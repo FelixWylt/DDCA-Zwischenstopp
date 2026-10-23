@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dagobert Ducks Archiv</title>
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171d2d" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="mast">
+  <div class="wrap">
+    <div class="brand">
+      <h1>Dagobert Ducks <span>Archiv</span></h1>
+      <div class="towns">ENTENHAUSEN · PAPEROPOLI · ANKEBORG</div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <a href="#collection" data-v="collection">Collection</a>
+      <a href="#add" data-v="add">Add</a>
+      <a href="#gaps" data-v="gaps">Gaps &amp; wishlist</a>
+      <a href="#stats" data-v="stats">Stats</a>
+      <a href="#import" data-v="import">Import CLZ</a>
+      <a href="#series" data-v="series">Series</a>
+      <a href="#backup" data-v="backup">Backup</a>
+    </nav>
+  </div>
+</header>
+
+<main><div class="wrap" id="app"><div class="empty"><h3>Opening your archive…</h3><p>Your comics load from the archive's database.</p></div></div></main>
+<div class="toast" id="toast" hidden></div>
+<div class="toast" id="update" hidden>A new version is ready. <button id="reload" style="margin-left:8px;padding:4px 10px">Update</button></div>
+
+<script src="vendor/papaparse.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
