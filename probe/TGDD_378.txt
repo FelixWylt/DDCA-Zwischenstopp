@@ -1,0 +1,105 @@
+{{Infobox DDSH
+|NR= 378
+|TITEL= Unerreichbares
+|EDATUM= 6. November 2018
+|NRGESCH= 6
+|PAG= 
+|PREIS= 3,70 € (D)<br> 4,10 € (A)<br> 7.40 SFr (CH)
+|RED= [[Peter Höpfner]]
+|BILD= Datei:DDSH 378.jpg
+|BES= Sticker der ''[[Micky Maus Sticker Story]]'' als [[Extra (Gimmick)|Extra]]
+}}
+
+== [[Cover]] ==
+*Zeichnung: [[Daan Jippes]] & [[Ulrich Schröder]]
+*Das Motiv der Coverzeichnung orientiert sich an einer Zeichnung von [[Carl Barks]], welche 1973 für das [[DDSH 32]] verwendet wurde
+[[Datei:DDSH 378 - Micky Maus Sticker Story.jpg|thumb|right|Das Extra, Sticker der ''[[Micky Maus Sticker Story]]'', befanden sich auf dem Cover des Hefts (© Egmont Ehapa)]]
+
+== Inhalt ==
+=== Seite 3+4 ===
+*Zeichnung: [[Cèsar Ferioli]]
+*Inhaltsverzeichnis und Impressum
+
+=== Aktion sauberes Kuhburg ===
+*[[Storycode]]: {{sc|W DD   70-04}}
+*Originaltitel: ''Trigger Gulch Gang''
+*[[Comic-Skript|Skript]]: ?
+*[[Comiczeichner|Zeichnungen]]: [[Tony Strobl]] (Bleistift), [[John Liggera]] ([[Inker|Tusche]])
+*[[Übersetzung]]: [[Arne Voigtmann]]
+*[[Produktionsjahr]]: 1960
+*Seitenanzahl: 12
+*deutsche Erstveröffentlichung
+*vorkommende Figuren: Danny Dulle, [[Donald Duck]], [[Tick, Trick & Track]]
+
+=== Rasantes Radrennen ===
+*Storycode: {{sc|H 2010-158}}
+*Originaltitel: ''De ronde van Duckstad''
+*Skript: [[Jan Kruse]]
+*Zeichnungen: [[Bas Heymans]]
+*Übersetzung: [[Manuela Buchholz]]
+*Produktionsjahr: 2010
+*Seitenanzahl: 11
+*deutsche Erstveröffentlichung
+*vorkommende Figuren: Donald Duck, [[Herbert]], [[Mac Moneysac]], [[Onkel Dagobert]], Tick, Trick & Track
+
+=== ''Leserforum'' ===
+*redaktioneller Teil
+*Seitenanzahl: 2 Seiten
+
+=== ''[[Liste aller Entenhausener Geschichte(n)|Entenhausener Geschichte(n)]], Folge 272'' ===
+*redaktioneller Teil
+*[[Autor]]: [[Wolfgang J. Fuchs]]
+*Thema: [[Micky]] und Donald – jahrzehntelange Freundschaft
+*Seitenanzahl: 2 Seiten
+
+=== Der Wünschelbrunnen ===
+*Storycode: {{sc|W US   25-03}}
+*Originaltitel: ''The Wishing Well''
+*Skript & Zeichnungen: [[Carl Barks]]
+*Übersetzung: [[Dr. Erika Fuchs]]
+*Produktionsjahr: 1958
+*Seitenanzahl: 4
+*Nachdruck aus: [[MM|Micky Maus]] 10/1960
+*vorkommende Figuren: [[Daniel Düsentrieb]], [[Helferlein]]
+
+Daniel Düsentrieb übertrifft sich selbst und erfindet einen Wünschelbrunnen. Beim praktischen Test ist sein erster Wunsch ein tropisches Land zu besuchen. Leider hat die Sache einen Haken, denn in diesem Land herrscht derzeit ein Bürgerkrieg. Helferlein kann ihn glücklicherweise zurückwünschen. Düsentrieb hat genug von seiner Erfindung und zerstört den Brunnen.
+
+=== Essen vergessen ===
+*Storycode: {{sc|D  2880}}
+*Originaltitel: ''Frokostproblemer''
+*Skript: [[Karl Dester]]
+*Zeichnungen: [[Antoni Gil-Bao]]
+*Übersetzung: [[Harry Nützel]]
+*Produktionsjahr: 1973
+*Seitenanzahl: 2
+*deutsche Erstveröffentlichung
+*vorkommende Figuren: Daniel Düsentrieb
+
+=== Tick, Trick & Track-Kurzgeschichte ===
+*Storycode: {{sc|D 2016-046}}
+*Titel: ''Nichts los''
+*Originaltitel: ''Evig kedsomhed''
+*Skript: [[Jaakko Seppälä]]
+*Zeichnungen: [[Michela Frare]]
+*Übersetzung: [[Joachim Stahl]]
+*Produktionsjahr: 2016
+*Seitenanzahl: [[Einseiter]]
+*deutsche Erstveröffentlichung
+*vorkommende Figuren: Donald Duck, [[Nachbar Zorngiebel]], Tick, Trick & Track
+
+=== Stunk in der Südsee ===
+*Storycode: {{sc|D 98309}}
+*Originaltitel: ''Havgudens øje''
+*Skript: [[Pat & Carol McGreal]]
+*Zeichnungen: [[Cèsar Ferioli Pelaez]]
+*Übersetzung: [[Peter Daibenzeiher]]
+*Produktionsjahr: 1998
+*Seitenanzahl: 22
+*Nachdruck aus: [[Micky Maus Magazin]] 20 & 21/2000
+*vorkommende Figuren: Donald Duck, [[Micky Maus]], Tick, Trick & Track
+*Anmerkung: Bei dieser Geschichte handelt es sich um ein [[Crossover]].
+
+== Weblinks ==
+*[https://www.comicguide.de/book/125441/Die-tollsten-Geschichten-von-Donald-Duck-378 Die Ausgabe im Comicguide]
+
+[[Kategorie:Die tollsten Geschichten von Donald Duck Sonderheft|378]]

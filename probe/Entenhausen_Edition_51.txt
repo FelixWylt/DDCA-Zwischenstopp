@@ -1,0 +1,75 @@
+{{Infobox Barks Library
+| SPECIAL = 
+| NR ALT = 51
+| NR NEU = 51
+| HELD = Donald Duck
+| ZEIT = 1963
+| UA = [[Der Fluch des Albatros]]
+| ERSCH ALT = April 2001
+| ERSCH NEU = 3. August 2018
+| GSCH = 6
+| PREIS ALT = 16,80 DM
+| SEITEN ALT = 60
+| PREIS NEU = 6,90 €
+| SEITEN NEU = 56
+| INDUCKSCODE = BL
+| ISBN = 3-7704-1950-2
+}}
+Das Heft '''Barks Library 51''' wurde im Jahr 2001 herausgebracht. 2018 erfolgte ein Neudruck unter dem Titel '''Entenhausen-Edition 51'''.
+
+==Geschichten==
+=== „Onkel Dagobert“-Einseiter ===
+{{I|W WDC 297-07}}
+*Englischer Titel: Million-Dollar Shower
+*Genre: Einseiter
+*Erstveröffentlichung: Juni 1965
+*Seiten: 1
+
+=== [[Der Glockendoktor]] ===
+{{I|W WDC 297-01}}
+*Englischer Titel: Monkey Business
+*Genre: [[Donald]]s Jobs, Reise Gagstory
+*Erstveröffentlichung: Juni 1965
+*Seiten: 10
+
+=== [[Donald hat Geheimnisse]] ===
+{{I|W WDC 308-06}}
+*Englischer Titel: The Beauty Business
+*Genre: [[Donald]]s Jobs, Gagstory
+*Erstveröffentlichung: März 1966
+*Seiten: 10
+
+=== [[Der Fluch des Albatros]] ===
+{{I|W WDC 312-01}}
+*Englischer Titel: The Not-so-Ancient Mariner
+*Genre: [[Gustav]] vs. [[Donald]], Gagstory
+*Erstveröffentlichung: September 1966
+*Seiten: 10
+
+===[[Eine stille Nacht]]===
+{{I|CS WDC  64}}
+*Englischer Titel: Silent Night
+*Genre: [[Weihnachten]], Gagstory
+*Erstveröffentlichung: 1976
+*Seiten: 10
+*Anmerkung: Diese 1945 entstandene Geschichte wurde [[Zensur|zensiert]] und erst 1976 veröffentlicht.
+
+=== [[Der Milchmann]] ===
+{{I|CS WDC 215}}
+*Englischer Titel: Donald the Milkman
+*Genre: [[Donald]]s Jobs, Gagstory
+*Erstveröffentlichung: 1974
+*Seiten: 10
+*Anmerkung: Diese 1957 entstandene Geschichte wurde [[Zensur|zensiert]] und erst 1974 veröffentlicht.
+
+Donald nimmt seine Stelle als Milchmann, trotz der frühen Arbeitsstunden sehr ernst. Zuverlässig und leise liefert er zu nachtschlafender Zeit Milch, Butter und Quark an die Kunden seines Gebietes aus. Doch einer hat es auf Donald abgesehen: Der miesepetrige Herr Gutknecht hofft, Donald aus dem Job verdrängen zu können, damit er selbst mit zweifelhaften Methoden ordentliche Gewinne absahnen kann. Dazu stellt er Donald immer wieder Fallen und provoziert Ausrutscher, die Donald gegen den Milchmann-Kodex verstoßen lassen, und sogleich schwärzt Gutknecht Donald bei dessen Chef an. Als Tick, Trick und Track ihren Onkel auf einer morgendlichen Tour begleiten, reißt den Ducks ob der Gutknecht’schen Frechheiten der Geduldsfaden, und sie lassen Herrn Gutknecht an allem teilhaben, was der Molkereiwagen so hergibt. Herr Gutknecht scheint somit sein Ziel erreicht zu haben, denn Donalds Chef sagt ihm zu, ihn nun endlich zu feuern. Als Gutknecht bei der Molkerei vorstellig wird, um sich auf den Posten des Milchmanns zu bewerben, trifft er erneut auf Donald, der nun Personalchef ist, denn alle seine anderen Kunden fanden, dass Donald der perfekte Milchmann ist und eine Beförderung verdient hat!
+
+== Zusätzlicher Inhalt der Barks Library ==
+Die Barks Library enthielt zusätzlich Artikel mit Hintergrundinformationen, die in der Entenhausen-Edition nicht mehr abgedruckt wurden.
+
+=== Die Filme von Carl Barks ===
+*Text: [[Thomas Andrae]]
+*Übersetzung: [[Johnny A. Grote]]
+*Seiten: 3
+
+[[Kategorie:Barks Library]]
