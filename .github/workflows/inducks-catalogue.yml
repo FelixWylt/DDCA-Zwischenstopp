@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Download INDUCKS export
         id: dl
@@ -64,4 +64,9 @@ jobs:
           git add catalogue sw.js
           git diff --cached --quiet && { echo "Nothing changed"; exit 0; }
           git commit -m "INDUCKS catalogue $(date -u +%F)"
-          git push
+          # someone may have pushed while this job ran: put the catalogue on top and retry
+          for i in 1 2 3; do
+            git pull --rebase -X theirs origin main && git push && exit 0
+            sleep 10
+          done
+          exit 1
