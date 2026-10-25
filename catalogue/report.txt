@@ -2,9 +2,9 @@ INDUCKS publications: 7,359
 
 PUBLICATIONS
   ✓ Lustiges Taschenbuch  →  de/LTB  'Lustiges Taschenbuch'  (by code)
-  ? LTB Spezial: no confident match. Candidates: de/BCLSP 'Disneys beste Comics aus Lustige Taschenbücher Spezial' (0); de/BXS 'Bertel-Express Spezial' (0); de/ENTS 'Enthologien Spezial' (0); de/ESP 'Die Eiskönigin - Spezial' (0); de/FAMS 'Frankfurter Allgemeine Magazin-Spezial' (0); de/FGLS 'Floyd Gottfredson Library Spezial (Die Sonntagsseiten in Farbe)' (0)
+  ? LTB Spezial: no confident match. Candidates: de/LTBSP 'Lustiges Taschenbuch Spezial' (100); de/PLTB 'Lustiges Taschenbuch Spezial-Edition' (100)
   ✓ Micky Maus Magazin  →  de/MM  'Micky Maus'  (by code)
-  ? Die tollsten Geschichten von Donald Duck Sonderheft: no confident match. Candidates: de/TGDDE 'Die tollsten Geschichten von Donald Duck - Edition' (70); de/TGDDSP 'Die tollsten Geschichten von Donald Duck - Spezial' (70); de/TGDD 'Die tollsten Geschichten von Donald Duck (Sonderheft)' (70); de/TGDDSB 'Die tollsten Geschichten von Donald Duck - Sammelband' (70); de/TGDDSBHC 'Die tollsten Geschichten von Donald Duck - Sammelband' (70)
+  ✓ Die tollsten Geschichten von Donald Duck Sonderheft  →  de/TGDD  'Die tollsten Geschichten von Donald Duck (Sonderheft)'  (by code)
   ✓ Lustiges Taschenbuch Maus-Edition  →  de/LTBM  'Lustiges Taschenbuch Maus-Edition'  (by title)
   ✓ Lustiges Taschenbuch Exklusiv  →  de/LTBEX  'Lustiges Taschenbuch Exklusiv'  (by title)
   ✓ Lustiges Taschenbuch Galaxy  →  de/LTBGA  'Lustiges Taschenbuch Galaxy'  (by title)
@@ -27,31 +27,32 @@ PUBLICATIONS
   ? Musiksaga: no confident match. Candidates: 
   ✓ Donald Duck & Co  →  no/DD  'Donald Duck & Co'  (by code)
 
-issues in chosen publications: 18,180
-entries: 183,271, story versions: 100,247
+issues in chosen publications: 18,653
+entries: 188,169, story versions: 102,071
 
 FILES
-  inducks-de-LTB.json: 666 issues, 810 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
-  inducks-de-MM.json: 3,437 issues, 2,492 KB  e.g. 1988/43 = de/MM1988-43 1988-10-20 (5 stories)
-  inducks-de-LTBM.json: 21 issues, 29 KB  e.g. 11 = de/LTBM 11 2019-10-29 (11 stories)
+  inducks-de-LTB.json: 666 issues, 809 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
+  inducks-de-MM.json: 3,437 issues, 2,470 KB  e.g. 1988/43 = de/MM1988-43 1988-10-20 (5 stories)
+  inducks-de-TGDD.json: 473 issues, 393 KB  e.g. 237 = de/TGDD 237 2007-02-06 (9 stories)
+  inducks-de-LTBM.json: 21 issues, 28 KB  e.g. 11 = de/LTBM 11 2019-10-29 (11 stories)
   inducks-de-LTBEX.json: 4 issues, 4 KB  e.g. 3 = de/LTBEX 3 2014-11-04 (8 stories)
   inducks-de-LTBGA.json: 6 issues, 7 KB  e.g. 4 = de/LTBGA  4 2018-08-17 (8 stories)
   inducks-de-MMM.json: 4 issues, 4 KB  e.g. 2018/02 = de/MMM2018-02 2018-03-09 (9 stories)
-  inducks-de-MMC.json: 106 issues, 146 KB  e.g. 54 = de/MMC 54 2020-05-05 (13 stories)
+  inducks-de-MMC.json: 106 issues, 145 KB  e.g. 54 = de/MMC 54 2020-05-05 (13 stories)
   inducks-de-MMP.json: 40 issues, 41 KB  e.g. 21 = de/MMP 21 1997-03 (6 stories)
   inducks-de-EEDCB.json: 100 issues, 55 KB  e.g. 51 = de/EEDCB 51 2018-08-03 (6 stories)
-  inducks-it-TL.json: 3,792 issues, 3,494 KB  e.g. 1899 = it/TL 1899 1992-04-19 (5 stories)
+  inducks-it-TL.json: 3,792 issues, 3,490 KB  e.g. 1899 = it/TL 1899 1992-04-19 (5 stories)
   inducks-it-TG.json: 739 issues, 698 KB  e.g. 369 = it/TG  369 1940-01-18 (9 stories)
-  inducks-se-KA.json: 3,630 issues, 3,354 KB  e.g. 1990/23 = se/KA1990-23 1990-06-04 (5 stories)
-  inducks-se-KAP.json: 589 issues, 755 KB  e.g. 318 = se/KAP 318 2005 (10 stories)
+  inducks-se-KA.json: 3,630 issues, 3,328 KB  e.g. 1990/23 = se/KA1990-23 1990-06-04 (5 stories)
+  inducks-se-KAP.json: 589 issues, 753 KB  e.g. 318 = se/KAP 318 2005 (10 stories)
   inducks-se-X.json: 96 issues, 47 KB  e.g. 2012/04 = se/X 2012-04 2012 (4 stories)
   inducks-se-KABS.json: 25 issues, 41 KB  e.g. 2019/02 = se/KABS2019-02 2019 (11 stories)
   inducks-se-WDS.json: 211 issues, 91 KB  e.g. 1969/10 = se/WDS1969-10 1969-10-06 (2 stories)
   inducks-se-WDG.json: 20 issues, 5 KB  e.g. 1983/03 = se/WDG1983-03 1983-05-11 (1 stories)
   inducks-se-WDK.json: 32 issues, 10 KB  e.g. 1979/01 = se/WDK1979-01 1979 (8 stories)
-  inducks-se-J.json: 224 issues, 125 KB  e.g. 1986/01 = se/J 1986-01 1986-01 (4 stories)
+  inducks-se-J.json: 224 issues, 124 KB  e.g. 1986/01 = se/J 1986-01 1986-01 (4 stories)
   inducks-se-BL.json: 53 issues, 23 KB  e.g. 1990/06 = se/BL 1990-06 1990-11-23 (3 stories)
-  inducks-se-MP.json: 319 issues, 176 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
-  inducks-no-DD.json: 4,066 issues, 3,374 KB  e.g. 1993B35 = no/DD1993B35 1993-08-31 (3 stories)
+  inducks-se-MP.json: 319 issues, 173 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
+  inducks-no-DD.json: 4,066 issues, 3,348 KB  e.g. 1993B35 = no/DD1993B35 1993-08-31 (3 stories)
 
 files in the ISV export: createtables.sql

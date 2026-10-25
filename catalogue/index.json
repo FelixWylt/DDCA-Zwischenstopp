@@ -17,6 +17,13 @@
    "file": "inducks-de-MM.json",
    "issues": 3437
   },
+  "die tollsten geschichten von donald duck sonderheft": {
+   "series": "Die tollsten Geschichten von Donald Duck Sonderheft",
+   "code": "de/TGDD",
+   "title": "Die tollsten Geschichten von Donald Duck (Sonderheft)",
+   "file": "inducks-de-TGDD.json",
+   "issues": 473
+  },
   "lustiges taschenbuch maus edition": {
    "series": "Lustiges Taschenbuch Maus-Edition",
    "code": "de/LTBM",
