@@ -55,7 +55,7 @@ jobs:
 
       - name: Mark the app for an update
         if: steps.dl.outcome == 'success'
-        run: sed -i -E "s/^const CATALOGUE = \".*\";/const CATALOGUE = \"$(date -u +%Y%m%d)\";/" sw.js
+        run: sed -i -E "s/^const CATALOGUE = \".*\";/const CATALOGUE = \"$(date -u +%Y%m%d%H%M)\";/" sw.js
 
       - name: Commit
         run: |
