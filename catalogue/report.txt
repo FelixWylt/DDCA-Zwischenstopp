@@ -2,7 +2,7 @@ INDUCKS publications: 7,359
 
 PUBLICATIONS
   ✓ Lustiges Taschenbuch  →  de/LTB  'Lustiges Taschenbuch'  (by code)
-  ? LTB Spezial: no confident match. Candidates: de/LTBSP 'Lustiges Taschenbuch Spezial' (100); de/PLTB 'Lustiges Taschenbuch Spezial-Edition' (100)
+  ✓ LTB Spezial  →  de/LTBSP  'Lustiges Taschenbuch Spezial'  (by code)
   ✓ Micky Maus Magazin  →  de/MM  'Micky Maus'  (by code)
   ✓ Die tollsten Geschichten von Donald Duck Sonderheft  →  de/TGDD  'Die tollsten Geschichten von Donald Duck (Sonderheft)'  (by code)
   ✓ Lustiges Taschenbuch Maus-Edition  →  de/LTBM  'Lustiges Taschenbuch Maus-Edition'  (by title)
@@ -27,11 +27,12 @@ PUBLICATIONS
   ? Musiksaga: no confident match. Candidates: 
   ✓ Donald Duck & Co  →  no/DD  'Donald Duck & Co'  (by code)
 
-issues in chosen publications: 18,653
-entries: 188,169, story versions: 102,071
+issues in chosen publications: 18,786
+entries: 190,801, story versions: 102,733
 
 FILES
   inducks-de-LTB.json: 666 issues, 809 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
+  inducks-de-LTBSP.json: 133 issues, 277 KB  e.g. 67 = de/LTBSP 67 2015-11-19 (14 stories)
   inducks-de-MM.json: 3,437 issues, 2,470 KB  e.g. 1988/43 = de/MM1988-43 1988-10-20 (5 stories)
   inducks-de-TGDD.json: 473 issues, 393 KB  e.g. 237 = de/TGDD 237 2007-02-06 (9 stories)
   inducks-de-LTBM.json: 21 issues, 28 KB  e.g. 11 = de/LTBM 11 2019-10-29 (11 stories)

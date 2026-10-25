@@ -10,6 +10,13 @@
    "file": "inducks-de-LTB.json",
    "issues": 666
   },
+  "ltb spezial": {
+   "series": "LTB Spezial",
+   "code": "de/LTBSP",
+   "title": "Lustiges Taschenbuch Spezial",
+   "file": "inducks-de-LTBSP.json",
+   "issues": 133
+  },
   "micky maus magazin": {
    "series": "Micky Maus Magazin",
    "code": "de/MM",
