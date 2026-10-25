@@ -303,7 +303,7 @@ function drawResults() {
       if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
     }
     return `<button class="item" data-id="${esc(c.id)}">
-      <div class="num">${isBook ? (c.issue ? esc(c.issue) : '<span style="font-size:.9rem">Book</span>') : esc(c.issueLabel || c.issue || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? se.short : (c.seriesName || "Other"))}</small></div>
+      <div class="num${String(isBook ? c.issue : (c.issueLabel || c.issue || "")).length > 4 ? " long" : ""}">${isBook ? (c.issue ? esc(c.issue) : '<span style="font-size:.9rem">Book</span>') : esc(c.issueLabel || c.issue || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? se.short : (c.seriesName || "Other"))}</small></div>
       <div style="min-width:0"><div class="t">${esc(c.title || (se ? se.name : c.seriesName) || "Untitled")}</div><div class="s">${esc(sub || (se ? se.name : c.seriesName || ""))}</div></div>
       <div class="chips">${chips.join("")}</div></button>`;
   }).join("");
@@ -330,7 +330,7 @@ VIEWS.add = {
     const d = S.draft, editing = !!d.id, isBook = d.kind === "book";
     const se = isBook ? null : seriesById(d.seriesId);
     const sopts = S.series.map(s => `<option value="${esc(s.id)}"${d.seriesId === s.id ? " selected" : ""}>${esc(s.name)} (${esc(s.country)})</option>`).join("") + `<option value="_other"${!se ? " selected" : ""}>Other series…</option>`;
-    const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12" : "Number, e.g. 474";
+    const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12 or 1985/?" : "Number, e.g. 474";
     const catReady = se && S.catalogue && S.catalogue.series && S.catalogue.series[se.id];
     const link = se && d.issue ? inducksIssueUrl(se, d.issue) : (se ? "https://inducks.org/publication.php?c=" + encodeURIComponent(se.code) : "");
     const grades = '<option value="">Not graded</option>' + GRADES.map(([v, l]) => `<option value="${v}"${d.grade === v ? " selected" : ""}>${l}</option>`).join("");
@@ -455,7 +455,9 @@ ${isBook ? `
       if (!d.issue.trim()) { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
       if (!se && !d.seriesName.trim()) { toast("Enter the series name"); return; }
       const p = parseIssue(se, d.issue);
-      if (se && se.numbering === "year" && !p.year) { toast("For " + se.short + " enter year and number, e.g. 1985/12"); $("#f-issue").focus(); return; }
+      const yearOnly = /^\s*(\d{4})\s*\/\s*\?\s*$/.exec(d.issue);
+      if (yearOnly) { p.year = +yearOnly[1]; p.label = yearOnly[1] + "/?"; p.n = null; p.sort = p.year * 1000 + (d.date && d.date.length >= 7 ? (+d.date.slice(5, 7) - 1) * 4.3 : 0); }
+      if (se && se.numbering === "year" && !p.year) { toast("For " + se.short + " enter year and number, e.g. 1985/12, or 1985/? if you don't know the number"); $("#f-issue").focus(); return; }
       const c = Object.assign({}, d, {
         seriesId: se ? se.id : "_other", seriesName: se ? se.name : d.seriesName.trim(), issueLabel: p.label, issueSort: p.sort,
         issueYear: p.year || null, issueNum: p.n, copies: Math.max(1, parseInt(d.copies, 10) || 1),
@@ -554,7 +556,7 @@ VIEWS.gaps = {
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
       <div class="stack"><h3>Full wishlist</h3>
-        ${wl.length ? '<div class="list">' + wl.map(c => { const s = seriesById(c.seriesId), bk = c.kind === "book"; return `<button class="item" data-open="${esc(c.id)}"><div class="num">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`; }).join("") + '</div>'
+        ${wl.length ? '<div class="list">' + wl.map(c => { const s = seriesById(c.seriesId), bk = c.kind === "book"; return `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`; }).join("") + '</div>'
           : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
       </div>`;
   },
@@ -590,7 +592,8 @@ VIEWS.stats = {
     const fmtMap = m => Object.keys(m).length ? Object.entries(m).map(([k, v]) => k + " " + fmt2(v)).join(" · ") : "–";
     const unread = own.filter(c => !c.read).length, trade = own.filter(c => c.forTrade || (c.copies || 1) > 1).length;
     const perSeries = S.series.map(s => {
-      const n = new Set(own.filter(c => c.seriesId === s.id).map(c => c.issueLabel)).size;
+      const mine = own.filter(c => c.seriesId === s.id);
+      const n = new Set(mine.filter(c => !/\?/.test(c.issueLabel || "")).map(c => c.issueLabel)).size + mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 52)) || 0 : (+s.latest || 0);
       return { s, n, tot };
     });
@@ -615,8 +618,8 @@ VIEWS.stats = {
           ${perSeries.map(({ s, n, tot }) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div><div class="track"><div class="fill" style="width:${tot ? Math.min(100, n / tot * 100).toFixed(1) : 0}%"></div></div><div class="n">${n} / ${tot}</div></div>`).join("")}
           ${others ? `<p class="small muted" style="margin:0">${others} more in other series.</p>` : ""}
         </div></div>
-        <div class="card stack"><h3>Most-collected creators</h3>
-          ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / topMax * 100).toFixed(1)}%;background:var(--owned)"></div></div><div class="n">${c} ${c === 1 ? "story" : "stories"}</div></div>`).join("") + '</div>'
+        <div class="card stack"><h3>Most-collected creators</h3><p class="small muted" style="margin:0">Counts each comic or story a writer or artist is credited on.</p>
+          ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / topMax * 100).toFixed(1)}%;background:var(--owned)"></div></div><div class="n">${c} ${c === 1 ? "credit" : "credits"}</div></div>`).join("") + '</div>'
             : '<p class="muted small" style="margin:0">Add stories with writers and artists to your comics to see who you collect most.</p>'}
         </div>
       </div>`;
@@ -691,13 +694,22 @@ VIEWS.backup = {
       file.text().then(txt => {
         let b; try { b = JSON.parse(txt); } catch (x) { b = null; }
         if (!b || !["dagobert-archiv", "entenhausen-archive"].includes(b.app) || !Array.isArray(b.comics)) { box.innerHTML = '<div class="banner warn">This file isn\'t a Dagobert Ducks Archiv backup. Choose a file made with Save or Send backup.</div>'; return; }
-        box.innerHTML = `<div class="confirm"><span>Restore ${b.comics.length} entries from ${esc(stampDate(b.exported))}?</span><button class="primary" id="yesrest">Restore</button><button id="norest">Cancel</button></div>`;
+        const isClz = b.source === "clz-import", ids = new Set(b.comics.map(c => c && c.id));
+        const oldClz = isClz ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id)) : [];
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? "Import " + b.comics.length + " comics from your CLZ collection?" : "Restore " + b.comics.length + " entries from " + esc(stampDate(b.exported)) + "?"}</span>
+          ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
+          <div class="row"><button class="primary" id="yesrest">${isClz ? "Import" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; e.target.value = ""; };
         $("#yesrest").onclick = async () => {
           try {
+            if (oldClz.length && $("#rmold") && $("#rmold").checked) {
+              const gone = oldClz.map(c => c.id);
+              await tx("comics", "readwrite", st => { gone.forEach(id => st.delete(id)); });
+              S.comics = S.comics.filter(c => !gone.includes(c.id));
+            }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
             const n = await saveMany(b.comics, d => { box.innerHTML = `<div class="banner">Restoring… ${d} of ${b.comics.length}</div>`; }, true);
-            await refreshStorageInfo(); toast("Restored " + n + " entries"); render();
+            await refreshStorageInfo(); toast((isClz ? "Imported " : "Restored ") + n + " entries"); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
       });
