@@ -197,3 +197,11 @@ details.wishseries > summary::-webkit-details-marker { display: none; }
 details.wishseries[open] > summary .chev { transform: rotate(90deg); }
 .chev { transition: transform .15s; display: inline-block; }
 .wanted-count { color: var(--wanted) !important; }
+.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 0.9rem; }
+.facts dt { color: var(--muted); font-weight: 700; }
+.facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.dkstory { border-top: 1px solid var(--line); padding-top: 10px; }
+.dkstory .t { font-weight: 700; }
+.dkstory .s { color: var(--muted); font-size: 0.85rem; }
+.dkstory details summary { cursor: pointer; color: var(--accent); margin-top: 4px; }
+.dkstory .t .mono { font-size: 0.72rem; font-weight: 400; margin-left: 4px; }

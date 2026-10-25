@@ -322,9 +322,10 @@ function seriesFromCatalogue(se, file, entry) {
 // ---------- derived ----------
 function owned() { return S.comics.filter(c => c.status !== "wanted"); }
 function searchText(c) {
-  const st = (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist, s.hero].join(" ")).join(" ");
+  const st = (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist, s.hero, s.dTitle, s.original, s.translator, s.characters, s.genre].join(" ")).join(" ");
+  const dk = c.duckipedia && c.duckipedia.issue ? [c.duckipedia.issue.translator, c.duckipedia.issue.editor, c.duckipedia.issue.title].join(" ") : "";
   const se = seriesById(c.seriesId);
-  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.location, c.source, c.author, c.publisher, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st].join(" "));
+  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.location, c.source, c.author, c.publisher, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
 }
 function sortComics(list) {
   const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
@@ -557,6 +558,18 @@ function seriesOptions(selected, label) {
   return Object.keys(groups).sort((a, b) => pubCompare(key(a)[0], key(b)[0]) || groupCompare(key(a)[1], key(b)[1])).map(g =>
     `<optgroup label="${esc(g)}">` + groups[g].map(s => `<option value="${esc(s.id)}"${selected === s.id ? " selected" : ""}>${esc(label(s))}</option>`).join("") + "</optgroup>").join("");
 }
+function duckipediaCard(c) {
+  const dk = c.duckipedia, i = dk.issue || {};
+  const facts = [["Title", i.title], ["Released", i.date], ["Price", i.price], ["Editor-in-chief", i.editor], ["Translation", i.translator], ["Pages", i.pages], ["ISBN", i.isbn], ["Notes", i.notes]].filter(x => x[1]);
+  const stories = (c.stories || []).filter(s => s.dTitle || s.plot || s.translator || s.characters);
+  return `<div class="card stack dkcard"><div class="row between"><h3>From Duckipedia</h3><span class="small muted">${esc(dk.fetched || "")}</span></div>
+    ${facts.length ? `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
+    ${stories.map(s => `<div class="dkstory"><div class="t">${esc(s.dTitle || s.title)}${s.code ? ` <span class="mono muted small">${esc(s.code)}</span>` : ""}</div>
+      <div class="s">${esc([s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · "))}</div>
+      ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
+      ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`).join("")}
+    <p class="small muted" style="margin:0">Text from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
+}
 // ---- Add / edit ----
 function blankDraft(pre) {
   return Object.assign({ kind: "issue", author: "", publisher: "", isbn: "", format: "", lang: "", status: "owned", seriesId: S.series[0] ? S.series[0].id : "_other", seriesName: "", issue: "", title: "", date: "", pages: "",
@@ -618,6 +631,7 @@ ${isBook ? `
         </div>
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
         <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from INDUCKS." : S.catalogue ? "This series isn't in the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
+          ${!isBook && window.Duckipedia && Duckipedia.candidates(se, d).length ? `<button class="ghost" id="dkfetch" type="button">${d.duckipedia ? "Refresh" : "Get"} details from Duckipedia</button>` : ""}
           <span id="ilink">${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : ""}</span></p>
         <div class="grid-form">
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
@@ -627,6 +641,7 @@ ${isBook ? `
         </div>
 `}
       </div>
+      ${d.duckipedia ? duckipediaCard(d) : ""}
       <div class="card stack">
         <div class="row between"><h3>Stories</h3><button id="addstory">Add story</button></div>
         ${d.stories.length ? '<div class="stories">' + stories + '</div>' : '<p class="muted small" style="margin:0">No stories listed yet. Add them so you can search by story, writer or artist later.</p>'}
@@ -684,6 +699,15 @@ ${isBook ? `
     };
     $("#addstory").onclick = () => { grab(); d.stories.push({ title: "", code: "", writer: "", artist: "", hero: "" }); render(); const rows = document.querySelectorAll(".story input"); rows.length && rows[rows.length - 5].focus(); };
     document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { grab(); d.stories.splice(+b.dataset.del, 1); render(); });
+    $("#dkfetch") && ($("#dkfetch").onclick = async () => {
+      grab(); const btn = $("#dkfetch"); btn.disabled = true; btn.textContent = "Asking Duckipedia…";
+      try {
+        const res = await Duckipedia.fetchIssue(seriesById(d.seriesId), d);
+        if (!res) { toast("Duckipedia has no page for this issue"); btn.disabled = false; btn.textContent = "Get details from Duckipedia"; return; }
+        S.draft = Duckipedia.merge(d, res); render();
+        toast("Duckipedia details added (" + res.stories.length + " stories). Tap Save to keep them.");
+      } catch (e) { toast(navigator.onLine ? "Duckipedia didn't answer. Try again later." : "Duckipedia needs an internet connection."); btn.disabled = false; btn.textContent = "Get details from Duckipedia"; }
+    });
     $("#lookup") && ($("#lookup").onclick = async () => {
       grab(); const se = seriesById(d.seriesId); if (!se) return;
       const hit = await catalogueLookup(se, d.issue);
@@ -794,7 +818,8 @@ VIEWS.match = {
       <div class="row"><button class="primary" id="mapply"${R.items.length ? "" : " disabled"}>Apply <span id="mcount">${chosen}</span> matches</button><button id="mback">Back</button></div>`;
   },
   bind() {
-    if (!S.matchRun) { buildMatchRun().then(() => { if (S.view === "match") render(); }); return; }
+    if (!S.catalogue) return;   // re-rendered once the catalogue has loaded
+    if (!S.matchRun) { if (!S.matchBuilding) { S.matchBuilding = true; buildMatchRun().then(() => { S.matchBuilding = false; if (S.view === "match") render(); }); } return; }
     const R = S.matchRun;
     document.querySelectorAll("[data-mid]").forEach(sel => sel.onchange = () => {
       const x = R.items.find(i => i.c.id === sel.dataset.mid); x.label = sel.value;
@@ -1074,6 +1099,42 @@ VIEWS.backup = {
   }
 };
 
+// ---- Duckipedia for all German comics ----
+function duckipediaTodo() {
+  if (!window.Duckipedia) return [];
+  // comics without a page are asked again after 90 days, in case the wiki has added one
+  return S.comics.filter(c => c.kind !== "book" && !c.duckipedia && !(c.duckipediaNone && daysSince(c.duckipediaNone) < 90) && Duckipedia.candidates(seriesById(c.seriesId), c).length);
+}
+function duckipediaBulkCard() {
+  if (!window.Duckipedia) return "";
+  const dk = S.dk, todo = duckipediaTodo().length, have = S.comics.filter(c => c.duckipedia).length;
+  if (!todo && !have && !dk) return "";
+  return `<div class="card stack"><h3>Duckipedia</h3>
+    <p class="small muted" style="margin:0">German comics can get extra details from <a href="https://de.duckipedia.org" target="_blank" rel="noopener">Duckipedia</a>: translator, price, characters, plot and more. They're saved with each comic, so they stay available offline. ${have === 1 ? "1 comic has" : have + " comics have"} them already.</p>
+    ${dk && dk.running ? `<div class="progress"><div style="width:${(dk.done / dk.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${dk.done} of ${dk.total} checked · ${dk.found} with details · ${dk.none} without a Duckipedia page</p><div class="row"><button id="dkstop">Stop</button></div>`
+      : dk && dk.finished ? `<p class="small" style="margin:0">Finished: ${dk.found} comics got details, ${dk.none} have no Duckipedia page${dk.failed ? ", " + dk.failed + " could not be fetched" : ""}.</p>` : ""}
+    ${!(dk && dk.running) && todo ? `<div class="row"><button class="primary" id="dkall">Get details for ${todo} German comics</button></div><p class="small muted" style="margin:0">Needs internet. Takes about ${Math.max(1, Math.round(todo * 1.8 / 60))} min; the app asks slowly to be gentle on the volunteer-run wiki.</p>` : ""}
+  </div>`;
+}
+async function duckipediaBulk() {
+  const todo = duckipediaTodo();
+  S.dk = { running: true, total: todo.length, done: 0, found: 0, none: 0, failed: 0 };
+  if (S.view === "series") render();
+  for (const c of todo) {
+    if (S.dk.stop) break;
+    try {
+      const res = await Duckipedia.fetchIssue(seriesById(c.seriesId), c);
+      if (res) { await saveComic(Duckipedia.merge(c, res)); S.dk.found++; }
+      else { await saveComic(Object.assign({}, c, { duckipediaNone: new Date().toISOString().slice(0, 10) })); S.dk.none++; }
+    } catch (e) { S.dk.failed++; if (!navigator.onLine) { toast("No internet. Duckipedia stopped."); break; } }
+    S.dk.done++;
+    if (S.view === "series") render();
+    await sleep(1500);
+  }
+  S.dk.running = false; S.dk.finished = true;
+  if (S.view === "series") render();
+  toast("Duckipedia: " + S.dk.found + " comics got details");
+}
 // ---- Series ----
 VIEWS.series = {
   html() {
@@ -1096,6 +1157,7 @@ VIEWS.series = {
         <datalist id="publist">${[...new Set([DISNEY, "Marvel", "DC", "Dargaud", "Dupuis", "Casterman"].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+      ${duckipediaBulkCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
           <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
@@ -1116,6 +1178,8 @@ VIEWS.series = {
     });
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
     $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
+    $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
     $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
       grab(); const s = S.series[+b.dataset.rm];
