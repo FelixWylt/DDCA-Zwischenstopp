@@ -113,11 +113,11 @@ const setConfig = (key, value) => tx("config", "readwrite", st => st.put({ key, 
 function newId() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, ""); }
 
 function slug(s) { return norm(s).replace(/ /g, "-").slice(0, 60) || "series"; }
-function newSeriesFor(name, issues) {
+function newSeriesFor(name, issues, group) {
   const used = new Set(S.series.map(s => s.id));
   let id = "x-" + slug(name), k = 2; while (used.has(id)) id = "x-" + slug(name) + "-" + k++;
   const years = (issues || []).map(c => c.issueYear || (/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]).filter(Boolean).map(Number);
-  const s = { id, name, short: "", group: guessGroup(name), code: "", country: "", numbering: years.length ? "year" : "running", latest: "" };
+  const s = { id, name, short: "", group: group || guessGroup(name), code: "", country: "", numbering: years.length ? "year" : "running", latest: "" };
   if (years.length) { s.firstYear = Math.min(...years); s.lastYear = Math.max(...years); s.perYear = ""; }
   S.series.push(s);
   return s;
@@ -131,7 +131,7 @@ async function adoptLooseSeries() {
   loose.forEach(c => { const n = String(c.seriesName || "Unknown series").trim(); (byName[n] = byName[n] || []).push(c); });
   const updated = [];
   Object.entries(byName).forEach(([name, list]) => {
-    const se = findSeriesByName(name) || newSeriesFor(name, list);
+    const se = findSeriesByName(name) || newSeriesFor(name, list, (list.find(c => c.seriesGroup) || {}).seriesGroup);
     list.forEach(c => updated.push(Object.assign({}, c, { seriesId: se.id, seriesName: se.name })));
   });
   if (updated.length) {
@@ -281,7 +281,7 @@ function seriesTitle(key) {
   if (key.startsWith("name:")) return key.slice(5) || "Unknown series";
   const se = seriesById(key); return se ? se.name : key;
 }
-function groupRank(name) { return name === BOOK_GROUP ? 2 : name === OTHER_GROUP ? 1 : 0; }
+function groupRank(name) { return name === BOOK_GROUP ? 2 : (name === OTHER_GROUP || name === "Other comics") ? 1 : 0; }
 function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de"); }
 function yearsText(list) {
   const ys = list.map(c => +(String(c.date || "").slice(0, 4)) || c.issueYear).filter(y => y > 1900);
@@ -566,12 +566,12 @@ ${isBook ? `
       if (d.kind === "book") return saveBook(next);
       const se = seriesById(d.seriesId);
       d.issue = String(d.issue || ""); d.seriesName = String(d.seriesName || "");
-      if (!d.issue.trim()) { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
+      if (!d.issue.trim() && se && se.numbering === "year") { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
       if (!se && !d.seriesName.trim()) { toast("Enter the series name"); return; }
       const p = parseIssue(se, d.issue);
       const yearOnly = /^\s*(\d{4})\s*\/\s*\?\s*$/.exec(d.issue);
       if (yearOnly) { p.year = +yearOnly[1]; p.label = yearOnly[1] + "/?"; p.n = null; p.sort = p.year * 1000 + (d.date && d.date.length >= 7 ? (+d.date.slice(5, 7) - 1) * 4.3 : 0); }
-      if (se && se.numbering === "year" && !p.year) { toast("For " + se.short + " enter year and number, e.g. 1985/12, or 1985/? if you don't know the number"); $("#f-issue").focus(); return; }
+      if (se && se.numbering === "year" && !p.year && d.issue.trim()) { toast("For " + se.short + " enter year and number, e.g. 1985/12, or 1985/? if you don't know the number"); $("#f-issue").focus(); return; }
       let target = se;
       if (!target) { target = findSeriesByName(d.seriesName.trim()) || newSeriesFor(d.seriesName.trim(), []); try { await saveSeries(); } catch (e) { toast(errText(e)); return; } }
       const c = Object.assign({}, d, {
@@ -813,11 +813,15 @@ VIEWS.backup = {
       file.text().then(txt => {
         let b; try { b = JSON.parse(txt); } catch (x) { b = null; }
         if (!b || !["dagobert-archiv", "entenhausen-archive"].includes(b.app) || !Array.isArray(b.comics)) { box.innerHTML = '<div class="banner warn">This file isn\'t a Dagobert Ducks Archiv backup. Choose a file made with Save or Send backup.</div>'; return; }
-        const isClz = b.source === "clz-import", ids = new Set(b.comics.map(c => c && c.id));
-        const oldClz = isClz ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id)) : [];
-        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? "Import " + b.comics.length + " comics from your CLZ collection?" : "Restore " + b.comics.length + " entries from " + esc(stampDate(b.exported)) + "?"}</span>
+        const isClz = /^clz/.test(b.source || ""), ids = new Set(b.comics.map(c => c && c.id));
+        const have = new Set(S.comics.map(c => c.id));
+        const fresh = isClz ? b.comics.filter(c => c && !have.has(c.id)) : b.comics;
+        const known = b.comics.length - fresh.length;
+        // only entries from the old in-app CLZ importer qualify; comics from converted files carry clzBatch/seriesGroup
+        const oldClz = b.source === "clz-import" ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id) && !c.clzBatch && !c.seriesGroup) : [];
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + " entries from " + esc(stampDate(b.exported)) + "?"}</span>
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
-          <div class="row"><button class="primary" id="yesrest">${isClz ? "Import" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
+          <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; e.target.value = ""; };
         $("#yesrest").onclick = async () => {
           try {
@@ -827,9 +831,9 @@ VIEWS.backup = {
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
-            const n = await saveMany(b.comics, d => { box.innerHTML = `<div class="banner">Restoring… ${d} of ${b.comics.length}</div>`; }, true);
+            const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
-            await refreshStorageInfo(); toast((isClz ? "Imported " : "Restored ") + n + " entries"); render();
+            await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + " entries"); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
       });
