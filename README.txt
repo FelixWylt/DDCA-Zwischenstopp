@@ -19,7 +19,7 @@ Hosting (one time)
   After installing, the phone keeps its own copy and works without internet.
 
 Releasing an update
-  Change the files, then raise VERSION in sw.js (e.g. "da-v4"). The app shows
+  Change the files, then raise VERSION in sw.js (e.g. "da-v5"). The app shows
   "A new version is ready" the next time it is opened while online.
 
 Backups

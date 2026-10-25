@@ -23,7 +23,7 @@ const FIELDS = [
   ["copies", "Copies"], ["notes", "Notes"], ["writer", "Writer"], ["artist", "Artist"], ["coverUrl", "Cover image URL"]
 ];
 const GUESS = {
-  series: ["series", "serie", "reihe", "title series"], issue: ["issue nr", "issue", "issue no", "nummer", "number", "no."],
+  series: ["series", "serie", "reihe", "title series"], issue: ["issue nr", "issue", "issue no", "nummer", "number", "nr", "no"],
   title: ["title", "issue title", "titel"], date: ["release date", "cover date", "publication date", "date", "datum"],
   status: ["collection status", "status"], grade: ["condition", "grade", "zustand"],
   pricePaid: ["purchase price", "price paid", "preis", "price"], purchaseDate: ["purchase date", "date purchased", "kaufdatum"],
@@ -51,7 +51,9 @@ function seriesById(id) { return S.series.find(s => s.id === id); }
 function parseIssue(series, raw) {
   const s = String(raw || "").trim();
   if (series && series.numbering === "year") {
-    const m = s.match(/(\d{4})\D+(\d{1,3})/);
+    let m = s.match(/(\d{4})\D+(\d{1,3})(?!\d)/);
+    const r = !m && s.match(/^\D*(\d{1,3})\D+(\d{4})(?!\d)/);
+    if (r) m = [r[0], r[2], r[1]];
     if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2], label: m[1] + "/" + String(+m[2]).padStart(2, "0") };
   }
   const m = s.match(/\d+(\.\d+)?/);
@@ -59,7 +61,22 @@ function parseIssue(series, raw) {
 }
 function fmt2(n) { return Number(n).toLocaleString("de-CH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function money(n, cur) { if (n == null || n === "" || isNaN(n)) return ""; return (cur ? cur + " " : "") + fmt2(n); }
-function parseAmt(v) { if (v == null || v === "") return ""; if (typeof v === "number") return Math.round(v * 100) / 100; const t = String(v).replace(/[\s'’]/g, "").replace(",", "."); if (t === "") return ""; const n = parseFloat(t); return isNaN(n) ? "" : Math.round(n * 100) / 100; }
+function parseAmt(v) {
+  if (v == null || v === "") return "";
+  if (typeof v === "number") return isFinite(v) ? Math.round(v * 100) / 100 : "";
+  let t = String(v).replace(/[^0-9.,\-]/g, "");
+  if (t === "" || t === "-") return "";
+  const lc = t.lastIndexOf(","), ld = t.lastIndexOf(".");
+  if (lc >= 0 && ld >= 0) t = lc > ld ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");   // 1.234,50 or 1,234.50
+  else if (lc >= 0 || ld >= 0) {
+    const sep = lc >= 0 ? "," : ".", parts = t.split(sep);
+    // a lone separator before exactly 3 digits (1.234 / 1,234) or repeated separators (1.234.567) mean thousands
+    const thousands = parts.length > 2 || (parts[1].length === 3 && /[1-9]/.test(parts[0]));
+    t = thousands ? parts.join("") : parts[0] + "." + parts[1];
+  }
+  const n = parseFloat(t);
+  return isNaN(n) ? "" : Math.round(n * 100) / 100;
+}
 function amtVal(v) { const n = parseAmt(v); return n === "" ? (v == null ? "" : String(v)) : n.toFixed(2); }
 function bindAmounts() { document.querySelectorAll("input.amt").forEach(el => el.addEventListener("blur", () => { const n = parseAmt(el.value); if (n !== "") el.value = n.toFixed(2); })); }
 function errText(e) {
@@ -87,7 +104,7 @@ function openDb() {
       if (!db.objectStoreNames.contains("comics")) db.createObjectStore("comics", { keyPath: "id" });
       if (!db.objectStoreNames.contains("config")) db.createObjectStore("config", { keyPath: "key" });
     };
-    r.onsuccess = () => res(r.result);
+    r.onsuccess = () => { const db = r.result; db.onversionchange = () => db.close(); res(db); };
     r.onerror = () => rej(r.error);
     r.onblocked = () => rej(new Error("blocked"));
   });
@@ -129,10 +146,10 @@ async function refreshStorageInfo() {
 async function askPersist() {
   try { if (navigator.storage && navigator.storage.persist && !S.persisted) S.persisted = await navigator.storage.persist(); } catch (e) {}
 }
-function stamp(c) {
+function stamp(c, keepDates) {
   const body = Object.assign({}, c);
   body.id = body.id || newId(); delete body.k;
-  body.updatedAt = new Date().toISOString();
+  if (!(keepDates && body.updatedAt)) body.updatedAt = new Date().toISOString();
   if (!body.createdAt) body.createdAt = body.updatedAt;
   return body;
 }
@@ -146,11 +163,11 @@ async function saveComic(c) {
   remember(body); askPersist();
   return body;
 }
-async function saveMany(list, onProgress) {
+async function saveMany(list, onProgress, keepDates) {
   // writes in chunks of 200 per transaction: fast and safe for big imports
   let done = 0;
   for (let i = 0; i < list.length; i += 200) {
-    const chunk = list.slice(i, i + 200).map(c => stamp(c));
+    const chunk = list.slice(i, i + 200).filter(c => c && typeof c === "object").map(c => stamp(c, keepDates));
     await tx("comics", "readwrite", st => { chunk.forEach(b => st.put(b)); });
     chunk.forEach(remember); done += chunk.length;
     onProgress && onProgress(done);
@@ -197,6 +214,10 @@ function sortComics(list) {
 // ---------- routing ----------
 function setView(v) { S.view = v; S.confirmDelete = false; render(); window.scrollTo(0, 0); }
 function nav(v) { if (location.hash !== "#" + v) { S.navLock = true; location.hash = v; } setView(v); }
+document.getElementById("tabs").addEventListener("click", e => {
+  const a = e.target.closest("a[data-v]"); if (!a) return;
+  if (location.hash === "#" + a.dataset.v) { e.preventDefault(); if (a.dataset.v === "add") { S.editing = null; S.draft = null; } setView(a.dataset.v); }
+});
 window.addEventListener("hashchange", () => {
   if (S.navLock) { S.navLock = false; return; }
   const v = location.hash.slice(1);
@@ -430,15 +451,17 @@ ${isBook ? `
       grab();
       if (d.kind === "book") return saveBook(next);
       const se = seriesById(d.seriesId);
+      d.issue = String(d.issue || ""); d.seriesName = String(d.seriesName || "");
       if (!d.issue.trim()) { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
       if (!se && !d.seriesName.trim()) { toast("Enter the series name"); return; }
       const p = parseIssue(se, d.issue);
+      if (se && se.numbering === "year" && !p.year) { toast("For " + se.short + " enter year and number, e.g. 1985/12"); $("#f-issue").focus(); return; }
       const c = Object.assign({}, d, {
         seriesId: se ? se.id : "_other", seriesName: se ? se.name : d.seriesName.trim(), issueLabel: p.label, issueSort: p.sort,
         issueYear: p.year || null, issueNum: p.n, copies: Math.max(1, parseInt(d.copies, 10) || 1),
         pricePaid: parseAmt(d.pricePaid),
         value: parseAmt(d.value),
-        stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist)
+        stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
       
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
@@ -446,7 +469,8 @@ ${isBook ? `
         const saved = await saveComic(c);
         toast(c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
         if (next) {
-          const nextIssue = se && se.numbering === "year" && p.year ? p.year + "/" + (p.n + 1) : (p.n != null ? String(p.n + 1) : "");
+          const per = se ? (+se.perYear || 52) : 52;
+          const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
           S.editing = null;
           S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
           render(); $("#f-title") && $("#f-title").focus();
@@ -454,13 +478,14 @@ ${isBook ? `
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     const saveBook = async (next) => {
+      ["title", "issue", "seriesName", "isbn"].forEach(k => d[k] = String(d[k] || ""));
       if (!d.title.trim()) { toast("Enter the book title first"); $("#f-title").focus(); return; }
       const vol = d.issue.trim(), vm = vol.match(/\d+(\.\d+)?/);
       const c = Object.assign({}, d, {
         kind: "book", seriesId: "_book", seriesName: d.seriesName.trim(), title: d.title.trim(), issue: vol, issueLabel: vol,
         issueSort: vm ? +vm[0] : 1e9, issueYear: null, issueNum: vm ? +vm[0] : null, copies: Math.max(1, parseInt(d.copies, 10) || 1),
         isbn: d.isbn.trim(), pricePaid: parseAmt(d.pricePaid), value: parseAmt(d.value),
-        stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist)
+        stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
       try {
@@ -529,7 +554,7 @@ VIEWS.gaps = {
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
       <div class="stack"><h3>Full wishlist</h3>
-        ${wl.length ? '<div class="list">' + wl.map(c => { const s = seriesById(c.seriesId); return `<button class="item" data-open="${esc(c.id)}"><div class="num">${esc(c.issueLabel || c.issue)}<small>${esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`; }).join("") + '</div>'
+        ${wl.length ? '<div class="list">' + wl.map(c => { const s = seriesById(c.seriesId), bk = c.kind === "book"; return `<button class="item" data-open="${esc(c.id)}"><div class="num">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`; }).join("") + '</div>'
           : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
       </div>`;
   },
@@ -566,7 +591,7 @@ VIEWS.stats = {
     const unread = own.filter(c => !c.read).length, trade = own.filter(c => c.forTrade || (c.copies || 1) > 1).length;
     const perSeries = S.series.map(s => {
       const n = new Set(own.filter(c => c.seriesId === s.id).map(c => c.issueLabel)).size;
-      const tot = s.numbering === "year" ? ((+s.lastYear - +s.firstYear + 1) * (+s.perYear || 52)) : (+s.latest || 0);
+      const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 52)) || 0 : (+s.latest || 0);
       return { s, n, tot };
     });
     const others = own.filter(c => !seriesById(c.seriesId) && c.kind !== "book").length;
@@ -671,7 +696,7 @@ VIEWS.backup = {
         $("#yesrest").onclick = async () => {
           try {
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
-            const n = await saveMany(b.comics, d => { box.innerHTML = `<div class="banner">Restoring… ${d} of ${b.comics.length}</div>`; });
+            const n = await saveMany(b.comics, d => { box.innerHTML = `<div class="banner">Restoring… ${d} of ${b.comics.length}</div>`; }, true);
             await refreshStorageInfo(); toast("Restored " + n + " entries"); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
@@ -698,8 +723,7 @@ VIEWS.import = {
     const mapRows = FIELDS.map(([k, l]) => `<label><span class="l">${esc(l)}</span><select data-map="${k}">${opt(I.map[k])}</select></label>`).join("");
     const sOpts = v => S.series.map(s => `<option value="${esc(s.id)}"${v === s.id ? " selected" : ""}>${esc(s.name)}</option>`).join("") + `<option value="_other"${v === "_other" ? " selected" : ""}>Keep as its own series</option><option value="_skip"${v === "_skip" ? " selected" : ""}>Don't import</option>`;
     const seriesRows = I.map.series ? Object.keys(I.seriesMap).sort().map(name => `<tr><td>${esc(name || "(blank)")}</td><td class="muted">${I.seriesCount[name]}</td><td><select data-smap="${esc(name)}">${sOpts(I.seriesMap[name])}</select></td></tr>`).join("") : "";
-    const prev = buildImportRows().slice(0, 5);
-    const willImport = buildImportRows().length;
+    const all = buildImportRows(), prev = all.slice(0, 5), willImport = all.length;
     return intro + `
       <div class="card stack"><div class="row between"><h3>1 · Match columns</h3><span class="small muted">${esc(I.fileName)} · ${I.rows.length} rows</span></div>
         <p class="small muted" style="margin:0">Columns were matched by name. Check them and change any that are wrong.</p>
@@ -711,8 +735,9 @@ VIEWS.import = {
         ${prev.map(c => `<tr><td>${esc((seriesById(c.seriesId) || {}).name || c.seriesName)}</td><td>${esc(c.issueLabel)}</td><td>${c.status === "wanted" ? "Wishlist" : "Owned"}</td><td>${esc(c.title)}</td><td>${esc(c.grade ? "Z" + c.grade : "")}</td><td>${esc(money(c.pricePaid, c.currency))}</td></tr>`).join("")}
         </tbody></table></div>
         <label style="max-width:220px"><span class="l">Currency for prices</span><select id="impcur">${CURRENCIES.map(c => `<option${I.currency === c ? " selected" : ""}>${c}</option>`).join("")}</select></label>
+        <label class="check"><input id="impdup" type="checkbox"${I.skipDupes ? " checked" : ""}> Skip comics already in the archive${I.skipped ? " (" + I.skipped + " found)" : ""}</label>
         <div class="row"><button class="primary" id="go"${willImport && S.db ? "" : " disabled"}>Import ${willImport} comics</button><button id="reset">Choose another file</button></div>
-        <p class="small muted" style="margin:0">CLZ condition grades are kept in the notes; set the Z grade later where you want one.</p></div>`;
+        <p class="small muted" style="margin:0">CLZ condition grades are kept in the notes; set the Z grade later where you want one. Comics marked "Sold" in CLZ are left out, and "For Sale" ones are marked for trade.</p></div>`;
   },
   bind() {
     const I = S.imp;
@@ -725,7 +750,7 @@ VIEWS.import = {
           if (!headers.length || !res.data.length) { toast("That file has no rows. Export again from CLZ as CSV."); return; }
           const map = {};
           FIELDS.forEach(([k]) => { const g = GUESS[k] || []; const h = headers.find(h => g.includes(norm(h))) || headers.find(h => g.some(x => norm(h).startsWith(x))); if (h && !Object.values(map).includes(h)) map[k] = h; });
-          S.imp = { fileName: file.name, headers, rows: res.data, map, seriesMap: {}, seriesCount: {}, currency: "CHF" };
+          S.imp = { fileName: file.name, headers, rows: res.data, map, seriesMap: {}, seriesCount: {}, currency: "CHF", skipDupes: true };
           rebuildSeriesMap(); render();
         }, error: () => toast("This file couldn't be read as CSV.") });
       };
@@ -739,6 +764,7 @@ VIEWS.import = {
     document.querySelectorAll("[data-map]").forEach(s => s.onchange = () => { I.map[s.dataset.map] = s.value; if (s.dataset.map === "series") rebuildSeriesMap(); render(); });
     document.querySelectorAll("[data-smap]").forEach(s => s.onchange = () => { I.seriesMap[s.dataset.smap] = s.value; render(); });
     $("#impcur").onchange = e => { I.currency = e.target.value; render(); };
+    $("#impdup").onchange = e => { I.skipDupes = e.target.checked; render(); };
     $("#reset").onclick = () => { S.imp = null; render(); };
     $("#go").onclick = async () => {
       const rows = buildImportRows();
@@ -764,8 +790,10 @@ function rebuildSeriesMap() {
 function buildImportRows() {
   const I = S.imp; if (!I) return [];
   const g = (r, k) => I.map[k] ? String(r[I.map[k]] == null ? "" : r[I.map[k]]).trim() : "";
-  const num = v => { if (!v) return ""; const n = parseFloat(String(v).replace(/[^0-9,.\-]/g, "").replace(/\.(?=\d{3}\b)/g, "").replace(",", ".")); return isNaN(n) ? "" : Math.round(n * 100) / 100; };
+  const num = parseAmt;
   const out = [];
+  const have = new Set(I.skipDupes ? S.comics.map(c => [c.seriesId === "_other" ? norm(c.seriesName) : c.seriesId, c.issueLabel, c.status].join("|")) : []);
+  I.skipped = 0;
   I.rows.forEach(r => {
     const sname = g(r, "series");
     const target = I.map.series ? (I.seriesMap[sname] || "_other") : "_other";
@@ -774,13 +802,16 @@ function buildImportRows() {
     const issue = g(r, "issue"); if (!issue && !g(r, "title")) return;
     const p = parseIssue(se, issue);
     const st = norm(g(r, "status"));
+    if (/^sold$/.test(st)) return;
+    const key = [se ? se.id : norm(sname || "Unknown series"), p.label || issue, /wish|want/.test(st) ? "wanted" : "owned"].join("|");
+    if (I.skipDupes && have.has(key)) { I.skipped++; return; }
     const readv = norm(g(r, "read"));
     const notes = [g(r, "notes"), g(r, "grade") ? "CLZ condition: " + g(r, "grade") : ""].filter(Boolean).join("\n");
     const stories = (g(r, "writer") || g(r, "artist")) ? [{ title: "", code: "", writer: g(r, "writer"), artist: g(r, "artist"), hero: "" }] : [];
     let pd = g(r, "purchaseDate"); const m = pd.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/) || pd.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
     if (m) pd = m[1].length === 4 ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`; else pd = "";
     out.push(blankDraft({
-      status: /wish|want/.test(st) ? "wanted" : "owned", seriesId: se ? se.id : "_other", seriesName: se ? se.name : (sname || "Unknown series"),
+      status: /wish|want/.test(st) ? "wanted" : "owned", forTrade: /sale/.test(st), seriesId: se ? se.id : "_other", seriesName: se ? se.name : (sname || "Unknown series"),
       issue, issueLabel: p.label || issue, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n,
       title: g(r, "title"), date: g(r, "date"), grade: "", copies: Math.max(1, parseInt(g(r, "copies"), 10) || 1),
       pricePaid: num(g(r, "pricePaid")), currency: I.currency, purchaseDate: pd, source: g(r, "source"), value: num(g(r, "value")),
@@ -857,6 +888,10 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     });
   }).catch(() => {});
   let reloaded = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (!reloaded) { reloaded = true; location.reload(); } });
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && navigator.onLine) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
+  });
 }
 })();
