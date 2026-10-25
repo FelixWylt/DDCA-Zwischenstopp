@@ -4,13 +4,19 @@
 
 // ---------- constants ----------
 const DEFAULT_SERIES = [
-  { id: "de-LTB",   name: "Lustiges Taschenbuch",  short: "LTB",   country: "DE", code: "de/LTB",   numbering: "running", latest: 612 },
-  { id: "de-LTBSP", name: "LTB Spezial",           short: "LTB Sp", country: "DE", code: "de/LTBSP", numbering: "running", latest: 125 },
-  { id: "de-MM",    name: "Micky Maus Magazin",    short: "MMM",   country: "DE", code: "de/MM",    numbering: "year", firstYear: 1951, lastYear: 2026, perYear: 52 },
-  { id: "it-TL",    name: "Topolino",              short: "TL",    country: "IT", code: "it/TL",    numbering: "running", latest: 3700 },
-  { id: "se-KA",    name: "Kalle Anka & C:o",      short: "KA",    country: "SE", code: "se/KA",    numbering: "year", firstYear: 1948, lastYear: 2026, perYear: 52 },
-  { id: "se-KAP",   name: "Kalle Ankas Pocket",    short: "KAP",   country: "SE", code: "se/KAP",   numbering: "running", latest: 560 }
+  { id: "de-LTB",   name: "Lustiges Taschenbuch",  short: "LTB",   group: "Lustiges Taschenbuch", country: "DE", code: "de/LTB",   numbering: "running", latest: 612 },
+  { id: "de-LTBSP", name: "LTB Spezial",           short: "LTB Sp", group: "Lustiges Taschenbuch", country: "DE", code: "de/LTBSP", numbering: "running", latest: 125 },
+  { id: "de-MM",    name: "Micky Maus Magazin",    short: "MMM",   group: "Micky Maus", country: "DE", code: "de/MM",    numbering: "year", firstYear: 1951, lastYear: 2026, perYear: 52 },
+  { id: "it-TL",    name: "Topolino",              short: "TL",    group: "Topolino", country: "IT", code: "it/TL",    numbering: "running", latest: 3700 },
+  { id: "se-KA",    name: "Kalle Anka & C:o",      short: "KA",    group: "Kalle Anka", country: "SE", code: "se/KA",    numbering: "year", firstYear: 1948, lastYear: 2026, perYear: 52 },
+  { id: "se-KAP",   name: "Kalle Ankas Pocket",    short: "KAP",   group: "Kalle Anka", country: "SE", code: "se/KAP",   numbering: "running", latest: 560 }
 ];
+const OTHER_GROUP = "Other series", BOOK_GROUP = "Books";
+const GROUP_RULES = [
+  [/^(lustiges taschenbuch|ltb)\b/, "Lustiges Taschenbuch"], [/micky maus/, "Micky Maus"], [/^kalle anka/, "Kalle Anka"],
+  [/topolino/, "Topolino"], [/donald duck|entenhausen/, "Donald Duck"], [/^walt disney/, "Walt Disney's"]
+];
+function guessGroup(name) { const n = String(name || "").toLowerCase(); const r = GROUP_RULES.find(([re]) => re.test(n)); return r ? r[1] : OTHER_GROUP; }
 const GRADES = [
   ["0", "Z0 · as new"], ["0-1", "Z0-1"], ["1", "Z1 · very good"], ["1-2", "Z1-2"], ["2", "Z2 · good"],
   ["2-3", "Z2-3"], ["3", "Z3 · worn"], ["3-4", "Z3-4"], ["4", "Z4 · poor"], ["4-5", "Z4-5"], ["5", "Z5 · very poor"]
@@ -19,7 +25,7 @@ const CURRENCIES = ["CHF", "EUR", "SEK"];
 // ---------- state ----------
 const S = {
   db: null, dbState: "loading", series: DEFAULT_SERIES.slice(), seriesSaved: false,
-  comics: [], view: "collection", filters: { q: "", series: "", status: "owned" }, shown: 200,
+  comics: [], view: "collection", filters: { q: "", status: "owned" }, shown: 200, col: {},
   editing: null, draft: null, gapSeries: DEFAULT_SERIES[0].id, catalogue: null, catCache: {},
   confirmDelete: false
 };
@@ -106,6 +112,34 @@ const getConfig = key => tx("config", "readonly", st => st.get(key)).then(r => r
 const setConfig = (key, value) => tx("config", "readwrite", st => st.put({ key, value }));
 function newId() { return (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2)).replace(/-/g, ""); }
 
+function slug(s) { return norm(s).replace(/ /g, "-").slice(0, 60) || "series"; }
+function newSeriesFor(name, issues) {
+  const used = new Set(S.series.map(s => s.id));
+  let id = "x-" + slug(name), k = 2; while (used.has(id)) id = "x-" + slug(name) + "-" + k++;
+  const years = (issues || []).map(c => c.issueYear || (/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]).filter(Boolean).map(Number);
+  const s = { id, name, short: "", group: guessGroup(name), code: "", country: "", numbering: years.length ? "year" : "running", latest: "" };
+  if (years.length) { s.firstYear = Math.min(...years); s.lastYear = Math.max(...years); s.perYear = ""; }
+  S.series.push(s);
+  return s;
+}
+function findSeriesByName(name) { const n = norm(name); return S.series.find(s => norm(s.name) === n); }
+async function adoptLooseSeries() {
+  let changed = false;
+  S.series.forEach(s => { if (s.group == null) { s.group = guessGroup(s.name); changed = true; } });
+  const loose = S.comics.filter(c => c.seriesId === "_other" && c.kind !== "book");
+  const byName = {};
+  loose.forEach(c => { const n = String(c.seriesName || "Unknown series").trim(); (byName[n] = byName[n] || []).push(c); });
+  const updated = [];
+  Object.entries(byName).forEach(([name, list]) => {
+    const se = findSeriesByName(name) || newSeriesFor(name, list);
+    list.forEach(c => updated.push(Object.assign({}, c, { seriesId: se.id, seriesName: se.name })));
+  });
+  if (updated.length) {
+    await tx("comics", "readwrite", st => { updated.forEach(c => st.put(c)); });
+    updated.forEach(remember); changed = true;
+  }
+  if (changed) await saveSeries();
+}
 async function boot() {
   if (!window.indexedDB) { S.dbState = "none"; render(); return; }
   try {
@@ -114,6 +148,7 @@ async function boot() {
     if (Array.isArray(list)) { S.series = list.map(x => Object.assign({}, x)); S.seriesSaved = true; }
     S.lastBackup = await getConfig("lastBackup") || null;
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
+    await adoptLooseSeries();
     S.dbState = "ready";
   } catch (e) { S.dbState = "error"; S.dbError = e; }
   refreshStorageInfo();
@@ -196,7 +231,11 @@ function sortComics(list) {
 
 // ---------- routing ----------
 function setView(v) { S.view = v; S.confirmDelete = false; render(); window.scrollTo(0, 0); }
-function nav(v) { if (location.hash !== "#" + v) { S.navLock = true; location.hash = v; } setView(v); }
+function nav(v) {
+  // pushState changes the address without firing hashchange/popstate, so the view state is kept
+  if (location.hash !== "#" + v) { try { history.pushState({ col: S.col }, "", "#" + v); } catch (e) { S.navLock = true; location.hash = v; } }
+  setView(v);
+}
 document.getElementById("tabs").addEventListener("click", e => {
   const a = e.target.closest("a[data-v]"); if (!a) return;
   if (location.hash === "#" + a.dataset.v) { e.preventDefault(); if (a.dataset.v === "add") { S.editing = null; S.draft = null; } setView(a.dataset.v); }
@@ -222,17 +261,84 @@ function render() {
 
 const VIEWS = {};
 
-// ---- Collection ----
+// ---- Collection: groups > series > issues ----
+function statusMatch(c) {
+  const f = S.filters.status;
+  if (f === "owned") return c.status !== "wanted";
+  if (f === "wanted") return c.status === "wanted";
+  if (f === "trade") return c.status !== "wanted" && (c.forTrade || (c.copies || 1) > 1);
+  if (f === "unread") return c.status !== "wanted" && !c.read;
+  return true;
+}
+function groupOf(c) {
+  if (c.kind === "book") return BOOK_GROUP;
+  const se = seriesById(c.seriesId);
+  return se ? (se.group || OTHER_GROUP) : OTHER_GROUP;
+}
+function seriesKeyOf(c) { return c.kind === "book" ? "book:" + (c.seriesName || "") : (seriesById(c.seriesId) ? c.seriesId : "name:" + (c.seriesName || "")); }
+function seriesTitle(key) {
+  if (key.startsWith("book:")) return key.slice(5) || "Single books";
+  if (key.startsWith("name:")) return key.slice(5) || "Unknown series";
+  const se = seriesById(key); return se ? se.name : key;
+}
+function groupRank(name) { return name === BOOK_GROUP ? 2 : name === OTHER_GROUP ? 1 : 0; }
+function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de"); }
+function yearsText(list) {
+  const ys = list.map(c => +(String(c.date || "").slice(0, 4)) || c.issueYear).filter(y => y > 1900);
+  if (!ys.length) return "";
+  const a = Math.min(...ys), b = Math.max(...ys); return a === b ? String(a) : a + "–" + b;
+}
+function countText(list) {
+  const own = list.filter(c => c.status !== "wanted").length, want = list.length - own;
+  const parts = [];
+  if (own) parts.push(own + (own === 1 ? " comic" : " comics"));
+  if (want) parts.push(want + " on wishlist");
+  return parts.join(" · ") || "0 comics";
+}
+function niceDate(d) {
+  const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(String(d || ""));
+  if (!m) return String(d || "");
+  const M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return m[3] ? +m[3] + " " + M[+m[2] - 1] + " " + m[1] : m[2] ? M[+m[2] - 1] + " " + m[1] : m[1];
+}
+function itemHtml(c, inSeries) {
+  const se = seriesById(c.seriesId);
+  const st = (c.stories || []);
+  const creators = [...new Set(st.flatMap(s => [s.writer, s.artist]).filter(Boolean))].slice(0, 2).join(", ");
+  const isBook = c.kind === "book";
+  const sub = isBook ? [c.seriesName, c.author, c.publisher, c.date].filter(Boolean).join(" · ")
+    : [c.date, creators].filter(Boolean).join(" · ");
+  const chips = [];
+  if (c.status === "wanted") chips.push('<span class="chip wanted">Wishlist</span>');
+  else {
+    if (c.grade) chips.push('<span class="chip">Z' + esc(c.grade) + '</span>');
+    if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? "×" + c.copies : "Trade") + '</span>');
+    if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
+  }
+  const numTxt = isBook ? c.issue : (c.issueLabel || c.issue || "");
+  return `<button class="item" data-id="${esc(c.id)}">
+    <div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
+    <div style="min-width:0"><div class="t">${esc(c.title || (inSeries && c.date ? niceDate(c.date) : (se ? se.name : c.seriesName)) || "Untitled")}</div><div class="s">${esc((inSeries && !c.title && !isBook ? creators : sub) || (inSeries ? "" : (se ? se.name : c.seriesName || "")))}</div></div>
+    <div class="chips">${chips.join("")}</div></button>`;
+}
+function openCol(col) {
+  S.col = col; S.shown = 200;
+  try { history.pushState({ col }, "", "#collection"); } catch (e) {}
+  render(); window.scrollTo(0, 0);
+}
+window.addEventListener("popstate", e => {
+  if (S.view !== "collection" && location.hash !== "#collection") return;
+  S.col = (e.state && e.state.col) || {};
+  if (S.view === "collection") render();
+});
 VIEWS.collection = {
   html() {
     const f = S.filters;
-    const opts = '<option value="">All series</option>' + S.series.map(s => `<option value="${esc(s.id)}"${f.series === s.id ? " selected" : ""}>${esc(s.name)}</option>`).join("") + '<option value="_other"' + (f.series === "_other" ? " selected" : "") + '>Other series</option><option value="_book"' + (f.series === "_book" ? " selected" : "") + '>Books</option>';
     const head = `
-      <div class="row between"><div><h2>Collection</h2><p class="lede">Search by series, issue, book title, ISBN, story, writer, artist or character.</p></div>
+      <div class="row between"><div><h2>Collection</h2><p class="lede hide-phone">Browse by group and series, or search everything at once.</p></div>
       <button class="primary" id="new">Add</button></div>
-      <div class="filters">
-        <label class="q"><span class="l">Search</span><input id="fq" type="search" placeholder="e.g. Don Rosa, Scarpa, Phantomias, I TL 1234" value="${esc(f.q)}"></label>
-        <label><span class="l">Series</span><select id="fs">${opts}</select></label>
+      <div class="filters two-col">
+        <label class="q"><span class="l">Search</span><input id="fq" type="search" placeholder="e.g. Don Rosa, Scarpa, Phantomias, ISBN" value="${esc(f.q)}"></label>
         <label><span class="l">Show</span><select id="fst">
           <option value="owned"${f.status === "owned" ? " selected" : ""}>Owned</option>
           <option value="wanted"${f.status === "wanted" ? " selected" : ""}>Wishlist</option>
@@ -247,56 +353,81 @@ VIEWS.collection = {
     return head + '<div id="results"></div>';
   },
   bind() {
-    const go = () => { S.editing = null; S.draft = null; nav("add"); };
+    const go = () => {
+      S.editing = null; S.draft = null;
+      const c = S.col || {};
+      if (c.s && c.s.startsWith("book:")) S.draft = blankDraft({ kind: "book", seriesId: "_book", seriesName: c.s.slice(5) });
+      else if (c.s && seriesById(c.s)) S.draft = blankDraft({ seriesId: c.s });
+      nav("add");
+    };
     $("#new") && ($("#new").onclick = go); $("#new2") && ($("#new2").onclick = go);
     $("#gobk") && ($("#gobk").onclick = () => { nav("backup"); });
     $("#fq").oninput = e => { S.filters.q = e.target.value; S.shown = 200; drawResults(); };
-    $("#fs").onchange = e => { S.filters.series = e.target.value; S.shown = 200; drawResults(); };
     $("#fst").onchange = e => { S.filters.status = e.target.value; S.shown = 200; drawResults(); };
     drawResults();
   }
 };
 function drawResults() {
   const box = $("#results"); if (!box) return;
-  const f = S.filters, q = norm(f.q);
-  let list = S.comics.filter(c => {
-    if (f.status === "owned" && c.status === "wanted") return false;
-    if (f.status === "wanted" && c.status !== "wanted") return false;
-    if (f.status === "trade" && !(c.status !== "wanted" && (c.forTrade || (c.copies || 1) > 1))) return false;
-    if (f.status === "unread" && (c.status === "wanted" || c.read)) return false;
-    if (f.series === "_other" && (seriesById(c.seriesId) || c.kind === "book")) return false;
-    if (f.series && f.series !== "_other" && c.seriesId !== f.series) return false;
-    if (q && !q.split(" ").every(w => searchText(c).includes(w))) return false;
-    return true;
-  });
-  list = sortComics(list);
-  const total = list.length;
-  const rows = list.slice(0, S.shown).map(c => {
-    const se = seriesById(c.seriesId);
-    const st = (c.stories || []);
-    const creators = [...new Set(st.flatMap(s => [s.writer, s.artist]).filter(Boolean))].slice(0, 3).join(", ");
-    const isBook = c.kind === "book";
-    const sub = isBook ? [c.seriesName, c.author, c.publisher, c.date].filter(Boolean).join(" · ")
-      : [c.date, st.length ? st.length + (st.length === 1 ? " story" : " stories") : "", creators].filter(Boolean).join(" · ");
-    const chips = [];
-    if (c.status === "wanted") chips.push('<span class="chip wanted">Wishlist</span>');
-    else {
-      if (c.grade) chips.push('<span class="chip">Z' + esc(c.grade) + '</span>');
-      if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? "×" + c.copies : "Trade") + '</span>');
-      if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
-    }
-    return `<button class="item" data-id="${esc(c.id)}">
-      <div class="num${String(isBook ? c.issue : (c.issueLabel || c.issue || "")).length > 4 ? " long" : ""}">${isBook ? (c.issue ? esc(c.issue) : '<span style="font-size:.9rem">Book</span>') : esc(c.issueLabel || c.issue || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? se.short : (c.seriesName || "Other"))}</small></div>
-      <div style="min-width:0"><div class="t">${esc(c.title || (se ? se.name : c.seriesName) || "Untitled")}</div><div class="s">${esc(sub || (se ? se.name : c.seriesName || ""))}</div></div>
-      <div class="chips">${chips.join("")}</div></button>`;
-  }).join("");
-  box.innerHTML = `<p class="muted small" style="margin:0 0 8px">${total} ${total === 1 ? "entry" : "entries"}</p>` +
-    (total ? '<div class="list">' + rows + '</div>' : '<div class="empty"><h3>Nothing matches</h3><p>Try another search word or change the filters above.</p></div>') +
-    (total > S.shown ? '<div class="row" style="justify-content:center;margin-top:12px"><button id="more">Show more (' + (total - S.shown) + ' left)</button></div>' : "");
+  const q = norm(S.filters.q), col = S.col || {};
+  const pool = S.comics.filter(statusMatch);
+  const crumbs = parts => '<nav class="crumbs" aria-label="Where you are">' + parts.map((p, i) => i === parts.length - 1
+    ? `<span aria-current="page">${esc(p.label)}</span>` : `<button class="crumb" data-col='${esc(JSON.stringify(p.col))}'>${esc(p.label)}</button><span class="sep" aria-hidden="true">›</span>`).join("") + '</nav>';
+  const more = total => total > S.shown ? '<div class="row" style="justify-content:center;margin-top:12px"><button id="more">Show more (' + (total - S.shown) + ' left)</button></div>' : "";
+  let html = "";
+  if (q) {
+    const list = sortComics(pool.filter(c => q.split(" ").every(w => searchText(c).includes(w))));
+    html = `<p class="muted small" style="margin:0 0 8px">${list.length} ${list.length === 1 ? "match" : "matches"} in all series</p>` +
+      (list.length ? '<div class="list">' + list.slice(0, S.shown).map(itemHtml).join("") + '</div>' : '<div class="empty"><h3>Nothing matches</h3><p>Try another search word or change Show.</p></div>') + more(list.length);
+  } else if (!col.g) {
+    const groups = {};
+    pool.forEach(c => { const g = groupOf(c); (groups[g] = groups[g] || []).push(c); });
+    const names = Object.keys(groups).sort(groupCompare);
+    html = `<p class="muted small" style="margin:0 0 8px">${countText(pool)} in ${names.length} ${names.length === 1 ? "group" : "groups"}</p>` +
+      (names.length ? '<div class="list">' + names.map(g => {
+        const list = groups[g], nSeries = new Set(list.map(seriesKeyOf)).size;
+        return `<button class="folder" data-col='${esc(JSON.stringify({ g }))}'><div style="min-width:0"><div class="t">${esc(g)}</div>
+          <div class="s">${nSeries} ${nSeries === 1 ? "series" : "series"} · ${esc(countText(list))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+      }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show</h3><p>Nothing in your archive fits “Show”. Change it above.</p></div>');
+  } else if (!col.s) {
+    const inGroup = pool.filter(c => groupOf(c) === col.g);
+    const bySeries = {};
+    inGroup.forEach(c => { const k = seriesKeyOf(c); (bySeries[k] = bySeries[k] || []).push(c); });
+    const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
+    const keys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b)));
+    html = crumbs([{ label: "All groups", col: {} }, { label: col.g }]) +
+      (keys.length ? '<div class="list">' + keys.map(k => {
+        const list = bySeries[k], se = seriesById(k), yrs = yearsText(list);
+        return `<button class="folder" data-col='${esc(JSON.stringify({ g: col.g, s: k }))}'><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div>
+          <div class="s">${esc([countText(list), yrs].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+      }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this group fits “Show”. Change it above or go back to all groups.</p></div>');
+  } else {
+    const list = sortComics(pool.filter(c => groupOf(c) === col.g && seriesKeyOf(c) === col.s));
+    let lastYear = null, rows = "";
+    const byYear = list.some(c => /^\d{4}\//.test(c.issueLabel || ""));
+    list.slice(0, S.shown).forEach(c => {
+      if (byYear) {
+        const y = (/^(\d{4})\//.exec(c.issueLabel || "") || [])[1] || "Other";
+        if (y !== lastYear) { const n = list.filter(x => ((/^(\d{4})\//.exec(x.issueLabel || "") || [])[1] || "Other") === y).length; rows += `<h4 class="yearhead">${esc(y)}<span>${n}</span></h4>`; lastYear = y; }
+      }
+      rows += itemHtml(c, true);
+    });
+    html = crumbs([{ label: "All groups", col: {} }, { label: col.g, col: { g: col.g } }, { label: seriesTitle(col.s) }]) +
+      `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` +
+      (list.length ? '<div class="list">' + rows + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
+  }
+  box.innerHTML = html;
+  box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
   box.querySelectorAll(".item").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
 }
 
+function seriesOptions(selected, label) {
+  const groups = {};
+  S.series.forEach(s => { const g = s.group || OTHER_GROUP; (groups[g] = groups[g] || []).push(s); });
+  return Object.keys(groups).sort(groupCompare).map(g =>
+    `<optgroup label="${esc(g)}">` + groups[g].map(s => `<option value="${esc(s.id)}"${selected === s.id ? " selected" : ""}>${esc(label(s))}</option>`).join("") + "</optgroup>").join("");
+}
 // ---- Add / edit ----
 function blankDraft(pre) {
   return Object.assign({ kind: "issue", author: "", publisher: "", isbn: "", format: "", lang: "", status: "owned", seriesId: S.series[0] ? S.series[0].id : "_other", seriesName: "", issue: "", title: "", date: "", pages: "",
@@ -312,7 +443,7 @@ VIEWS.add = {
     }
     const d = S.draft, editing = !!d.id, isBook = d.kind === "book";
     const se = isBook ? null : seriesById(d.seriesId);
-    const sopts = S.series.map(s => `<option value="${esc(s.id)}"${d.seriesId === s.id ? " selected" : ""}>${esc(s.name)} (${esc(s.country)})</option>`).join("") + `<option value="_other"${!se ? " selected" : ""}>Other series…</option>`;
+    const sopts = seriesOptions(d.seriesId, s => s.name + (s.country ? " (" + s.country + ")" : "")) + `<option value="_other"${!se ? " selected" : ""}>New series…</option>`;
     const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12 or 1985/?" : "Number, e.g. 474";
     const catReady = se && S.catalogue && S.catalogue.series && S.catalogue.series[se.id];
     const link = se && d.issue ? inducksIssueUrl(se, d.issue) : (se ? "https://inducks.org/publication.php?c=" + encodeURIComponent(se.code) : "");
@@ -355,7 +486,7 @@ ${isBook ? `
           <label><span class="l">Issue</span><input id="f-issue" placeholder="${esc(hint)}" value="${esc(d.issue)}"></label>
           <button id="lookup" ${catReady ? "" : "disabled"}>Fill from INDUCKS</button>
         </div>
-        ${!se ? `<label><span class="l">Series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
+        ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
         <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
           <span id="ilink">${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : ""}</span></p>
         <div class="grid-form">
@@ -441,8 +572,10 @@ ${isBook ? `
       const yearOnly = /^\s*(\d{4})\s*\/\s*\?\s*$/.exec(d.issue);
       if (yearOnly) { p.year = +yearOnly[1]; p.label = yearOnly[1] + "/?"; p.n = null; p.sort = p.year * 1000 + (d.date && d.date.length >= 7 ? (+d.date.slice(5, 7) - 1) * 4.3 : 0); }
       if (se && se.numbering === "year" && !p.year) { toast("For " + se.short + " enter year and number, e.g. 1985/12, or 1985/? if you don't know the number"); $("#f-issue").focus(); return; }
+      let target = se;
+      if (!target) { target = findSeriesByName(d.seriesName.trim()) || newSeriesFor(d.seriesName.trim(), []); try { await saveSeries(); } catch (e) { toast(errText(e)); return; } }
       const c = Object.assign({}, d, {
-        seriesId: se ? se.id : "_other", seriesName: se ? se.name : d.seriesName.trim(), issueLabel: p.label, issueSort: p.sort,
+        seriesId: target.id, seriesName: target.name, issueLabel: p.label, issueSort: p.sort,
         issueYear: p.year || null, issueNum: p.n, copies: Math.max(1, parseInt(d.copies, 10) || 1),
         pricePaid: parseAmt(d.pricePaid),
         value: parseAmt(d.value),
@@ -459,7 +592,7 @@ ${isBook ? `
           S.editing = null;
           S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
           render(); $("#f-title") && $("#f-title").focus();
-        } else { S.draft = null; S.editing = null; S.filters.series = saved.seriesId === "_other" ? "_other" : saved.seriesId; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
+        } else { S.draft = null; S.editing = null; S.col = { g: groupOf(saved), s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     const saveBook = async (next) => {
@@ -480,7 +613,7 @@ ${isBook ? `
           S.editing = null;
           S.draft = blankDraft({ kind: "book", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
           render(); $("#f-title") && $("#f-title").focus();
-        } else { S.draft = null; S.editing = null; S.filters.series = "_book"; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
+        } else { S.draft = null; S.editing = null; S.col = { g: BOOK_GROUP, s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     $("#save").onclick = () => doSave(false);
@@ -501,7 +634,7 @@ VIEWS.gaps = {
     const mine = S.comics.filter(c => c.seriesId === se.id);
     const own = new Map(), want = new Map();
     mine.forEach(c => { (c.status === "wanted" ? want : own).set(c.issueLabel || c.issue, c); });
-    const opts = S.series.map(s => `<option value="${esc(s.id)}"${s.id === se.id ? " selected" : ""}>${esc(s.name)}</option>`).join("");
+    const opts = seriesOptions(se.id, s => s.name);
     let grid = "", total = 0;
     const cell = (label, txt) => {
       const o = own.get(label), w = want.get(label);
@@ -510,6 +643,7 @@ VIEWS.gaps = {
     };
     if (se.numbering === "year") {
       const y0 = +se.firstYear || 1950, y1 = +se.lastYear || new Date().getFullYear(), per = +se.perYear || 52;
+      const unknown = mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const years = [];
       for (let y = y1; y >= y0; y--) years.push(y);
       total = years.length * per;
@@ -520,7 +654,7 @@ VIEWS.gaps = {
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
-      const max = +se.latest || 100; total = max; let cells = "";
+      const max = +se.latest || Math.max(10, ...mine.map(c => c.issueNum || 0)); total = max; let cells = "";
       for (let n = 1; n <= max; n++) cells += cell(String(n), n);
       grid = '<div class="cells">' + cells + '</div>';
     }
@@ -534,7 +668,8 @@ VIEWS.gaps = {
           <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
         <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear)}–${esc(se.lastYear)}, ${esc(se.perYear)} issues a year` : `Grid runs to issue ${esc(se.latest)}`}. Adjust this under Series.</span></div>
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${esc(se.perYear || 52)} issues a year` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
+        ${mine.some(c => /\?/.test(c.issueLabel || "")) ? `<p class="small muted" style="margin:0">${mine.filter(c => /\?/.test(c.issueLabel || "")).length} issues with an unknown number aren't shown in the grid.</p>` : ""}
         <div id="cellpick"></div>
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
@@ -574,13 +709,14 @@ VIEWS.stats = {
     own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); if (typeof c.value === "number") vals[cur] = (vals[cur] || 0) + c.value * (c.copies || 1); });
     const fmtMap = m => Object.keys(m).length ? Object.entries(m).map(([k, v]) => k + " " + fmt2(v)).join(" · ") : "–";
     const unread = own.filter(c => !c.read).length, trade = own.filter(c => c.forTrade || (c.copies || 1) > 1).length;
-    const perSeries = S.series.map(s => {
+    const perSeries = S.series.filter(s => s.numbering === "year" ? (+s.firstYear && +s.lastYear && +s.perYear) : +s.latest).map(s => {
       const mine = own.filter(c => c.seriesId === s.id);
       const n = new Set(mine.filter(c => !/\?/.test(c.issueLabel || "")).map(c => c.issueLabel)).size + mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 52)) || 0 : (+s.latest || 0);
       return { s, n, tot };
     });
-    const others = own.filter(c => !seriesById(c.seriesId) && c.kind !== "book").length;
+    const sized = new Set(perSeries.map(x => x.s.id));
+    const others = own.filter(c => !sized.has(c.seriesId) && c.kind !== "book").length;
     const books = own.filter(c => c.kind === "book").length;
     const creators = {};
     own.forEach(c => (c.stories || []).forEach(st => [st.writer, st.artist].forEach(p => { if (p) p.split(/[,;&\/]+/).map(x => x.trim()).filter(Boolean).forEach(x => creators[x] = (creators[x] || 0) + 1); })));
@@ -599,7 +735,7 @@ VIEWS.stats = {
       <div class="two">
         <div class="card stack"><h3>Completion per series</h3><div class="bars">
           ${perSeries.map(({ s, n, tot }) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div><div class="track"><div class="fill" style="width:${tot ? Math.min(100, n / tot * 100).toFixed(1) : 0}%"></div></div><div class="n">${n} / ${tot}</div></div>`).join("")}
-          ${others ? `<p class="small muted" style="margin:0">${others} more in other series.</p>` : ""}
+          ${others ? `<p class="small muted" style="margin:0">${others} more in series without a set size. Set the latest issue under Series to include them.</p>` : ""}
         </div></div>
         <div class="card stack"><h3>Most-collected creators</h3><p class="small muted" style="margin:0">Counts each comic or story a writer or artist is credited on.</p>
           ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / topMax * 100).toFixed(1)}%;background:var(--owned)"></div></div><div class="n">${c} ${c === 1 ? "credit" : "credits"}</div></div>`).join("") + '</div>'
@@ -692,6 +828,7 @@ VIEWS.backup = {
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
             const n = await saveMany(b.comics, d => { box.innerHTML = `<div class="banner">Restoring… ${d} of ${b.comics.length}</div>`; }, true);
+            await adoptLooseSeries();
             await refreshStorageInfo(); toast((isClz ? "Imported " : "Restored ") + n + " entries"); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
@@ -705,18 +842,20 @@ VIEWS.series = {
   html() {
     const rows = S.series.map((s, i) => `<div class="seriesrow" data-i="${i}">
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
+      <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
       <label><span class="l">Short</span><input data-k="short" value="${esc(s.short)}"></label>
       <label><span class="l">INDUCKS code</span><input data-k="code" class="mono" value="${esc(s.code)}" placeholder="de/LTB"></label>
       <label><span class="l">Country</span><input data-k="country" value="${esc(s.country)}" maxlength="3"></label>
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
-        ? `<label><span class="l">Years</span><input data-k="years" value="${esc((s.firstYear || "") + "–" + (s.lastYear || ""))}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" value="${esc(s.perYear || 52)}"></label>`
+        ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
         : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
       <button class="ghost danger" data-rm="${i}" title="Remove series" aria-label="Remove series">✕</button></div>`).join("");
     return `
-      <div><h2>Series</h2><p class="lede">The series you collect. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles. Starting values are estimates, so set them to match your series.</p></div>
+      <div><h2>Series</h2><p class="lede">The series you collect. The group decides where a series appears under Collection. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
       ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
       <div class="card stack"><div class="serieslist">${rows}</div>
+        <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         <p class="small muted" style="margin:0">${S.catalogue ? "Loaded for " + Object.keys(S.catalogue.series || {}).length + " series" + (S.catalogue.built ? ", built " + esc(S.catalogue.built) : "") + ". Data from INDUCKS (inducks.org)." : "Not loaded yet. Once it is, Add comic fills in titles, dates and full story lists from INDUCKS."}</p></div>`;
@@ -730,19 +869,21 @@ VIEWS.series = {
         else if (k === "latest" || k === "perYear") s[k] = parseInt(v, 10) || "";
         else s[k] = v;
       });
-      if (!s.id) s.id = (s.code || s.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now();
+      if (!s.id) { const base = (s.code || s.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== s && x.id === id)) id = base + "-" + k++; s.id = id; }
     });
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
-    $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", code: "", country: "", numbering: "running", latest: 100 }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
+    $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", group: "", code: "", country: "", numbering: "running", latest: "" }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
       grab(); const s = S.series[+b.dataset.rm];
       const used = S.comics.filter(c => c.seriesId === s.id).length;
-      if (used) { toast(used + " comics use this series. Move or delete them first."); return; }
+      if (used) { toast(used + " comics are in this series. Move or delete them first."); return; }
       S.series.splice(+b.dataset.rm, 1); render();
     });
     $("#saveser").onclick = async () => {
       grab();
       if (S.series.some(s => !s.name)) { toast("Every series needs a name"); return; }
+      S.series.forEach(s => { if (!s.group) s.group = OTHER_GROUP; });
+      S.series.sort((a, b) => groupCompare(a.group, b.group));
       const ids = S.series.map(s => s.id); if (new Set(ids).size !== ids.length) { toast("Two series have the same INDUCKS code"); return; }
       try { await saveSeries(); toast("Series saved"); render(); } catch (e) { toast(errText(e)); }
     };
