@@ -16,29 +16,12 @@ const GRADES = [
   ["2-3", "Z2-3"], ["3", "Z3 · worn"], ["3-4", "Z3-4"], ["4", "Z4 · poor"], ["4-5", "Z4-5"], ["5", "Z5 · very poor"]
 ];
 const CURRENCIES = ["CHF", "EUR", "SEK"];
-const FIELDS = [
-  ["series", "Series"], ["issue", "Issue number"], ["title", "Issue title"], ["date", "Publication date"],
-  ["status", "Owned / wishlist"], ["grade", "Condition"], ["pricePaid", "Price paid"], ["purchaseDate", "Purchase date"],
-  ["source", "Bought from"], ["value", "Estimated value"], ["location", "Storage location"], ["read", "Read"],
-  ["copies", "Copies"], ["notes", "Notes"], ["writer", "Writer"], ["artist", "Artist"], ["coverUrl", "Cover image URL"]
-];
-const GUESS = {
-  series: ["series", "serie", "reihe", "title series"], issue: ["issue nr", "issue", "issue no", "nummer", "number", "nr", "no"],
-  title: ["title", "issue title", "titel"], date: ["release date", "cover date", "publication date", "date", "datum"],
-  status: ["collection status", "status"], grade: ["condition", "grade", "zustand"],
-  pricePaid: ["purchase price", "price paid", "preis", "price"], purchaseDate: ["purchase date", "date purchased", "kaufdatum"],
-  source: ["purchase store", "store", "bought from", "source"], value: ["value", "current value", "my value", "wert"],
-  location: ["storage box", "location", "box", "storage"], read: ["read it", "read", "gelesen"],
-  copies: ["quantity", "copies", "qty"], notes: ["notes", "my notes", "comments"], writer: ["writer", "script", "author"],
-  artist: ["artist", "penciller", "pencils", "art"], coverUrl: ["cover", "cover url", "front cover"]
-};
-
 // ---------- state ----------
 const S = {
   db: null, dbState: "loading", series: DEFAULT_SERIES.slice(), seriesSaved: false,
   comics: [], view: "collection", filters: { q: "", series: "", status: "owned" }, shown: 200,
   editing: null, draft: null, gapSeries: DEFAULT_SERIES[0].id, catalogue: null, catCache: {},
-  imp: null, confirmDelete: false, downloads: null
+  confirmDelete: false
 };
 
 // ---------- helpers ----------
@@ -258,15 +241,15 @@ VIEWS.collection = {
           <option value="all"${f.status === "all" ? " selected" : ""}>Everything</option></select></label>
       </div>`;
     if (!S.comics.length) {
-      return head + `<div class="empty"><h3>Your archive is empty</h3><p>Add your first comic or book by hand, or import your CLZ collection to bring everything over at once.</p>
-        <div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="new2">Add comic or book</button><button id="goimp">Import from CLZ</button></div></div>`;
+      return head + `<div class="empty"><h3>Your archive is empty</h3><p>Add your first comic or book, or load a backup under Backup.</p>
+        <div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="new2">Add comic or book</button><button id="gobk">Go to Backup</button></div></div>`;
     }
     return head + '<div id="results"></div>';
   },
   bind() {
     const go = () => { S.editing = null; S.draft = null; nav("add"); };
     $("#new") && ($("#new").onclick = go); $("#new2") && ($("#new2").onclick = go);
-    $("#goimp") && ($("#goimp").onclick = () => { nav("import"); });
+    $("#gobk") && ($("#gobk").onclick = () => { nav("backup"); });
     $("#fq").oninput = e => { S.filters.q = e.target.value; S.shown = 200; drawResults(); };
     $("#fs").onchange = e => { S.filters.series = e.target.value; S.shown = 200; drawResults(); };
     $("#fst").onchange = e => { S.filters.status = e.target.value; S.shown = 200; drawResults(); };
@@ -716,123 +699,6 @@ VIEWS.backup = {
     };
   }
 };
-
-// ---- Import ----
-VIEWS.import = {
-  html() {
-    const I = S.imp;
-    const intro = `<div><h2>Import from CLZ</h2><p class="lede">In the CLZ Comics app or on CLZ Cloud, export your collection as a CSV file with all fields, then choose it here. You'll match the columns and series before anything is saved.</p></div>`;
-    if (!I) return intro + `<div class="card stack"><label><span class="l">CLZ export file (.csv)</span><input id="file" type="file" accept=".csv,text/csv"></label>
-      <p class="small muted" style="margin:0">The file is read on this phone. Nothing is sent anywhere.</p></div>`;
-    if (I.running || I.done) {
-      const pct = I.total ? (I.ok + I.fail) / I.total * 100 : 0;
-      return intro + `<div class="card stack"><h3>${I.done ? "Import finished" : "Importing…"}</h3><div class="progress"><div style="width:${pct.toFixed(1)}%"></div></div>
-        <p style="margin:0">${I.ok} of ${I.total} saved${I.fail ? ` · <span style="color:var(--danger)">${I.fail} failed</span>` : ""}.</p>
-        ${I.lastError ? `<p class="small" style="color:var(--danger);margin:0">${esc(I.lastError)}</p>` : ""}
-        ${I.done ? '<div class="row"><button class="primary" id="seecol">See collection</button><button id="again">Import another file</button></div>' : ""}</div>`;
-    }
-    const opt = sel => '<option value="">— not used —</option>' + I.headers.map(h => `<option${sel === h ? " selected" : ""}>${esc(h)}</option>`).join("");
-    const mapRows = FIELDS.map(([k, l]) => `<label><span class="l">${esc(l)}</span><select data-map="${k}">${opt(I.map[k])}</select></label>`).join("");
-    const sOpts = v => S.series.map(s => `<option value="${esc(s.id)}"${v === s.id ? " selected" : ""}>${esc(s.name)}</option>`).join("") + `<option value="_other"${v === "_other" ? " selected" : ""}>Keep as its own series</option><option value="_skip"${v === "_skip" ? " selected" : ""}>Don't import</option>`;
-    const seriesRows = I.map.series ? Object.keys(I.seriesMap).sort().map(name => `<tr><td>${esc(name || "(blank)")}</td><td class="muted">${I.seriesCount[name]}</td><td><select data-smap="${esc(name)}">${sOpts(I.seriesMap[name])}</select></td></tr>`).join("") : "";
-    const all = buildImportRows(), prev = all.slice(0, 5), willImport = all.length;
-    return intro + `
-      <div class="card stack"><div class="row between"><h3>1 · Match columns</h3><span class="small muted">${esc(I.fileName)} · ${I.rows.length} rows</span></div>
-        <p class="small muted" style="margin:0">Columns were matched by name. Check them and change any that are wrong.</p>
-        <div class="grid-form">${mapRows}</div></div>
-      <div class="card stack"><h3>2 · Match series</h3>
-        ${I.map.series ? `<p class="small muted" style="margin:0">Link each CLZ series to one of your series, keep it as its own, or skip it.</p><div class="tablewrap"><table><thead><tr><th>CLZ series</th><th>Rows</th><th>Import as</th></tr></thead><tbody>${seriesRows}</tbody></table></div>` : '<p class="muted small" style="margin:0">Choose the Series column above first.</p>'}</div>
-      <div class="card stack"><h3>3 · Check and import</h3>
-        <div class="tablewrap"><table><thead><tr><th>Series</th><th>Issue</th><th>Status</th><th>Title</th><th>Condition</th><th>Paid</th></tr></thead><tbody>
-        ${prev.map(c => `<tr><td>${esc((seriesById(c.seriesId) || {}).name || c.seriesName)}</td><td>${esc(c.issueLabel)}</td><td>${c.status === "wanted" ? "Wishlist" : "Owned"}</td><td>${esc(c.title)}</td><td>${esc(c.grade ? "Z" + c.grade : "")}</td><td>${esc(money(c.pricePaid, c.currency))}</td></tr>`).join("")}
-        </tbody></table></div>
-        <label style="max-width:220px"><span class="l">Currency for prices</span><select id="impcur">${CURRENCIES.map(c => `<option${I.currency === c ? " selected" : ""}>${c}</option>`).join("")}</select></label>
-        <label class="check"><input id="impdup" type="checkbox"${I.skipDupes ? " checked" : ""}> Skip comics already in the archive${I.skipped ? " (" + I.skipped + " found)" : ""}</label>
-        <div class="row"><button class="primary" id="go"${willImport && S.db ? "" : " disabled"}>Import ${willImport} comics</button><button id="reset">Choose another file</button></div>
-        <p class="small muted" style="margin:0">CLZ condition grades are kept in the notes; set the Z grade later where you want one. Comics marked "Sold" in CLZ are left out, and "For Sale" ones are marked for trade.</p></div>`;
-  },
-  bind() {
-    const I = S.imp;
-    if (!I) {
-      $("#file").onchange = e => {
-        const file = e.target.files[0]; if (!file) return;
-        if (!window.Papa) { toast("The CSV reader didn't load. Reload the page and try again."); return; }
-        Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => {
-          const headers = res.meta.fields || [];
-          if (!headers.length || !res.data.length) { toast("That file has no rows. Export again from CLZ as CSV."); return; }
-          const map = {};
-          FIELDS.forEach(([k]) => { const g = GUESS[k] || []; const h = headers.find(h => g.includes(norm(h))) || headers.find(h => g.some(x => norm(h).startsWith(x))); if (h && !Object.values(map).includes(h)) map[k] = h; });
-          S.imp = { fileName: file.name, headers, rows: res.data, map, seriesMap: {}, seriesCount: {}, currency: "CHF", skipDupes: true };
-          rebuildSeriesMap(); render();
-        }, error: () => toast("This file couldn't be read as CSV.") });
-      };
-      return;
-    }
-    if (I.running || I.done) {
-      $("#seecol") && ($("#seecol").onclick = () => { S.imp = null; S.filters = { q: "", series: "", status: "all" }; nav("collection"); });
-      $("#again") && ($("#again").onclick = () => { S.imp = null; render(); });
-      return;
-    }
-    document.querySelectorAll("[data-map]").forEach(s => s.onchange = () => { I.map[s.dataset.map] = s.value; if (s.dataset.map === "series") rebuildSeriesMap(); render(); });
-    document.querySelectorAll("[data-smap]").forEach(s => s.onchange = () => { I.seriesMap[s.dataset.smap] = s.value; render(); });
-    $("#impcur").onchange = e => { I.currency = e.target.value; render(); };
-    $("#impdup").onchange = e => { I.skipDupes = e.target.checked; render(); };
-    $("#reset").onclick = () => { S.imp = null; render(); };
-    $("#go").onclick = async () => {
-      const rows = buildImportRows();
-      Object.assign(I, { running: true, total: rows.length, ok: 0, fail: 0 }); render();
-      try { await saveMany(rows, d => { I.ok = d; render(); }); }
-      catch (e) { I.fail = rows.length - I.ok; I.lastError = errText(e); }
-      I.running = false; I.done = true; render();
-    };
-  }
-};
-function rebuildSeriesMap() {
-  const I = S.imp; I.seriesMap = {}; I.seriesCount = {};
-  if (!I.map.series) return;
-  I.rows.forEach(r => { const n = String(r[I.map.series] || "").trim(); I.seriesCount[n] = (I.seriesCount[n] || 0) + 1; });
-  Object.keys(I.seriesCount).forEach(n => {
-    const nn = norm(n);
-    const hit = S.series.find(s => norm(s.name) === nn) || S.series.find(s => nn && (nn.includes(norm(s.name)) || norm(s.name).includes(nn))) || S.series.find(s => nn.split(" ").includes(norm(s.short)));
-    // "LTB Spezial" must not fall into plain LTB
-    const spez = /spezial/.test(nn) ? S.series.find(s => /spezial/.test(norm(s.name))) : null;
-    I.seriesMap[n] = (spez || hit || {}).id || "_other";
-  });
-}
-function buildImportRows() {
-  const I = S.imp; if (!I) return [];
-  const g = (r, k) => I.map[k] ? String(r[I.map[k]] == null ? "" : r[I.map[k]]).trim() : "";
-  const num = parseAmt;
-  const out = [];
-  const have = new Set(I.skipDupes ? S.comics.map(c => [c.seriesId === "_other" ? norm(c.seriesName) : c.seriesId, c.issueLabel, c.status].join("|")) : []);
-  I.skipped = 0;
-  I.rows.forEach(r => {
-    const sname = g(r, "series");
-    const target = I.map.series ? (I.seriesMap[sname] || "_other") : "_other";
-    if (target === "_skip") return;
-    const se = seriesById(target);
-    const issue = g(r, "issue"); if (!issue && !g(r, "title")) return;
-    const p = parseIssue(se, issue);
-    const st = norm(g(r, "status"));
-    if (/^sold$/.test(st)) return;
-    const key = [se ? se.id : norm(sname || "Unknown series"), p.label || issue, /wish|want/.test(st) ? "wanted" : "owned"].join("|");
-    if (I.skipDupes && have.has(key)) { I.skipped++; return; }
-    const readv = norm(g(r, "read"));
-    const notes = [g(r, "notes"), g(r, "grade") ? "CLZ condition: " + g(r, "grade") : ""].filter(Boolean).join("\n");
-    const stories = (g(r, "writer") || g(r, "artist")) ? [{ title: "", code: "", writer: g(r, "writer"), artist: g(r, "artist"), hero: "" }] : [];
-    let pd = g(r, "purchaseDate"); const m = pd.match(/(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/) || pd.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
-    if (m) pd = m[1].length === 4 ? `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}` : `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`; else pd = "";
-    out.push(blankDraft({
-      status: /wish|want/.test(st) ? "wanted" : "owned", forTrade: /sale/.test(st), seriesId: se ? se.id : "_other", seriesName: se ? se.name : (sname || "Unknown series"),
-      issue, issueLabel: p.label || issue, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n,
-      title: g(r, "title"), date: g(r, "date"), grade: "", copies: Math.max(1, parseInt(g(r, "copies"), 10) || 1),
-      pricePaid: num(g(r, "pricePaid")), currency: I.currency, purchaseDate: pd, source: g(r, "source"), value: num(g(r, "value")),
-      location: g(r, "location"), read: /^(yes|y|true|1|ja|x)$/.test(readv) || /read/.test(readv) && !/unread|not/.test(readv),
-      notes, coverUrl: /^https?:\/\//.test(g(r, "coverUrl")) ? g(r, "coverUrl") : "", stories, importedFrom: "CLZ"
-    }));
-  });
-  return out;
-}
 
 // ---- Series ----
 VIEWS.series = {
