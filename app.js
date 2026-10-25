@@ -248,6 +248,77 @@ async function catalogueLookup(series, issue) {
   return data[p.label] || data[String(p.n)] || data[String(issue).trim()] || null;
 }
 
+// ---------- INDUCKS matching ----------
+function labelParts(lab) {
+  let m = /^(\d{4})\/(\d{1,3})$/.exec(lab || "");
+  if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
+  if (/^\d+$/.test(lab || "")) return { year: null, n: +lab, sort: +lab };
+  m = /^(\d{4})/.exec(lab || "");
+  return { year: m ? +m[1] : null, n: null, sort: m ? +m[1] * 1000 + 999 : 1e9 };
+}
+const STOP = new Set("missa inte serien klassiker extra nummer numret festlig tavling tavlingen sommar specialnummer".split(" "));
+function titleWords(t) { return norm(t).split(" ").filter(w => w.length >= 5 && !STOP.has(w)); }
+// Proposes an INDUCKS issue for one comic. sure = can be applied without checking.
+function proposeMatch(c, file) {
+  const issues = file.issues || {}, lab = c.issueLabel || c.issue || "";
+  if (lab && issues[lab]) return { label: lab, how: "Same number", sure: true };
+  const date = String(c.date || ""), year = (/^(\d{4})/.exec(lab) || /^(\d{4})/.exec(date) || [])[1];
+  const inYear = year ? Object.keys(issues).filter(k => k.startsWith(year) || String(issues[k].d || "").startsWith(year)) : [];
+  if (date.length >= 10) {
+    const hit = inYear.filter(k => issues[k].d === date);
+    if (hit.length === 1) return { label: hit[0], how: "Same cover date", sure: true };
+  }
+  if (date.length >= 7) {
+    const hit = inYear.filter(k => String(issues[k].d || "").slice(0, 7) === date.slice(0, 7));
+    if (hit.length === 1) return { label: hit[0], how: "Same month", sure: false };
+  }
+  const n = /^\d+$/.test(lab) ? +lab : null;
+  if (n != null && year) {
+    const k = year + "/" + String(n).padStart(2, "0");
+    if (issues[k]) return { label: k, how: "Year " + year + ", number " + n, sure: false };
+  }
+  const words = titleWords(c.title);
+  if (words.length && inYear.length) {
+    const scored = inYear.map(k => {
+      const text = norm([issues[k].t].concat((issues[k].s || []).map(x => x.t)).join(" "));
+      return [k, words.filter(w => text.includes(w)).length];
+    }).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
+    if (scored.length && (scored.length === 1 || scored[0][1] > scored[1][1]) && (scored[0][1] >= 2 || scored.length === 1))
+      return { label: scored[0][0], how: "Cover text matches a story", sure: false };
+  }
+  return { label: "", how: inYear.length ? "Pick the issue" : "No match found", sure: false };
+}
+function applyIssueFromCatalogue(c, label, hit) {
+  const p = labelParts(label), out = Object.assign({}, c);
+  out.issue = label; out.issueLabel = label; out.issueYear = p.year; out.issueNum = p.n; out.issueSort = p.sort;
+  if (hit.d && String(hit.d).length >= String(c.date || "").length) out.date = hit.d;
+  if (!c.title && hit.t) out.title = hit.t;
+  if (!c.pages && hit.pg) out.pages = hit.pg;
+  const fromClz = !(c.stories || []).some(x => x.code);
+  const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
+  if (fromClz && (hit.s || []).length) out.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "" }));
+  out.inducks = hit.ic;
+  return out;
+}
+// fills in missing series details (INDUCKS code, numbering, size) from the catalogue
+function seriesFromCatalogue(se, file, entry) {
+  let changed = false;
+  if (!se.code) { se.code = entry.code; changed = true; }
+  const labs = Object.keys(file.issues || {});
+  const yearLabs = labs.map(l => /^(\d{4})\/(\d{1,3})$/.exec(l)).filter(Boolean);
+  if (yearLabs.length > labs.length / 2) {
+    if (se.numbering !== "year") { se.numbering = "year"; changed = true; }
+    const ys = yearLabs.map(m => +m[1]), ns = yearLabs.map(m => +m[2]);
+    if (!se.firstYear) { se.firstYear = Math.min(...ys); changed = true; }
+    if (!se.lastYear) { se.lastYear = Math.max(...ys); changed = true; }
+    if (!se.perYear) { se.perYear = Math.min(60, Math.max(...ns)); changed = true; }
+  } else if (se.numbering !== "year" && !se.latest) {
+    const nums = labs.filter(l => /^\d+$/.test(l)).map(Number);
+    if (nums.length) { se.latest = Math.max(...nums); changed = true; }
+  }
+  return changed;
+}
+
 // ---------- derived ----------
 function owned() { return S.comics.filter(c => c.status !== "wanted"); }
 function searchText(c) {
@@ -274,7 +345,7 @@ document.getElementById("tabs").addEventListener("click", e => {
 window.addEventListener("hashchange", () => {
   if (S.navLock) { S.navLock = false; return; }
   const v = location.hash.slice(1);
-  if (VIEWS[v]) { if (v === "add") { S.editing = null; S.draft = null; } setView(v); }
+  if (VIEWS[v]) { if (v === "add") { S.editing = null; S.draft = null; } if (v === "match") S.matchRun = null; setView(v); }
 });
 
 // ---------- render ----------
@@ -283,7 +354,9 @@ function render() {
   const app = $("#app");
   let head = "";
   if (S.dbState === "none") head = '<div class="banner warn">This browser can\'t store data. Open the archive in Chrome on your phone.</div>';
-  if (S.dbState === "ready" && S.comics.length && S.view === "collection" && daysSince(S.lastBackup) > 14) head = '<div class="banner warn row between"><span>' + (S.lastBackup ? "Your last backup is " + daysSince(S.lastBackup) + " days old." : "You haven\'t backed up your archive yet.") + '</span><a href="#backup">Make a backup</a></div>';
+  const unmatched = S.catalogue && S.view === "collection" && !(S.col && S.col.p) ? S.comics.filter(c => !c.inducks && !c.inducksChecked && c.kind !== "book" && catEntry(seriesById(c.seriesId))).length : 0;
+  if (unmatched) head += '<div class="banner row between"><span>INDUCKS can add story lists and issue numbers to ' + unmatched + ' of your comics.</span><a href="#match">Review matches</a></div>';
+  if (S.dbState === "ready" && S.comics.length && S.view === "collection" && daysSince(S.lastBackup) > 14) head += '<div class="banner warn row between"><span>' + (S.lastBackup ? "Your last backup is " + daysSince(S.lastBackup) + " days old." : "You haven\'t backed up your archive yet.") + '</span><a href="#backup">Make a backup</a></div>';
   if (S.dbState === "error") head = '<div class="banner warn">The archive could not open its data on this phone (' + esc(S.dbError && (S.dbError.name || S.dbError.message) || "error") + '). Close the app fully and open it again.</div>';
   if (S.dbState === "loading") { app.innerHTML = '<div class="empty"><h3>Opening your archive…</h3><p>Loading your comics from this phone.</p></div>'; return; }
   app.innerHTML = '<div class="stack">' + head + VIEWS[S.view].html() + '</div>';
@@ -689,6 +762,84 @@ ${isBook ? `
   }
 };
 
+// ---- Match with INDUCKS ----
+VIEWS.match = {
+  html() {
+    if (!S.catalogue) return '<h2>Match with INDUCKS</h2><div class="empty"><h3>No INDUCKS catalogue yet</h3><p>Update the app while online to get it.</p></div>';
+    if (!S.matchRun) return '<div><h2>Match with INDUCKS</h2><p class="lede">Looking for your comics in INDUCKS…</p></div><div class="empty"><h3>Checking…</h3></div>';
+    const R = S.matchRun;
+    const sure = R.items.filter(x => x.sure), check = R.items.filter(x => !x.sure && x.label), open = R.items.filter(x => !x.label && !x.sure);
+    const row = x => {
+      const c = x.c, se = seriesById(c.seriesId);
+      const opts = [`<option value="">Don't match</option>`].concat((x.options || []).map(k => {
+        const h = x.file.issues[k], first = (h.s || []).slice(0, 2).map(s => s.t).filter(Boolean).join(" / ");
+        return `<option value="${esc(k)}"${k === x.label ? " selected" : ""}>${esc(k)} · ${esc(niceDate(h.d))}${first ? " · " + esc(first.slice(0, 60)) : ""}</option>`;
+      })).join("");
+      return `<div class="matchrow"><div style="min-width:0"><div class="t">${esc((se ? se.short || se.name : c.seriesName) + " " + (c.issueLabel || c.issue || ""))}${c.title ? " · " + esc(c.title) : ""}</div>
+        <div class="s">${esc([niceDate(c.date), x.how].filter(Boolean).join(" · "))}</div></div>
+        <label><span class="l">INDUCKS issue</span><select data-mid="${esc(c.id)}">${opts}</select></label></div>`;
+    };
+    const chosen = R.items.filter(x => x.label).length;
+    return `
+      <div><h2>Match with INDUCKS</h2><p class="lede">Matched comics get INDUCKS's issue number, date and full story list with writers and artists. Your own details (condition, price, notes and so on) stay as they are.</p></div>
+      <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(105px,1fr))">
+        <div class="card stat"><div class="v">${sure.length}</div><div class="k">certain matches</div></div>
+        <div class="card stat"><div class="v">${check.length}</div><div class="k">likely, please check</div></div>
+        <div class="card stat"><div class="v">${open.length}</div><div class="k">not found</div></div>
+      </div>
+      ${check.length ? `<div class="card stack"><h3>Please check</h3><p class="small muted" style="margin:0">Each one has a suggestion. Change it if it's wrong, or choose "Don't match".</p>${check.map(row).join("")}</div>` : ""}
+      ${open.length ? `<div class="card stack"><h3>Not found</h3><p class="small muted" style="margin:0">Pick the issue if you know it. Those left on "Don't match" stay as they are.</p>${open.map(row).join("")}</div>` : ""}
+      ${sure.length ? `<details class="card"><summary><strong>${sure.length} certain matches</strong> <span class="small muted">same number or exact cover date</span></summary><div class="stack" style="margin-top:12px">${sure.map(row).join("")}</div></details>` : ""}
+      ${R.notInCatalogue || R.already ? `<p class="small muted" style="margin:0">${[R.notInCatalogue ? R.notInCatalogue + " Disney comics are in series without INDUCKS data" : "", R.already ? R.already + " are already matched" : ""].filter(Boolean).join("; ")}.</p>` : ""}
+      <div class="row"><button class="primary" id="mapply"${R.items.length ? "" : " disabled"}>Apply <span id="mcount">${chosen}</span> matches</button><button id="mback">Back</button></div>`;
+  },
+  bind() {
+    if (!S.matchRun) { buildMatchRun().then(() => { if (S.view === "match") render(); }); return; }
+    const R = S.matchRun;
+    document.querySelectorAll("[data-mid]").forEach(sel => sel.onchange = () => {
+      const x = R.items.find(i => i.c.id === sel.dataset.mid); x.label = sel.value;
+      $("#mcount").textContent = R.items.filter(i => i.label).length;
+    });
+    $("#mback") && ($("#mback").onclick = () => { S.matchRun = null; nav("series"); });
+    $("#mapply") && ($("#mapply").onclick = async () => {
+      const btn = $("#mapply"); btn.disabled = true;
+      const updated = R.items.filter(x => x.label).map(x => applyIssueFromCatalogue(x.c, x.label, x.file.issues[x.label]))
+        // comics left on "Don't match" are remembered as checked, so the reminder stops counting them
+        .concat(R.items.filter(x => !x.label && !x.c.inducksChecked).map(x => Object.assign({}, x.c, { inducksChecked: true })));
+      try {
+        await saveMany(updated);
+        let sChanged = false;
+        R.files.forEach(({ se, file, entry }) => { if (seriesFromCatalogue(se, file, entry)) sChanged = true; });
+        if (sChanged) await saveSeries();
+        toast("Matched " + R.items.filter(x => x.label).length + " comics with INDUCKS");
+        S.matchRun = null; S.col = {}; nav("collection");
+      } catch (e) { toast(errText(e)); btn.disabled = false; }
+    });
+  }
+};
+async function buildMatchRun() {
+  const items = [], files = []; let notInCatalogue = 0, already = 0;
+  const bySeries = {};
+  S.comics.forEach(c => { if (c.kind !== "book" && seriesById(c.seriesId)) (bySeries[c.seriesId] = bySeries[c.seriesId] || []).push(c); });
+  for (const [sid, list] of Object.entries(bySeries)) {
+    const se = seriesById(sid), entry = catEntry(se);
+    if (!entry) { if (se.publisher === DISNEY) notInCatalogue += list.length; continue; }
+    const file = await catalogueFile(entry); if (!file) continue;
+    files.push({ se, file, entry });
+    list.forEach(c => {
+      if (c.inducks) { already++; return; }
+      const m = proposeMatch(c, file);
+      const yr = (/^(\d{4})/.exec(m.label || c.issueLabel || "") || /^(\d{4})/.exec(c.date || "") || [])[1];
+      const options = yr ? Object.keys(file.issues).filter(k => k.startsWith(yr) || String(file.issues[k].d || "").startsWith(yr)) : (m.label ? [m.label] : []);
+      if (m.label && !options.includes(m.label)) options.unshift(m.label);
+      items.push(Object.assign({ c, file, options: options.slice(0, 120) }, m));
+    });
+  }
+  const ord = x => (x.c.seriesName || "") + String(x.c.issueSort || 0).padStart(12, "0");
+  items.sort((a, b) => ord(a).localeCompare(ord(b)));
+  S.matchRun = { items, files, notInCatalogue, already };
+}
+
 // ---- Gaps & wishlist ----
 VIEWS.gaps = {
   html() {
@@ -782,7 +933,7 @@ VIEWS.stats = {
     const others = own.filter(c => !sized.has(c.seriesId) && c.kind !== "book").length;
     const books = own.filter(c => c.kind === "book").length;
     const creators = {};
-    own.forEach(c => (c.stories || []).forEach(st => [st.writer, st.artist].forEach(p => { if (p) p.split(/[,;&\/]+/).map(x => x.trim()).filter(Boolean).forEach(x => creators[x] = (creators[x] || 0) + 1); })));
+    own.forEach(c => (c.stories || []).forEach(st => [st.writer, st.artist].forEach(p => { if (p) p.split(/[,;&\/]+/).map(x => x.trim()).filter(Boolean).filter(x => x !== "?").forEach(x => creators[x] = (creators[x] || 0) + 1); })));
     const top = Object.entries(creators).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const topMax = top.length ? top[0][1] : 1;
     return `
@@ -930,6 +1081,7 @@ VIEWS.series = {
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
           <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
+          <div class="row"><button class="primary" id="gomatch">Match my comics with INDUCKS</button></div>
           <p class="small muted" style="margin:0">Story data from <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>, used under the Inducks licence. Thanks to its indexers.</p>`
           : `<p class="small muted" style="margin:0">Not loaded yet. Once it is, Add fills in titles, dates and full story lists from INDUCKS.</p>`}</div>`;
   },
@@ -945,6 +1097,7 @@ VIEWS.series = {
       if (!s.id) { const base = (s.code || s.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== s && x.id === id)) id = base + "-" + k++; s.id = id; }
     });
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
+    $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
     $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
       grab(); const s = S.series[+b.dataset.rm];

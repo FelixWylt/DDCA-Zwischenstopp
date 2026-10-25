@@ -43,8 +43,11 @@ for r in rows("inducks_publication", ["publicationcode", "countrycode", "languag
 log(f"INDUCKS publications: {len(pubs):,}")
 
 def score(p, t):
+    return max(score1(p, t, title) for title in (t.get("titles") or [t["title"]]))
+
+def score1(p, t, title):
     if p["countrycode"] != t["country"]: return 0
-    a, b = norm(p["title"]), norm(t["title"])
+    a, b = norm(p["title"]), norm(title)
     # exact title, or the INDUCKS title adds words after ours ("Topolino (libretto)"); never the reverse
     s = 100 if a == b else 70 if a.startswith(b + " ") else 0
     return s + (50 if s and t.get("code") == p["publicationcode"] else 0)
@@ -58,7 +61,7 @@ for t in targets:
         cands = sorted(((score(p, t), p) for p in pubs.values()), key=lambda x: (-x[0], len(x[1]["title"])))
         cands = [c for c in cands if c[0] > 0][:5]
         if not cands:  # show near misses to help fix the list
-            words = set(norm(t["title"]).split())
+            words = set(" ".join(norm(x) for x in (t.get("titles") or [t["title"]])).split()) - {"ltb", "c", "o", "s"}
             near = sorted((p for p in pubs.values() if p["countrycode"] == t["country"] and words & set(norm(p["title"]).split())),
                           key=lambda p: -len(words & set(norm(p["title"]).split())))[:6]
             cands = [(0, p) for p in near]
@@ -112,9 +115,9 @@ def label_for(num):
 def names(pairs, roles):
     seen = []
     for role, p in pairs:
-        if role in roles:
+        if role in roles and p.strip() not in ("?", ""):
             n = people.get(p, p)
-            if n not in seen: seen.append(n)
+            if n and n.strip() not in ("?", "") and n not in seen: seen.append(n)
     return ", ".join(seen)
 
 index = {"built": datetime.date.today().isoformat(), "source": "I.N.D.U.C.K.S. (https://inducks.org)",
