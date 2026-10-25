@@ -1,0 +1,161 @@
+{
+ "built": "2026-10-25",
+ "source": "I.N.D.U.C.K.S. (https://inducks.org)",
+ "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
+ "series": {
+  "lustiges taschenbuch": {
+   "series": "Lustiges Taschenbuch",
+   "code": "de/LTB",
+   "title": "Lustiges Taschenbuch",
+   "file": "inducks-de-LTB.json",
+   "issues": 666
+  },
+  "micky maus magazin": {
+   "series": "Micky Maus Magazin",
+   "code": "de/MM",
+   "title": "Micky Maus",
+   "file": "inducks-de-MM.json",
+   "issues": 3437
+  },
+  "lustiges taschenbuch maus edition": {
+   "series": "Lustiges Taschenbuch Maus-Edition",
+   "code": "de/LTBM",
+   "title": "Lustiges Taschenbuch Maus-Edition",
+   "file": "inducks-de-LTBM.json",
+   "issues": 21
+  },
+  "lustiges taschenbuch exklusiv": {
+   "series": "Lustiges Taschenbuch Exklusiv",
+   "code": "de/LTBEX",
+   "title": "Lustiges Taschenbuch Exklusiv",
+   "file": "inducks-de-LTBEX.json",
+   "issues": 4
+  },
+  "lustiges taschenbuch galaxy": {
+   "series": "Lustiges Taschenbuch Galaxy",
+   "code": "de/LTBGA",
+   "title": "Lustiges Taschenbuch Galaxy",
+   "file": "inducks-de-LTBGA.json",
+   "issues": 6
+  },
+  "mega micky maus": {
+   "series": "Mega Micky Maus",
+   "code": "de/MMM",
+   "title": "MEGA Micky Maus",
+   "file": "inducks-de-MMM.json",
+   "issues": 4
+  },
+  "micky maus comics": {
+   "series": "Micky Maus Comics",
+   "code": "de/MMC",
+   "title": "Micky Maus Comics",
+   "file": "inducks-de-MMC.json",
+   "issues": 106
+  },
+  "micky maus prasentiert": {
+   "series": "Micky Maus präsentiert",
+   "code": "de/MMP",
+   "title": "Micky Maus präsentiert",
+   "file": "inducks-de-MMP.json",
+   "issues": 40
+  },
+  "entenhausen edition donald von carl barks": {
+   "series": "Entenhausen-Edition - Donald von Carl Barks",
+   "code": "de/EEDCB",
+   "title": "Entenhausen-Edition Donald von Carl Barks",
+   "file": "inducks-de-EEDCB.json",
+   "issues": 100
+  },
+  "topolino": {
+   "series": "Topolino",
+   "code": "it/TL",
+   "title": "Topolino (libretto)",
+   "file": "inducks-it-TL.json",
+   "issues": 3792
+  },
+  "topolino giornale": {
+   "series": "Topolino Giornale",
+   "code": "it/TG",
+   "title": "Topolino (giornale)",
+   "file": "inducks-it-TG.json",
+   "issues": 739
+  },
+  "kalle anka c o": {
+   "series": "Kalle Anka & C:o",
+   "code": "se/KA",
+   "title": "Kalle Anka & C:o",
+   "file": "inducks-se-KA.json",
+   "issues": 3630
+  },
+  "kalle ankas pocket": {
+   "series": "Kalle Ankas Pocket",
+   "code": "se/KAP",
+   "title": "Kalle Ankas Pocket",
+   "file": "inducks-se-KAP.json",
+   "issues": 589
+  },
+  "kalle anka extra": {
+   "series": "Kalle Anka Extra",
+   "code": "se/X",
+   "title": "Kalle Anka extra",
+   "file": "inducks-se-X.json",
+   "issues": 96
+  },
+  "kalle ankas basta": {
+   "series": "Kalle Ankas Bästa",
+   "code": "se/KABS",
+   "title": "Kalle Ankas bästa",
+   "file": "inducks-se-KABS.json",
+   "issues": 25
+  },
+  "walt disney s serier": {
+   "series": "Walt Disney's Serier",
+   "code": "se/WDS",
+   "title": "Walt Disney's Serier",
+   "file": "inducks-se-WDS.json",
+   "issues": 211
+  },
+  "walt disney s godbitar": {
+   "series": "Walt Disney's Godbitar",
+   "code": "se/WDG",
+   "title": "Walt Disney's Godbitar",
+   "file": "inducks-se-WDG.json",
+   "issues": 20
+  },
+  "walt disney s klassiker": {
+   "series": "Walt Disney's Klassiker",
+   "code": "se/WDK",
+   "title": "Walt Disney's Klassiker",
+   "file": "inducks-se-WDK.json",
+   "issues": 32
+  },
+  "farbror joakim": {
+   "series": "Farbror Joakim",
+   "code": "se/J",
+   "title": "(Farbror) Joakim",
+   "file": "inducks-se-J.json",
+   "issues": 224
+  },
+  "bjornligan": {
+   "series": "Björnligan",
+   "code": "se/BL",
+   "title": "Björnligan",
+   "file": "inducks-se-BL.json",
+   "issues": 53
+  },
+  "musse pigg c o": {
+   "series": "Musse Pigg & C:o",
+   "code": "se/MP",
+   "title": "Musse Pigg & C:o",
+   "file": "inducks-se-MP.json",
+   "issues": 319
+  },
+  "donald duck co": {
+   "series": "Donald Duck & Co",
+   "code": "no/DD",
+   "title": "Donald Duck & Co",
+   "file": "inducks-no-DD.json",
+   "issues": 4066
+  }
+ }
+}

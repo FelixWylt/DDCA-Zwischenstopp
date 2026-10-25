@@ -1,6 +1,6 @@
 // Dagobert Ducks Archiv service worker: keeps the app (and the INDUCKS catalogue) on the phone for offline use.
 const APP_VERSION = "da-v11";
-const CATALOGUE = "none";   // set by the INDUCKS catalogue job, so phones pick up a new catalogue
+const CATALOGUE = "20261025";   // set by the INDUCKS catalogue job, so phones pick up a new catalogue
 const VERSION = APP_VERSION + "-" + CATALOGUE;
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "vendor/papaparse.min.js",
