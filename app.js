@@ -840,6 +840,24 @@ async function buildMatchRun() {
   S.matchRun = { items, files, notInCatalogue, already };
 }
 
+// wishlist: one folder per series, opened by tapping
+function wishItem(c) {
+  const s = seriesById(c.seriesId), bk = c.kind === "book";
+  return `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`;
+}
+function wishlistBySeries(wl) {
+  const groups = {};
+  wl.forEach(c => { const k = seriesKeyOf(c); (groups[k] = groups[k] || []).push(c); });
+  const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
+  const keys = Object.keys(groups).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b)));
+  S.wishOpen = S.wishOpen || {};
+  return '<div class="list">' + keys.map(k => {
+    const list = groups[k], se = seriesById(k), max = list.filter(c => typeof c.pricePaid === "number");
+    const sub = [list.length + (list.length === 1 ? " issue wanted" : " issues wanted"), se ? se.publisher : "", max.length ? "budget " + money(max.reduce((a, c) => a + c.pricePaid, 0), max[0].currency) : ""].filter(Boolean).join(" · ");
+    return `<details class="wishseries" data-wk="${esc(k)}"${S.wishOpen[k] ? " open" : ""}><summary class="folder"><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div><div class="s">${esc(sub)}</div></div><span class="count wanted-count">${list.length}</span><span class="chev" aria-hidden="true">›</span></summary>
+      <div class="list" style="margin-top:8px">${list.map(wishItem).join("")}</div></details>`;
+  }).join("") + '</div>';
+}
 // ---- Gaps & wishlist ----
 VIEWS.gaps = {
   html() {
@@ -888,14 +906,14 @@ VIEWS.gaps = {
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
       <div class="stack"><h3>Full wishlist</h3>
-        ${wl.length ? '<div class="list">' + wl.map(c => { const s = seriesById(c.seriesId), bk = c.kind === "book"; return `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`; }).join("") + '</div>'
-          : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
+        ${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
       </div>`;
   },
   bind() {
     $("#gs") && ($("#gs").onchange = e => { S.gapSeries = e.target.value; render(); });
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+    document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = () => {
       if (b.dataset.id) { open(b.dataset.id); return; }
       const se = seriesById(S.gapSeries) || S.series[0], label = b.dataset.issue;

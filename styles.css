@@ -192,3 +192,8 @@ th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; colo
 .matchrow .s { color: var(--muted); font-size: 0.84rem; }
 @media (max-width: 640px) { .matchrow { grid-template-columns: 1fr; } }
 details.card summary { cursor: pointer; }
+details.wishseries > summary { list-style: none; }
+details.wishseries > summary::-webkit-details-marker { display: none; }
+details.wishseries[open] > summary .chev { transform: rotate(90deg); }
+.chev { transition: transform .15s; display: inline-block; }
+.wanted-count { color: var(--wanted) !important; }
