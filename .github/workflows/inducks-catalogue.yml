@@ -1,0 +1,67 @@
+name: Build INDUCKS catalogue
+
+# Downloads the public INDUCKS export, extracts the Disney series listed in
+# catalogue/publications.json and commits the result. Runs when started by hand
+# (Actions tab > Run workflow), when the list or script changes, and once a month.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [catalogue/publications.json, scripts/build_catalogue.py, .github/workflows/inducks-catalogue.yml]
+  schedule:
+    - cron: "17 6 3 * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: inducks-catalogue
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download INDUCKS export
+        id: dl
+        continue-on-error: true
+        run: |
+          mkdir -p data/isv
+          curl --fail --silent --show-error --location --retry 4 --retry-delay 20 \
+            --user-agent "DagobertDucksArchiv-catalogue (+https://github.com/${{ github.repository }})" \
+            --dump-header data/headers.txt --output data/isv.tgz https://inducks.org/inducks/isv.tgz
+          # The site's bot check can answer with an HTML page: make sure this is a real archive
+          gzip -t data/isv.tgz
+          tar -xzf data/isv.tgz -C data/isv --strip-components=1
+          ls -la data/isv | head -100
+          du -sh data/isv.tgz data/isv
+
+      - name: Build catalogue
+        if: steps.dl.outcome == 'success'
+        run: python3 scripts/build_catalogue.py data/isv catalogue
+
+      - name: Note a failed download
+        if: steps.dl.outcome != 'success'
+        run: |
+          {
+            echo "Download from inducks.org failed on $(date -u +%F)."
+            echo "Response headers:"; cat data/headers.txt 2>/dev/null || echo "(none)"
+            echo "First bytes:"; head -c 600 data/isv.tgz 2>/dev/null || echo "(no file)"
+          } > catalogue/report.txt
+
+      - name: Mark the app for an update
+        if: steps.dl.outcome == 'success'
+        run: sed -i -E "s/^const CATALOGUE = \".*\";/const CATALOGUE = \"$(date -u +%Y%m%d)\";/" sw.js
+
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add catalogue sw.js
+          git diff --cached --quiet && { echo "Nothing changed"; exit 0; }
+          git commit -m "INDUCKS catalogue $(date -u +%F)"
+          git push

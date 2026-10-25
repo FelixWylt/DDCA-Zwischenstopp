@@ -87,6 +87,7 @@ function errText(e) {
   return "Saving failed (" + (n || "error") + "). Try again.";
 }
 function inducksIssueUrl(series, issue) {
+  const ce = catEntry(series); if (series && !series.code && ce) series = Object.assign({}, series, { code: ce.code });
   if (!series || !series.code) return "";
   const p = parseIssue(series, issue);
   if (p.n == null) return "https://inducks.org/publication.php?c=" + encodeURIComponent(series.code);
@@ -226,16 +227,25 @@ async function saveSeries() {
 async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/index.json"); if (r.ok) { S.catalogue = await r.json(); render(); } } catch (e) { S.catalogue = null; }
 }
-async function catalogueLookup(series, issue) {
-  if (!S.catalogue || !S.catalogue.series || !S.catalogue.series[series.id]) return null;
-  if (!S.catCache[series.id]) {
-    const r = await fetch("catalogue/" + S.catalogue.series[series.id].file);
+// the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
+function catEntry(se) {
+  const all = S.catalogue && S.catalogue.series; if (!se || !all) return null;
+  return all[norm(se.name)] || (se.code && Object.values(all).find(x => x.code === se.code)) || null;
+}
+async function catalogueFile(entry) {
+  if (!S.catCache[entry.file]) {
+    const r = await fetch("catalogue/" + entry.file);
     if (!r.ok) return null;
-    S.catCache[series.id] = await r.json();
+    S.catCache[entry.file] = await r.json();
   }
+  return S.catCache[entry.file];
+}
+async function catalogueLookup(series, issue) {
+  const entry = catEntry(series); if (!entry) return null;
+  const file = await catalogueFile(entry); if (!file) return null;
   const p = parseIssue(series, issue);
-  const data = S.catCache[series.id].issues || {};
-  return data[p.label] || data[String(p.n)] || null;
+  const data = file.issues || {};
+  return data[p.label] || data[String(p.n)] || data[String(issue).trim()] || null;
 }
 
 // ---------- derived ----------
@@ -491,8 +501,9 @@ VIEWS.add = {
     const se = isBook ? null : seriesById(d.seriesId);
     const sopts = seriesOptions(d.seriesId, s => s.name + (s.country ? " (" + s.country + ")" : "")) + `<option value="_other"${!se ? " selected" : ""}>New series…</option>`;
     const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12 or 1985/?" : "Number, e.g. 474";
-    const catReady = se && S.catalogue && S.catalogue.series && S.catalogue.series[se.id];
-    const link = se && d.issue ? inducksIssueUrl(se, d.issue) : (se ? "https://inducks.org/publication.php?c=" + encodeURIComponent(se.code) : "");
+    const catReady = catEntry(se);
+    const icode = se && (se.code || (catEntry(se) || {}).code);
+    const link = se && d.issue ? inducksIssueUrl(se, d.issue) : (icode ? "https://inducks.org/publication.php?c=" + encodeURIComponent(icode) : "");
     const grades = '<option value="">Not graded</option>' + GRADES.map(([v, l]) => `<option value="${v}"${d.grade === v ? " selected" : ""}>${l}</option>`).join("");
     const curs = CURRENCIES.map(c => `<option${d.currency === c ? " selected" : ""}>${c}</option>`).join("");
     const stories = d.stories.map((s, i) => `<div class="story" data-i="${i}">
@@ -533,7 +544,7 @@ ${isBook ? `
           <button id="lookup" ${catReady ? "" : "disabled"}>Fill from INDUCKS</button>
         </div>
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
-        <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
+        <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from INDUCKS." : S.catalogue ? "This series isn't in the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
           <span id="ilink">${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : ""}</span></p>
         <div class="grid-form">
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
@@ -595,14 +606,20 @@ ${isBook ? `
     $("#f-issue").oninput = e => {
       d.issue = e.target.value;
       const se = seriesById(d.seriesId), l = $("#ilink");
-      if (se && l) l.innerHTML = ` <a href="${esc(d.issue ? inducksIssueUrl(se, d.issue) : "https://inducks.org/publication.php?c=" + encodeURIComponent(se.code))}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>`;
+      const ic = se && (se.code || (catEntry(se) || {}).code);
+      if (se && l) l.innerHTML = ic ? ` <a href="${esc(d.issue ? inducksIssueUrl(se, d.issue) : "https://inducks.org/publication.php?c=" + encodeURIComponent(ic))}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : "";
     };
     $("#addstory").onclick = () => { grab(); d.stories.push({ title: "", code: "", writer: "", artist: "", hero: "" }); render(); const rows = document.querySelectorAll(".story input"); rows.length && rows[rows.length - 5].focus(); };
     document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { grab(); d.stories.splice(+b.dataset.del, 1); render(); });
     $("#lookup") && ($("#lookup").onclick = async () => {
       grab(); const se = seriesById(d.seriesId); if (!se) return;
       const hit = await catalogueLookup(se, d.issue);
-      if (!hit) { toast("Issue not found in the catalogue"); return; }
+      if (!hit) { toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return; }
+      if (hit.ic) {   // compact catalogue format
+        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages;
+        d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
+        d.inducks = hit.ic; render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
+      }
       d.title = d.title || hit.title || ""; d.date = hit.date || d.date; d.pages = hit.pages || d.pages; d.coverUrl = d.coverUrl || hit.cover || "";
       d.stories = (hit.stories || []).map(s => ({ title: s.title || "", code: s.code || "", writer: s.writer || "", artist: s.artist || "", hero: s.hero || "" }));
       d.inducks = hit.issuecode || ""; render(); toast("Filled from INDUCKS");
@@ -911,7 +928,10 @@ VIEWS.series = {
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
       <div class="card stack"><h3>INDUCKS catalogue</h3>
-        <p class="small muted" style="margin:0">${S.catalogue ? "Loaded for " + Object.keys(S.catalogue.series || {}).length + " series" + (S.catalogue.built ? ", built " + esc(S.catalogue.built) : "") + ". Data from INDUCKS (inducks.org)." : "Not loaded yet. Once it is, Add comic fills in titles, dates and full story lists from INDUCKS."}</p></div>`;
+        ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
+          <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
+          <p class="small muted" style="margin:0">Story data from <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>, used under the Inducks licence. Thanks to its indexers.</p>`
+          : `<p class="small muted" style="margin:0">Not loaded yet. Once it is, Add fills in titles, dates and full story lists from INDUCKS.</p>`}</div>`;
   },
   bind() {
     const grab = () => document.querySelectorAll(".seriesrow").forEach(row => {

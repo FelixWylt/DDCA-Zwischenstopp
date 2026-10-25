@@ -1,0 +1,30 @@
+{
+  "_note": "Disney series to take from INDUCKS. 'series' is the series name in the app, 'code' a known INDUCKS code (optional), 'title' what to look for when there is no code.",
+  "targets": [
+    {"series": "Lustiges Taschenbuch", "country": "de", "code": "de/LTB", "title": "Lustiges Taschenbuch"},
+    {"series": "LTB Spezial", "country": "de", "title": "LTB Spezial"},
+    {"series": "Micky Maus Magazin", "country": "de", "code": "de/MM", "title": "Micky Maus"},
+    {"series": "Die tollsten Geschichten von Donald Duck Sonderheft", "country": "de", "title": "Die tollsten Geschichten von Donald Duck"},
+    {"series": "Lustiges Taschenbuch Maus-Edition", "country": "de", "title": "Lustiges Taschenbuch Maus-Edition"},
+    {"series": "Lustiges Taschenbuch Exklusiv", "country": "de", "title": "Lustiges Taschenbuch Exklusiv"},
+    {"series": "Lustiges Taschenbuch Galaxy", "country": "de", "title": "Lustiges Taschenbuch Galaxy"},
+    {"series": "Mega Micky Maus", "country": "de", "title": "Mega Micky Maus"},
+    {"series": "Micky Maus Comics", "country": "de", "title": "Micky Maus Comics"},
+    {"series": "Micky Maus präsentiert", "country": "de", "title": "Micky Maus präsentiert"},
+    {"series": "Entenhausen-Edition - Donald von Carl Barks", "country": "de", "title": "Entenhausen-Edition"},
+    {"series": "Topolino", "country": "it", "code": "it/TL", "title": "Topolino"},
+    {"series": "Topolino Giornale", "country": "it", "title": "Topolino giornale"},
+    {"series": "Kalle Anka & C:o", "country": "se", "code": "se/KA", "title": "Kalle Anka & C:o"},
+    {"series": "Kalle Ankas Pocket", "country": "se", "code": "se/KAP", "title": "Kalle Ankas Pocket"},
+    {"series": "Kalle Anka Extra", "country": "se", "title": "Kalle Anka Extra"},
+    {"series": "Kalle Ankas Bästa", "country": "se", "title": "Kalle Ankas Bästa"},
+    {"series": "Walt Disney's Serier", "country": "se", "title": "Walt Disney's serier"},
+    {"series": "Walt Disney's Godbitar", "country": "se", "title": "Walt Disney's godbitar"},
+    {"series": "Walt Disney's Klassiker", "country": "se", "title": "Walt Disney's klassiker"},
+    {"series": "Farbror Joakim", "country": "se", "title": "Farbror Joakim"},
+    {"series": "Björnligan", "country": "se", "title": "Björnligan"},
+    {"series": "Musse Pigg & C:o", "country": "se", "title": "Musse Pigg & C:o"},
+    {"series": "Musiksaga", "country": "se", "title": "Musiksaga"},
+    {"series": "Donald Duck & Co", "country": "no", "code": "no/DD", "title": "Donald Duck & Co"}
+  ]
+}

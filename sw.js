@@ -1,5 +1,7 @@
 // Dagobert Ducks Archiv service worker: keeps the app (and the INDUCKS catalogue) on the phone for offline use.
-const VERSION = "da-v10";
+const APP_VERSION = "da-v11";
+const CATALOGUE = "none";   // set by the INDUCKS catalogue job, so phones pick up a new catalogue
+const VERSION = APP_VERSION + "-" + CATALOGUE;
 const SHELL = [
   "./", "index.html", "styles.css", "app.js", "manifest.webmanifest", "vendor/papaparse.min.js",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png",
@@ -20,7 +22,7 @@ self.addEventListener("install", event => {
       if (r.ok) {
         const idx = await r.clone().json();
         await cache.put("catalogue/index.json", r);
-        const files = Object.values(idx.series || {}).map(s => "catalogue/" + s.file);
+        const files = [...new Set(Object.values(idx.series || {}).map(s => "catalogue/" + s.file))];
         await cache.addAll(files.map(u => new Request(u, { cache: "reload" })));
       }
     } catch (e) { /* no catalogue yet */ }
