@@ -793,8 +793,9 @@ VIEWS.backup = {
           <div><strong>USB cable:</strong> Save backup to Downloads, connect the phone, and copy the file from the phone's Download folder.</div>
         </div></div>
       <div class="card stack"><h3>Restore</h3>
-        <p class="small muted" style="margin:0">Use this on a new phone, after a reset, or to bring over the test version from claude.ai. Restoring updates matching comics and adds the rest. Nothing is deleted.</p>
-        <label style="max-width:420px"><span class="l">Backup file</span><input id="restore" type="file" accept=".json,.txt,application/json,text/plain"></label>
+        <p class="small muted" style="margin:0">Load a backup on a new phone or after a reset, or load a converted CLZ file. Nothing is deleted.</p>
+        <label class="filepick" for="restore"><span class="btn primary">Choose file…</span><span class="small muted">Look in Downloads. Any file can be picked; the app checks it before loading anything.</span></label>
+        <input id="restore" type="file" class="visually-hidden">
         <div id="restoreBox"></div></div>`;
   },
   bind() {

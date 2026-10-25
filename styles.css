@@ -178,3 +178,8 @@ th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; colo
 .yearhead { display: flex; justify-content: space-between; align-items: baseline; margin: 10px 2px 0; font-family: var(--f-mono); font-size: 0.8rem; font-weight: 500; color: var(--muted); letter-spacing: 0.04em; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 .yearhead:first-child { margin-top: 0; }
 .filters.two-col .q { grid-column: auto; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.filepick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; cursor: pointer; }
+.btn { display: inline-flex; align-items: center; font-weight: 700; border-radius: 8px; padding: 10px 16px; border: 1px solid var(--line); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+#restore:focus-visible + * , .filepick:focus-within .btn { outline: 2px solid var(--accent); outline-offset: 2px; }
