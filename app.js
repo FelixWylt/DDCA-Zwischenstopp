@@ -294,6 +294,55 @@ async function saveComic(c) {
   remember(body); askPersist(); announce();
   return body;
 }
+// ---- lots: several comics bought together for one price ----
+function lotFields(d) {
+  const lots = recentLots(), cur = d.lotId && d.lotId !== "new" ? lotInfo(d.lotId) : null;
+  if (cur && !lots.some(l => l.id === cur.id)) lots.unshift(cur);
+  const others = cur ? cur.members.filter(c => c.id !== d.id) : [];
+  const n = (cur ? cur.members.length + (cur.members.some(c => c.id === d.id) ? 0 : 1) : 1);
+  const total = parseAmt(d.lotTotal);
+  return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${lots.map(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`).join("")}</select></label>
+    <label><span class="l">Price for the whole lot</span><input id="f-lotTotal" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.lotTotal))}"></label>
+    <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together. Add the others with “Save and add next”, which keeps the lot."}</span>
+      ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
+}
+function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && c.status !== "wanted") : []; }
+function lotInfo(id) {
+  const m = lotMembers(id); if (!m.length) return null;
+  const f = m.slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))[0];
+  return { id, members: m, total: f.lotTotal, currency: f.lotCurrency || f.currency || "CHF", source: f.source || "", date: f.purchaseDate || "", created: m.reduce((a, c) => c.createdAt > a ? c.createdAt : a, "") };
+}
+function recentLots() {
+  const ids = [...new Set(S.comics.filter(c => c.lotId && c.status !== "wanted").map(c => c.lotId))];
+  return ids.map(lotInfo).filter(Boolean).sort((a, b) => String(b.created).localeCompare(String(a.created))).slice(0, 6);
+}
+function lotLabel(l) { return [money(l.total, l.currency), l.members.length + (l.members.length === 1 ? " comic" : " comics"), l.source, l.date ? niceDate(l.date) : ""].filter(Boolean).join(" · "); }
+// spreads the lot price over its comics to the cent: 20.00 for 3 -> 6.67, 6.67, 6.66
+async function rebalanceLot(id, total, currency) {
+  const m = lotMembers(id).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
+  if (!m.length) return;
+  const T = Math.round((typeof total === "number" ? total : +m[0].lotTotal || 0) * 100), cur = currency || m[0].lotCurrency || m[0].currency;
+  const units = m.reduce((a, c) => a + (c.copies || 1), 0), base = Math.floor(T / units);
+  let rest = T - base * units;
+  const out = m.map(c => { let cents = base; if (rest > 0 && (c.copies || 1) === 1) { cents++; rest--; } return Object.assign({}, c, { pricePaid: cents / 100, currency: cur, lotTotal: T / 100, lotCurrency: cur }); });
+  if (rest > 0) out[0].pricePaid = Math.round((out[0].pricePaid * 100 + rest / (out[0].copies || 1))) / 100;   // only when every comic has several copies
+  await saveMany(out, null, true); announce();
+}
+// before saving: settle the lot fields; returns false (with a message) if something is missing
+function prepareLot(d, c, before) {
+  if (c.status === "wanted" || !d.lotId) { c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; return true; }
+  const total = parseAmt(d.lotTotal);
+  if (!(typeof total === "number" && total > 0)) { toast("Enter the price for the whole lot"); $("#f-lotTotal") && $("#f-lotTotal").focus(); return false; }
+  if (d.lotId === "new") d.lotId = newId();
+  c.lotId = d.lotId; c.lotTotal = total; c.lotCurrency = c.currency; c.pricePaid = "";
+  return true;
+}
+async function afterLotSave(c, before) {
+  if (c.lotId) await rebalanceLot(c.lotId, c.lotTotal, c.currency);
+  if (before && before.lotId && before.lotId !== c.lotId) await rebalanceLot(before.lotId);   // left its old lot
+  const l = c.lotId && lotInfo(c.lotId);
+  return l ? " · lot of " + l.members.length + ", " + money(l.total / l.members.length, l.currency) + " each" : "";
+}
 async function saveMany(list, onProgress, keepDates) {
   // writes in chunks of 200 per transaction: fast and safe for big imports
   let done = 0;
@@ -565,6 +614,7 @@ function itemHtml(c, inSeries) {
     if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
   }
   if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
+  if (c.lotId && c.status !== "wanted") chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
   const numTxt = isBook ? c.issue : (c.issueLabel || c.issue || "");
   if (isNovel(c)) {   // a book: its cover (or its initial), then title, author and year
     const sub2 = [inSeries ? "" : c.seriesName && c.seriesName + (c.issue ? " " + c.issue : ""), c.author, c.date, c.lang].filter(Boolean).join(" · ");
@@ -908,7 +958,8 @@ ${isBook ? `
           <label><span class="l">Condition</span><select id="f-grade">${grades}</select></label>
           <label><span class="l">Copies</span><input id="f-copies" type="number" min="1" value="${esc(d.copies || 1)}"></label>
           <label><span class="l">Storage location</span><input id="f-location" value="${esc(d.location)}" placeholder="Box 3, shelf B"></label>
-          <label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>
+          <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
+          ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
           <label><span class="l">Estimated value</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
@@ -930,6 +981,16 @@ ${isBook ? `
     const d = S.draft;
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
+    $("#f-inlot") && ($("#f-inlot").onchange = e => {
+      grab();
+      if (e.target.checked) { const last = recentLots()[0]; d.lotId = "new"; d.lotTotal = d.lotTotal || ""; if (last && daysSince(last.created) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.currency = last.currency; } }
+      else { d.lotId = ""; d.lotTotal = ""; }
+      render(); $("#f-inlot") && $("#f-inlot").scrollIntoView({ block: "center" });
+    });
+    $("#f-lot") && ($("#f-lot").onchange = e => { grab(); d.lotId = e.target.value; const l = lotInfo(d.lotId); if (l) { d.lotTotal = l.total; d.currency = l.currency; if (!d.source) d.source = l.source; if (!d.purchaseDate) d.purchaseDate = l.date; } else d.lotTotal = ""; render(); });
+    // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
+    $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together. Add the others with “Save and add next”, which keeps the lot."; });
+    document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
     $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
     $("#comicscan") && ($("#comicscan").onclick = async () => {
       grab();
@@ -949,7 +1010,7 @@ ${isBook ? `
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
@@ -1077,11 +1138,14 @@ ${isBook ? `
       }
       const btns = document.querySelectorAll("#save, #saveNext, #skipNext"); btns.forEach(b => b.disabled = true);
       try {
+        const before = d.id ? S.comics.find(x => x.id === d.id) : null;
+        if (!prepareLot(d, c, before)) { btns.forEach(b => b.disabled = false); return; }
         const saved = await saveComic(c);
+        const lotNote = await afterLotSave(saved, before);
         for (const id of alsoGone) await deleteComic(id);
         if (saved.barcode && saved.seriesId) { S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {}); }
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
-        toast(moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
+        toast((moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive") + lotNote);
         if (next) {
           S.lastSaved = (target.short || target.name) + " " + p.label;
           goNext(c, p, se);
@@ -1095,7 +1159,7 @@ ${isBook ? `
       if (dbl) p = Object.assign({}, p, { n: +dbl[2] });   // after 2016-11-12 comes 2016/13
       const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
       S.editing = null;
-      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
+      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
       render(); $("#f-issue") && $("#f-issue").focus();
     };
     // skip a number you don't have: move on without saving anything
@@ -1120,11 +1184,14 @@ ${isBook ? `
       });
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
       try {
+        const before = d.id ? S.comics.find(x => x.id === d.id) : null;
+        if (!prepareLot(d, c, before)) { btns.forEach(b => b.disabled = false); return; }
         const saved = await saveComic(c);
-        toast(c.status === "wanted" ? "Book added to wishlist" : "Book saved");
+        const lotNote = await afterLotSave(saved, before);
+        toast((c.status === "wanted" ? "Book added to wishlist" : "Book saved") + lotNote);
         if (next) {
           S.editing = null;
-          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
+          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
           render(); $("#f-title") && $("#f-title").focus();
         } else { S.draft = null; S.editing = null; S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
@@ -1134,7 +1201,7 @@ ${isBook ? `
     $("#del") && ($("#del").onclick = () => {
       $("#confirmBox").innerHTML = '<div class="confirm"><span>Delete this ' + (d.kind === "book" ? "book" : "comic") + ' from your archive? This can\'t be undone.</span><button class="danger" id="yesdel">Delete</button><button id="nodel">Keep it</button></div>';
       $("#nodel").onclick = () => $("#confirmBox").innerHTML = "";
-      $("#yesdel").onclick = async () => { try { await deleteComic(d.id); toast("Deleted"); S.draft = null; S.editing = null; nav("collection"); } catch (e) { toast(errText(e)); } };
+      $("#yesdel").onclick = async () => { try { const lot = (S.comics.find(x => x.id === d.id) || {}).lotId; await deleteComic(d.id); if (lot) await rebalanceLot(lot); toast("Deleted"); S.draft = null; S.editing = null; nav("collection"); } catch (e) { toast(errText(e)); } };
     });
   }
 };
