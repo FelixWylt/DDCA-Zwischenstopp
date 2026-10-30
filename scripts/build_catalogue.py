@@ -77,8 +77,15 @@ for t in targets:
 
 # 2. issues ---------------------------------------------------------------------------
 issues = {}
+DIR_COUNTRIES = {"de", "se", "it", "no", "dk", "fi"}
+directory = {}   # every publication of these countries: how many issues, which years
 for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "title", "pages", "oldestdate"]):
     if r["publicationcode"] in chosen: issues[r["issuecode"]] = r
+    pc = r["publicationcode"]
+    if pubs.get(pc, {}).get("countrycode") in DIR_COUNTRIES:
+        e = directory.setdefault(pc, [0, 9999, 0]); e[0] += 1
+        y = int(r["oldestdate"][:4]) if re.match(r"\d{4}", r["oldestdate"] or "") else 0
+        if y: e[1] = min(e[1], y); e[2] = max(e[2], y)
 log(f"\nissues in chosen publications: {len(issues):,}")
 
 # 3. entries (contents of each issue) -------------------------------------------------
@@ -143,11 +150,15 @@ for code, t in chosen.items():
     json.dump({"code": code, "title": pubs[code]["title"], "issues": out}, open(os.path.join(out_dir, fname), "w", encoding="utf-8"),
               ensure_ascii=False, separators=(",", ":"))
     size = os.path.getsize(os.path.join(out_dir, fname))
-    index["series"][norm(t["series"])] = {"series": t["series"], "code": code, "title": pubs[code]["title"], "file": fname, "issues": len(out)}
+    index["series"][norm(t["series"])] = {"series": t["series"], "aliases": t.get("aliases", []), "code": code, "title": pubs[code]["title"], "file": fname, "issues": len(out)}
     sample = next(iter(sorted(out.items(), key=lambda kv: kv[1]["d"] or "")[len(out)//2:]), None)
     log(f"  {fname}: {len(out):,} issues, {size/1024:,.0f} KB" + (f"  e.g. {sample[0]} = {sample[1]['ic']} {sample[1]['d']} ({len(sample[1]['s'])} stories)" if sample else ""))
 
 json.dump(index, open(os.path.join(out_dir, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+# directory of all publications, so the app can say "this series is on INDUCKS as ..." even if it isn't in the catalogue
+dir_out = sorted([[pc, pubs[pc]["title"], n, (y0 if y0 < 9999 else 0), y1] for pc, (n, y0, y1) in directory.items()], key=lambda x: x[0])
+json.dump({"built": index["built"], "publications": dir_out}, open(os.path.join(out_dir, "directory.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+log(f"directory.json: {len(dir_out):,} publications ({', '.join(sorted(DIR_COUNTRIES))}), {os.path.getsize(os.path.join(out_dir, 'directory.json'))/1024:,.0f} KB")
 for lic in glob.glob(os.path.join(isv_dir, "*icen*")) + glob.glob(os.path.join(isv_dir, "..", "*icen*")):
     shutil.copy(lic, os.path.join(out_dir, "INDUCKS-" + os.path.basename(lic)))
     log(f"licence file copied: {os.path.basename(lic)}")

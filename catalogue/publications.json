@@ -1,5 +1,5 @@
 {
-  "_note": "Disney series to take from INDUCKS. 'series' is the series name in the app, 'code' a known INDUCKS code (optional), 'title' what to look for when there is no code.",
+  "_note": "Disney series to take from INDUCKS. 'series' is the series name in the app, 'aliases' other names it may have there, 'code' a known INDUCKS code (optional), 'title'/'titles' what to look for when there is no code.",
   "targets": [
     {
       "series": "Lustiges Taschenbuch",
@@ -63,7 +63,10 @@
     {
       "series": "Entenhausen-Edition - Donald von Carl Barks",
       "country": "de",
-      "title": "Entenhausen-Edition"
+      "title": "Entenhausen-Edition",
+      "aliases": [
+        "Entenhausen-Edition"
+      ]
     },
     {
       "series": "Topolino",
@@ -137,7 +140,329 @@
       "series": "Donald Duck & Co",
       "country": "no",
       "code": "no/DD",
-      "title": "Donald Duck & Co"
+      "title": "Donald Duck & Co",
+      "aliases": [
+        "Donald Duck & Co (Norway)"
+      ]
+    },
+    {
+      "series": "Micky Maus Zeitung",
+      "country": "de",
+      "title": "Micky Maus Zeitung",
+      "titles": [
+        "Micky Maus Zeitung",
+        "Micky Maus-Zeitung",
+        "Micky-Maus-Zeitung"
+      ]
+    },
+    {
+      "series": "Donald Duck & Co (Germany)",
+      "country": "de",
+      "title": "Donald Duck & Co",
+      "titles": [
+        "Donald Duck & Co",
+        "Donald Duck & Co."
+      ]
+    },
+    {
+      "series": "Paperino Mese",
+      "country": "it",
+      "title": "Paperino Mese",
+      "titles": [
+        "Paperino Mese",
+        "Paperino mese"
+      ]
+    },
+    {
+      "series": "Kalle Ankas julbok",
+      "country": "se",
+      "title": "Kalle Ankas julbok",
+      "titles": [
+        "Kalle Ankas julbok",
+        "Kalle Ankas Julbok",
+        "Julbok"
+      ]
+    },
+    {
+      "series": "Kalle Ankas Pocket Special",
+      "country": "se",
+      "title": "Kalle Ankas Pocket Special",
+      "titles": [
+        "Kalle Ankas Pocket Special",
+        "Kalle Ankas Pocket special",
+        "Kalle Ankas Specialpocket"
+      ]
+    },
+    {
+      "series": "Ankeborgs Samlarpocket",
+      "country": "se",
+      "title": "Ankeborgs Samlarpocket",
+      "titles": [
+        "Ankeborgs Samlarpocket",
+        "Ankeborgs samlarpocket"
+      ]
+    },
+    {
+      "series": "Stål-Kalle Pocket",
+      "country": "se",
+      "title": "Stål-Kalle Pocket",
+      "titles": [
+        "Stål-Kalle Pocket",
+        "Stål-Kalle pocket",
+        "Stål-Kalle"
+      ]
+    },
+    {
+      "series": "Farbror Joakims liv",
+      "country": "se",
+      "title": "Farbror Joakims liv"
+    },
+    {
+      "series": "Lustiges Taschenbuch Ultimate Phantomias",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Ultimate Phantomias",
+      "titles": [
+        "Lustiges Taschenbuch Ultimate Phantomias",
+        "LTB Ultimate Phantomias"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Young Comics",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Young Comics",
+      "titles": [
+        "Lustiges Taschenbuch Young Comics",
+        "LTB Young Comics"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Entenhausen Stars",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Entenhausen Stars",
+      "titles": [
+        "Lustiges Taschenbuch Entenhausen Stars",
+        "LTB Entenhausen Stars"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Crime",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Crime",
+      "titles": [
+        "Lustiges Taschenbuch Crime",
+        "LTB Crime"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Royal",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Royal",
+      "titles": [
+        "Lustiges Taschenbuch Royal",
+        "LTB Royal"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Sonderedition",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Sonderedition",
+      "titles": [
+        "Lustiges Taschenbuch Sonderedition",
+        "LTB Sonderedition"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch präsentiert",
+      "country": "de",
+      "title": "Lustiges Taschenbuch präsentiert",
+      "titles": [
+        "Lustiges Taschenbuch präsentiert",
+        "LTB präsentiert"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Enten-Edition",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Enten-Edition",
+      "titles": [
+        "Lustiges Taschenbuch Enten-Edition",
+        "LTB Enten-Edition"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Sonderband",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Sonderband",
+      "titles": [
+        "Lustiges Taschenbuch Sonderband",
+        "LTB Sonderband"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Extra",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Extra",
+      "titles": [
+        "Lustiges Taschenbuch Extra",
+        "LTB Extra"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Weltreise",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Weltreise",
+      "titles": [
+        "Lustiges Taschenbuch Weltreise",
+        "LTB Weltreise"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Classic Edition",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Classic Edition",
+      "titles": [
+        "Lustiges Taschenbuch Classic Edition",
+        "LTB Classic Edition"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Premium",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Premium",
+      "titles": [
+        "Lustiges Taschenbuch Premium",
+        "LTB Premium"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Halloween (Sonderband)",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Halloween",
+      "titles": [
+        "Lustiges Taschenbuch Halloween",
+        "LTB Halloween"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Advent (Sonderband)",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Advent",
+      "titles": [
+        "Lustiges Taschenbuch Advent",
+        "LTB Advent",
+        "Lustiges Taschenbuch Adventskalender"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Ostern (Sonderband)",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Ostern",
+      "titles": [
+        "Lustiges Taschenbuch Ostern",
+        "LTB Ostern"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Weihnachten (Sonderband)",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Weihnachten",
+      "titles": [
+        "Lustiges Taschenbuch Weihnachten",
+        "LTB Weihnachten"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Winter (Sonderband)",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Winter",
+      "titles": [
+        "Lustiges Taschenbuch Winter",
+        "LTB Winter"
+      ]
+    },
+    {
+      "series": "Lustiges Taschenbuch Premium Plus",
+      "country": "de",
+      "title": "Lustiges Taschenbuch Premium Plus",
+      "titles": [
+        "Lustiges Taschenbuch Premium Plus",
+        "Lustiges Taschenbuch Premium+",
+        "LTB Premium Plus"
+      ],
+      "aliases": [
+        "Lusties Taschenbuch Premium +",
+        "Lustiges Taschenbuch Premium +"
+      ]
+    },
+    {
+      "series": "Donald Duck (Taschenbuch)",
+      "country": "de",
+      "title": "Donald Duck (Taschenbuch)",
+      "titles": [
+        "Donald Duck (Taschenbuch)",
+        "Donald Duck Taschenbuch",
+        "Donald Duck"
+      ]
+    },
+    {
+      "series": "Mammut Comics",
+      "country": "de",
+      "title": "Mammut Comics",
+      "titles": [
+        "Mammut Comics",
+        "Mammut-Comics"
+      ]
+    },
+    {
+      "series": "Micky Maus Taschenbuch",
+      "country": "de",
+      "title": "Micky Maus Taschenbuch",
+      "titles": [
+        "Micky Maus Taschenbuch",
+        "Micky Maus Taschenbücher"
+      ]
+    },
+    {
+      "series": "Disney Special Books Panini",
+      "country": "it",
+      "title": "Disney Special Books",
+      "titles": [
+        "Disney Special Books",
+        "Disney Special Books Panini"
+      ]
+    },
+    {
+      "series": "Le Storie Di Novecento",
+      "country": "it",
+      "title": "Le storie di Novecento",
+      "titles": [
+        "Le storie di Novecento",
+        "Le Storie Di Novecento"
+      ]
+    },
+    {
+      "series": "Panzerknacker & Co",
+      "country": "de",
+      "title": "Panzerknacker & Co",
+      "titles": [
+        "Panzerknacker & Co",
+        "Panzerknacker & Co.",
+        "Die Panzerknacker"
+      ]
+    },
+    {
+      "series": "Le più belle storie Disney",
+      "country": "it",
+      "title": "Le più belle storie Disney",
+      "titles": [
+        "Le più belle storie Disney",
+        "Le più belle storie"
+      ]
+    },
+    {
+      "series": "Divertiamoci a stare bene",
+      "country": "it",
+      "title": "Divertiamoci a stare bene"
     }
   ]
 }

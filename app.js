@@ -389,7 +389,8 @@ async function loadCatalogueIndex() {
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
 function catEntry(se) {
   const all = S.catalogue && S.catalogue.series; if (!se || !all) return null;
-  return all[norm(se.name)] || (se.code && Object.values(all).find(x => x.code === se.code)) || null;
+  const n = norm(se.name), list = Object.values(all);
+  return (se.code && list.find(x => x.code === se.code)) || all[n] || list.find(x => (x.aliases || []).some(a => norm(a) === n)) || null;
 }
 async function catalogueFile(entry) {
   if (!S.catCache[entry.file]) {
