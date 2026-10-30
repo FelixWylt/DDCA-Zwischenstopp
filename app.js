@@ -2046,6 +2046,27 @@ async function duckipediaBulk() {
   refreshDkCard();
   toast("Duckipedia: " + S.dk.found + " comics got details");
 }
+// ---- INDUCKS status of a series: in the offline catalogue, only on INDUCKS, or not found ----
+function inducksCandidates(se) {
+  const dir = S.inducksDir; if (!dir) return [];
+  const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
+  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"] }[lang] || null;
+  return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && (norm(p[1]) === n || norm(p[1]).replace(/\s+\d+$/, "") === n || (n.length > 8 && norm(p[1]).includes(n))))
+    .sort((a, b) => b[2] - a[2]).slice(0, 3);
+}
+function inducksNote(se) {
+  if (se.publisher && se.publisher !== DISNEY) return "";
+  const ce = catEntry(se);
+  if (ce) return `In the offline INDUCKS catalogue as <a href="https://inducks.org/publication.php?c=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">${esc(ce.code)}</a> “${esc(ce.title)}”, ${Number(ce.issues).toLocaleString("de-CH")} issues.`;
+  if (!S.inducksDir) { loadInducksDir(); return "Checking INDUCKS…"; }
+  const c = inducksCandidates(se);
+  if (!c.length) return "Not found on INDUCKS under this name. If you know its INDUCKS code, enter it above.";
+  return "On INDUCKS, but not in your offline catalogue yet: " + c.map(p => `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(p[0])}" target="_blank" rel="noopener">${esc(p[0])}</a> “${esc(p[1])}” (${p[2]} issues${p[3] ? ", " + p[3] + (p[4] && p[4] !== p[3] ? "–" + p[4] : "") : ""})`).join("; ") + ". The catalogue on GitHub has to include it before Fill from INDUCKS works offline.";
+}
+async function loadInducksDir() {
+  if (S.inducksDirLoading) return; S.inducksDirLoading = true;
+  try { const r = await fetch("catalogue/directory.json"); if (r.ok) { S.inducksDir = (await r.json()).publications || []; document.querySelectorAll(".inducksnote[data-ni]").forEach(el => { const se = S.series[+el.dataset.ni]; if (se) el.innerHTML = inducksNote(se); }); } } catch (e) {}
+}
 // ---- one-time rearrangement: universe › country/format ----
 function arrangeCard() {
   const pending = arrangePending();
@@ -2095,6 +2116,7 @@ VIEWS.series = {
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
       <label><span class="l">Short</span><input data-k="short" value="${esc(s.short)}"></label>
       <label><span class="l">INDUCKS code</span><input data-k="code" class="mono" value="${esc(s.code)}" placeholder="de/LTB"></label>
+      <div class="wide small inducksnote" data-ni="${i}">${inducksNote(s)}</div>
       <label><span class="l">Country</span><input data-k="country" value="${esc(s.country)}" maxlength="3"></label>
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
@@ -2110,7 +2132,8 @@ VIEWS.series = {
       return `<details class="sgroup" data-u="${esc(u)}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${esc(u)}</span><span class="muted small">${n} series</span></summary>` +
         Object.keys(groups).sort(groupCompare).map(g => `<h4 class="sghead">${esc(g)}</h4>` + groups[g].map(i => {
           const s = S.series[i], k = sKey(s), cnt = used[s.id] || 0;
-          const meta = [s.short, cnt === 1 ? "1 comic" : cnt + " comics", s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", s.code].filter(Boolean).join(" · ");
+          const ce = catEntry(s);
+          const meta = [s.short, cnt === 1 ? "1 comic" : cnt + " comics", s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
           return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([s.name, s.short, s.group, u, s.code].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(seriesLabel(s) || "New series")}</span><span class="muted small">${esc(meta)}</span></summary>${fields(s, i)}</details>`;
         }).join("")).join("") + '</details>';
     }).join("");
