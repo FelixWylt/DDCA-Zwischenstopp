@@ -1028,10 +1028,38 @@ function backupFile(asText) {
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
+// data: links work in Chrome and in DuckDuckGo / other WebView browsers, which ignore blob: downloads
 function saveToDevice(file) {
-  const url = URL.createObjectURL(file), a = document.createElement("a");
-  a.href = url; a.download = file.name; document.body.appendChild(a); a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 2000);
+  return new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => {
+      const a = document.createElement("a");
+      a.href = String(r.result).replace(/^data:[^;,]*/, "data:application/octet-stream"); a.download = file.name;
+      document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 2000); res();
+    };
+    r.onerror = () => res();
+    r.readAsDataURL(file);
+  });
+}
+// backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
+const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
+async function backupText() {
+  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics });
+  let bytes = new TextEncoder().encode(json), gz = false;
+  if (typeof CompressionStream !== "undefined") {
+    bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
+  }
+  let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return TEXT_PREFIX + (gz ? "gz:" : "raw:") + btoa(bin);
+}
+async function readBackupText(txt) {
+  const t = String(txt || "").trim();
+  if (!t.startsWith(TEXT_PREFIX)) return t;   // a plain backup file
+  const body = t.slice(TEXT_PREFIX.length), gz = body.startsWith("gz:");
+  const bin = atob(body.replace(/^(gz|raw):/, "").replace(/\s+/g, ""));
+  const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+  if (!gz) return new TextDecoder().decode(bytes);
+  return await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
 }
 async function markBackedUp() { S.lastBackup = new Date().toISOString(); try { await setConfig("lastBackup", S.lastBackup); } catch (e) {} }
 function csvFile() {
@@ -1062,7 +1090,13 @@ VIEWS.backup = {
           <button ${canShare ? "" : 'class="primary" '}id="bsave"${n ? "" : " disabled"}>Save backup to Downloads</button>
           <button id="bcsv"${n ? "" : " disabled"}>Save table for Excel (.csv)</button>
         </div>
-        <div class="banner warn" id="bnote" hidden></div></div>
+        <div class="banner warn" id="bnote" hidden></div>
+        <details class="card" style="padding:12px"><summary><strong>Downloads don't work in my browser</strong></summary>
+          <div class="stack" style="margin-top:10px">
+            <p class="small" style="margin:0">Copy the whole archive as text instead, then paste it into an email to yourself (Gmail), a Google Keep note or a Google Docs document. To restore, paste that text under Restore.</p>
+            <div class="row"><button class="primary" id="bcopy"${n ? "" : " disabled"}>Copy backup as text</button></div>
+            <textarea id="bcopybox" class="mono" rows="4" readonly hidden></textarea>
+          </div></details></div>
       <div class="card stack"><h3>Getting the file to your Windows PC</h3>
         <div class="small" style="display:grid;gap:8px;max-width:68ch">
           <div><strong>Google Drive:</strong> Send backup, choose Drive, then download it on the PC from drive.google.com.</div>
@@ -1073,6 +1107,9 @@ VIEWS.backup = {
         <p class="small muted" style="margin:0">Load a backup on a new phone or after a reset, or load a converted CLZ file. Nothing is deleted.</p>
         <label class="filepick" for="restore"><span class="btn primary">Choose file…</span><span class="small muted">Look in Downloads. Any file can be picked; the app checks it before loading anything.</span></label>
         <input id="restore" type="file" class="visually-hidden">
+        <details><summary class="small"><strong>Restore from copied text</strong></summary>
+          <div class="stack" style="margin-top:8px"><textarea id="restoretext" rows="4" placeholder="Paste the text that starts with DAGOBERT-BACKUP"></textarea>
+          <div class="row"><button id="restoretextgo">Check pasted text</button></div></div></details>
         <div id="restoreBox"></div></div>`;
   },
   bind() {
@@ -1081,24 +1118,37 @@ VIEWS.backup = {
       const f = backupFile(true);
       let ok = false;
       try { ok = navigator.canShare({ files: [f] }); } catch (e) { ok = false; }
-      if (!ok) { saveToDevice(f); await markBackedUp(); render(); showBackupNote("This browser can't send files from an app, so the backup was saved to Downloads instead (" + f.name + "). To send it: open the Files app › Downloads, press and hold the file, then tap Share and choose Google Drive, Gmail or Quick Share."); return; }
+      if (!ok) { await saveToDevice(f); await markBackedUp(); render(); showBackupNote("This browser can't send files from an app, so the backup was saved to Downloads instead (" + f.name + "). To send it: open the Files app › Downloads, press and hold the file, then tap Share and choose Google Drive, Gmail or Quick Share."); return; }
       try {
         await navigator.share({ files: [f] });
         await markBackedUp(); toast("Backup sent"); render();
       } catch (e) {
         if (e && e.name === "AbortError") return;   // share menu closed without choosing
-        saveToDevice(f); await markBackedUp(); render();
+        await saveToDevice(f); await markBackedUp(); render();
         showBackupNote("Sending didn't work (" + (e && e.name || "error") + "), so the backup was saved to Downloads instead (" + f.name + "). To send it: open the Files app › Downloads, press and hold the file, then tap Share.");
       }
     });
-    $("#bsave") && ($("#bsave").onclick = async () => { const f = backupFile(false); saveToDevice(f); await markBackedUp(); render(); showBackupNote("Saved to Downloads as " + f.name + ". To send it: open the Files app › Downloads, press and hold the file, then tap Share."); });
-    $("#bcsv") && ($("#bcsv").onclick = () => { saveToDevice(csvFile()); toast("Table saved to Downloads"); });
-    $("#restore").onchange = e => {
-      const file = e.target.files[0]; if (!file) return;
+    $("#bsave") && ($("#bsave").onclick = async () => { const f = backupFile(false); await saveToDevice(f); await markBackedUp(); render(); showBackupNote("Saved to Downloads as " + f.name + ". To send it: open the Files app › Downloads, press and hold the file, then tap Share."); });
+    $("#bcsv") && ($("#bcsv").onclick = async () => { await saveToDevice(csvFile()); toast("Table saved to Downloads"); });
+    $("#bcopy") && ($("#bcopy").onclick = async () => {
+      const btn = $("#bcopy"); btn.disabled = true;
+      try {
+        const txt = await backupText(), box = $("#bcopybox");
+        let copied = false;
+        try { await navigator.clipboard.writeText(txt); copied = true; } catch (e) {}
+        box.value = txt; box.hidden = false;
+        if (!copied) { box.focus(); box.select(); }
+        await markBackedUp();
+        showBackupNote(copied ? "Backup copied (" + Math.round(txt.length / 1024) + " KB of text). Now open Gmail, Keep or Docs and paste it." : "Your browser didn't allow copying automatically. The text is selected in the box: press and hold it, choose Copy, then paste it into Gmail, Keep or Docs.");
+      } catch (e) { showBackupNote("Copying didn't work (" + (e && e.name || "error") + ")."); }
+      btn.disabled = false;
+    });
+    const restoreFrom = async (raw, clear) => {
       const box = $("#restoreBox");
-      file.text().then(txt => {
+      let txt = raw; try { txt = await readBackupText(raw); } catch (x) { txt = ""; }
+      {
         let b; try { b = JSON.parse(txt); } catch (x) { b = null; }
-        if (!b || !["dagobert-archiv", "entenhausen-archive"].includes(b.app) || !Array.isArray(b.comics)) { box.innerHTML = '<div class="banner warn">This file isn\'t a Dagobert Ducks Archiv backup. Choose a file made with Save or Send backup.</div>'; return; }
+        if (!b || !["dagobert-archiv", "entenhausen-archive"].includes(b.app) || !Array.isArray(b.comics)) { box.innerHTML = '<div class="banner warn">This isn\'t a Dagobert Ducks Archiv backup. Choose a file made with Save or Send backup, or paste the complete copied text.</div>'; return; }
         const isClz = /^clz/.test(b.source || ""), ids = new Set(b.comics.map(c => c && c.id));
         const have = new Set(S.comics.map(c => c.id));
         const fresh = isClz ? b.comics.filter(c => c && !have.has(c.id)) : b.comics;
@@ -1108,7 +1158,7 @@ VIEWS.backup = {
         box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + " entries from " + esc(stampDate(b.exported)) + "?"}</span>
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
           <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
-        $("#norest").onclick = () => { box.innerHTML = ""; e.target.value = ""; };
+        $("#norest").onclick = () => { box.innerHTML = ""; clear(); };
         $("#yesrest").onclick = async () => {
           try {
             if (oldClz.length && $("#rmold") && $("#rmold").checked) {
@@ -1122,8 +1172,10 @@ VIEWS.backup = {
             await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + " entries"); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
-      });
+      }
     };
+    $("#restore").onchange = e => { const file = e.target.files[0]; if (file) file.text().then(t => restoreFrom(t, () => { e.target.value = ""; })); };
+    $("#restoretextgo") && ($("#restoretextgo").onclick = () => restoreFrom($("#restoretext").value, () => { $("#restoretext").value = ""; }));
   }
 };
 
