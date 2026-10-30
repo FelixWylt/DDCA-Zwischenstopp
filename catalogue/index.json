@@ -199,6 +199,14 @@
    "file": "inducks-no-DD.json",
    "issues": 4066
   },
+  "micky maus zeitung": {
+   "series": "Micky Maus Zeitung",
+   "aliases": [],
+   "code": "ch/MMZ",
+   "title": "Micky Maus Zeitung",
+   "file": "inducks-ch-MMZ.json",
+   "issues": 19
+  },
   "donald duck co germany": {
    "series": "Donald Duck & Co (Germany)",
    "aliases": [],
@@ -247,6 +255,14 @@
    "file": "inducks-se-SK.json",
    "issues": 113
   },
+  "farbror joakims liv": {
+   "series": "Farbror Joakims liv",
+   "aliases": [],
+   "code": "se/FJL",
+   "title": "Joakim von Anka: Farbror Joakims Liv",
+   "file": "inducks-se-FJL.json",
+   "issues": 4
+  },
   "lustiges taschenbuch ultimate phantomias": {
    "series": "Lustiges Taschenbuch Ultimate Phantomias",
    "aliases": [],
@@ -278,6 +294,14 @@
    "title": "Lustiges Taschenbuch Crime",
    "file": "inducks-de-LTBCR.json",
    "issues": 30
+  },
+  "lustiges taschenbuch royal": {
+   "series": "Lustiges Taschenbuch Royal",
+   "aliases": [],
+   "code": "de/LTBRO",
+   "title": "Lustiges Taschenbuch Sonderband: Royal",
+   "file": "inducks-de-LTBRO.json",
+   "issues": 7
   },
   "lustiges taschenbuch sonderedition": {
    "series": "Lustiges Taschenbuch Sonderedition",
@@ -343,6 +367,57 @@
    "file": "inducks-de-LTBPR.json",
    "issues": 51
   },
+  "lustiges taschenbuch halloween sonderband": {
+   "series": "Lustiges Taschenbuch Halloween (Sonderband)",
+   "aliases": [],
+   "code": "de/LTBHA",
+   "title": "Lustiges Taschenbuch Sonderband: Halloween",
+   "file": "inducks-de-LTBHA.json",
+   "issues": 12
+  },
+  "lustiges taschenbuch advent sonderband": {
+   "series": "Lustiges Taschenbuch Advent (Sonderband)",
+   "aliases": [],
+   "code": "de/LTBAV",
+   "title": "Lustiges Taschenbuch Sonderband: Advent",
+   "file": "inducks-de-LTBAV.json",
+   "issues": 8
+  },
+  "lustiges taschenbuch ostern sonderband": {
+   "series": "Lustiges Taschenbuch Ostern (Sonderband)",
+   "aliases": [],
+   "code": "de/LTBOS",
+   "title": "Lustiges Taschenbuch Sonderband: Ostern",
+   "file": "inducks-de-LTBOS.json",
+   "issues": 18
+  },
+  "lustiges taschenbuch weihnachten sonderband": {
+   "series": "Lustiges Taschenbuch Weihnachten (Sonderband)",
+   "aliases": [],
+   "code": "de/LTBSB",
+   "title": "Lustiges Taschenbuch Sonderband: Weihnachten",
+   "file": "inducks-de-LTBSB.json",
+   "issues": 31
+  },
+  "lustiges taschenbuch winter sonderband": {
+   "series": "Lustiges Taschenbuch Winter (Sonderband)",
+   "aliases": [],
+   "code": "de/LTBW",
+   "title": "Lustiges Taschenbuch Sonderband: Winter",
+   "file": "inducks-de-LTBW.json",
+   "issues": 8
+  },
+  "lustiges taschenbuch premium plus": {
+   "series": "Lustiges Taschenbuch Premium Plus",
+   "aliases": [
+    "Lusties Taschenbuch Premium +",
+    "Lustiges Taschenbuch Premium +"
+   ],
+   "code": "de/LTBPRP",
+   "title": "Lustiges Taschenbuch Premium Plus",
+   "file": "inducks-de-LTBPRP.json",
+   "issues": 8
+  },
   "donald duck taschenbuch": {
    "series": "Donald Duck (Taschenbuch)",
    "aliases": [],
@@ -350,6 +425,14 @@
    "title": "Donald Duck",
    "file": "inducks-de-DD.json",
    "issues": 533
+  },
+  "mammut comics": {
+   "series": "Mammut Comics",
+   "aliases": [],
+   "code": "de/MC",
+   "title": "Mammut Comics",
+   "file": "inducks-de-MC.json",
+   "issues": 352
   },
   "micky maus taschenbuch": {
    "series": "Micky Maus Taschenbuch",
