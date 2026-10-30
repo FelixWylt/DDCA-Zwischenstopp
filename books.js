@@ -53,6 +53,7 @@
         pages, lang: langName(first("041", "a")),
         // a publisher's paperback number (dtv 21412, rororo 23315) isn't a book series
         ...(+tidy(first("490", "v")).replace(/\D/g, "") > 200 ? {} : { series: tidy(first("490", "a")), volume: tidy(first("490", "v")) }),
+        rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
         genre: fields("655").map(f => sub(f, "a")[0]).filter(Boolean).join(", "), isbn
       };
     });
@@ -100,7 +101,7 @@
   }
 
   // ---- merge: national libraries first, then Open Library, then Google ----
-  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "genre", "cover", "isbn"];
+  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
     KEYS.forEach(k => { for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });

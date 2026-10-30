@@ -246,7 +246,10 @@ async function boot() {
     if (Array.isArray(list)) { S.series = list.map(x => Object.assign({}, x)); S.seriesSaved = true; }
     S.lastBackup = await getConfig("lastBackup") || null;
     S.lastSeries = await getConfig("lastSeries") || null;
+    S.barcodes = await getConfig("barcodes") || {};
+    S.bookSizes = await getConfig("bookSizes") || {};
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
+    S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     await adoptLooseSeries();
     S.dbState = "ready";
   } catch (e) { S.dbState = "error"; S.dbError = e; }
@@ -735,6 +738,57 @@ function seriesOptions(selected, label) {
   return Object.keys(groups).sort((a, b) => pubCompare(key(a)[0], key(b)[0]) || groupCompare(key(a)[1], key(b)[1])).map(g =>
     `<optgroup label="${esc(g)}">` + groups[g].map(s => `<option value="${esc(s.id)}"${selected === s.id ? " selected" : ""}>${esc(label(s))}</option>`).join("") + "</optgroup>").join("");
 }
+function bookSeriesOptions(selected) {
+  const names = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); });
+  const keys = Object.keys(names).sort((a, b) => a.localeCompare(b, "de"));
+  return keys.length ? '<optgroup label="Book series">' + keys.map(n => `<option value="${esc("book:" + n)}"${selected === "book:" + n ? " selected" : ""}>${esc(n)}${names[n] ? "" : " (comic books)"}</option>`).join("") + "</optgroup>" : "";
+}
+// gap grid for a book series: volumes 1..n
+function bookGapsHtml() {
+  const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
+  const vol = c => { const m = /^\s*(\d{1,4})\s*$/.exec(String(c.issue || "")); return m ? +m[1] : 0; };
+  const own = new Map(), want = new Map();
+  mine.forEach(c => { const v = vol(c); if (v) (c.status === "wanted" ? want : own).set(v, c); });
+  const sizes = S.bookSizes || {}, maxHave = Math.max(0, ...mine.map(vol)), size = Math.max(+sizes[name] || 0, maxHave);
+  let cells = "";
+  for (let n = 1; n <= size; n++) {
+    const o = own.get(n), w = want.get(n);
+    cells += `<button class="cell ${o && w ? "owned conflict" : o ? "owned" : w ? "wanted" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
+  }
+  const noVol = mine.filter(c => !vol(c));
+  const ownCount = [...own.keys()].length, wantCount = [...want.keys()].filter(k => !own.has(k)).length;
+  const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
+  return `
+    <div><h2>Gaps &amp; wishlist</h2><p class="lede">Every volume of a book series at a glance. Tap a missing number to add it as owned or put it on your wishlist.</p></div>
+    <div class="card stack">
+      <div class="row between">
+        <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${seriesOptions("", s => s.name)}${bookSeriesOptions(S.gapSeries)}</select></label>
+        <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, size - ownCount)} missing</span></div>
+      </div>
+      <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
+      ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
+      <div id="cellpick"></div>
+      ${size ? `<div class="cells">${cells}</div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}
+    </div>
+    <div class="stack"><h3>Full wishlist</h3>${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3></div>'}</div>`;
+}
+function bindBookGaps() {
+  const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
+  const proto = mine[0] || {};
+  $("#gs").onchange = e => { S.gapSeries = e.target.value; render(); };
+  $("#bsizego").onclick = async () => { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: parseInt($("#bsize").value, 10) || "" }); await setConfig("bookSizes", S.bookSizes); toast("Saved"); render(); };
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
+  document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
+  document.querySelectorAll(".cell[data-vol]").forEach(b => b.onclick = () => {
+    if (b.dataset.id) { S.editing = b.dataset.id; S.draft = null; nav("add"); return; }
+    const v = b.dataset.vol, base = { kind: "book", bookType: proto.bookType || "", seriesId: "_book", seriesName: name, issue: v, author: proto.author || "", publisher: proto.publisher || "", lang: proto.lang || "" };
+    const box = $("#cellpick");
+    box.innerHTML = `<div class="confirm"><strong>${esc(name)} ${esc(v)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist…</button><button class="ghost" id="cpX">Cancel</button></div>`;
+    $("#cpX").onclick = () => box.innerHTML = "";
+    $("#cpOwn").onclick = () => { S.editing = null; S.draft = blankDraft(base); nav("add"); };
+    $("#cpWant").onclick = () => { S.editing = null; S.draft = blankDraft(Object.assign(base, { status: "wanted" })); nav("add"); };
+  });
+}
 function duckipediaCard(c) {
   const dk = c.duckipedia, i = dk.issue || {};
   const facts = [["Title", i.title], ["Released", i.date], ["Price", i.price], ["Editor-in-chief", i.editor], ["Translation", i.translator], ["Pages", i.pages], ["ISBN", i.isbn], ["Notes", i.notes]].filter(x => x[1]);
@@ -821,6 +875,8 @@ ${isBook ? `
           <label><span class="l">Issue</span><input id="f-issue" placeholder="${esc(hint)}" value="${esc(d.issue)}"></label>
           <button id="lookup" ${catReady ? "" : "disabled"}>Fill from INDUCKS</button>
         </div>
+        <div class="row" style="gap:8px"><button class="ghost" id="comicscan" type="button">Scan barcode or ISBN</button></div>
+        <div id="bookmsg"></div>
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
         <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from INDUCKS." : S.catalogue ? "This series isn't in the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
           ${!isBook && window.Duckipedia && Duckipedia.candidates(se, { issueLabel: "1" }).length ? `<button class="ghost" id="dkfetch" type="button">${d.duckipedia ? "Refresh" : "Get"} details from Duckipedia</button>` : ""}
@@ -830,6 +886,7 @@ ${isBook ? `
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
+          <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
         </div>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.seriesId === d.seriesId).map(c => c.publisher).concat(S.comics.map(c => c.publisher)).filter(Boolean))].slice(0, 40).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
@@ -874,12 +931,17 @@ ${isBook ? `
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
+    $("#comicscan") && ($("#comicscan").onclick = async () => {
+      grab();
+      try { const hit = await scanBarcode({ ext: true }); if (hit) await comicFromCode(d, hit.code, hit.ext); }
+      catch (e) { bookMsg('<div class="banner warn">' + (e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "The camera isn't allowed for this app. Allow it in the browser's site settings, then try again." : "The camera couldn't start. Type the number instead.") + '</div>'); }
+    });
     $("#booksearch") && ($("#booksearch").onclick = () => searchBooks(d, grab));
     $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); fillFromIsbn(d, grab); } });
     $("#isbnscan") && ($("#isbnscan").onclick = async () => {
       grab();
       try {
-        const code = await scanBarcode(); if (!code) return;
+        const hit = await scanBarcode(); if (!hit) return; const code = hit.code;
         if (!/^97[89]/.test(code)) { bookMsg('<div class="banner warn">That barcode (' + esc(code) + ') isn\'t an ISBN. Books have one starting with 978 or 979; try the other barcode, or type the ISBN.</div>'); return; }
         d.isbn = code; $("#f-isbn").value = code; fillFromIsbn(d, grab);
       } catch (e) {
@@ -954,6 +1016,11 @@ ${isBook ? `
     const doSave = async (next) => {
       grab();
       if (d.kind === "book") return saveBook(next);
+      // the ISBN-or-barcode field: an ISBN, or a magazine barcode with its add-on
+      { const raw = String(d.isbn || "").trim(), digits = raw.replace(/[^0-9X ]/gi, "").trim();
+        if (!raw) { d.isbn = ""; }
+        else if (window.Books && Books.normalize(raw)) { d.isbn = Books.normalize(raw); d.barcode = ""; d.barcodeExt = ""; }
+        else { const m = /^(\d{8,13})(?:\s+(\d{2}|\d{5}))?$/.exec(digits); if (m) { d.barcode = m[1]; d.barcodeExt = m[2] || d.barcodeExt || ""; d.isbn = ""; } } }
       const se = seriesById(d.seriesId);
       d.issue = String(d.issue || ""); d.seriesName = String(d.seriesName || "");
       if (!d.issue.trim() && se && se.numbering === "year" && !(d.id && !String((S.comics.find(x => x.id === d.id) || {}).issue || "").trim())) { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
@@ -1012,6 +1079,7 @@ ${isBook ? `
       try {
         const saved = await saveComic(c);
         for (const id of alsoGone) await deleteComic(id);
+        if (saved.barcode && saved.seriesId) { S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {}); }
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
         toast(moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
         if (next) {
@@ -1171,6 +1239,7 @@ function wishlistBySeries(wl) {
 // ---- Gaps & wishlist ----
 VIEWS.gaps = {
   html() {
+    if (String(S.gapSeries || "").startsWith("book:") && S.comics.some(c => c.kind === "book" && c.seriesName === S.gapSeries.slice(5))) return bookGapsHtml();
     const se = seriesById(S.gapSeries) || S.series[0];
     if (!se) return '<h2>Gaps &amp; wishlist</h2><div class="empty"><h3>No series set up</h3><p>Add your series under the Series tab first.</p></div>';
     const mine = S.comics.filter(c => c.seriesId === se.id);
@@ -1183,7 +1252,7 @@ VIEWS.gaps = {
     const live = mine.filter(c => !c.facsimile), clash = new Set();
     live.forEach(a => { if (a.status === "wanted") return; live.forEach(b => { if (b.status === "wanted" && sameSlot(a.issueLabel || a.issue, b.issueLabel || b.issue)) { clash.add(a.id); clash.add(b.id); } }); });
     const clashSq = new Set(live.filter(c => clash.has(c.id)).flatMap(c => covered(c.issueLabel || c.issue)));
-    const opts = seriesOptions(se.id, s => s.name);
+    const opts = seriesOptions(se.id, s => s.name) + bookSeriesOptions("");
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
     const tag = se.short || se.name;
     const gridLabels = new Set();
@@ -1270,6 +1339,7 @@ VIEWS.gaps = {
       </div>`;
   },
   bind() {
+    if (String(S.gapSeries || "").startsWith("book:") && $("#bsize")) return bindBookGaps();
     $("#gs") && ($("#gs").onchange = e => { S.gapSeries = e.target.value; render(); });
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
@@ -1468,9 +1538,86 @@ async function searchBooks(d, grab) {
     render(); bookMsg('<div class="banner ok">Filled in. Check the details and save.</div>');
   });
 }
+// a scanned comic: ISBN (pocket books like LTB) -> library record -> series and number;
+// magazine barcode -> the series it was saved with before, issue number from the add-on
+function seriesFromName(name) {
+  const n = norm(name); if (!n) return null;
+  return S.series.find(s => norm(s.name) === n || norm(s.short) === n) || S.series.find(s => n.startsWith(norm(s.name)) && norm(s.name).length > 5) || null;
+}
+async function comicFromCode(d, code, ext) {
+  const isbn = window.Books && Books.normalize(code);
+  if (isbn && /^97[89]/.test(code)) {
+    const known = S.comics.find(c => c.id !== d.id && c.isbn && Books.normalize(c.isbn) === isbn);
+    if (known) { d.seriesId = known.seriesId; d.seriesName = known.seriesName; d.issue = known.issueLabel || known.issue; d.isbn = isbn; render(); bookMsg(`<div class="banner warn">You already have this ISBN: ${esc(comicTag(known))}${known.status === "wanted" ? " (on your wishlist)" : ""}. Saving asks what to do with it.</div>`); return; }
+    bookMsg('<div class="banner">Looking up ISBN ' + isbn + '…</div>');
+    const res = await Books.lookupIsbn(isbn), r = res.data;
+    d.isbn = isbn;
+    if (!r) { render(); bookMsg(`<div class="banner warn">${res.offline ? "Looking up the ISBN needs an internet connection." : "The library databases don't know ISBN " + isbn + "."} Pick the series and number yourself; the ISBN is saved with the comic.</div>`); return; }
+    const se = seriesFromName(r.rawSeries || r.series), vol = String(r.rawVolume || r.volume || "").replace(/^\D+/, "").replace(/\D.*$/, "");
+    if (se && vol) {
+      d.seriesId = se.id; d.seriesName = se.name; d.issue = vol; render();
+      bookMsg(`<div class="banner ok">ISBN ${isbn} is ${esc((se.short || se.name) + " " + vol)}${r.title ? " – " + esc(r.title) : ""}.${catEntry(se) ? " Filling in from INDUCKS…" : ""}</div>`);
+      if (catEntry(se)) setTimeout(() => $("#lookup") && $("#lookup").click(), 50);
+    } else {
+      if (r.title && !d.title) d.title = r.title; render();
+      bookMsg(`<div class="banner warn">ISBN ${isbn}: ${esc(r.title || "found")}${r.rawSeries ? " (" + esc(r.rawSeries + (r.rawVolume ? " " + r.rawVolume : "")) + ")" : ""}. That series isn't one of yours yet: pick the series and number, or add the series under Series. If it's a single volume, add it as a <strong>Comic book</strong> instead.</div>`);
+    }
+    return;
+  }
+  // magazine barcode
+  const map = S.barcodes || {}, sid = map[code];
+  d.barcode = code; d.barcodeExt = ext || ""; d.isbn = "";
+  const se = sid && seriesById(sid);
+  if (!se) { render(); bookMsg(`<div class="banner">Barcode ${esc(code)}${ext ? " with add-on " + esc(ext) : ""} isn't known yet. Pick the series and the number and save: from then on the app recognises this magazine's barcode.</div>`); return; }
+  d.seriesId = se.id; d.seriesName = se.name;
+  const n = ext ? +ext.slice(-2) : 0;   // the add-on's last two digits are the issue number
+  if (n) d.issue = se.numbering === "year" ? (d.issue && /^\d{4}/.test(d.issue) ? d.issue.slice(0, 4) : String(new Date().getFullYear())) + "/" + String(n).padStart(2, "0") : String(n);
+  render();
+  bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}${n ? ", number " + n : ""}.${ext && ext.length === 5 ? " The add-on has 5 digits (" + esc(ext) + "); check that the number is right." : ""}${se.numbering === "year" && n ? " Check the year: the barcode only tells the number." : n ? "" : " The add-on with the number wasn't readable; type the number."}</div>`);
+}
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) return res(); const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = () => rej(new Error("load")); document.head.appendChild(t); }); }
 // camera barcode scanner: the browser's own detector if it has one, otherwise ZXing (stored with the app)
-async function scanBarcode() {
+// The 2- or 5-digit add-on right of a magazine barcode (EAN-2 / EAN-5), read straight from the
+// picture, since the bundled ZXing doesn't return it. canvas: the frame; x0: where the main barcode ends; y: its row.
+const ADDON_L = [[3,2,1,1],[2,2,2,1],[2,1,2,2],[1,4,1,1],[1,1,3,2],[1,2,3,1],[1,1,1,4],[1,3,1,2],[1,2,1,3],[3,1,1,2]];
+const ADDON_G = ADDON_L.map(p => p.slice().reverse());
+const ADDON5_PARITY = ["GGLLL", "GLGLL", "GLLGL", "GLLLG", "LGGLL", "LLGGL", "LLLGG", "LGLGL", "LGLLG", "LLGLG"];
+function readAddon(canvas, x0, y) {
+  const g = canvas.getContext("2d"), w = canvas.width;
+  for (const dy of [0, -6, 6, -12, 12, -20, 20]) {
+    const yy = Math.round(y + dy); if (yy < 0 || yy >= canvas.height || x0 >= w - 10) continue;
+    const px = g.getImageData(Math.round(x0), yy, w - Math.round(x0), 1).data, lum = [];
+    for (let i = 0; i < px.length; i += 4) lum.push(px[i] * 0.3 + px[i + 1] * 0.59 + px[i + 2] * 0.11);
+    const mn = Math.min(...lum), mx = Math.max(...lum); if (mx - mn < 60) continue;
+    const thr = (mn + mx) / 2, runs = [];   // [isBar, length]
+    lum.forEach(v => { const bar = v < thr; if (runs.length && runs[runs.length - 1][0] === bar) runs[runs.length - 1][1]++; else runs.push([bar, 1]); });
+    for (let s0 = 0; s0 < Math.min(runs.length, 8); s0++) {
+      if (!runs[s0][0] || s0 + 3 > runs.length) continue;
+      const [a, b2, c] = [runs[s0][1], runs[s0 + 1][1], runs[s0 + 2] && runs[s0 + 2][1]];
+      if (!c || !runs[s0 + 2][0]) continue;
+      const mod = (a + b2 + c) / 4; if (Math.abs(a - mod) > mod * 0.6 || Math.abs(b2 - mod) > mod * 0.6 || Math.abs(c - 2 * mod) > mod * 0.9) continue;
+      for (const n of [5, 2]) {
+        let i = s0 + 3, digits = "", par = "", ok = true;
+        for (let k = 0; k < n && ok; k++) {
+          if (k) { i += 2; }   // separator: one space, one bar
+          const r = runs.slice(i, i + 4).map(x => x[1]); if (r.length < 4) { ok = false; break; }
+          const sum = r.reduce((x, y) => x + y, 0), sc = r.map(x => x * 7 / sum);
+          let best = null;
+          [["L", ADDON_L], ["G", ADDON_G]].forEach(([set, pats]) => pats.forEach((pat, dgt) => { const e = pat.reduce((acc, m, j) => acc + (m - sc[j]) ** 2, 0); if (!best || e < best.e) best = { e, dgt, set }; }));
+          if (!best || best.e > 1.6) ok = false; else { digits += best.dgt; par += best.set; }
+          i += 4;
+        }
+        if (!ok) continue;
+        if (n === 2 && ["LL", "LG", "GL", "GG"][+digits % 4] === par) return digits;
+        if (n === 5) { const d = digits.split("").map(Number), chk = (3 * (d[0] + d[2] + d[4]) + 9 * (d[1] + d[3])) % 10; if (ADDON5_PARITY[chk] === par) return digits; }
+      }
+    }
+  }
+  return "";
+}
+// resolves to { code, ext } (ext: the small 2- or 5-digit add-on magazines print next to the barcode), or null
+async function scanBarcode(opts) {
+  const wantExt = !!(opts && opts.ext);
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("nocamera");
   const box = document.createElement("div"); box.className = "scanner";
   box.innerHTML = '<div class="scanframe"><video playsinline muted></video><div class="scanline"></div></div><p>Hold the barcode on the back of the book inside the frame.</p><button class="primary" type="button">Cancel</button>';
@@ -1480,14 +1627,19 @@ async function scanBarcode() {
   const close = () => { stop = true; if (stream) stream.getTracks().forEach(t => t.stop()); box.remove(); };
   return new Promise(async (resolve, reject) => {
     box.querySelector("button").onclick = () => { close(); resolve(null); };
-    const done = code => { close(); resolve(code); };
+    let firstHit = 0, best = null;
+    const done = (code, ext) => {
+      // magazines: keep looking briefly for the add-on, which tells the issue number
+      if (wantExt && !ext && !/^97[89]/.test(code)) { best = best || { code, ext: "" }; if (!firstHit) firstHit = Date.now(); if (Date.now() - firstHit < 1800) return false; }
+      close(); resolve(ext || !best ? { code, ext: ext || "" } : best); return true;
+    };
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false });
       video.srcObject = stream; await video.play();
       let native = null;
-      if ("BarcodeDetector" in window) { try { const f = await BarcodeDetector.getSupportedFormats(); if (f.includes("ean_13")) native = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a"] }); } catch (e) {} }
+      if ("BarcodeDetector" in window && !wantExt) { try { const f = await BarcodeDetector.getSupportedFormats(); if (f.includes("ean_13")) native = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a"] }); } catch (e) {} }
       if (native) {
-        const tick = async () => { if (stop) return; try { const r = await native.detect(video); const hit = r.find(x => /^97[89]\d{10}$/.test(x.rawValue)) || r[0]; if (hit) return done(hit.rawValue); } catch (e) {} setTimeout(tick, 200); };
+        const tick = async () => { if (stop) return; try { const r = await native.detect(video); const hit = r.find(x => /^97[89]\d{10}$/.test(x.rawValue)) || r[0]; if (hit && done(hit.rawValue)) return; } catch (e) {} setTimeout(tick, 200); };
         tick();
       } else {
         await loadScript("vendor/zxing.min.js");
@@ -1502,7 +1654,14 @@ async function scanBarcode() {
             const bw = Math.round(w * 0.9), bh = Math.round(h * 0.45);
             canvas.width = bw; canvas.height = bh;
             g.drawImage(video, (w - bw) / 2, (h - bh) / 2, bw, bh, 0, 0, bw, bh);
-            try { const r = reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(canvas)))); if (r) return done(r.getText()); } catch (e) { /* nothing found in this frame */ }
+            try {
+              const r = reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(canvas))));
+              if (r) {
+                const m = r.getResultMetadata(); let ext = m && m.get(ZXing.ResultMetadataType.UPC_EAN_EXTENSION);
+                if (!ext && wantExt) { const pts = r.getResultPoints() || []; if (pts.length) ext = readAddon(canvas, Math.max(...pts.map(q => q.getX())) + 2, pts.reduce((a, q) => a + q.getY(), 0) / pts.length); }
+                if (done(r.getText(), ext ? String(ext) : "")) return;
+              }
+            } catch (e) { /* nothing found in this frame */ }
           }
           setTimeout(tick, 220);
         };
