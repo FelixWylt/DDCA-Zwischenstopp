@@ -11,7 +11,10 @@ const DEFAULT_SERIES = [
   { id: "se-KA",    name: "Kalle Anka & C:o",      short: "KA",    group: "Kalle Anka", country: "SE", code: "se/KA",    numbering: "year", firstYear: 1948, lastYear: 2026, perYear: 52 },
   { id: "se-KAP",   name: "Kalle Ankas Pocket",    short: "KAP",   group: "Kalle Anka", country: "SE", code: "se/KAP",   numbering: "running", latest: 560 }
 ];
-const OTHER_GROUP = "Other series", BOOK_GROUP = "Books", DISNEY = "Disney", OTHER_PUB = "Other", BOOK_PUB = "Books";
+const OTHER_GROUP = "Other series", BOOK_GROUP = "Books", DISNEY = "Disney", OTHER_PUB = "Other", BOOK_PUB = "Comic books", NOVEL_PUB = "Books";
+// a normal book (novel, non-fiction) as opposed to a comic book like the Carl Barks Collection
+const isNovel = c => c.kind === "book" && c.bookType === "book";
+const isBookUni = p => p === BOOK_PUB || p === NOVEL_PUB;
 // groups that the second CLZ file used for publishers; they move up one level
 const PUBLISHER_GROUPS = { "Marvel": "Marvel", "DC": "DC", "Dargaud": "Dargaud", "Dupuis": "Dupuis", "Casterman": "Casterman",
   "Hanna-Barbera": "Hanna-Barbera", "Swedish comics": "Swedish comics", "Other comics": OTHER_PUB };
@@ -487,11 +490,11 @@ function statusMatch(c) {
   return true;
 }
 function publisherOf(c) {
-  if (c.kind === "book") return BOOK_PUB;
+  if (c.kind === "book") return isNovel(c) ? NOVEL_PUB : BOOK_PUB;
   const se = seriesById(c.seriesId);
   return se ? (se.publisher || OTHER_PUB) : OTHER_PUB;
 }
-function pubRank(name) { return name === DISNEY ? 0 : name === BOOK_PUB ? 3 : name === OTHER_PUB ? 2 : 1; }
+function pubRank(name) { return name === DISNEY ? 0 : name === NOVEL_PUB ? 4 : name === BOOK_PUB ? 3 : name === OTHER_PUB ? 2 : 1; }
 function pubCompare(a, b) { return pubRank(a) - pubRank(b) || String(a).localeCompare(String(b), "de"); }
 function groupOf(c) {
   if (c.kind === "book") return BOOK_GROUP;
@@ -519,10 +522,12 @@ function yearsText(list) {
 }
 function countText(list) {
   const own = list.filter(c => c.status !== "wanted").length, want = list.length - own;
+  const nov = list.filter(c => c.status !== "wanted" && isNovel(c)).length, com = own - nov;
   const parts = [];
-  if (own) parts.push(own + (own === 1 ? " comic" : " comics"));
+  if (com) parts.push(com + (com === 1 ? " comic" : " comics"));
+  if (nov) parts.push(nov + (nov === 1 ? " book" : " books"));
   if (want) parts.push(want + " on wishlist");
-  return parts.join(" · ") || "0 comics";
+  return parts.join(" · ") || (list.length && list.every(isNovel) ? "0 books" : "0 comics");
 }
 // dates are stored as 2021-05-25 / 2021-05 / 2021 and shown the German way: 25.05.2021 / 05.2021 / 2021
 function niceDate(d) {
@@ -628,8 +633,8 @@ function drawResults() {
     html = (S.arrangeLater ? "" : arrangeCard()) + `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>` +
       (names.length ? '<div class="list">' + names.map(p => {
         const list = pubs[p], nGroups = new Set(list.map(groupOf)).size, nSeries = new Set(list.map(seriesKeyOf)).size;
-        const target = p === BOOK_PUB ? { p, g: BOOK_GROUP } : { p };
-        const sub = p === BOOK_PUB ? `${nSeries} ${nSeries === 1 ? "series" : "series"}` : `${nGroups} ${nGroups === 1 ? "group" : "groups"} · ${nSeries} series`;
+        const target = isBookUni(p) ? { p, g: BOOK_GROUP } : { p };
+        const sub = isBookUni(p) ? `${nSeries} ${nSeries === 1 ? "series" : "series"}` : `${nGroups} ${nGroups === 1 ? "group" : "groups"} · ${nSeries} series`;
         return `<button class="folder pub" data-col='${esc(JSON.stringify(target))}'><div style="min-width:0"><div class="t">${esc(p)}</div>
           <div class="s">${sub} · ${esc(countText(list))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show</h3><p>Nothing in your archive fits “Show”. Change it above.</p></div>');
@@ -650,7 +655,7 @@ function drawResults() {
     inGroup.forEach(c => { const k = seriesKeyOf(c); (bySeries[k] = bySeries[k] || []).push(c); });
     const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
     const keys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b)));
-    const trail = col.p === BOOK_PUB ? [{ label: "All", col: {} }, { label: BOOK_PUB }] : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g }];
+    const trail = isBookUni(col.p) ? [{ label: "All", col: {} }, { label: col.p }] : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g }];
     html = crumbs(trail) +
       (keys.length ? '<div class="list">' + keys.map(k => {
         const list = bySeries[k], se = seriesById(k), yrs = yearsText(list);
@@ -668,8 +673,8 @@ function drawResults() {
       }
       rows += itemHtml(c, true);
     });
-    const trail = col.p === BOOK_PUB
-      ? [{ label: "All", col: {} }, { label: BOOK_PUB, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }]
+    const trail = isBookUni(col.p)
+      ? [{ label: "All", col: {} }, { label: col.p, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }]
       : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }];
     html = crumbs(trail) +
       `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` +
@@ -736,27 +741,38 @@ VIEWS.add = {
         <button class="ghost danger" data-del="${i}" aria-label="Remove story" title="Remove story">✕</button></div>`).join("");
     return `
       <div class="row between"><div><h2>${editing ? (isBook ? "Edit book" : "Edit comic") : "Add to archive"}</h2>
-      <p class="lede">${editing ? "Change any detail and save." : isBook ? "Fill in what you know about the book. Only the title is needed." : "Pick the series and issue, then fill in your copy's details. Fields left empty are fine."}</p></div>
+      <p class="lede">${editing ? "Change any detail and save." : isBook ? "Type or scan the ISBN and tap “Fill from book databases”, or fill in what you know. Only the title is needed." : "Pick the series and issue, then fill in your copy's details. Fields left empty are fine."}</p></div>
       ${editing ? '<button id="cancel">Back to collection</button>' : ""}</div>
       <div class="card stack">
         <div class="row between">
-          <div class="seg" role="group" aria-label="Type"><button type="button" data-kind="issue" aria-pressed="${!isBook}">Comic issue</button><button type="button" data-kind="book" aria-pressed="${isBook}">Book</button></div>
+          <div class="seg" role="group" aria-label="Type"><button type="button" data-kind="issue" aria-pressed="${!isBook}">Comic issue</button><button type="button" data-kind="book" aria-pressed="${isBook && !isNovel(d)}">Comic book</button><button type="button" data-kind="novel" aria-pressed="${isNovel(d)}">Book</button></div>
           <div class="seg" role="group" aria-label="Status"><button type="button" data-st="owned" aria-pressed="${d.status !== "wanted"}">I own it</button><button type="button" data-st="wanted" aria-pressed="${d.status === "wanted"}">Wishlist</button></div></div>
 ${isBook ? `
-        <div class="grid-form">
-          <label class="wide"><span class="l">Book title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Carl Barks: Die Ducks"></label>
-          <label class="wide"><span class="l">Author or editor</span><input id="f-author" value="${esc(d.author)}" placeholder="e.g. Carl Barks, Don Rosa"></label>
-          <label><span class="l">Book series</span><input id="f-seriesName" list="bookseries" value="${esc(d.seriesName)}" placeholder="e.g. Carl Barks Collection"></label>
-          <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
-          <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Comic Collection"></label>
-          <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
-          <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn)}" placeholder="978-3-…"></label>
-          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
-          <label><span class="l">Language</span><select id="f-lang">${["", "German", "Italian", "Swedish", "English", "Other"].map(v => `<option value="${v}"${d.lang === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
-          <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
-          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover image (optional)"></label>
+        <div class="isbnrow">
+          <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="978-3-…"></label>
+          <button id="isbnfill" type="button">Fill from book databases</button>
+          <button id="isbnscan" type="button" class="ghost" aria-label="Scan the barcode with the camera">Scan barcode</button>
         </div>
-        <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <div id="bookmsg"></div>
+        <div class="grid-form">
+          ${d.coverUrl ? `<div class="wide coverrow"><img class="cover" src="${esc(d.coverUrl)}" alt="Cover" loading="lazy" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
+          <label class="wide"><span class="l">Title</span><input id="f-title" value="${esc(d.title)}" placeholder="${isNovel(d) ? "e.g. Der kleine Hobbit" : "e.g. Carl Barks: Die Ducks"}"></label>
+          <label class="wide"><span class="l">${isNovel(d) ? "Author" : "Author or editor"}</span><input id="f-author" value="${esc(d.author)}" placeholder="${isNovel(d) ? "e.g. J. R. R. Tolkien" : "e.g. Carl Barks, Don Rosa"}"></label>
+          <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
+          ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
+          <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
+          <label><span class="l">Genre</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Krimi"></label>` : ""}
+          <label><span class="l">Book series</span><input id="f-seriesName" list="bookseries" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "e.g. Harry Potter" : "e.g. Carl Barks Collection"}"></label>
+          <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
+          <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
+          <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
+          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Language</span><select id="f-lang">${[...new Set(["", "German", "Swedish", "Italian", "English", "French", "Norwegian", "Danish", "Dutch", "Spanish", "Other", d.lang || ""])].map(v => `<option value="${v}"${(d.lang || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
+          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
+        </div>
+        <datalist id="genres">${[...new Set(["Roman", "Krimi", "Fantasy", "Science-Fiction", "Sachbuch", "Biografie", "Kinderbuch", "Jugendbuch", "Geschichte", "Humor"].concat(S.comics.map(c => c.genre).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"].concat(S.comics.map(c => c.publisher).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
         <div class="lookup">
@@ -816,8 +832,21 @@ ${isBook ? `
     const d = S.draft;
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
+    $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
+    $("#booksearch") && ($("#booksearch").onclick = () => searchBooks(d, grab));
+    $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); fillFromIsbn(d, grab); } });
+    $("#isbnscan") && ($("#isbnscan").onclick = async () => {
+      grab();
+      try {
+        const code = await scanBarcode(); if (!code) return;
+        if (!/^97[89]/.test(code)) { bookMsg('<div class="banner warn">That barcode (' + esc(code) + ') isn\'t an ISBN. Books have one starting with 978 or 979; try the other barcode, or type the ISBN.</div>'); return; }
+        d.isbn = code; $("#f-isbn").value = code; fillFromIsbn(d, grab);
+      } catch (e) {
+        bookMsg('<div class="banner warn">' + (e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "The camera isn't allowed for this app. Allow it in the browser's site settings (the lock or ⓘ next to the address), then try again." : e && e.message === "nocamera" ? "This browser doesn't give web apps access to the camera. Type the ISBN instead." : "The camera couldn't start: " + esc(e && (e.message || e.name) || "unknown") + ". Type the ISBN instead.") + '</div>');
+      }
+    });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
@@ -826,8 +855,11 @@ ${isBook ? `
     $("#cancel") && ($("#cancel").onclick = () => { S.draft = null; S.editing = null; nav("collection"); });
     document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { grab(); d.status = b.dataset.st; render(); });
     document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {
-      grab(); if (d.kind === b.dataset.kind) return;
-      d.kind = b.dataset.kind;
+      grab();
+      const k = b.dataset.kind, kind = k === "issue" ? "issue" : "book", bt = k === "novel" ? "book" : "";
+      if (d.kind === kind && (d.bookType || "") === bt) return;
+      d.bookType = bt; if (d.kind === kind) { render(); return; }
+      d.kind = kind;
       if (d.kind === "book") { d.seriesId = "_book"; if (seriesById(d.seriesName) || S.series.some(x => x.name === d.seriesName)) d.seriesName = ""; }
       else if (!seriesById(d.seriesId)) { d.seriesId = defaultSeriesId(); d.seriesName = ""; }
       render();
@@ -983,9 +1015,9 @@ ${isBook ? `
         toast(c.status === "wanted" ? "Book added to wishlist" : "Book saved");
         if (next) {
           S.editing = null;
-          S.draft = blankDraft({ kind: "book", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
+          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
           render(); $("#f-title") && $("#f-title").focus();
-        } else { S.draft = null; S.editing = null; S.col = { p: BOOK_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
+        } else { S.draft = null; S.editing = null; S.col = { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     $("#save").onclick = () => doSave(false);
@@ -1232,7 +1264,9 @@ VIEWS.gaps = {
 // ---- Stats ----
 VIEWS.stats = {
   html() {
-    const own = owned(), wanted = S.comics.filter(c => c.status === "wanted");
+    // comics and normal books are counted separately
+    const own = owned().filter(c => !isNovel(c)), wanted = S.comics.filter(c => c.status === "wanted" && !isNovel(c));
+    const novels = owned().filter(isNovel), novelsWanted = S.comics.filter(c => c.status === "wanted" && isNovel(c));
     if (!S.comics.length) return '<h2>Stats</h2><div class="empty"><h3>No stats yet</h3><p>Stats appear here once you\'ve added comics.</p></div>';
     const nf = n => Number(n).toLocaleString("de-CH");
     const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -1246,7 +1280,7 @@ VIEWS.stats = {
     const groups = {};
     own.forEach(c => { const p = publisherOf(c), g = groupOf(c), k = p + "\u0001" + g; (groups[k] = groups[k] || { p, g, n: 0 }).n++; });
     const gl = Object.values(groups).sort((a, b) => b.n - a.n), gmax = gl.length ? gl[0].n : 1;
-    const groupLabel = x => x.p === DISNEY || x.p === BOOK_PUB ? x.g : x.p + " · " + x.g;
+    const groupLabel = x => x.p === DISNEY ? x.g : x.p === BOOK_PUB ? BOOK_PUB : x.p + " · " + x.g;
     const gShown = S.statAllGroups ? gl : gl.slice(0, 8);
     const comp = `<div class="card stack"><div class="cardhead"><h3>What you collect</h3><span class="muted small">${gl.length} groups</span></div>
       <div class="hbars">${gShown.map(x => `<button class="hbar" data-p="${esc(x.p)}" data-g="${esc(x.g)}" title="${esc(groupLabel(x))}: ${x.n} comics"><span class="lab">${esc(groupLabel(x))}</span><span class="track"><span class="fill" style="width:${(x.n / gmax * 100).toFixed(1)}%"></span></span><span class="n">${nf(x.n)}</span></button>`).join("")}</div>
@@ -1306,8 +1340,8 @@ VIEWS.stats = {
     return `
       <div><h2>Stats</h2><p class="lede">Your collection by the numbers.</p></div>
       <div class="hero card">
-        <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics and books you own</div>
-          <div class="small muted">${nf(issues)} issues · ${books} books${copies > own.length ? " · " + nf(copies) + " copies with duplicates" : ""}</div></div>
+        <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics you own</div>
+          <div class="small muted">${nf(issues)} issues · ${books} comic ${books === 1 ? "book" : "books"}${copies > own.length ? " · " + nf(copies) + " copies with duplicates" : ""}</div></div>
         <div class="hero-side">
           <div><div class="v2">${nf(wanted.length)}</div><div class="k">on wishlist</div></div>
           <div><div class="v2">${nf(seriesOwned)}</div><div class="k">series</div></div>
@@ -1319,7 +1353,8 @@ VIEWS.stats = {
       ${completion}
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
-      <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>`;
+      <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>
+      ${novels.length || novelsWanted.length ? bookStats(novels, novelsWanted) : ""}`;
   },
   bind() {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
@@ -1331,6 +1366,110 @@ VIEWS.stats = {
     document.querySelectorAll(".col").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
   }
 };
+// ---- Stats for normal books, kept apart from the comics ----
+function bookStats(own, wanted) {
+  const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+  const read = own.filter(c => c.read), pagesRead = read.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
+  const tallyBy = (f, n) => { const m = {}; own.forEach(c => f(c).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, n); };
+  const bars = (list, unit) => { const max = list.length ? list[0][1] : 1; return '<div class="hbars">' + list.map(([n, c]) => `<div class="hbar static" title="${esc(n)}: ${c}"><span class="lab">${esc(n)}</span><span class="track"><span class="fill book" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${c}</span></div>`).join("") + "</div>"; };
+  const authors = tallyBy(c => splitPeople(c.author), 10), langs = tallyBy(c => [c.lang || "Not set"], 8), genres = tallyBy(c => String(c.genre || "").split(/\s*[,;\/]\s*/), 8);
+  return `<h2 class="sectionhead">Books</h2>
+    <div class="hero card">
+      <div class="hero-main"><div class="v book">${nf(own.length)}</div><div class="k">${own.length === 1 ? "book" : "books"} you own</div><div class="small muted">novels, non-fiction and other books that aren't comics</div></div>
+      <div class="hero-side">
+        <div><div class="v2">${nf(wanted.length)}</div><div class="k">on wishlist</div></div>
+        <div><div class="v2">${nf(new Set(own.map(c => c.author).filter(Boolean)).size)}</div><div class="k">${new Set(own.map(c => c.author).filter(Boolean)).size === 1 ? "author" : "authors"}</div></div>
+        <div><div class="v2">${pct(read.length, own.length)} %</div><div class="k">read · ${nf(own.length - read.length)} to go</div><div class="meter"><span style="width:${pct(read.length, own.length)}%"></span></div></div>
+        <div><div class="v2">${nf(pagesRead)}</div><div class="k">pages read</div></div>
+      </div>
+    </div>
+    ${own.length ? `<div class="two">
+      <div class="card stack"><div class="cardhead"><h3>Top authors</h3><span class="muted small">books</span></div>${authors.length ? bars(authors) : '<p class="muted small" style="margin:0">Add authors to your books to see them here.</p>'}</div>
+      <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${bars(langs)}
+        ${genres.length ? `<div class="cardhead" style="margin-top:8px"><h3>Genres</h3><span class="muted small">books</span></div>${bars(genres)}` : ""}</div>
+    </div>` : ""}`;
+}
+// ---- book lookup and barcode scanning ----
+function applyBookData(d, r) {
+  const set = (k, v) => { if (v) d[k] = v; };
+  set("title", r.title); set("author", (r.authors || []).join(", ")); set("publisher", r.publisher); set("date", r.year);
+  set("pages", r.pages); set("lang", r.lang); set("genre", r.genre); set("translator", r.translator); set("originalTitle", r.originalTitle);
+  set("coverUrl", r.cover); set("isbn", r.isbn);
+  if (r.series && !d.seriesName) { d.seriesName = r.series; if (r.volume && !d.issue) d.issue = String(r.volume).replace(/^\D+/, ""); }
+}
+function bookMsg(html) { const b = $("#bookmsg"); if (b) { b.innerHTML = html; b.scrollIntoView({ block: "nearest" }); } }
+async function fillFromIsbn(d, grab) {
+  grab();
+  if (!window.Books) return;
+  const isbn = Books.normalize(d.isbn);
+  if (!isbn) { bookMsg('<div class="banner warn">That isn\'t a valid ISBN. It has 10 or 13 digits and is printed above the barcode.</div>'); return; }
+  const dup = S.comics.find(c => c.id !== d.id && c.kind === "book" && Books.normalize(c.isbn) === isbn);
+  bookMsg('<div class="banner">Looking up ' + isbn + '…</div>');
+  const res = await Books.lookupIsbn(isbn);
+  if (!res.data) { bookMsg(`<div class="banner warn">${res.offline ? "The book databases need an internet connection." : "None of the book databases knows ISBN " + isbn + ". Fill in the details yourself, or try “Search by title and author”."}</div>`); d.isbn = isbn; return; }
+  applyBookData(d, res.data); render();
+  bookMsg(`<div class="banner ok">Filled in from ${esc(res.sources.join(", "))}. Check the details and save.${dup ? ` <strong>You already have this ISBN: ${esc(dup.title)}${dup.status === "wanted" ? " (on your wishlist)" : ""}.</strong>` : ""}</div>`);
+}
+async function searchBooks(d, grab) {
+  grab();
+  const q = [d.title, d.author].filter(Boolean).join(" ").trim();
+  if (!q) { bookMsg('<div class="banner warn">Type at least part of the title or the author first.</div>'); $("#f-title").focus(); return; }
+  bookMsg('<div class="banner">Searching…</div>');
+  const list = await Books.search(q);
+  if (!list.length) { bookMsg('<div class="banner warn">Nothing found' + (navigator.onLine ? "" : " (you seem to be offline)") + '. Try fewer or other words.</div>'); return; }
+  bookMsg(`<div class="card stack bookhits"><div class="row between"><strong>${list.length} found. Tap your edition:</strong><button class="ghost" id="bhx" type="button">Close</button></div>
+    ${list.map((r, i) => `<button class="bookhit" data-hit="${i}" type="button">${r.cover ? `<img src="${esc(r.cover)}" alt="" loading="lazy" onerror="this.remove()">` : '<span class="nocover"></span>'}<span><span class="t">${esc(r.title)}</span><span class="s">${esc([(r.authors || []).join(", "), r.publisher, r.year, r.lang, r.isbn ? "ISBN " + r.isbn : ""].filter(Boolean).join(" · "))}</span></span></button>`).join("")}</div>`);
+  $("#bhx").onclick = () => bookMsg("");
+  document.querySelectorAll("[data-hit]").forEach(b => b.onclick = async () => {
+    const r = list[+b.dataset.hit];
+    if (r.isbn) { d.isbn = r.isbn; const full = await Books.lookupIsbn(r.isbn); applyBookData(d, Object.assign({}, r, full.data || {})); }
+    else applyBookData(d, r);
+    render(); bookMsg('<div class="banner ok">Filled in. Check the details and save.</div>');
+  });
+}
+function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) return res(); const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = () => rej(new Error("load")); document.head.appendChild(t); }); }
+// camera barcode scanner: the browser's own detector if it has one, otherwise ZXing (stored with the app)
+async function scanBarcode() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("nocamera");
+  const box = document.createElement("div"); box.className = "scanner";
+  box.innerHTML = '<div class="scanframe"><video playsinline muted></video><div class="scanline"></div></div><p>Hold the barcode on the back of the book inside the frame.</p><button class="primary" type="button">Cancel</button>';
+  document.body.appendChild(box);
+  const video = box.querySelector("video");
+  let stream, stop = false;
+  const close = () => { stop = true; if (stream) stream.getTracks().forEach(t => t.stop()); box.remove(); };
+  return new Promise(async (resolve, reject) => {
+    box.querySelector("button").onclick = () => { close(); resolve(null); };
+    const done = code => { close(); resolve(code); };
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false });
+      video.srcObject = stream; await video.play();
+      let native = null;
+      if ("BarcodeDetector" in window) { try { const f = await BarcodeDetector.getSupportedFormats(); if (f.includes("ean_13")) native = new BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a"] }); } catch (e) {} }
+      if (native) {
+        const tick = async () => { if (stop) return; try { const r = await native.detect(video); const hit = r.find(x => /^97[89]\d{10}$/.test(x.rawValue)) || r[0]; if (hit) return done(hit.rawValue); } catch (e) {} setTimeout(tick, 200); };
+        tick();
+      } else {
+        await loadScript("vendor/zxing.min.js");
+        const hints = new Map(); hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [ZXing.BarcodeFormat.EAN_13, ZXing.BarcodeFormat.EAN_8, ZXing.BarcodeFormat.UPC_A]); hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+        // read a band across the middle of the picture a few times a second
+        const reader = new ZXing.MultiFormatReader(); reader.setHints(hints);
+        const canvas = document.createElement("canvas"), g = canvas.getContext("2d", { willReadFrequently: true });
+        const tick = () => {
+          if (stop) return;
+          const w = video.videoWidth, h = video.videoHeight;
+          if (w && h) {
+            const bw = Math.round(w * 0.9), bh = Math.round(h * 0.45);
+            canvas.width = bw; canvas.height = bh;
+            g.drawImage(video, (w - bw) / 2, (h - bh) / 2, bw, bh, 0, 0, bw, bh);
+            try { const r = reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(canvas)))); if (r) return done(r.getText()); } catch (e) { /* nothing found in this frame */ }
+          }
+          setTimeout(tick, 220);
+        };
+        tick();
+      }
+    } catch (e) { close(); reject(e); }
+  });
+}
 // ---- Stories ----
 function splitPeople(v) { return String(v || "").split(/[,;&\/]+/).map(x => x.trim()).filter(x => x && x !== "?"); }
 function splitChars(v) {
@@ -1481,7 +1620,7 @@ async function readBackupText(txt) {
 async function markBackedUp() { S.lastBackup = new Date().toISOString(); try { await setConfig("lastBackup", S.lastBackup); } catch (e) {} }
 function csvFile() {
   const cols = ["type", "series", "issue", "status", "title", "date", "grade", "copies", "pricePaid", "currency", "value", "purchaseDate", "source", "location", "read", "forTrade", "notes", "author", "publisher", "isbn", "format", "language", "stories"];
-  const rows = sortComics(S.comics).map(c => { const se = seriesById(c.seriesId); return [c.kind === "book" ? "book" : "comic", se ? se.name : c.seriesName, c.issueLabel || c.issue, c.status, c.title, c.date, c.grade, c.copies, amtVal(c.pricePaid), c.currency, amtVal(c.value), c.purchaseDate, c.source, c.location, c.read ? "yes" : "no", c.forTrade ? "yes" : "no", c.notes, c.author, c.publisher, c.isbn, c.format, c.lang, (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist].filter(Boolean).join(" | ")).join(" ;; ")]; });
+  const rows = sortComics(S.comics).map(c => { const se = seriesById(c.seriesId); return [c.kind === "book" ? (isNovel(c) ? "book" : "comic book") : "comic", se ? se.name : c.seriesName, c.issueLabel || c.issue, c.status, c.title, c.date, c.grade, c.copies, amtVal(c.pricePaid), c.currency, amtVal(c.value), c.purchaseDate, c.source, c.location, c.read ? "yes" : "no", c.forTrade ? "yes" : "no", c.notes, c.author, c.publisher, c.isbn, c.format, c.lang, (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist].filter(Boolean).join(" | ")).join(" ;; ")]; });
   const csv = Papa.unparse({ fields: cols, data: rows });
   return new File(["﻿" + csv], "dagobert-archiv-table-" + new Date().toISOString().slice(0, 10) + ".csv", { type: "text/csv" });
 }

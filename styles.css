@@ -295,3 +295,25 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); fon
 .g5 { background: color-mix(in oklab, var(--owned) 15%, var(--cell)); }
 .moneytab td, .moneytab th { text-align: right; font-variant-numeric: tabular-nums; }
 .moneytab td:first-child, .moneytab th:first-child { text-align: left; font-weight: 700; }
+
+/* books: ISBN lookup, search results, scanner */
+.banner.ok { background: var(--owned-soft); }
+.isbnrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; }
+@media (max-width: 520px) { .isbnrow { grid-template-columns: 1fr 1fr; } .isbnrow label { grid-column: 1 / -1; } }
+.coverrow { display: flex; }
+img.cover { max-height: 180px; max-width: 130px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.18); background: var(--cell); }
+.bookhits { gap: 4px; }
+.bookhit { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; font-weight: 400; width: 100%; padding: 6px 8px; }
+.bookhit img, .bookhit .nocover { width: 40px; height: 56px; object-fit: cover; border-radius: 3px; background: var(--cell); display: block; }
+.bookhit .t { display: block; font-weight: 700; }
+.bookhit .s { display: block; color: var(--muted); font-size: 0.82rem; }
+.scanner { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.92); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 16px; text-align: center; }
+.scanframe { position: relative; width: min(92vw, 520px); aspect-ratio: 4 / 3; border-radius: 12px; overflow: hidden; background: #000; }
+.scanframe video { width: 100%; height: 100%; object-fit: cover; }
+.scanline { position: absolute; left: 8%; right: 8%; top: 50%; height: 2px; background: #ff4d4d; box-shadow: 0 0 8px #ff4d4d; }
+.hbar.static { cursor: default; }
+.hbar.static:hover { background: none; }
+.hbar .fill.book, .hero .v.book { --c: var(--trade); }
+.hbar .fill.book { background: var(--trade); }
+.hero .v.book { color: var(--trade); }
+.sectionhead { margin: 24px 0 0; padding-top: 16px; border-top: 2px solid var(--line); }
