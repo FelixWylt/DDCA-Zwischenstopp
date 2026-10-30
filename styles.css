@@ -205,3 +205,6 @@ details.wishseries[open] > summary .chev { transform: rotate(90deg); }
 .dkstory .s { color: var(--muted); font-size: 0.85rem; }
 .dkstory details summary { cursor: pointer; color: var(--accent); margin-top: 4px; }
 .dkstory .t .mono { font-size: 0.72rem; font-weight: 400; margin-left: 4px; }
+details.offgrid > summary { cursor: pointer; padding: 6px 0; }
+.cell.conflict { box-shadow: inset 0 0 0 2px var(--wanted); }
+.cell.conflict::after { content: "!"; font-size: 0.6rem; vertical-align: super; margin-left: 1px; }

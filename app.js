@@ -58,6 +58,8 @@ function parseIssue(series, raw) {
     if (r) m = [r[0], r[2], r[1]];
     if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2], label: m[1] + "/" + String(+m[2]).padStart(2, "0") };
   }
+  const plain = /^[A-Za-zÄÖÜäöüß.:#\s-]*?0*(\d{1,5})\s*\.?$/.exec(s);   // "LTB 480", "Nr. 481", "#482", "0482"
+  if (plain && !(series && series.numbering === "year")) return { n: +plain[1], sort: +plain[1], label: String(+plain[1]) };
   const m = s.match(/\d+(\.\d+)?/);
   return { n: m ? +m[0] : null, sort: m ? +m[0] : 1e9, label: s };
 }
@@ -151,13 +153,20 @@ async function adoptLooseSeries() {
     changed = true;
   });
   if (changed) S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group));
-  const loose = S.comics.filter(c => c.seriesId === "_other" && c.kind !== "book");
+  const loose = S.comics.filter(c => c.kind !== "book" && (c.seriesId === "_other" || !seriesById(c.seriesId)));
   const byName = {};
   loose.forEach(c => { const n = String(c.seriesName || "Unknown series").trim(); (byName[n] = byName[n] || []).push(c); });
   const updated = [];
   Object.entries(byName).forEach(([name, list]) => {
     const se = findSeriesByName(name) || newSeriesFor(name, list, (list.find(c => c.seriesGroup) || {}).seriesGroup);
     list.forEach(c => updated.push(Object.assign({}, c, { seriesId: se.id, seriesName: se.name })));
+  });
+  S.comics.forEach(c => {
+    if (c.kind === "book" || updated.some(u => u.id === c.id)) return;
+    const se = seriesById(c.seriesId);
+    if (!se || se.numbering === "year" || !c.issueLabel || (/^\d+$/.test(c.issueLabel) && String(+c.issueLabel) === c.issueLabel) || c.inducks) return;
+    const p = parseIssue(se, c.issueLabel);
+    if (/^\d+$/.test(p.label) && p.label !== c.issueLabel) updated.push(Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort }));
   });
   if (updated.length) {
     await tx("comics", "readwrite", st => { updated.forEach(c => st.put(c)); });
@@ -201,10 +210,21 @@ function remember(saved) {
   const i = S.comics.findIndex(x => x.id === saved.id);
   if (i >= 0) S.comics[i] = saved; else S.comics.push(saved);
 }
+const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("dagobert-archiv") : null;
+function announce() { try { channel && channel.postMessage("changed"); } catch (e) {} }
+async function reloadFromDb() {
+  if (!S.db) return;
+  try {
+    const list = await getConfig("series"); if (Array.isArray(list)) S.series = list.map(x => Object.assign({}, x));
+    S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
+    if (S.view !== "add") render();   // never disturb a form being filled in
+  } catch (e) {}
+}
+if (channel) channel.onmessage = () => reloadFromDb();
 async function saveComic(c) {
   const body = stamp(c);
   await tx("comics", "readwrite", st => st.put(body));
-  remember(body); askPersist();
+  remember(body); askPersist(); announce();
   return body;
 }
 async function saveMany(list, onProgress, keepDates) {
@@ -217,16 +237,16 @@ async function saveMany(list, onProgress, keepDates) {
     onProgress && onProgress(done);
     await sleep(0);
   }
-  askPersist();
+  askPersist(); announce();
   return done;
 }
 async function deleteComic(id) {
   await tx("comics", "readwrite", st => st.delete(id));
-  S.comics = S.comics.filter(x => x.id !== id);
+  S.comics = S.comics.filter(x => x.id !== id); announce();
 }
 async function saveSeries() {
   await setConfig("series", S.series);
-  S.seriesSaved = true;
+  S.seriesSaved = true; announce();
 }
 async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/index.json"); if (r.ok) { S.catalogue = await r.json(); render(); } } catch (e) { S.catalogue = null; }
@@ -432,6 +452,7 @@ function itemHtml(c, inSeries) {
     if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? "×" + c.copies : "Trade") + '</span>');
     if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
   }
+  if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
   const numTxt = isBook ? c.issue : (c.issueLabel || c.issue || "");
   return `<button class="item" data-id="${esc(c.id)}">
     <div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
@@ -673,11 +694,13 @@ ${isBook ? `
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
+          ${isBook ? "" : `<label class="check"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
         </div></div>`}
       <div class="row">
         <button class="primary" id="save"${S.db ? "" : " disabled"}>${editing ? "Save changes" : "Save to archive"}</button>
         ${!editing ? '<button id="saveNext"' + (S.db ? "" : " disabled") + '>' + (isBook ? "Save and add next volume" : "Save and add next issue") + '</button>' : ""}
+        ${!editing && !isBook ? '<button class="ghost" id="skipNext" type="button">Skip this number</button>' : ""}
         ${editing ? '<button class="danger" id="del">Delete</button>' : ""}
       </div>
       <div id="confirmBox"></div>`;
@@ -687,7 +710,7 @@ ${isBook ? `
     bindAmounts();
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
-      ["read", "forTrade"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
+      ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
       document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => s[inp.dataset.sf] = inp.value); });
     };
     $("#cancel") && ($("#cancel").onclick = () => { S.draft = null; S.editing = null; nav("collection"); });
@@ -755,21 +778,65 @@ ${isBook ? `
         value: parseAmt(d.value),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
-      
-      const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
+      let moved = false;
+      if (!d.id && !c.facsimile && p.label && !/\?/.test(p.label)) {
+        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && (x.issueLabel || x.issue) === p.label);
+        const wish = same.find(x => x.status === "wanted"), have = same.find(x => x.status !== "wanted");
+        const tag = (target.short || target.name) + " " + p.label;
+        if (c.status !== "wanted" && wish && !have) {
+          // bought something from the wishlist: that entry becomes owned instead of a second one
+          ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k]) c[k] = wish[k]; });
+          if (!c.stories.length && (wish.stories || []).length) c.stories = wish.stories;
+          c.id = wish.id; c.createdAt = wish.createdAt; moved = true;
+        } else if (!S.dupOk && (have || (wish && c.status === "wanted"))) {
+          const box = $("#confirmBox");
+          box.innerHTML = have
+            ? `<div class="confirm"><span>${esc(tag)} is already in your collection${c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")"}.</span>
+                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : `<button class="primary" id="dupCopy">Count as one more copy</button><button id="dupSep">Save as separate entry</button>`}
+                ${next ? `<button id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`
+            : `<div class="confirm"><span>${esc(tag)} is already on your wishlist.</span>${next ? `<button class="primary" id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`;
+          box.scrollIntoView({ block: "center" });
+          $("#dupNo").onclick = () => { box.innerHTML = ""; };
+          $("#dupSkip") && ($("#dupSkip").onclick = () => { box.innerHTML = ""; skipToNext(); });
+          $("#dupWant") && ($("#dupWant").onclick = () => { box.innerHTML = ""; S.dupOk = true; doSave(next).finally(() => { S.dupOk = false; }); });
+          $("#dupSep") && ($("#dupSep").onclick = () => { box.innerHTML = ""; S.dupOk = true; doSave(next).finally(() => { S.dupOk = false; }); });
+          $("#dupCopy") && ($("#dupCopy").onclick = async () => {
+            box.innerHTML = "";
+            try { await saveComic(Object.assign({}, have, { copies: (have.copies || 1) + 1 })); toast(tag + ": now " + ((have.copies || 1) + 1) + " copies"); next ? skipToNext() : (S.draft = null, nav("collection")); }
+            catch (e) { toast(errText(e)); }
+          });
+          return;
+        }
+      }
+      const btns = document.querySelectorAll("#save, #saveNext, #skipNext"); btns.forEach(b => b.disabled = true);
       try {
         const saved = await saveComic(c);
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
-        toast(c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
+        toast(moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
         if (next) {
-          const per = se ? (+se.perYear || 52) : 52;
-          const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
-          S.editing = null;
-          S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
-          render(); $("#f-title") && $("#f-title").focus();
+          S.lastSaved = (target.short || target.name) + " " + p.label;
+          goNext(c, p, se);
         } else { S.draft = null; S.editing = null; S.col = { p: publisherOf(saved), g: groupOf(saved), s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
+    // the next number in a run, keeping series, status, place and date of purchase
+    const goNext = (c, p, se) => {
+      const per = se ? (+se.perYear || 52) : 52;
+      const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
+      S.editing = null;
+      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
+      render(); $("#f-issue") && $("#f-issue").focus();
+    };
+    // skip a number you don't have: move on without saving anything
+    const skipToNext = () => {
+      grab(); const se0 = seriesById(d.seriesId);
+      const p0 = parseIssue(se0, d.issue);
+      if (p0.n == null) { toast("Enter an issue number first"); return; }
+      const skipped = (se0 ? se0.short || se0.name : "") + " " + p0.label;
+      goNext(Object.assign({}, d, { seriesId: d.seriesId, seriesName: d.seriesName }), p0, se0);
+      toast(skipped + " skipped, nothing saved");
+    };
+    $("#skipNext") && ($("#skipNext").onclick = skipToNext);
     const saveBook = async (next) => {
       ["title", "issue", "seriesName", "isbn"].forEach(k => d[k] = String(d[k] || ""));
       if (!d.title.trim()) { toast("Enter the book title first"); $("#f-title").focus(); return; }
@@ -905,18 +972,24 @@ VIEWS.gaps = {
     if (!se) return '<h2>Gaps &amp; wishlist</h2><div class="empty"><h3>No series set up</h3><p>Add your series under the Series tab first.</p></div>';
     const mine = S.comics.filter(c => c.seriesId === se.id);
     const own = new Map(), want = new Map();
-    mine.forEach(c => { (c.status === "wanted" ? want : own).set(c.issueLabel || c.issue, c); });
+    // a double issue like 2012-13-14 fills both of its numbers
+    const covered = lab => { const m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(lab || ""); return m ? [m[1] + "/" + m[2].padStart(2, "0"), m[1] + "/" + m[3].padStart(2, "0")] : [lab]; };
+    mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => (c.status === "wanted" ? want : own).set(k, c)); });
     const opts = seriesOptions(se.id, s => s.name);
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
     const tag = se.short || se.name;
+    const gridLabels = new Set();
     const cell = (label, txt) => {
+      gridLabels.add(label);
       const o = own.get(label), w = want.get(label);
       if (o) ownIn++; else if (w) wantIn++;
-      const cls = o ? "owned" : w ? "wanted" : "";
+      const cls = o && w ? "owned conflict" : o ? "owned" : w ? "wanted" : "";
       return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc((o || w || {}).id || "")}" title="${esc(tag + " " + label + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${esc(txt)}</button>`;
     };
     if (se.numbering === "year") {
-      const y0 = +se.firstYear || 1950, y1 = +se.lastYear || new Date().getFullYear(), per = +se.perYear || 52;
+      const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
+      const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
+      const y0 = Math.min(+se.firstYear || 1950, ...ownYears), y1 = Math.max(+se.lastYear || new Date().getFullYear(), ...ownYears), per = Math.max(+se.perYear || 52, ownMax);
       const unknown = mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const years = [];
       for (let y = y1; y >= y0; y--) years.push(y);
@@ -928,11 +1001,28 @@ VIEWS.gaps = {
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
-      const max = +se.latest || Math.max(10, ...mine.map(c => c.issueNum || 0)); total = max; let cells = "";
+      const highest = Math.max(0, ...mine.filter(c => /^\d+$/.test(c.issueLabel || "")).map(c => +c.issueLabel));
+      const max = Math.max(+se.latest || 10, highest); total = max; let cells = "";
       for (let n = 1; n <= max; n++) cells += cell(String(n), n);
       grid = '<div class="cells">' + cells + '</div>';
     }
-    const outside = [...own.keys()].filter(k => !/\?/.test(k)).length - ownIn;   // unknown numbers are reported separately below
+    // every comic of this series the grid can't show, with the reason
+    const firstOf = new Map();
+    const notInGrid = [];
+    const both = new Set([...own.keys()].filter(k => want.has(k) && gridLabels.has(k)));
+    mine.forEach(c => {
+      const lab = c.issueLabel || c.issue || "";
+      if (c.facsimile) { notInGrid.push({ c, why: "Facsimile or reprint of " + lab + ", so the square shows only the original." }); return; }
+      if (both.has(lab)) { notInGrid.push({ c, why: c.status === "wanted" ? "Also owned: if you have it, delete this wishlist entry." : "Also on your wishlist: if you don't have it, delete this entry; if you do, delete the wishlist one.", conflict: true }); return; }
+      if (covered(lab).length > 1 && covered(lab).every(k => gridLabels.has(k))) return;   // double issue, shown in both squares
+      if (gridLabels.has(lab) && !firstOf.has(lab + c.status)) { firstOf.set(lab + c.status, c); return; }
+      const sup = /^(\d{4})X(\d{1,3})$/.exec(lab);
+      const why = sup ? "Supplement (extra booklet) from " + sup[1] + ", not a numbered issue."
+        : /\?/.test(lab) ? "Number unknown. Edit it, or match it under Series › INDUCKS."
+        : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
+        : !lab ? "No issue number" : "Number “" + lab + "” doesn't fit this series' numbering" + (se.numbering === "year" ? " (year/number, e.g. 1985/12)." : ".");
+      notInGrid.push({ c, why });
+    });
     const ownCount = ownIn, wantCount = wantIn;
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
     return `
@@ -940,11 +1030,12 @@ VIEWS.gaps = {
       <div class="card stack">
         <div class="row between">
           <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${opts}</select></label>
-          <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span>${outside ? `<span class="chip">${outside} outside the grid</span>` : ""}</div>
+          <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
         <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>
         <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${esc(se.perYear || 52)} issues a year` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
-        ${mine.some(c => /\?/.test(c.issueLabel || "")) ? `<p class="small muted" style="margin:0">${mine.filter(c => /\?/.test(c.issueLabel || "")).length} issues with an unknown number aren't shown in the grid.</p>` : ""}
+        ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" + (notInGrid.some(x => !x.conflict) ? " · " : "") : ""}${notInGrid.filter(x => !x.conflict).length ? notInGrid.filter(x => !x.conflict).length + (notInGrid.filter(x => !x.conflict).length === 1 ? " comic isn't" : " comics aren't") + " in the grid" : ""}</strong> · tap to see why</summary>
+          <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
         <div id="cellpick"></div>
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
@@ -956,6 +1047,7 @@ VIEWS.gaps = {
     $("#gs") && ($("#gs").onchange = e => { S.gapSeries = e.target.value; render(); });
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+    const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = () => {
       if (b.dataset.id) { open(b.dataset.id); return; }
@@ -1155,7 +1247,7 @@ VIEWS.backup = {
         const known = b.comics.length - fresh.length;
         // only entries from the old in-app CLZ importer qualify; comics from converted files carry clzBatch/seriesGroup
         const oldClz = b.source === "clz-import" ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id) && !c.clzBatch && !c.seriesGroup) : [];
-        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + " entries from " + esc(stampDate(b.exported)) + "?"}</span>
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
           <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; clear(); };
@@ -1169,7 +1261,7 @@ VIEWS.backup = {
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
-            await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + " entries"); render();
+            await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + (n === 1 ? " entry" : " entries")); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
       }
