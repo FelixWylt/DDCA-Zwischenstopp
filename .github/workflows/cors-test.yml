@@ -2,12 +2,16 @@ name: cors-test
 on:
   push:
     branches: [cors-test]
+permissions:
+  contents: write
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Check CORS headers of book databases
         run: |
+          exec > cors-result.txt 2>&1
           O="Origin: https://felixwylt.github.io"
           for u in \
             "https://openlibrary.org/api/books?bibkeys=ISBN:9783423214124&jscmd=data&format=json" \
@@ -23,3 +27,7 @@ jobs:
             curl -s -D - -o body.txt -H "$O" -L --max-time 20 "$u" | grep -iE "^HTTP|access-control-allow-origin|content-type|location" || true
             head -c 600 body.txt; echo
           done
+      - name: Save result
+        run: |
+          git config user.name "cors-test"; git config user.email "cors-test@users.noreply.github.com"
+          git add cors-result.txt; git commit -m "CORS result [skip ci]"; git push
