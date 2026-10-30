@@ -317,3 +317,16 @@ img.cover { max-height: 180px; max-width: 130px; border-radius: 6px; box-shadow:
 .hbar .fill.book { background: var(--trade); }
 .hero .v.book { color: var(--trade); }
 .sectionhead { margin: 24px 0 0; padding-top: 16px; border-top: 2px solid var(--line); }
+
+/* Collection: Comics / Books sub tabs */
+.subtabs { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+.subtabs button { border: 0; border-radius: 0; padding: 10px 12px; background: var(--surface); color: var(--muted); font-size: 1rem; }
+.subtabs button + button { border-left: 1px solid var(--line); }
+.subtabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--ink); box-shadow: inset 0 -3px 0 var(--accent); }
+.subtabs button .muted { font-weight: 400; font-size: 0.85rem; margin-left: 4px; }
+.listhead { margin: 18px 0 8px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.item.book { grid-template-columns: 44px minmax(0, 1fr) auto; }
+.bookthumb { position: relative; width: 44px; height: 62px; border-radius: 4px; overflow: hidden; background: color-mix(in oklab, var(--trade) 18%, var(--surface)); display: grid; place-items: center; }
+.bookthumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.bookthumb .ini { font-family: var(--f-display); font-weight: 800; font-size: 1.3rem; color: var(--trade); }
+.bookthumb .vol { position: absolute; z-index: 2; right: 0; bottom: 0; background: var(--ink); color: var(--surface); font-size: 0.68rem; font-weight: 700; padding: 1px 4px; border-top-left-radius: 4px; }
