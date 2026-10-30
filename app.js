@@ -101,10 +101,18 @@ function parseIssue(series, raw) {
       const pad = x => String(+x).padStart(2, "0");
       return { year: +dd[1], n: +dd[2], sort: +dd[1] * 1000 + +dd[2], label: dd[1] + "-" + pad(dd[2]) + "-" + pad(dd[3]) };
     }
+    // variants: "1984/19A", "1984/19 B" -> "1984-19A", the INDUCKS form
+    const vy = s.match(/(\d{4})\D+?(\d{1,3})\s*([A-Za-z])(?![A-Za-z])/);
+    if (vy) { const L = vy[3].toUpperCase(); return { year: +vy[1], n: +vy[2], sort: +vy[1] * 1000 + +vy[2] + (L.charCodeAt(0) - 64) / 100, label: vy[1] + "-" + String(+vy[2]).padStart(2, "0") + L }; }
     let m = s.match(/(\d{4})\D+(\d{1,3})(?!\d)/);
     const r = !m && s.match(/^\D*(\d{1,3})\D+(\d{4})(?!\d)/);
     if (r) m = [r[0], r[2], r[1]];
     if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2], label: m[1] + "/" + String(+m[2]).padStart(2, "0") };
+  }
+  // variants: "546A", "LTB 546 b", "546-B" -> "546A"
+  const pv = !(series && series.numbering === "year") && /^[A-Za-zÄÖÜäöüß.:#\s-]*?0*(\d{1,5})\s*[-\/]?\s*([A-Za-z])\s*$/.exec(s);
+  if (pv) {
+    const L = pv[2].toUpperCase(); return { n: +pv[1], sort: +pv[1] + (L.charCodeAt(0) - 64) / 100, label: pv[1].replace(/^0+(?=\d)/, "") + L };
   }
   const plain = /^[A-Za-zÄÖÜäöüß.:#\s-]*?0*(\d{1,5})\s*\.?$/.exec(s);   // "LTB 480", "Nr. 481", "#482", "0482"
   if (plain && !(series && series.numbering === "year")) return { n: +plain[1], sort: +plain[1], label: String(+plain[1]) };
@@ -291,10 +299,22 @@ async function saveMany(list, onProgress, keepDates) {
 }
 // the grid squares an issue fills: a double issue "2016-11-12" fills 2016/11 and 2016/12
 function issueSquares(lab) {
+  let v = /^(\d{1,5})([A-Z])$/.exec(lab || "");               // variant 546A sits in square 546
+  if (v) return [v[1]];
+  v = /^(\d{4})-(\d{1,3})([A-Z])$/.exec(lab || "");          // variant 1984-19A sits in 1984/19
+  if (v) return [v[1] + "/" + v[2].padStart(2, "0")];
   const m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(lab || "");
   if (!m) return [lab];
   const out = []; for (let i = +m[2]; i <= +m[3]; i++) out.push(m[1] + "/" + String(i).padStart(2, "0"));
   return out;
+}
+function variantOf(lab) { const m = /^(?:\d{4}-)?\d{1,5}([A-Z])$/.exec(lab || ""); return m ? m[1] : ""; }
+// two numbers stand for the same comic: same square, and not two different variants (546A and 546B are different comics)
+function sameSlot(a, b) {
+  const sa = issueSquares(a), sb = issueSquares(b);
+  if (!sa.some(k => sb.includes(k))) return false;
+  const va = variantOf(a), vb = variantOf(b);
+  return !(va && vb && va !== vb);
 }
 async function deleteComic(id) {
   await tx("comics", "readwrite", st => st.delete(id));
@@ -333,6 +353,10 @@ function labelParts(lab) {
   let m = /^(\d{4})\/(\d{1,3})$/.exec(lab || "");
   if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
   if (/^\d+$/.test(lab || "")) return { year: null, n: +lab, sort: +lab };
+  m = /^(\d{1,5})([A-Z])$/.exec(lab || "");
+  if (m) return { year: null, n: +m[1], sort: +m[1] + (m[2].charCodeAt(0) - 64) / 100 };
+  m = /^(\d{4})-(\d{1,3})([A-Z])$/.exec(lab || "");
+  if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] + (m[3].charCodeAt(0) - 64) / 100 };
   m = /^(\d{4})-(\d{1,3})-\d{1,3}$/.exec(lab || "");
   if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
   m = /^(\d{4})/.exec(lab || "");
@@ -495,19 +519,31 @@ function countText(list) {
   if (want) parts.push(want + " on wishlist");
   return parts.join(" · ") || "0 comics";
 }
+// dates are stored as 2021-05-25 / 2021-05 / 2021 and shown the German way: 25.05.2021 / 05.2021 / 2021
 function niceDate(d) {
   const m = /^(\d{4})(?:-(\d{2}))?(?:-(\d{2}))?$/.exec(String(d || ""));
   if (!m) return String(d || "");
-  const M = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  return m[3] ? +m[3] + " " + M[+m[2] - 1] + " " + m[1] : m[2] ? M[+m[2] - 1] + " " + m[1] : m[1];
+  return m[3] ? m[3] + "." + m[2] + "." + m[1] : m[2] ? m[2] + "." + m[1] : m[1];
 }
+// reads 25.5.2021, 25.05.21, 5.2021, 05/2021, 2021-05-25 or 2021; anything else stays as typed
+function isoDate(v) {
+  const t = String(v || "").trim(); if (!t) return "";
+  let m = /^(\d{1,2})\.\s*(\d{1,2})\.\s*(\d{2}|\d{4})$/.exec(t);
+  if (m) { const y = m[3].length === 2 ? (+m[3] > 40 ? 1900 : 2000) + +m[3] : +m[3]; if (+m[2] >= 1 && +m[2] <= 12 && +m[1] >= 1 && +m[1] <= 31) return y + "-" + m[2].padStart(2, "0") + "-" + m[1].padStart(2, "0"); }
+  m = /^(\d{1,2})\s*[.\/]\s*(\d{4})$/.exec(t);
+  if (m && +m[1] >= 1 && +m[1] <= 12) return m[2] + "-" + m[1].padStart(2, "0");
+  m = /^(\d{4})-(\d{1,2})(?:-(\d{1,2}))?$/.exec(t);
+  if (m) return m[1] + "-" + m[2].padStart(2, "0") + (m[3] ? "-" + m[3].padStart(2, "0") : "");
+  return t;
+}
+function todayIso() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function itemHtml(c, inSeries) {
   const se = seriesById(c.seriesId);
   const st = (c.stories || []);
   const creators = [...new Set(st.flatMap(s => [s.writer, s.artist]).filter(Boolean))].slice(0, 2).join(", ");
   const isBook = c.kind === "book";
   const sub = isBook ? [c.seriesName, c.author, c.publisher, c.date].filter(Boolean).join(" · ")
-    : [c.date, creators].filter(Boolean).join(" · ");
+    : [niceDate(c.date), creators].filter(Boolean).join(" · ");
   const chips = [];
   if (c.status === "wanted") chips.push('<span class="chip wanted">Wishlist</span>');
   else {
@@ -729,7 +765,7 @@ ${isBook ? `
           <span id="ilink">${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : ""}</span></p>
         <div class="grid-form">
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
-          <label><span class="l">Publication date</span><input id="f-date" value="${esc(d.date)}" placeholder="2015-03"></label>
+          <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
@@ -756,7 +792,7 @@ ${isBook ? `
           <label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
           <label><span class="l">Estimated value</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
-          <label><span class="l">Purchase date</span><input id="f-purchaseDate" type="date" value="${esc(d.purchaseDate)}"></label>
+          <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
@@ -774,8 +810,11 @@ ${isBook ? `
   bind() {
     const d = S.draft;
     bindAmounts();
+    $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      if (d.kind !== "book") d.date = isoDate(d.date);
+      d.purchaseDate = isoDate(d.purchaseDate);
       ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
       document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => s[inp.dataset.sf] = inp.value); });
     };
@@ -812,7 +851,19 @@ ${isBook ? `
     $("#lookup") && ($("#lookup").onclick = async () => {
       grab(); const se = seriesById(d.seriesId); if (!se) return;
       const hit = await catalogueLookup(se, d.issue);
-      if (!hit) { toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return; }
+      if (!hit) {
+        // the number exists only as variants (LTB 546A and 546B): offer them
+        const entry = catEntry(se), file = entry && await catalogueFile(entry), p = parseIssue(se, d.issue);
+        const vars = file ? Object.keys(file.issues || {}).filter(k => variantOf(k) && sameSlot(k, p.label)) : [];
+        if (vars.length) {
+          $("#confirmBox").innerHTML = `<div class="confirm"><span>${esc(se.short || se.name)} ${esc(p.label)} came out in ${vars.length} variants. Which one is it?</span>${vars.map(k => `<button data-var="${esc(k)}">${esc(k)}${file.issues[k].t ? " · " + esc(String(file.issues[k].t).slice(0, 40)) : ""}</button>`).join("")}<button class="ghost" id="varNo">Cancel</button></div>`;
+          $("#varNo").onclick = () => { $("#confirmBox").innerHTML = ""; };
+          document.querySelectorAll("[data-var]").forEach(b => b.onclick = () => { $("#confirmBox").innerHTML = ""; d.issue = b.dataset.var; $("#f-issue").value = d.issue; $("#lookup").click(); });
+          $("#confirmBox").scrollIntoView({ block: "center" });
+          return;
+        }
+        toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return;
+      }
       if (hit.ic) {   // compact catalogue format
         d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages;
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
@@ -847,8 +898,7 @@ ${isBook ? `
       let moved = false, alsoGone = [];
       if (!d.id && !c.facsimile && p.label && !/\?/.test(p.label)) {
         // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
-        const mySq = issueSquares(p.label);
-        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && issueSquares(x.issueLabel || x.issue).some(k => mySq.includes(k)));
+        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label));
         const wishes = same.filter(x => x.status === "wanted"), wish = wishes.find(x => (x.issueLabel || x.issue) === p.label) || wishes[0];
         const have = same.find(x => x.status !== "wanted" && (x.issueLabel || x.issue) === p.label) || same.find(x => x.status !== "wanted");
         const haveLab = have && (have.issueLabel || have.issue), exact = haveLab === p.label;
@@ -1049,7 +1099,12 @@ VIEWS.gaps = {
     const own = new Map(), want = new Map();
     // a double issue like 2012-13-14 fills both of its numbers
     const covered = issueSquares;
-    mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => (c.status === "wanted" ? want : own).set(k, c)); });
+    const inSquare = new Map();   // square -> every comic in it (variants, double issues)
+    mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
+    // owned and wished at once: the same comic both ways (546A owned with 546B wished is fine)
+    const live = mine.filter(c => !c.facsimile), clash = new Set();
+    live.forEach(a => { if (a.status === "wanted") return; live.forEach(b => { if (b.status === "wanted" && sameSlot(a.issueLabel || a.issue, b.issueLabel || b.issue)) { clash.add(a.id); clash.add(b.id); } }); });
+    const clashSq = new Set(live.filter(c => clash.has(c.id)).flatMap(c => covered(c.issueLabel || c.issue)));
     const opts = seriesOptions(se.id, s => s.name);
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
     const tag = se.short || se.name;
@@ -1058,8 +1113,12 @@ VIEWS.gaps = {
       gridLabels.add(label);
       const o = own.get(label), w = want.get(label);
       if (o) ownIn++; else if (w) wantIn++;
-      const cls = o && w ? "owned conflict" : o ? "owned" : w ? "wanted" : "";
-      return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc((o || w || {}).id || "")}" title="${esc(tag + " " + label + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${esc(txt)}</button>`;
+      const all = inSquare.get(label) || [];
+      const vars = all.filter(c => variantOf(c.issueLabel || c.issue));
+      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" : "") + (o && w && !clashSq.has(label) ? " alsowant" : "");
+      const vtxt = vars.length ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
+      const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
+      return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info)}">${esc(txt)}${vtxt}</button>`;
     };
     if (se.numbering === "year") {
       const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
@@ -1084,12 +1143,13 @@ VIEWS.gaps = {
     // every comic of this series the grid can't show, with the reason
     const firstOf = new Map();
     const notInGrid = [];
-    const both = new Set([...own.keys()].filter(k => want.has(k) && gridLabels.has(k)));
+    const both = new Set([...clashSq].filter(k => gridLabels.has(k)));
     mine.forEach(c => {
       const lab = c.issueLabel || c.issue || "";
       if (c.facsimile) { notInGrid.push({ c, why: "Facsimile or reprint of " + lab + ", so the square shows only the original." }); return; }
-      if (both.has(lab)) { notInGrid.push({ c, why: c.status === "wanted" ? "Also owned: if you have it, delete this wishlist entry." : "Also on your wishlist: if you don't have it, delete this entry; if you do, delete the wishlist one.", conflict: true }); return; }
+      if (clash.has(c.id) && covered(lab).some(k => gridLabels.has(k))) { notInGrid.push({ c, why: c.status === "wanted" ? "Also owned: if you have it, delete this wishlist entry." : "Also on your wishlist: if you don't have it, delete this entry; if you do, delete the wishlist one.", conflict: true }); return; }
       if (covered(lab).length > 1 && covered(lab).every(k => gridLabels.has(k))) return;   // double issue, shown in both squares
+      if (variantOf(lab) && covered(lab).every(k => gridLabels.has(k))) return;              // variant, shown in its number's square
       if (gridLabels.has(lab) && !firstOf.has(lab + c.status)) { firstOf.set(lab + c.status, c); return; }
       const sup = /^(\d{4})X(\d{1,3})$/.exec(lab);
       const why = sup ? "Supplement (extra booklet) from " + sup[1] + ", not a numbered issue."
@@ -1097,6 +1157,15 @@ VIEWS.gaps = {
         : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
         : !lab ? "No issue number" : "Number “" + lab + "” doesn't fit this series' numbering" + (se.numbering === "year" ? " (year/number, e.g. 1985/12)." : ".");
       notInGrid.push({ c, why });
+    });
+    // numbers INDUCKS only knows as variants (LTB 546 is 546A or 546B): ask which one
+    const entry = catEntry(se), cat = entry && S.catCache[entry.file];
+    if (entry && !cat && !S.catLoading) { S.catLoading = true; catalogueFile(entry).then(() => { S.catLoading = false; if (S.view === "gaps") render(); }).catch(() => { S.catLoading = false; }); }
+    if (cat) mine.forEach(c => {
+      const lab = c.issueLabel || c.issue || "";
+      if (c.facsimile || variantOf(lab) || (cat.issues || {})[lab] || /\?/.test(lab)) return;
+      const vars = Object.keys(cat.issues || {}).filter(k => variantOf(k) && sameSlot(k, lab));
+      if (vars.length && !notInGrid.some(x => x.c === c)) notInGrid.push({ c, hint: true, why: "INDUCKS lists this number only as variants " + vars.join(", ") + ". Open it and add the letter, e.g. " + vars[0] + "." });
     });
     const ownCount = ownIn, wantCount = wantIn;
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
@@ -1107,9 +1176,13 @@ VIEWS.gaps = {
           <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${opts}</select></label>
           <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
-        <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>
+        <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
         <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${esc(se.perYear || 52)} issues a year` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
-        ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" + (notInGrid.some(x => !x.conflict) ? " · " : "") : ""}${notInGrid.filter(x => !x.conflict).length ? notInGrid.filter(x => !x.conflict).length + (notInGrid.filter(x => !x.conflict).length === 1 ? " comic isn't" : " comics aren't") + " in the grid" : ""}</strong> · tap to see why</summary>
+        ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
+            both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
+            (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),
+            (k => k ? k + (k === 1 ? " comic isn't" : " comics aren't") + " in the grid" : "")(notInGrid.filter(x => !x.conflict && !x.hint).length)
+          ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
         <div id="cellpick"></div>
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
@@ -1128,6 +1201,16 @@ VIEWS.gaps = {
       if (b.dataset.id) { open(b.dataset.id); return; }
       const se = seriesById(S.gapSeries) || S.series[0], label = b.dataset.issue;
       const box = $("#cellpick");
+      const ids = (b.dataset.ids || "").split(",").filter(Boolean);
+      if (ids.length) {   // several comics in one square: variants, or owned and wished
+        const cs = ids.map(id => S.comics.find(c => c.id === id)).filter(Boolean);
+        box.innerHTML = `<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong>${cs.map(c => `<button data-pick="${esc(c.id)}">${esc(c.issueLabel || c.issue)} · ${c.status === "wanted" ? "wishlist" : "owned"}</button>`).join("")}<button id="cpAdd">Add another variant…</button><button class="ghost" id="cpX">Cancel</button></div>`;
+        box.querySelectorAll("[data-pick]").forEach(x => x.onclick = () => open(x.dataset.pick));
+        $("#cpAdd").onclick = () => { S.editing = null; S.draft = blankDraft({ seriesId: se.id, issue: label }); nav("add"); };
+        $("#cpX").onclick = () => box.innerHTML = "";
+        box.scrollIntoView({ block: "nearest" });
+        return;
+      }
       box.innerHTML = `<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist</button><button class="ghost" id="cpX">Cancel</button></div>`;
       $("#cpX").onclick = () => box.innerHTML = "";
       $("#cpOwn").onclick = () => { S.editing = null; S.draft = blankDraft({ seriesId: se.id, issue: label }); nav("add"); };
@@ -1430,7 +1513,9 @@ function bindArrangeCard() {
 // ---- Series ----
 VIEWS.series = {
   html() {
-    const rows = S.series.map((s, i) => (i === 0 || (S.series[i - 1].publisher || "") !== (s.publisher || "") ? `<h3 class="pubhead">${esc(s.publisher || "No universe yet")}</h3>` : "") + `<div class="seriesrow" data-i="${i}">
+    const used = {}; S.comics.forEach(c => { used[c.seriesId] = (used[c.seriesId] || 0) + 1; });
+    S.serOpen = S.serOpen || {};
+    const fields = (s, i) => `<div class="seriesrow" data-i="${i}">
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
       <label><span class="l">Universe</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
@@ -1441,15 +1526,30 @@ VIEWS.series = {
       ${s.numbering === "year"
         ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
         : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
-      <button class="ghost danger" data-rm="${i}" title="Remove series" aria-label="Remove series">✕</button></div>`).join("");
+      <button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`;
+    // universe › group › series, each series a row that opens for editing
+    const tree = {};
+    S.series.forEach((s, i) => { const u = s.publisher || "No universe yet", g = s.group || OTHER_GROUP; ((tree[u] = tree[u] || {})[g] = tree[u][g] || []).push(i); });
+    const sKey = s => s.id || "new:" + S.series.indexOf(s);
+    const rows = Object.keys(tree).sort(pubCompare).map(u => {
+      const groups = tree[u], n = Object.values(groups).reduce((a, l) => a + l.length, 0);
+      return `<details class="sgroup" data-u="${esc(u)}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${esc(u)}</span><span class="muted small">${n} series</span></summary>` +
+        Object.keys(groups).sort(groupCompare).map(g => `<h4 class="sghead">${esc(g)}</h4>` + groups[g].map(i => {
+          const s = S.series[i], k = sKey(s), cnt = used[s.id] || 0;
+          const meta = [s.short, cnt === 1 ? "1 comic" : cnt + " comics", s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", s.code].filter(Boolean).join(" · ");
+          return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([s.name, s.short, s.group, u, s.code].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(seriesLabel(s) || "New series")}</span><span class="muted small">${esc(meta)}</span></summary>${fields(s, i)}</details>`;
+        }).join("")).join("") + '</details>';
+    }).join("");
     return `
       ${arrangeCard()}
       <div><h2>Series</h2><p class="lede">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
       ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
-      <div class="card stack"><div class="serieslist">${rows}</div>
+      <div class="card stack">
+        <label><span class="l">Find a series</span><input id="serfind" type="search" placeholder="Name, short name, group or INDUCKS code" value="${esc(S.serFind || "")}"></label>
+        <div class="serieslist">${rows}</div>
         <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
-        <div class="row"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+        <div class="row savebar"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
       ${duckipediaBulkCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
@@ -1472,9 +1572,27 @@ VIEWS.series = {
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
     $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
     bindArrangeCard();
+    document.querySelectorAll("details.sgroup").forEach(el => el.ontoggle = () => { S.serOpen["u:" + el.dataset.u] = el.open; });
+    document.querySelectorAll("details.sitem").forEach(el => el.ontoggle = () => { S.serOpen[el.dataset.k] = el.open; });
+    const find = () => {
+      const q = norm(S.serFind || ""), words = q ? q.split(" ") : [];
+      document.querySelectorAll("details.sgroup").forEach(g => {
+        let any = false;
+        g.querySelectorAll("details.sitem").forEach(it => { const hit = words.every(w => it.dataset.find.includes(w)); it.hidden = !hit; any = any || hit; });
+        g.querySelectorAll(".sghead").forEach(h => { let el = h.nextElementSibling, vis = false; while (el && el.classList.contains("sitem")) { vis = vis || !el.hidden; el = el.nextElementSibling; } h.hidden = !vis; });
+        g.hidden = !any;
+        if (q) g.open = any; else g.open = !!S.serOpen["u:" + g.dataset.u];
+      });
+    };
+    $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
+    if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
     $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
-    $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
+    $("#addser").onclick = () => {
+      grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" });
+      S.serFind = ""; S.serOpen["u:No universe yet"] = true; S.serOpen["new:" + (S.series.length - 1)] = true; render();
+      const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); const last = ins[ins.length - 1]; last.scrollIntoView({ block: "center" }); last.focus();
+    };
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
       grab(); const s = S.series[+b.dataset.rm];
       const used = S.comics.filter(c => c.seriesId === s.id).length;

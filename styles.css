@@ -213,3 +213,24 @@ details.offgrid > summary { cursor: pointer; padding: 6px 0; }
 .arr-preview { display: grid; gap: 10px; margin-top: 8px; }
 .arr-u strong { display: block; margin-bottom: 2px; }
 .arr-g { padding-left: 12px; margin: 2px 0; line-height: 1.4; }
+.cell sup { font-size: 0.58rem; margin-left: 1px; vertical-align: super; line-height: 0; }
+.cell.alsowant { box-shadow: inset 0 0 0 2px var(--wanted); }
+.tiny { font-size: 0.78rem; padding: 0 4px; min-height: 0; text-transform: none; letter-spacing: 0; }
+
+/* Series tab: universe › group › series, rows open for editing */
+.sgroup { border-top: 1px solid var(--line); padding-top: 8px; }
+.sgroup:first-child { border-top: 0; padding-top: 0; }
+.sgroup > summary, .sitem > summary { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; cursor: pointer; list-style: none; }
+.sgroup > summary::-webkit-details-marker, .sitem > summary::-webkit-details-marker { display: none; }
+.sgroup > summary { padding: 8px 2px; }
+.sgroup > summary .t { font-family: var(--f-display); font-weight: 800; font-size: 1.1rem; color: var(--accent); }
+.sgroup > summary::after, .sitem > summary::after { content: "›"; color: var(--muted); transition: transform .15s; }
+.sgroup[open] > summary::after, .sitem[open] > summary::after { transform: rotate(90deg); }
+.sghead { margin: 10px 0 4px; font-size: 0.8rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.sitem { border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); margin: 6px 0; }
+.sitem > summary { padding: 10px 12px; }
+.sitem > summary .t { font-weight: 700; min-width: 0; }
+.sitem > summary .small { margin-left: auto; text-align: right; }
+.sitem[open] { border-color: var(--accent); }
+.sitem .seriesrow { padding: 4px 12px 12px; border-bottom: 0; }
+.savebar { position: sticky; bottom: 0; background: var(--surface); padding: 10px 0 4px; border-top: 1px solid var(--line); z-index: 2; }
