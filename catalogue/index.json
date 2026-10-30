@@ -1,10 +1,11 @@
 {
- "built": "2026-10-25",
+ "built": "2026-10-30",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
   "lustiges taschenbuch": {
    "series": "Lustiges Taschenbuch",
+   "aliases": [],
    "code": "de/LTB",
    "title": "Lustiges Taschenbuch",
    "file": "inducks-de-LTB.json",
@@ -12,6 +13,7 @@
   },
   "ltb spezial": {
    "series": "LTB Spezial",
+   "aliases": [],
    "code": "de/LTBSP",
    "title": "Lustiges Taschenbuch Spezial",
    "file": "inducks-de-LTBSP.json",
@@ -19,6 +21,7 @@
   },
   "micky maus magazin": {
    "series": "Micky Maus Magazin",
+   "aliases": [],
    "code": "de/MM",
    "title": "Micky Maus",
    "file": "inducks-de-MM.json",
@@ -26,6 +29,7 @@
   },
   "die tollsten geschichten von donald duck sonderheft": {
    "series": "Die tollsten Geschichten von Donald Duck Sonderheft",
+   "aliases": [],
    "code": "de/TGDD",
    "title": "Die tollsten Geschichten von Donald Duck (Sonderheft)",
    "file": "inducks-de-TGDD.json",
@@ -33,6 +37,7 @@
   },
   "lustiges taschenbuch maus edition": {
    "series": "Lustiges Taschenbuch Maus-Edition",
+   "aliases": [],
    "code": "de/LTBM",
    "title": "Lustiges Taschenbuch Maus-Edition",
    "file": "inducks-de-LTBM.json",
@@ -40,6 +45,7 @@
   },
   "lustiges taschenbuch exklusiv": {
    "series": "Lustiges Taschenbuch Exklusiv",
+   "aliases": [],
    "code": "de/LTBEX",
    "title": "Lustiges Taschenbuch Exklusiv",
    "file": "inducks-de-LTBEX.json",
@@ -47,6 +53,7 @@
   },
   "lustiges taschenbuch galaxy": {
    "series": "Lustiges Taschenbuch Galaxy",
+   "aliases": [],
    "code": "de/LTBGA",
    "title": "Lustiges Taschenbuch Galaxy",
    "file": "inducks-de-LTBGA.json",
@@ -54,6 +61,7 @@
   },
   "mega micky maus": {
    "series": "Mega Micky Maus",
+   "aliases": [],
    "code": "de/MMM",
    "title": "MEGA Micky Maus",
    "file": "inducks-de-MMM.json",
@@ -61,6 +69,7 @@
   },
   "micky maus comics": {
    "series": "Micky Maus Comics",
+   "aliases": [],
    "code": "de/MMC",
    "title": "Micky Maus Comics",
    "file": "inducks-de-MMC.json",
@@ -68,6 +77,7 @@
   },
   "micky maus prasentiert": {
    "series": "Micky Maus präsentiert",
+   "aliases": [],
    "code": "de/MMP",
    "title": "Micky Maus präsentiert",
    "file": "inducks-de-MMP.json",
@@ -75,6 +85,9 @@
   },
   "entenhausen edition donald von carl barks": {
    "series": "Entenhausen-Edition - Donald von Carl Barks",
+   "aliases": [
+    "Entenhausen-Edition"
+   ],
    "code": "de/EEDCB",
    "title": "Entenhausen-Edition Donald von Carl Barks",
    "file": "inducks-de-EEDCB.json",
@@ -82,13 +95,15 @@
   },
   "topolino": {
    "series": "Topolino",
+   "aliases": [],
    "code": "it/TL",
    "title": "Topolino (libretto)",
    "file": "inducks-it-TL.json",
-   "issues": 3792
+   "issues": 3793
   },
   "topolino giornale": {
    "series": "Topolino Giornale",
+   "aliases": [],
    "code": "it/TG",
    "title": "Topolino (giornale)",
    "file": "inducks-it-TG.json",
@@ -96,6 +111,7 @@
   },
   "kalle anka c o": {
    "series": "Kalle Anka & C:o",
+   "aliases": [],
    "code": "se/KA",
    "title": "Kalle Anka & C:o",
    "file": "inducks-se-KA.json",
@@ -103,6 +119,7 @@
   },
   "kalle ankas pocket": {
    "series": "Kalle Ankas Pocket",
+   "aliases": [],
    "code": "se/KAP",
    "title": "Kalle Ankas Pocket",
    "file": "inducks-se-KAP.json",
@@ -110,6 +127,7 @@
   },
   "kalle anka extra": {
    "series": "Kalle Anka Extra",
+   "aliases": [],
    "code": "se/X",
    "title": "Kalle Anka extra",
    "file": "inducks-se-X.json",
@@ -117,6 +135,7 @@
   },
   "kalle ankas basta": {
    "series": "Kalle Ankas Bästa",
+   "aliases": [],
    "code": "se/KABS",
    "title": "Kalle Ankas bästa",
    "file": "inducks-se-KABS.json",
@@ -124,6 +143,7 @@
   },
   "walt disney s serier": {
    "series": "Walt Disney's Serier",
+   "aliases": [],
    "code": "se/WDS",
    "title": "Walt Disney's Serier",
    "file": "inducks-se-WDS.json",
@@ -131,6 +151,7 @@
   },
   "walt disney s godbitar": {
    "series": "Walt Disney's Godbitar",
+   "aliases": [],
    "code": "se/WDG",
    "title": "Walt Disney's Godbitar",
    "file": "inducks-se-WDG.json",
@@ -138,6 +159,7 @@
   },
   "walt disney s klassiker": {
    "series": "Walt Disney's Klassiker",
+   "aliases": [],
    "code": "se/WDK",
    "title": "Walt Disney's Klassiker",
    "file": "inducks-se-WDK.json",
@@ -145,6 +167,7 @@
   },
   "farbror joakim": {
    "series": "Farbror Joakim",
+   "aliases": [],
    "code": "se/J",
    "title": "(Farbror) Joakim",
    "file": "inducks-se-J.json",
@@ -152,6 +175,7 @@
   },
   "bjornligan": {
    "series": "Björnligan",
+   "aliases": [],
    "code": "se/BL",
    "title": "Björnligan",
    "file": "inducks-se-BL.json",
@@ -159,6 +183,7 @@
   },
   "musse pigg c o": {
    "series": "Musse Pigg & C:o",
+   "aliases": [],
    "code": "se/MP",
    "title": "Musse Pigg & C:o",
    "file": "inducks-se-MP.json",
@@ -166,10 +191,205 @@
   },
   "donald duck co": {
    "series": "Donald Duck & Co",
+   "aliases": [
+    "Donald Duck & Co (Norway)"
+   ],
    "code": "no/DD",
    "title": "Donald Duck & Co",
    "file": "inducks-no-DD.json",
    "issues": 4066
+  },
+  "donald duck co germany": {
+   "series": "Donald Duck & Co (Germany)",
+   "aliases": [],
+   "code": "de/DDCO",
+   "title": "Donald Duck & Co",
+   "file": "inducks-de-DDCO.json",
+   "issues": 104
+  },
+  "paperino mese": {
+   "series": "Paperino Mese",
+   "aliases": [],
+   "code": "it/PM",
+   "title": "Paperino Mese",
+   "file": "inducks-it-PM.json",
+   "issues": 495
+  },
+  "kalle ankas julbok": {
+   "series": "Kalle Ankas julbok",
+   "aliases": [],
+   "code": "se/KAJ",
+   "title": "Kalle Ankas julbok",
+   "file": "inducks-se-KAJ.json",
+   "issues": 77
+  },
+  "kalle ankas pocket special": {
+   "series": "Kalle Ankas Pocket Special",
+   "aliases": [],
+   "code": "se/KAPS",
+   "title": "Kalle Ankas Pocket Special",
+   "file": "inducks-se-KAPS.json",
+   "issues": 158
+  },
+  "ankeborgs samlarpocket": {
+   "series": "Ankeborgs Samlarpocket",
+   "aliases": [],
+   "code": "se/ASP",
+   "title": "Ankeborgs samlarpocket",
+   "file": "inducks-se-ASP.json",
+   "issues": 51
+  },
+  "stal kalle pocket": {
+   "series": "Stål-Kalle Pocket",
+   "aliases": [],
+   "code": "se/SK",
+   "title": "Stål-Kalle",
+   "file": "inducks-se-SK.json",
+   "issues": 113
+  },
+  "lustiges taschenbuch ultimate phantomias": {
+   "series": "Lustiges Taschenbuch Ultimate Phantomias",
+   "aliases": [],
+   "code": "de/LTBUP",
+   "title": "Lustiges Taschenbuch Ultimate Phantomias",
+   "file": "inducks-de-LTBUP.json",
+   "issues": 48
+  },
+  "lustiges taschenbuch young comics": {
+   "series": "Lustiges Taschenbuch Young Comics",
+   "aliases": [],
+   "code": "de/LTBYC",
+   "title": "Lustiges Taschenbuch Young Comics",
+   "file": "inducks-de-LTBYC.json",
+   "issues": 22
+  },
+  "lustiges taschenbuch entenhausen stars": {
+   "series": "Lustiges Taschenbuch Entenhausen Stars",
+   "aliases": [],
+   "code": "de/LTBEHS",
+   "title": "Lustiges Taschenbuch Entenhausen Stars",
+   "file": "inducks-de-LTBEHS.json",
+   "issues": 18
+  },
+  "lustiges taschenbuch crime": {
+   "series": "Lustiges Taschenbuch Crime",
+   "aliases": [],
+   "code": "de/LTBCR",
+   "title": "Lustiges Taschenbuch Crime",
+   "file": "inducks-de-LTBCR.json",
+   "issues": 30
+  },
+  "lustiges taschenbuch sonderedition": {
+   "series": "Lustiges Taschenbuch Sonderedition",
+   "aliases": [],
+   "code": "de/LTBSE",
+   "title": "Lustiges Taschenbuch Sonderedition",
+   "file": "inducks-de-LTBSE.json",
+   "issues": 65
+  },
+  "lustiges taschenbuch prasentiert": {
+   "series": "Lustiges Taschenbuch präsentiert",
+   "aliases": [],
+   "code": "de/LTBPS",
+   "title": "Lustiges Taschenbuch präsentiert",
+   "file": "inducks-de-LTBPS.json",
+   "issues": 8
+  },
+  "lustiges taschenbuch enten edition": {
+   "series": "Lustiges Taschenbuch Enten-Edition",
+   "aliases": [],
+   "code": "de/LTBE",
+   "title": "Lustiges Taschenbuch Enten-Edition",
+   "file": "inducks-de-LTBE.json",
+   "issues": 100
+  },
+  "lustiges taschenbuch sonderband": {
+   "series": "Lustiges Taschenbuch Sonderband",
+   "aliases": [],
+   "code": "de/LTBSBM",
+   "title": "Lustiges Taschenbuch Sonderband",
+   "file": "inducks-de-LTBSBM.json",
+   "issues": 2
+  },
+  "lustiges taschenbuch extra": {
+   "series": "Lustiges Taschenbuch Extra",
+   "aliases": [],
+   "code": "de/LTBX",
+   "title": "Lustiges Taschenbuch Extra",
+   "file": "inducks-de-LTBX.json",
+   "issues": 9
+  },
+  "lustiges taschenbuch weltreise": {
+   "series": "Lustiges Taschenbuch Weltreise",
+   "aliases": [],
+   "code": "de/LTBWR",
+   "title": "Lustiges Taschenbuch Weltreise",
+   "file": "inducks-de-LTBWR.json",
+   "issues": 6
+  },
+  "lustiges taschenbuch classic edition": {
+   "series": "Lustiges Taschenbuch Classic Edition",
+   "aliases": [],
+   "code": "de/LTBCE",
+   "title": "Lustiges Taschenbuch Classic Edition",
+   "file": "inducks-de-LTBCE.json",
+   "issues": 20
+  },
+  "lustiges taschenbuch premium": {
+   "series": "Lustiges Taschenbuch Premium",
+   "aliases": [],
+   "code": "de/LTBPR",
+   "title": "Lustiges Taschenbuch Premium",
+   "file": "inducks-de-LTBPR.json",
+   "issues": 51
+  },
+  "donald duck taschenbuch": {
+   "series": "Donald Duck (Taschenbuch)",
+   "aliases": [],
+   "code": "de/DD",
+   "title": "Donald Duck",
+   "file": "inducks-de-DD.json",
+   "issues": 533
+  },
+  "micky maus taschenbuch": {
+   "series": "Micky Maus Taschenbuch",
+   "aliases": [],
+   "code": "de/MMT",
+   "title": "Micky Maus Taschenbuch",
+   "file": "inducks-de-MMT.json",
+   "issues": 36
+  },
+  "disney special books panini": {
+   "series": "Disney Special Books Panini",
+   "aliases": [],
+   "code": "it/DSBP",
+   "title": "Disney Special Books Panini",
+   "file": "inducks-it-DSBP.json",
+   "issues": 96
+  },
+  "panzerknacker co": {
+   "series": "Panzerknacker & Co",
+   "aliases": [],
+   "code": "de/PK",
+   "title": "Panzerknacker & Co",
+   "file": "inducks-de-PK.json",
+   "issues": 17
+  },
+  "le piu belle storie disney": {
+   "series": "Le più belle storie Disney",
+   "aliases": [],
+   "code": "it/PBST",
+   "title": "Le più belle storie Disney",
+   "file": "inducks-it-PBST.json",
+   "issues": 71
+  },
+  "divertiamoci a stare bene": {
+   "series": "Divertiamoci a stare bene",
+   "aliases": [],
+   "code": "it/DSB",
+   "title": "Divertiamoci a stare bene",
+   "file": "inducks-it-DSB.json",
+   "issues": 8
   }
  }
 }
