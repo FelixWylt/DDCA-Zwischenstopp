@@ -147,12 +147,13 @@
     },
     {
       "series": "Micky Maus Zeitung",
-      "country": "de",
+      "country": "ch",
       "title": "Micky Maus Zeitung",
       "titles": [
         "Micky Maus Zeitung",
+        "Micky-Maus-Zeitung",
         "Micky Maus-Zeitung",
-        "Micky-Maus-Zeitung"
+        "Mickey Mouse Zeitung"
       ]
     },
     {
@@ -215,7 +216,8 @@
     {
       "series": "Farbror Joakims liv",
       "country": "se",
-      "title": "Farbror Joakims liv"
+      "title": "Farbror Joakims liv",
+      "code": "se/FJL"
     },
     {
       "series": "Lustiges Taschenbuch Ultimate Phantomias",
@@ -260,7 +262,8 @@
       "titles": [
         "Lustiges Taschenbuch Royal",
         "LTB Royal"
-      ]
+      ],
+      "code": "de/LTBRO"
     },
     {
       "series": "Lustiges Taschenbuch Sonderedition",
@@ -341,7 +344,8 @@
       "titles": [
         "Lustiges Taschenbuch Halloween",
         "LTB Halloween"
-      ]
+      ],
+      "code": "de/LTBHA"
     },
     {
       "series": "Lustiges Taschenbuch Advent (Sonderband)",
@@ -351,7 +355,8 @@
         "Lustiges Taschenbuch Advent",
         "LTB Advent",
         "Lustiges Taschenbuch Adventskalender"
-      ]
+      ],
+      "code": "de/LTBAV"
     },
     {
       "series": "Lustiges Taschenbuch Ostern (Sonderband)",
@@ -360,7 +365,8 @@
       "titles": [
         "Lustiges Taschenbuch Ostern",
         "LTB Ostern"
-      ]
+      ],
+      "code": "de/LTBOS"
     },
     {
       "series": "Lustiges Taschenbuch Weihnachten (Sonderband)",
@@ -369,7 +375,8 @@
       "titles": [
         "Lustiges Taschenbuch Weihnachten",
         "LTB Weihnachten"
-      ]
+      ],
+      "code": "de/LTBSB"
     },
     {
       "series": "Lustiges Taschenbuch Winter (Sonderband)",
@@ -378,7 +385,8 @@
       "titles": [
         "Lustiges Taschenbuch Winter",
         "LTB Winter"
-      ]
+      ],
+      "code": "de/LTBW"
     },
     {
       "series": "Lustiges Taschenbuch Premium Plus",
@@ -392,7 +400,8 @@
       "aliases": [
         "Lusties Taschenbuch Premium +",
         "Lustiges Taschenbuch Premium +"
-      ]
+      ],
+      "code": "de/LTBPRP"
     },
     {
       "series": "Donald Duck (Taschenbuch)",
@@ -402,7 +411,8 @@
         "Donald Duck (Taschenbuch)",
         "Donald Duck Taschenbuch",
         "Donald Duck"
-      ]
+      ],
+      "code": "de/DD"
     },
     {
       "series": "Mammut Comics",
@@ -411,7 +421,8 @@
       "titles": [
         "Mammut Comics",
         "Mammut-Comics"
-      ]
+      ],
+      "code": "de/MC"
     },
     {
       "series": "Micky Maus Taschenbuch",
