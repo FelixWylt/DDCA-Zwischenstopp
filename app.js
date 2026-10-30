@@ -29,6 +29,47 @@ const GROUP_RULES = [
   [/^(lustiges taschenbuch|ltb)\b/, "Lustiges Taschenbuch"], [/micky maus/, "Micky Maus"], [/^kalle anka/, "Kalle Anka"],
   [/topolino/, "Topolino"], [/donald duck|entenhausen/, "Donald Duck"], [/^walt disney/, "Walt Disney's"]
 ];
+// ---- arrangement: universe › group (Disney by country and format, the rest by franchise) ----
+const UNIVERSES = { "Dargaud": "Franco-Belgian", "Dupuis": "Franco-Belgian", "Casterman": "Franco-Belgian", "Lombard": "Franco-Belgian", "Hanna-Barbera": OTHER_PUB };
+const DE_LTB = "Deutschland – Lustiges Taschenbuch", DE_MAG = "Deutschland – Hefte & Magazine", DE_ALB = "Deutschland – Alben & Sammlerbände";
+const SE_MAG = "Sverige – Tidningar", SE_POC = "Sverige – Pocket", SE_ALB = "Sverige – Album & böcker";
+const IT_ALL = "Italia", NO_ALL = "Norge";
+// series that the rules below would place differently
+const ARRANGE_IDS = {
+  "donald-duck-taschenbuch": DE_ALB, "micky-maus-taschenbuch": DE_ALB, "mammut-comics": DE_ALB, "x-micky-maus-prasentiert": DE_ALB,
+  "x-micky-maus-comics": DE_MAG, "x-panzerknacker-co": DE_MAG, "x-die-tollsten-geschichten-von-donald-duck-sonderheft": DE_MAG,
+  "x-musiksaga": SE_ALB, "farbror-joakims-liv": SE_ALB, "x-walt-disney-s-godbitar": SE_ALB, "x-walt-disney-s-klassiker": SE_ALB,
+  "x-walt-disney-s-serier": SE_MAG, "x-donald-duck-co": NO_ALL, "donald-duck-co-germany": DE_MAG
+};
+const LANG_OF = { de: "German", ger: "German", deu: "German", se: "Swedish", swe: "Swedish", sv: "Swedish", it: "Italian", ita: "Italian", no: "Norwegian", nor: "Norwegian", en: "English", eng: "English", us: "English", gb: "English", fr: "French", fra: "French" };
+function seriesLang(se) {
+  const c = String(se.country || (se.code || "").split("/")[0] || "").toLowerCase();
+  if (LANG_OF[c]) return LANG_OF[c];
+  const m = /\((german|germany|swedish|sweden|italian|italy|norwegian|norway|english)\)\s*$/i.exec(se.name || "");
+  if (m) return { germany: "German", sweden: "Swedish", italy: "Italian", norway: "Norwegian" }[m[1].toLowerCase()] || m[1][0].toUpperCase() + m[1].slice(1).toLowerCase();
+  const n = norm(se.name);
+  if (/\b(lustiges|taschenbuch|micky|maus|entenhausen|tollsten|geschichten|panzerknacker|spezial|sonderheft|sonderband|edition|magazin|zeitung|prasentiert|mammut|ltb|mmm)\b/.test(n)) return "German";
+  if (/\b(topolino|paperino|paperone|storie|giornale|almanacco|zio|divertiamoci|piu|belle|novecento|panini)\b/.test(n)) return "Italian";
+  if (/[åäö]|c:o/i.test(se.name) || /\b(kalle|anka|farbror|joakim|musse|pigg|bjornligan|stal|ankeborg|samlarpocket|pocket|tidning|julbok|basta|godbitar|klassiker|serier|liv)/.test(n)) return "Swedish";
+  const langs = {}; S.comics.forEach(c => { if (c.seriesId === se.id && c.lang) langs[c.lang] = (langs[c.lang] || 0) + 1; });
+  return Object.keys(langs).sort((a, b) => langs[b] - langs[a])[0] || "";
+}
+function arrangeSeries(se) {
+  const uni = se.publisher === DISNEY || !se.publisher ? DISNEY : (UNIVERSES[se.publisher] || se.publisher);
+  if (uni !== DISNEY) return { publisher: uni, group: se.group || franchiseOf(se.name) };
+  if (ARRANGE_IDS[se.id]) return { publisher: DISNEY, group: ARRANGE_IDS[se.id] };
+  const n = norm(se.name), lang = seriesLang(se);
+  if (lang === "German") return { publisher: DISNEY, group: /(taschenbuch|\bltb\b)/.test(n) ? DE_LTB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
+  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) ? SE_POC : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
+  if (lang === "Italian") return { publisher: DISNEY, group: IT_ALL };
+  if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
+  return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
+}
+const NEW_GROUPS = [DE_LTB, DE_MAG, DE_ALB, SE_MAG, SE_POC, SE_ALB, IT_ALL, NO_ALL];
+// the new arrangement is in use once any Disney series sits in one of its groups
+function arrangedInUse() { return S.series.some(se => se.publisher === DISNEY && NEW_GROUPS.includes(se.group)); }
+// series still arranged the old way (by publisher, or Disney groups by character)
+function arrangePending() { return S.series.filter(se => UNIVERSES[se.publisher] || (se.publisher === DISNEY && !NEW_GROUPS.includes(se.group) && arrangeSeries(se).group !== se.group)); }
 function guessGroup(name) { const n = String(name || "").toLowerCase(); const r = GROUP_RULES.find(([re]) => re.test(n)); return r ? r[1] : OTHER_GROUP; }
 const GRADES = [
   ["0", "Z0 · as new"], ["0-1", "Z0-1"], ["1", "Z1 · very good"], ["1-2", "Z1-2"], ["2", "Z2 · good"],
@@ -146,6 +187,7 @@ function newSeriesFor(name, issues, group) {
   const pub = group && PUBLISHER_GROUPS[group] ? PUBLISHER_GROUPS[group] : (guessGroup(name) !== OTHER_GROUP || !group ? DISNEY : OTHER_PUB);
   const s = { id, name, short: "", publisher: pub, group: group && PUBLISHER_GROUPS[group] ? franchiseOf(name) : (group || guessGroup(name)), code: "", country: "", numbering: years.length ? "year" : "running", latest: "" };
   if (years.length) { s.firstYear = Math.min(...years); s.lastYear = Math.max(...years); s.perYear = ""; }
+  if (arrangedInUse()) Object.assign(s, arrangeSeries(s));
   S.series.push(s);
   return s;
 }
@@ -432,7 +474,12 @@ function seriesKeyOf(c) { return c.kind === "book" ? "book:" + (c.seriesName || 
 function seriesTitle(key) {
   if (key.startsWith("book:")) return key.slice(5) || "Single books";
   if (key.startsWith("name:")) return key.slice(5) || "Unknown series";
-  const se = seriesById(key); return se ? se.name : key;
+  const se = seriesById(key); return se ? seriesLabel(se) : key;
+}
+// "Spider-Man (German)" when two series share a name
+function seriesLabel(se) {
+  if (!S.series.some(x => x !== se && norm(x.name) === norm(se.name))) return se.name;
+  const l = seriesLang(se); return l ? se.name + " (" + l + ")" : se.name;
 }
 function groupRank(name) { return name === BOOK_GROUP ? 2 : (name === OTHER_GROUP || name === "Other comics") ? 1 : 0; }
 function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de"); }
@@ -489,7 +536,7 @@ VIEWS.collection = {
   html() {
     const f = S.filters;
     const head = `
-      <div class="row between"><div><h2>Collection</h2><p class="lede hide-phone">Browse by publisher, group and series, or search everything at once.</p></div>
+      <div class="row between"><div><h2>Collection</h2><p class="lede hide-phone">Browse by universe, group and series, or search everything at once.</p></div>
       <button class="primary" id="new">Add</button></div>
       <div class="filters two-col">
         <label class="q"><span class="l">Search</span><input id="fq" type="search" placeholder="e.g. Don Rosa, Scarpa, Phantomias, ISBN" value="${esc(f.q)}"></label>
@@ -537,7 +584,7 @@ function drawResults() {
     const pubs = {};
     pool.forEach(c => { const p = publisherOf(c); (pubs[p] = pubs[p] || []).push(c); });
     const names = Object.keys(pubs).sort(pubCompare);
-    html = `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>` +
+    html = (S.arrangeLater ? "" : arrangeCard()) + `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>` +
       (names.length ? '<div class="list">' + names.map(p => {
         const list = pubs[p], nGroups = new Set(list.map(groupOf)).size, nSeries = new Set(list.map(seriesKeyOf)).size;
         const target = p === BOOK_PUB ? { p, g: BOOK_GROUP } : { p };
@@ -555,7 +602,7 @@ function drawResults() {
         const list = groups[g], nSeries = new Set(list.map(seriesKeyOf)).size;
         return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g }))}'><div style="min-width:0"><div class="t">${esc(g)}</div>
           <div class="s">${nSeries} series · ${esc(countText(list))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
-      }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing from this publisher fits “Show”. Change it above.</p></div>');
+      }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing here fits “Show”. Change it above.</p></div>');
   } else if (!col.s) {
     const inGroup = pool.filter(c => publisherOf(c) === col.p && groupOf(c) === col.g);
     const bySeries = {};
@@ -591,6 +638,7 @@ function drawResults() {
   box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
   box.querySelectorAll(".item").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
+  bindArrangeCard();
 }
 
 function seriesOptions(selected, label) {
@@ -683,8 +731,10 @@ ${isBook ? `
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(d.date)}" placeholder="2015-03"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
+          <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
         </div>
+        <datalist id="publishers">${[...new Set(S.comics.filter(c => c.seriesId === d.seriesId).map(c => c.publisher).concat(S.comics.map(c => c.publisher)).filter(Boolean))].slice(0, 40).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 `}
       </div>
       ${d.duckipedia ? duckipediaCard(d) : ""}
@@ -1339,12 +1389,50 @@ async function duckipediaBulk() {
   refreshDkCard();
   toast("Duckipedia: " + S.dk.found + " comics got details");
 }
+// ---- one-time rearrangement: universe › country/format ----
+function arrangeCard() {
+  const pending = arrangePending();
+  if (!pending.length) return "";
+  const used = id => S.comics.filter(c => c.seriesId === id).length;
+  const plan = S.series.map(se => ({ se, to: pending.includes(se) ? arrangeSeries(se) : { publisher: se.publisher || OTHER_PUB, group: se.group || OTHER_GROUP } }));
+  const tree = {};
+  plan.forEach(({ se, to }) => { ((tree[to.publisher] = tree[to.publisher] || {})[to.group] = tree[to.publisher][to.group] || []).push(se); });
+  const preview = Object.keys(tree).sort(pubCompare).map(u => `<div class="arr-u"><strong>${esc(u)}</strong>` + Object.keys(tree[u]).sort(groupCompare).map(g =>
+    `<div class="arr-g">${esc(g)} <span class="muted">· ${tree[u][g].map(se => esc(seriesLabel(se))).join(", ")}</span></div>`).join("") + '</div>').join("");
+  const typo = S.series.find(se => /^Lusties Taschenbuch/i.test(se.name));
+  const empty = S.series.filter(se => !used(se.id) && !DEFAULT_SERIES.some(d => d.id === se.id));
+  return `<div class="card stack" id="arrbox"><h3>New arrangement for your series</h3>
+    <p class="small" style="margin:0">Top level becomes the <strong>universe</strong> (Disney, Franco-Belgian, Marvel, DC, Swedish comics, Other). Disney series are grouped by <strong>country and format</strong>; the others stay grouped by character. ${pending.length} series move. Your comics, numbers and wishlist don't change, and you can still edit any group below.</p>
+    <details><summary class="small">Show the new arrangement</summary><div class="arr-preview small">${preview}</div></details>
+    ${typo ? `<label class="check" style="min-height:0"><input id="arrTypo" type="checkbox" checked> Correct the spelling “${esc(typo.name)}” to “${esc(typo.name.replace(/^Lusties/i, "Lustiges"))}” (it stays its own series)</label>` : ""}
+    ${empty.length ? `<label class="check" style="min-height:0"><input id="arrEmpty" type="checkbox"> Remove ${empty.length === 1 ? "1 series" : empty.length + " series"} without any comics: ${empty.map(se => esc(se.name)).join(", ")}</label>` : ""}
+    <div class="row"><button class="primary" id="arrGo"${S.db ? "" : " disabled"}>Rearrange</button>${S.view === "collection" ? '<button class="ghost" id="arrLater">Not now</button>' : ""}</div></div>`;
+}
+function bindArrangeCard() {
+  const go = $("#arrGo"); if (!go) return;
+  $("#arrLater") && ($("#arrLater").onclick = () => { S.arrangeLater = true; $("#arrbox").remove(); });
+  go.onclick = async () => {
+    go.disabled = true;
+    try {
+      const pending = arrangePending(), renamed = [];
+      pending.forEach(se => Object.assign(se, arrangeSeries(se)));
+      if ($("#arrTypo") && $("#arrTypo").checked) S.series.forEach(se => { if (/^Lusties Taschenbuch/i.test(se.name)) { se.name = se.name.replace(/^Lusties/i, "Lustiges"); renamed.push(se); } });
+      if ($("#arrEmpty") && $("#arrEmpty").checked) S.series = S.series.filter(se => S.comics.some(c => c.seriesId === se.id) || DEFAULT_SERIES.some(d => d.id === se.id));
+      const n = id => S.comics.filter(c => c.seriesId === id).length;
+      S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group) || n(b.id) - n(a.id) || a.name.localeCompare(b.name, "de"));
+      await saveSeries();
+      const fix = S.comics.filter(c => renamed.some(se => se.id === c.seriesId)).map(c => Object.assign({}, c, { seriesName: seriesById(c.seriesId).name }));
+      if (fix.length) await saveMany(fix, null, true);
+      S.col = {}; toast(pending.length + " series rearranged"); render();
+    } catch (e) { toast(errText(e)); go.disabled = false; }
+  };
+}
 // ---- Series ----
 VIEWS.series = {
   html() {
-    const rows = S.series.map((s, i) => (i === 0 || (S.series[i - 1].publisher || "") !== (s.publisher || "") ? `<h3 class="pubhead">${esc(s.publisher || "No publisher yet")}</h3>` : "") + `<div class="seriesrow" data-i="${i}">
+    const rows = S.series.map((s, i) => (i === 0 || (S.series[i - 1].publisher || "") !== (s.publisher || "") ? `<h3 class="pubhead">${esc(s.publisher || "No universe yet")}</h3>` : "") + `<div class="seriesrow" data-i="${i}">
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
-      <label><span class="l">Publisher</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
+      <label><span class="l">Universe</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
       <label><span class="l">Short</span><input data-k="short" value="${esc(s.short)}"></label>
       <label><span class="l">INDUCKS code</span><input data-k="code" class="mono" value="${esc(s.code)}" placeholder="de/LTB"></label>
@@ -1355,10 +1443,11 @@ VIEWS.series = {
         : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
       <button class="ghost danger" data-rm="${i}" title="Remove series" aria-label="Remove series">✕</button></div>`).join("");
     return `
-      <div><h2>Series</h2><p class="lede">The series you collect. Publisher and group decide where a series appears under Collection. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
+      ${arrangeCard()}
+      <div><h2>Series</h2><p class="lede">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
       ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
       <div class="card stack"><div class="serieslist">${rows}</div>
-        <datalist id="publist">${[...new Set([DISNEY, "Marvel", "DC", "Dargaud", "Dupuis", "Casterman"].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
+        <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
       ${duckipediaBulkCard()}
@@ -1382,6 +1471,7 @@ VIEWS.series = {
     });
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
     $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
+    bindArrangeCard();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
     $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
     $("#addser").onclick = () => { grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" }); render(); const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); ins[ins.length - 1].focus(); };
