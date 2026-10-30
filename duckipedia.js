@@ -16,7 +16,8 @@
   function candidates(series, comic) {
     if (!series || !comic) return [];
     const code = series.code || "";
-    const german = code.startsWith("de/") || String(series.country || "").toUpperCase() === "DE" || /german/i.test(comic.lang || "");
+    const disney = !series.publisher || series.publisher === "Disney";   // Duckipedia covers Disney comics only
+    const german = code.startsWith("de/") || (disney && (String(series.country || "").toUpperCase() === "DE" || /german/i.test(comic.lang || "")));
     if (!german) return [];
     const lab = String(comic.issueLabel || comic.issue || "");
     let m = /^(\d{4})\/(\d{1,3})$/.exec(lab), y = "", n = "";
