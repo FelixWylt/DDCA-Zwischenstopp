@@ -1022,9 +1022,10 @@ VIEWS.stats = {
 // ---- Backup ----
 function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" }) : ""; }
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
+function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
   const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics });
-  const name = "dagobert-archiv-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".json.txt" : ".json");
+  const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
 function saveToDevice(file) {
@@ -1060,7 +1061,8 @@ VIEWS.backup = {
           ${canShare ? `<button class="primary" id="bshare"${n ? "" : " disabled"}>Send backup…</button>` : ""}
           <button ${canShare ? "" : 'class="primary" '}id="bsave"${n ? "" : " disabled"}>Save backup to Downloads</button>
           <button id="bcsv"${n ? "" : " disabled"}>Save table for Excel (.csv)</button>
-        </div></div>
+        </div>
+        <div class="banner warn" id="bnote" hidden></div></div>
       <div class="card stack"><h3>Getting the file to your Windows PC</h3>
         <div class="small" style="display:grid;gap:8px;max-width:68ch">
           <div><strong>Google Drive:</strong> Send backup, choose Drive, then download it on the PC from drive.google.com.</div>
@@ -1075,13 +1077,21 @@ VIEWS.backup = {
   },
   bind() {
     $("#bshare") && ($("#bshare").onclick = async () => {
-      let f = backupFile(false);
-      if (!navigator.canShare({ files: [f] })) f = backupFile(true);
-      if (!navigator.canShare({ files: [f] })) { toast("Sharing files isn't supported here. Use Save backup to Downloads."); return; }
-      try { await navigator.share({ files: [f], title: "Dagobert Ducks Archiv backup" }); await markBackedUp(); toast("Backup sent"); render(); }
-      catch (e) { if (e && e.name !== "AbortError") toast("Sending didn't work. Use Save backup to Downloads."); }
+      // Android browsers only share a few file types; a .txt file with text/plain is the one they accept most widely
+      const f = backupFile(true);
+      let ok = false;
+      try { ok = navigator.canShare({ files: [f] }); } catch (e) { ok = false; }
+      if (!ok) { saveToDevice(f); await markBackedUp(); render(); showBackupNote("This browser can't send files from an app, so the backup was saved to Downloads instead (" + f.name + "). To send it: open the Files app › Downloads, press and hold the file, then tap Share and choose Google Drive, Gmail or Quick Share."); return; }
+      try {
+        await navigator.share({ files: [f] });
+        await markBackedUp(); toast("Backup sent"); render();
+      } catch (e) {
+        if (e && e.name === "AbortError") return;   // share menu closed without choosing
+        saveToDevice(f); await markBackedUp(); render();
+        showBackupNote("Sending didn't work (" + (e && e.name || "error") + "), so the backup was saved to Downloads instead (" + f.name + "). To send it: open the Files app › Downloads, press and hold the file, then tap Share.");
+      }
     });
-    $("#bsave") && ($("#bsave").onclick = async () => { saveToDevice(backupFile(false)); await markBackedUp(); toast("Backup saved to Downloads"); render(); });
+    $("#bsave") && ($("#bsave").onclick = async () => { const f = backupFile(false); saveToDevice(f); await markBackedUp(); render(); showBackupNote("Saved to Downloads as " + f.name + ". To send it: open the Files app › Downloads, press and hold the file, then tap Share."); });
     $("#bcsv") && ($("#bcsv").onclick = () => { saveToDevice(csvFile()); toast("Table saved to Downloads"); });
     $("#restore").onchange = e => {
       const file = e.target.files[0]; if (!file) return;
