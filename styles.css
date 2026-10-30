@@ -250,3 +250,48 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); fon
 .chipbtn.wanted { border-color: var(--wanted); color: var(--wanted); }
 .barbtn { width: 100%; background: none; border: 0; padding: 2px 0; font-weight: 400; border-radius: 6px; }
 .barbtn:hover { background: var(--accent-soft); }
+
+/* Stats */
+.cardhead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.cardhead h3 { margin: 0; }
+.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 20px; align-items: center; }
+.hero .v { font-family: var(--f-display); font-weight: 800; font-size: 3.2rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--accent); }
+.hero .k { font-size: 0.85rem; color: var(--muted); }
+.hero-main .k { font-size: 1rem; color: var(--ink); font-weight: 700; margin: 4px 0 2px; }
+.hero-side { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.hero-side .v2 { font-family: var(--f-display); font-weight: 800; font-size: 1.5rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.meter { height: 6px; border-radius: 99px; background: var(--cell); margin-top: 6px; overflow: hidden; }
+.meter span { display: block; height: 100%; background: var(--owned); border-radius: 99px; }
+@media (max-width: 640px) { .hero { grid-template-columns: 1fr; } .hero-main { padding-bottom: 14px; border-bottom: 1px solid var(--line); } }
+
+.hbars { display: grid; gap: 2px; }
+.hbar { display: grid; grid-template-columns: minmax(0, 11rem) minmax(0, 1fr) 4.6rem; gap: 10px; align-items: center; width: 100%; background: none; border: 0; border-radius: 6px; padding: 6px 4px; font-weight: 400; font-size: 0.88rem; text-align: left; }
+.hbar:hover, .hbar:focus-visible { background: var(--accent-soft); }
+.hbar .lab { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hbar .rank { display: inline-block; width: 1.9em; color: var(--muted); font-variant-numeric: tabular-nums; }
+.hbar .track { height: 10px; background: var(--cell); border-radius: 0 4px 4px 0; overflow: hidden; }
+.hbar .fill { display: block; height: 100%; background: var(--accent); border-radius: 0 4px 4px 0; }
+.hbar .fill.owned { background: var(--owned); }
+.hbar .n { font-variant-numeric: tabular-nums; font-weight: 700; text-align: right; min-width: 2.5em; }
+.hbar .n small { display: block; font-weight: 400; color: var(--muted); font-size: 0.75rem; }
+@media (max-width: 520px) { .hbar { grid-template-columns: minmax(0, 1fr) 4.6rem; row-gap: 4px; } .hbar .track { grid-column: 1 / -1; grid-row: 2; } }
+
+.cols { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 2px; height: 170px; align-items: end; border-bottom: 1px solid var(--line); }
+.col { height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; background: none; border: 0; padding: 0 2px; border-radius: 0; position: relative; }
+.col .bar { display: block; background: var(--accent); opacity: 0.55; border-radius: 4px 4px 0 0; min-height: 2px; }
+.col.on .bar, .col:hover .bar { opacity: 1; }
+.col .x { position: absolute; bottom: -1.5em; left: 0; right: 0; text-align: center; font-size: 0.72rem; color: var(--muted); font-weight: 400; font-family: var(--f-mono); }
+.cols + p { margin-top: 1.6em !important; }
+
+.seg-bar { display: flex; gap: 2px; height: 16px; }
+.seg-bar span:first-child { border-radius: 4px 0 0 4px; } .seg-bar span:last-child { border-radius: 0 4px 4px 0; }
+.legend2 { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.82rem; }
+.legend2 i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.g0 { background: var(--owned); }
+.g1 { background: color-mix(in oklab, var(--owned) 78%, var(--cell)); }
+.g2 { background: color-mix(in oklab, var(--owned) 58%, var(--cell)); }
+.g3 { background: color-mix(in oklab, var(--owned) 40%, var(--cell)); }
+.g4 { background: color-mix(in oklab, var(--owned) 26%, var(--cell)); }
+.g5 { background: color-mix(in oklab, var(--owned) 15%, var(--cell)); }
+.moneytab td, .moneytab th { text-align: right; font-variant-numeric: tabular-nums; }
+.moneytab td:first-child, .moneytab th:first-child { text-align: left; font-weight: 700; }

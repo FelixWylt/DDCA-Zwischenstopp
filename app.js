@@ -502,7 +502,8 @@ function seriesTitle(key) {
 }
 // "Spider-Man (German)" when two series share a name
 function seriesLabel(se) {
-  if (!S.series.some(x => x !== se && norm(x.name) === norm(se.name))) return se.name;
+  const same = n => String(n || "").trim().toLowerCase();
+  if (!S.series.some(x => x !== se && same(x.name) === same(se.name))) return se.name;
   const l = seriesLang(se); return l ? se.name + " (" + l + ")" : se.name;
 }
 function groupRank(name) { return name === BOOK_GROUP ? 2 : (name === OTHER_GROUP || name === "Other comics") ? 1 : 0; }
@@ -1228,55 +1229,102 @@ VIEWS.gaps = {
 VIEWS.stats = {
   html() {
     const own = owned(), wanted = S.comics.filter(c => c.status === "wanted");
-    if (!S.comics.length) return '<h2>Stats</h2><div class="empty"><h3>No stats yet</h3><p>Stats appear here once you\'ve added or imported comics.</p></div>';
+    if (!S.comics.length) return '<h2>Stats</h2><div class="empty"><h3>No stats yet</h3><p>Stats appear here once you\'ve added comics.</p></div>';
+    const nf = n => Number(n).toLocaleString("de-CH");
+    const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+    const books = own.filter(c => c.kind === "book").length, issues = own.length - books;
     const copies = own.reduce((a, c) => a + (c.copies || 1), 0);
-    const sums = {}, vals = {};
-    own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); if (typeof c.value === "number") vals[cur] = (vals[cur] || 0) + c.value * (c.copies || 1); });
-    const fmtMap = m => Object.keys(m).length ? Object.entries(m).map(([k, v]) => k + " " + fmt2(v)).join(" · ") : "–";
-    const unread = own.filter(c => !c.read).length, trade = own.filter(c => c.forTrade || (c.copies || 1) > 1).length;
-    const perSeries = S.series.filter(s => s.numbering === "year" ? (+s.firstYear && +s.lastYear && +s.perYear) : +s.latest).map(s => {
-      const mine = own.filter(c => c.seriesId === s.id);
-      const n = new Set(mine.filter(c => !/\?/.test(c.issueLabel || "")).map(c => c.issueLabel)).size + mine.filter(c => /\?/.test(c.issueLabel || "")).length;
-      const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 52)) || 0 : (+s.latest || 0);
+    const read = own.filter(c => c.read).length;
+    const idx = storyIndex("owned");
+    const seriesOwned = new Set(own.filter(c => c.kind !== "book").map(c => c.seriesId)).size;
+
+    // 1. what the collection is made of: universe › group, biggest first
+    const groups = {};
+    own.forEach(c => { const p = publisherOf(c), g = groupOf(c), k = p + "\u0001" + g; (groups[k] = groups[k] || { p, g, n: 0 }).n++; });
+    const gl = Object.values(groups).sort((a, b) => b.n - a.n), gmax = gl.length ? gl[0].n : 1;
+    const groupLabel = x => x.p === DISNEY || x.p === BOOK_PUB ? x.g : x.p + " · " + x.g;
+    const gShown = S.statAllGroups ? gl : gl.slice(0, 8);
+    const comp = `<div class="card stack"><div class="cardhead"><h3>What you collect</h3><span class="muted small">${gl.length} groups</span></div>
+      <div class="hbars">${gShown.map(x => `<button class="hbar" data-p="${esc(x.p)}" data-g="${esc(x.g)}" title="${esc(groupLabel(x))}: ${x.n} comics"><span class="lab">${esc(groupLabel(x))}</span><span class="track"><span class="fill" style="width:${(x.n / gmax * 100).toFixed(1)}%"></span></span><span class="n">${nf(x.n)}</span></button>`).join("")}</div>
+      ${gl.length > 8 ? `<button class="ghost" id="stAllGroups" type="button">${S.statAllGroups ? "Show fewer" : "Show all " + gl.length + " groups"}</button>` : ""}
+      <p class="small muted" style="margin:0">Tap a group to open it in Collection.</p></div>`;
+
+    // 2. when your comics came out, per decade
+    const dec = {}; let undated = 0;
+    own.forEach(c => { const y = +(String(c.date || "").slice(0, 4)) || c.issueYear; if (y > 1900) { const d = Math.floor(y / 10) * 10; dec[d] = (dec[d] || 0) + 1; } else undated++; });
+    const dks = Object.keys(dec).map(Number).sort((a, b) => a - b);
+    const decs = dks.length ? Array.from({ length: (dks[dks.length - 1] - dks[0]) / 10 + 1 }, (_, i) => dks[0] + i * 10) : [];
+    const dmax = Math.max(1, ...Object.values(dec)), peak = decs.reduce((a, d) => (dec[d] || 0) > (dec[a] || 0) ? d : a, decs[0]);
+    const years = decs.length ? `<div class="card stack"><div class="cardhead"><h3>When they came out</h3><span class="muted small" id="decread">${peak}s: ${nf(dec[peak] || 0)} comics</span></div>
+      <div class="cols" role="img" aria-label="Comics per decade">${decs.map(d => `<button class="col${d === peak ? " on" : ""}" data-dec="${d}" data-n="${dec[d] || 0}" title="${d}s: ${dec[d] || 0} comics"><span class="bar" style="height:${((dec[d] || 0) / dmax * 100).toFixed(1)}%"></span><span class="x">${String(d).slice(2)}</span></button>`).join("")}</div>
+      <p class="small muted" style="margin:0">Per decade of publication${undated ? " · " + undated + " without a date" : ""}. Tap a bar for its number.</p></div>` : "";
+
+    // 3. completion of series with a known size
+    const perSeries = S.series.map(s => {
+      const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0)) : (+s.latest || 0);
+      const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book");
+      // count the squares the gap grid shows as owned, so both screens agree
+      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); return s.numbering === "year" ? !!m && +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] >= 1 && +m[2] <= Math.max(+s.perYear || 0, 1) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
+      const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
-    });
+    }).filter(x => x.tot && x.n).sort((a, b) => b.n - a.n);
     const sized = new Set(perSeries.map(x => x.s.id));
-    const others = own.filter(c => !sized.has(c.seriesId) && c.kind !== "book").length;
-    const books = own.filter(c => c.kind === "book").length;
-    // writers and artists, each story counted once (a reprint doesn't count twice)
-    const idx = storyIndex("owned"), tally = role => {
-      const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1));
-      return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, 10);
-    };
-    const creatorCard = (role, title, color) => {
+    const unsized = new Set(own.filter(c => c.kind !== "book" && !sized.has(c.seriesId)).map(c => c.seriesId)).size;
+    const completion = perSeries.length ? `<div class="card stack"><div class="cardhead"><h3>How complete</h3><span class="muted small">${perSeries.length} series with a known size</span></div>
+      <div class="hbars">${(S.statAllSeries ? perSeries : perSeries.slice(0, 8)).map(({ s, n, tot }) => `<button class="hbar" data-gap="${esc(s.id)}" title="${esc(s.name)}: ${n} of ${tot}"><span class="lab">${esc(seriesLabel(s))}</span><span class="track"><span class="fill owned" style="width:${Math.max(1, Math.min(100, n / tot * 100)).toFixed(1)}%"></span></span><span class="n">${pct(n, tot)} %<small>${nf(n)} / ${nf(tot)}</small></span></button>`).join("")}</div>
+      ${perSeries.length > 8 ? `<button class="ghost" id="stAllSeries" type="button">${S.statAllSeries ? "Show fewer" : "Show all " + perSeries.length + " series"}</button>` : ""}
+      <p class="small muted" style="margin:0">Biggest first. Tap a series for its gap grid.${unsized ? " " + unsized + " more series have no size yet; set the latest issue under Series to include them." : ""}</p></div>` : "";
+
+    // 4. writers and artists, each story counted once
+    const tally = role => { const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, 10); };
+    const creatorCard = (role, title) => {
       const top = tally(role), max = top.length ? top[0][1] : 1;
-      return `<div class="card stack"><h3>${title}</h3>
-        ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<button class="bar barbtn" data-who="${esc(n)}" data-role="${role}"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / max * 100).toFixed(1)}%;background:${color}"></div></div><div class="n">${c} ${c === 1 ? "story" : "stories"}</div></button>`).join("") + '</div><p class="small muted" style="margin:0">Each story counts once, even if you have it in several comics. Tap a name to see the stories.</p>'
-          : '<p class="muted small" style="margin:0">Add stories with ' + (role === "writers" ? "writers" : "artists") + ' to your comics to see who you collect most.</p>'}</div>`;
+      return `<div class="card stack"><div class="cardhead"><h3>${title}</h3><span class="muted small">stories</span></div>
+        ${top.length ? '<div class="hbars">' + top.map(([n, c], i) => `<button class="hbar" data-who="${esc(n)}" data-role="${role}" title="${esc(n)}: ${c} stories"><span class="lab"><span class="rank">${i + 1}</span>${esc(n)}</span><span class="track"><span class="fill" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${c}</span></button>`).join("") + '</div>'
+          : '<p class="muted small" style="margin:0">Add stories with ' + role + ' to your comics to see who you collect most.</p>'}</div>`;
     };
+
+    // 5. condition and money, only when there's data
+    const graded = own.filter(c => c.grade);
+    const gradeMap = {}; graded.forEach(c => { const g = String(c.grade).split("-")[0]; gradeMap[g] = (gradeMap[g] || 0) + 1; });
+    const gradeNames = { 0: "Z0 as new", 1: "Z1 very good", 2: "Z2 good", 3: "Z3 worn", 4: "Z4 poor", 5: "Z5 very poor" };
+    const condition = graded.length ? `<div class="card stack"><div class="cardhead"><h3>Condition</h3><span class="muted small">${graded.length} of ${nf(own.length)} graded</span></div>
+      <div class="seg-bar" role="img" aria-label="Condition of graded comics">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span class="g${g}" style="flex:${gradeMap[g]}" title="${gradeNames[g]}: ${gradeMap[g]}"></span>`).join("")}</div>
+      <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></span>`).join("")}</div>
+      <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade.</p></div>` : "";
+    const sums = {}, vals = {}; let priced = 0, valued = 0;
+    own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") { priced++; sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); } if (typeof c.value === "number") { valued++; vals[cur] = (vals[cur] || 0) + c.value * (c.copies || 1); } });
+    const moneyRows = Object.keys(Object.assign({}, sums, vals)).sort();
+    const money = moneyRows.length ? `<div class="card stack"><div class="cardhead"><h3>Money</h3><span class="muted small">per currency, not converted</span></div>
+      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Est. value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}</tbody></table></div>
+      <p class="small muted" style="margin:0">Price paid is filled in for ${priced} of ${nf(own.length)} comics, value for ${valued}.</p></div>` : "";
+
     return `
-      <div><h2>Stats</h2><p class="lede">Your collection by the numbers. Values are summed per currency, not converted.</p></div>
-      <div class="stats">
-        <div class="card stat"><div class="v">${own.length.toLocaleString("de-CH")}</div><div class="k">${books ? "owned · " + books + " of them books" : "issues owned"}${copies > own.length ? " · " + copies + " copies" : ""}</div></div>
-        <div class="card stat"><div class="v">${wanted.length.toLocaleString("de-CH")}</div><div class="k">on wishlist</div></div>
-        <div class="card stat"><div class="v" style="font-size:1.15rem">${esc(fmtMap(sums))}</div><div class="k">paid in total</div></div>
-        <div class="card stat"><div class="v" style="font-size:1.15rem">${esc(fmtMap(vals))}</div><div class="k">estimated value</div></div>
-        <div class="card stat"><div class="v">${unread}</div><div class="k">unread</div></div>
-        <div class="card stat"><div class="v">${trade}</div><div class="k">for trade or duplicate</div></div>
+      <div><h2>Stats</h2><p class="lede">Your collection by the numbers.</p></div>
+      <div class="hero card">
+        <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics and books you own</div>
+          <div class="small muted">${nf(issues)} issues · ${books} books${copies > own.length ? " · " + nf(copies) + " copies with duplicates" : ""}</div></div>
+        <div class="hero-side">
+          <div><div class="v2">${nf(wanted.length)}</div><div class="k">on wishlist</div></div>
+          <div><div class="v2">${nf(seriesOwned)}</div><div class="k">series</div></div>
+          <div><div class="v2">${nf(idx.length)}</div><div class="k">stories</div></div>
+          <div><div class="v2">${pct(read, own.length)} %</div><div class="k">read · ${nf(own.length - read)} to go</div><div class="meter"><span style="width:${pct(read, own.length)}%"></span></div></div>
+        </div>
       </div>
-      <div>
-        <div class="card stack"><h3>Completion per series</h3><div class="bars">
-          ${perSeries.map(({ s, n, tot }) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div><div class="track"><div class="fill" style="width:${tot ? Math.min(100, n / tot * 100).toFixed(1) : 0}%"></div></div><div class="n">${n} / ${tot}</div></div>`).join("")}
-          ${others ? `<p class="small muted" style="margin:0">${others} more in series without a set size. Set the latest issue under Series to include them.</p>` : ""}
-        </div></div>
-      </div>
-      <div class="two">
-        ${creatorCard("writers", "Most-collected writers", "var(--owned)")}
-        ${creatorCard("artists", "Most-collected artists", "var(--accent)")}
-      </div>`;
+      <div class="two">${comp}${years}</div>
+      ${completion}
+      <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
+      ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
+      <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>`;
   },
   bind() {
-    document.querySelectorAll(".barbtn").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
+    document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
+    document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
+    document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; nav("gaps"); });
+    $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
+    $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
+    const show = b => { document.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
+    document.querySelectorAll(".col").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
   }
 };
 // ---- Stories ----
