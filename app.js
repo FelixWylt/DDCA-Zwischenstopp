@@ -1243,10 +1243,17 @@ VIEWS.stats = {
     const sized = new Set(perSeries.map(x => x.s.id));
     const others = own.filter(c => !sized.has(c.seriesId) && c.kind !== "book").length;
     const books = own.filter(c => c.kind === "book").length;
-    const creators = {};
-    own.forEach(c => (c.stories || []).forEach(st => [st.writer, st.artist].forEach(p => { if (p) p.split(/[,;&\/]+/).map(x => x.trim()).filter(Boolean).filter(x => x !== "?").forEach(x => creators[x] = (creators[x] || 0) + 1); })));
-    const top = Object.entries(creators).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    const topMax = top.length ? top[0][1] : 1;
+    // writers and artists, each story counted once (a reprint doesn't count twice)
+    const idx = storyIndex("owned"), tally = role => {
+      const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1));
+      return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, 10);
+    };
+    const creatorCard = (role, title, color) => {
+      const top = tally(role), max = top.length ? top[0][1] : 1;
+      return `<div class="card stack"><h3>${title}</h3>
+        ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<button class="bar barbtn" data-who="${esc(n)}" data-role="${role}"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / max * 100).toFixed(1)}%;background:${color}"></div></div><div class="n">${c} ${c === 1 ? "story" : "stories"}</div></button>`).join("") + '</div><p class="small muted" style="margin:0">Each story counts once, even if you have it in several comics. Tap a name to see the stories.</p>'
+          : '<p class="muted small" style="margin:0">Add stories with ' + (role === "writers" ? "writers" : "artists") + ' to your comics to see who you collect most.</p>'}</div>`;
+    };
     return `
       <div><h2>Stats</h2><p class="lede">Your collection by the numbers. Values are summed per currency, not converted.</p></div>
       <div class="stats">
@@ -1257,18 +1264,126 @@ VIEWS.stats = {
         <div class="card stat"><div class="v">${unread}</div><div class="k">unread</div></div>
         <div class="card stat"><div class="v">${trade}</div><div class="k">for trade or duplicate</div></div>
       </div>
-      <div class="two">
+      <div>
         <div class="card stack"><h3>Completion per series</h3><div class="bars">
           ${perSeries.map(({ s, n, tot }) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.name)}</div><div class="track"><div class="fill" style="width:${tot ? Math.min(100, n / tot * 100).toFixed(1) : 0}%"></div></div><div class="n">${n} / ${tot}</div></div>`).join("")}
           ${others ? `<p class="small muted" style="margin:0">${others} more in series without a set size. Set the latest issue under Series to include them.</p>` : ""}
         </div></div>
-        <div class="card stack"><h3>Most-collected creators</h3><p class="small muted" style="margin:0">Counts each comic or story a writer or artist is credited on.</p>
-          ${top.length ? '<div class="bars">' + top.map(([n, c]) => `<div class="bar"><div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(n)}</div><div class="track"><div class="fill" style="width:${(c / topMax * 100).toFixed(1)}%;background:var(--owned)"></div></div><div class="n">${c} ${c === 1 ? "credit" : "credits"}</div></div>`).join("") + '</div>'
-            : '<p class="muted small" style="margin:0">Add stories with writers and artists to your comics to see who you collect most.</p>'}
-        </div>
+      </div>
+      <div class="two">
+        ${creatorCard("writers", "Most-collected writers", "var(--owned)")}
+        ${creatorCard("artists", "Most-collected artists", "var(--accent)")}
       </div>`;
+  },
+  bind() {
+    document.querySelectorAll(".barbtn").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
   }
 };
+// ---- Stories ----
+function splitPeople(v) { return String(v || "").split(/[,;&\/]+/).map(x => x.trim()).filter(x => x && x !== "?"); }
+function splitChars(v) {
+  const t = String(v || "").replace(/Tick,\s*Trick und Track/g, "Tick, Trick und Track".replace(/,/g, "\u0001"));
+  const out = []; let depth = 0, cur = "";
+  for (const ch of t) { if (ch === "(") depth++; if (ch === ")") depth = Math.max(0, depth - 1); if (ch === "," && !depth) { out.push(cur); cur = ""; } else cur += ch; }
+  out.push(cur);
+  return out.map(x => x.replace(/\u0001/g, ",").replace(/\s*\([^)]*\)/g, "").trim()).filter(Boolean);
+}
+const storyCode = v => String(v || "").replace(/\s+/g, " ").trim();
+// every story once, with the comics it appears in (a reprinted story is one story)
+function storyIndex(status) {
+  const map = new Map();
+  S.comics.forEach(c => {
+    if (status === "owned" && c.status === "wanted") return;
+    if (status === "wanted" && c.status !== "wanted") return;
+    (c.stories || []).forEach((st, i) => {
+      if (!st.title && !st.code) return;
+      const code = storyCode(st.code);
+      let key = code ? "c:" + code : "x:" + c.id + ":" + i;
+      // parts of a serial can share one code inside a comic: then each part is its own story
+      if (map.has(key) && map.get(key).items.includes(c)) key += "#" + norm(st.dTitle || st.title) + "#" + i;
+      if (map.has(key) && map.get(key).items.includes(c)) return;
+      let e = map.get(key);
+      if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
+      const title = st.dTitle || st.title; if (title && !e.titles.includes(title)) e.titles.push(title);
+      splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
+      splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => e.chars.add(x));
+      ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
+      if (st.plot && !e.plotFrom && c.duckipedia) e.plotFrom = c.duckipedia;
+      e.items.push(c);
+    });
+  });
+  return [...map.values()];
+}
+function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short || se.name : c.seriesName || "") + " " + (c.issueLabel || c.issue || ""); }
+VIEWS.stories = {
+  html() {
+    const st = S.st = S.st || { q: "", mode: "stories", who: null, status: "owned", sort: "title", shown: 100 };
+    const all = storyIndex(st.status);
+    const seg = (k, label) => `<button type="button" data-mode="${k}" aria-pressed="${st.mode === k}">${label}</button>`;
+    const head = `<div><h2>Stories</h2><p class="lede">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
+      <div class="card stack">
+        <div class="seg" role="group" aria-label="Show">${seg("stories", "Stories")}${seg("writers", "Writers")}${seg("artists", "Artists")}${seg("chars", "Characters")}</div>
+        <div class="filters two-col">
+          <label class="q"><span class="l">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.mode === "stories" ? "Title, code, writer, artist, character" : "Name"}"></label>
+          <label><span class="l">In</span><select id="stst"><option value="owned"${st.status === "owned" ? " selected" : ""}>Comics I own</option><option value="wanted"${st.status === "wanted" ? " selected" : ""}>My wishlist</option><option value="all"${st.status === "all" ? " selected" : ""}>Both</option></select></label>
+          ${st.mode === "stories" ? `<label><span class="l">Sort</span><select id="stsort"><option value="title"${st.sort === "title" ? " selected" : ""}>Title</option><option value="comics"${st.sort === "comics" ? " selected" : ""}>Most reprinted</option><option value="code"${st.sort === "code" ? " selected" : ""}>Story code</option></select></label>` : ""}
+        </div>
+        ${st.who ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role])}: ${esc(st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
+      </div><div id="stres"></div>`;
+    return all.length ? head : head.replace('<div id="stres"></div>', '<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" or Duckipedia details, or you add them on a comic.</p></div>');
+  },
+  bind() {
+    const st = S.st;
+    document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { st.mode = b.dataset.mode; st.q = ""; st.shown = 100; if (st.mode !== "stories") st.who = null; render(); });
+    $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; drawStories(); };
+    $("#stst").onchange = e => { st.status = e.target.value; st.shown = 100; render(); };
+    $("#stsort") && ($("#stsort").onchange = e => { st.sort = e.target.value; drawStories(); });
+    $("#stwhox") && ($("#stwhox").onclick = () => { st.who = null; render(); });
+    drawStories();
+  }
+};
+function drawStories() {
+  const box = $("#stres"); if (!box) return;
+  const st = S.st, q = norm(st.q), words = q ? q.split(" ") : [];
+  const all = storyIndex(st.status);
+  const more = n => n > st.shown ? `<div class="row" style="justify-content:center;margin-top:12px"><button id="stmore">Show more (${n - st.shown} left)</button></div>` : "";
+  if (st.mode !== "stories") {
+    const role = st.mode, counts = new Map();
+    all.forEach(e => e[role === "chars" ? "chars" : role].forEach(n => { const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); counts.set(n, x); }));
+    const list = [...counts.values()].filter(x => words.every(w => norm(x.n).includes(w))).sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de"));
+    box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${role === "writers" ? (list.length === 1 ? "writer" : "writers") : role === "artists" ? (list.length === 1 ? "artist" : "artists") : list.length === 1 ? "character" : "characters"}</p>` +
+      (list.length ? '<div class="list">' + list.slice(0, st.shown).map(x => `<button class="folder" data-who="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`).join("") + '</div>' : '<div class="empty"><h3>Nobody found</h3><p>Try another name.</p></div>') + more(list.length);
+    box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.mode = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+  } else {
+    let list = all;
+    if (st.who) list = list.filter(e => e[st.who.role === "chars" ? "chars" : st.who.role].has(st.who.name));
+    if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
+    const title = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
+    list = list.slice().sort(st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de") : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de"));
+    const reprints = list.filter(e => e.items.length > 1).length;
+    box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
+      (list.length ? '<div class="list">' + list.slice(0, st.shown).map(e => {
+        const people = [[...e.writers].join(", "), [...e.artists].join(", ")];
+        const by = people[0] && people[0] === people[1] ? people[0] : [people[0] && "W: " + people[0], people[1] && "A: " + people[1]].filter(Boolean).join(" · ");
+        const plotSrc = e.plot && e.plotFrom ? ` <span class="muted">(<a href="${esc(e.plotFrom.url)}" target="_blank" rel="noopener">Duckipedia</a>, GFDL 1.2, <a href="${esc(e.plotFrom.authors)}" target="_blank" rel="noopener">authors</a>)</span>` : "";
+        return `<details class="storyit"><summary><div style="min-width:0"><div class="t">${esc(title(e) || "Untitled")}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
+          <div class="stbody small">
+            ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
+            ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
+            ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(niceDate(e.first))}` : ""}</div>` : ""}
+            ${e.writers.size ? `<div><span class="muted">Writer:</span> ${[...e.writers].map(n => `<button class="link" data-person="writers" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+            ${e.artists.size ? `<div><span class="muted">Artist:</span> ${[...e.artists].map(n => `<button class="link" data-person="artists" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+            ${e.chars.size ? `<div><span class="muted">Characters:</span> ${[...e.chars].map(n => `<button class="link" data-person="chars" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+            ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(e.genre)}</div>` : ""}
+            ${e.plot ? `<p class="stplot">${esc(e.plot)}${plotSrc}</p>` : ""}
+            <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : ""}</button>`).join("")}</div>
+          </div></details>`;
+      }).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or change "In".</p></div>') + more(list.length);
+    box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
+    box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+  }
+  $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
+}
 // ---- Backup ----
 function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" }) : ""; }
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }

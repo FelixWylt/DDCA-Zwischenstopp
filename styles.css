@@ -234,3 +234,19 @@ details.offgrid > summary { cursor: pointer; padding: 6px 0; }
 .sitem[open] { border-color: var(--accent); }
 .sitem .seriesrow { padding: 4px 12px 12px; border-bottom: 0; }
 .savebar { position: sticky; bottom: 0; background: var(--surface); padding: 10px 0 4px; border-top: 1px solid var(--line); z-index: 2; }
+
+/* Stories tab */
+.storyit { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); }
+.storyit > summary { display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; list-style: none; }
+.storyit > summary::-webkit-details-marker { display: none; }
+.storyit > summary .t { font-weight: 700; }
+.storyit > summary .s { color: var(--muted); font-size: 0.85rem; overflow: hidden; text-overflow: ellipsis; }
+.storyit > summary .chip { flex: none; }
+.storyit[open] { border-color: var(--accent); }
+.stbody { display: grid; gap: 6px; padding: 0 12px 12px; }
+.stplot { margin: 4px 0; line-height: 1.5; white-space: pre-line; }
+button.link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 400; text-decoration: underline; text-underline-offset: 2px; }
+.chipbtn { font-size: 0.82rem; padding: 4px 10px; border-radius: 999px; font-family: var(--f-mono); font-weight: 500; }
+.chipbtn.wanted { border-color: var(--wanted); color: var(--wanted); }
+.barbtn { width: 100%; background: none; border: 0; padding: 2px 0; font-weight: 400; border-radius: 6px; }
+.barbtn:hover { background: var(--accent-soft); }
