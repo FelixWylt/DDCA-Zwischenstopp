@@ -53,6 +53,13 @@ function seriesById(id) { return S.series.find(s => s.id === id); }
 function parseIssue(series, raw) {
   const s = String(raw || "").trim();
   if (series && series.numbering === "year") {
+    // double issues: "2016/11-12", "2016 11+12", "11-12/2016" -> "2016-11-12", the INDUCKS form
+    let dd = s.match(/(\d{4})\D+?(\d{1,3})\s*[-+&]\s*(\d{1,3})(?!\d)/), dr = !dd && s.match(/^\D*(\d{1,3})\s*[-+&]\s*(\d{1,3})\D+(\d{4})(?!\d)/);
+    if (dr) dd = [dr[0], dr[3], dr[1], dr[2]];
+    if (dd && +dd[3] > +dd[2] && +dd[3] - +dd[2] <= 2) {
+      const pad = x => String(+x).padStart(2, "0");
+      return { year: +dd[1], n: +dd[2], sort: +dd[1] * 1000 + +dd[2], label: dd[1] + "-" + pad(dd[2]) + "-" + pad(dd[3]) };
+    }
     let m = s.match(/(\d{4})\D+(\d{1,3})(?!\d)/);
     const r = !m && s.match(/^\D*(\d{1,3})\D+(\d{4})(?!\d)/);
     if (r) m = [r[0], r[2], r[1]];
@@ -240,6 +247,13 @@ async function saveMany(list, onProgress, keepDates) {
   askPersist(); announce();
   return done;
 }
+// the grid squares an issue fills: a double issue "2016-11-12" fills 2016/11 and 2016/12
+function issueSquares(lab) {
+  const m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(lab || "");
+  if (!m) return [lab];
+  const out = []; for (let i = +m[2]; i <= +m[3]; i++) out.push(m[1] + "/" + String(i).padStart(2, "0"));
+  return out;
+}
 async function deleteComic(id) {
   await tx("comics", "readwrite", st => st.delete(id));
   S.comics = S.comics.filter(x => x.id !== id); announce();
@@ -277,6 +291,8 @@ function labelParts(lab) {
   let m = /^(\d{4})\/(\d{1,3})$/.exec(lab || "");
   if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
   if (/^\d+$/.test(lab || "")) return { year: null, n: +lab, sort: +lab };
+  m = /^(\d{4})-(\d{1,3})-\d{1,3}$/.exec(lab || "");
+  if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
   m = /^(\d{4})/.exec(lab || "");
   return { year: m ? +m[1] : null, n: null, sort: m ? +m[1] * 1000 + 999 : 1e9 };
 }
@@ -615,7 +631,7 @@ VIEWS.add = {
     const d = S.draft, editing = !!d.id, isBook = d.kind === "book";
     const se = isBook ? null : seriesById(d.seriesId);
     const sopts = seriesOptions(d.seriesId, s => s.name + (s.country ? " (" + s.country + ")" : "")) + `<option value="_other"${!se ? " selected" : ""}>New series…</option>`;
-    const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12 or 1985/?" : "Number, e.g. 474";
+    const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12, double issue 1985/12-13" : "Number, e.g. 474";
     const catReady = catEntry(se);
     const icode = se && (se.code || (catEntry(se) || {}).code);
     const link = d.inducks ? "https://inducks.org/issue.php?c=" + encodeURIComponent(d.inducks).replace(/%20/g, "+")
@@ -778,21 +794,27 @@ ${isBook ? `
         value: parseAmt(d.value),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
-      let moved = false;
+      let moved = false, alsoGone = [];
       if (!d.id && !c.facsimile && p.label && !/\?/.test(p.label)) {
-        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && (x.issueLabel || x.issue) === p.label);
-        const wish = same.find(x => x.status === "wanted"), have = same.find(x => x.status !== "wanted");
+        // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
+        const mySq = issueSquares(p.label);
+        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && issueSquares(x.issueLabel || x.issue).some(k => mySq.includes(k)));
+        const wishes = same.filter(x => x.status === "wanted"), wish = wishes.find(x => (x.issueLabel || x.issue) === p.label) || wishes[0];
+        const have = same.find(x => x.status !== "wanted" && (x.issueLabel || x.issue) === p.label) || same.find(x => x.status !== "wanted");
+        const haveLab = have && (have.issueLabel || have.issue), exact = haveLab === p.label;
         const tag = (target.short || target.name) + " " + p.label;
         if (c.status !== "wanted" && wish && !have) {
           // bought something from the wishlist: that entry becomes owned instead of a second one
-          ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k]) c[k] = wish[k]; });
-          if (!c.stories.length && (wish.stories || []).length) c.stories = wish.stories;
+          const sameNo = (wish.issueLabel || wish.issue) === p.label;
+          ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k] && sameNo) c[k] = wish[k]; });
+          if (!c.stories.length && (wish.stories || []).length && sameNo) c.stories = wish.stories;
           c.id = wish.id; c.createdAt = wish.createdAt; moved = true;
+          alsoGone = wishes.filter(x => x !== wish).map(x => x.id);   // a double issue also clears the other number's wish
         } else if (!S.dupOk && (have || (wish && c.status === "wanted"))) {
           const box = $("#confirmBox");
           box.innerHTML = have
-            ? `<div class="confirm"><span>${esc(tag)} is already in your collection${c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")"}.</span>
-                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : `<button class="primary" id="dupCopy">Count as one more copy</button><button id="dupSep">Save as separate entry</button>`}
+            ? `<div class="confirm"><span>${exact ? esc(tag) + " is already in your collection" + (c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")") : esc(tag) + " overlaps with " + esc((target.short || target.name) + " " + haveLab) + ", which is already in your collection"}.</span>
+                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : exact ? `<button class="primary" id="dupCopy">Count as one more copy</button><button id="dupSep">Save as separate entry</button>` : `<button class="primary" id="dupSep">Save anyway</button>`}
                 ${next ? `<button id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`
             : `<div class="confirm"><span>${esc(tag)} is already on your wishlist.</span>${next ? `<button class="primary" id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`;
           box.scrollIntoView({ block: "center" });
@@ -811,6 +833,7 @@ ${isBook ? `
       const btns = document.querySelectorAll("#save, #saveNext, #skipNext"); btns.forEach(b => b.disabled = true);
       try {
         const saved = await saveComic(c);
+        for (const id of alsoGone) await deleteComic(id);
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
         toast(moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive");
         if (next) {
@@ -822,6 +845,8 @@ ${isBook ? `
     // the next number in a run, keeping series, status, place and date of purchase
     const goNext = (c, p, se) => {
       const per = se ? (+se.perYear || 52) : 52;
+      const dbl = /^(\d{4})-\d{1,3}-(\d{1,3})$/.exec(p.label || "");
+      if (dbl) p = Object.assign({}, p, { n: +dbl[2] });   // after 2016-11-12 comes 2016/13
       const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
       S.editing = null;
       S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location });
@@ -973,7 +998,7 @@ VIEWS.gaps = {
     const mine = S.comics.filter(c => c.seriesId === se.id);
     const own = new Map(), want = new Map();
     // a double issue like 2012-13-14 fills both of its numbers
-    const covered = lab => { const m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(lab || ""); return m ? [m[1] + "/" + m[2].padStart(2, "0"), m[1] + "/" + m[3].padStart(2, "0")] : [lab]; };
+    const covered = issueSquares;
     mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => (c.status === "wanted" ? want : own).set(k, c)); });
     const opts = seriesOptions(se.id, s => s.name);
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
