@@ -58,6 +58,8 @@ function parseIssue(series, raw) {
     if (r) m = [r[0], r[2], r[1]];
     if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2], label: m[1] + "/" + String(+m[2]).padStart(2, "0") };
   }
+  const plain = /^[A-Za-zÄÖÜäöüß.:#\s-]*?0*(\d{1,5})\s*\.?$/.exec(s);   // "LTB 480", "Nr. 481", "#482", "0482"
+  if (plain && !(series && series.numbering === "year")) return { n: +plain[1], sort: +plain[1], label: String(+plain[1]) };
   const m = s.match(/\d+(\.\d+)?/);
   return { n: m ? +m[0] : null, sort: m ? +m[0] : 1e9, label: s };
 }
@@ -151,13 +153,20 @@ async function adoptLooseSeries() {
     changed = true;
   });
   if (changed) S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group));
-  const loose = S.comics.filter(c => c.seriesId === "_other" && c.kind !== "book");
+  const loose = S.comics.filter(c => c.kind !== "book" && (c.seriesId === "_other" || !seriesById(c.seriesId)));
   const byName = {};
   loose.forEach(c => { const n = String(c.seriesName || "Unknown series").trim(); (byName[n] = byName[n] || []).push(c); });
   const updated = [];
   Object.entries(byName).forEach(([name, list]) => {
     const se = findSeriesByName(name) || newSeriesFor(name, list, (list.find(c => c.seriesGroup) || {}).seriesGroup);
     list.forEach(c => updated.push(Object.assign({}, c, { seriesId: se.id, seriesName: se.name })));
+  });
+  S.comics.forEach(c => {
+    if (c.kind === "book" || updated.some(u => u.id === c.id)) return;
+    const se = seriesById(c.seriesId);
+    if (!se || se.numbering === "year" || !c.issueLabel || (/^\d+$/.test(c.issueLabel) && String(+c.issueLabel) === c.issueLabel) || c.inducks) return;
+    const p = parseIssue(se, c.issueLabel);
+    if (/^\d+$/.test(p.label) && p.label !== c.issueLabel) updated.push(Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort }));
   });
   if (updated.length) {
     await tx("comics", "readwrite", st => { updated.forEach(c => st.put(c)); });
@@ -201,10 +210,21 @@ function remember(saved) {
   const i = S.comics.findIndex(x => x.id === saved.id);
   if (i >= 0) S.comics[i] = saved; else S.comics.push(saved);
 }
+const channel = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("dagobert-archiv") : null;
+function announce() { try { channel && channel.postMessage("changed"); } catch (e) {} }
+async function reloadFromDb() {
+  if (!S.db) return;
+  try {
+    const list = await getConfig("series"); if (Array.isArray(list)) S.series = list.map(x => Object.assign({}, x));
+    S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
+    if (S.view !== "add") render();   // never disturb a form being filled in
+  } catch (e) {}
+}
+if (channel) channel.onmessage = () => reloadFromDb();
 async function saveComic(c) {
   const body = stamp(c);
   await tx("comics", "readwrite", st => st.put(body));
-  remember(body); askPersist();
+  remember(body); askPersist(); announce();
   return body;
 }
 async function saveMany(list, onProgress, keepDates) {
@@ -217,16 +237,16 @@ async function saveMany(list, onProgress, keepDates) {
     onProgress && onProgress(done);
     await sleep(0);
   }
-  askPersist();
+  askPersist(); announce();
   return done;
 }
 async function deleteComic(id) {
   await tx("comics", "readwrite", st => st.delete(id));
-  S.comics = S.comics.filter(x => x.id !== id);
+  S.comics = S.comics.filter(x => x.id !== id); announce();
 }
 async function saveSeries() {
   await setConfig("series", S.series);
-  S.seriesSaved = true;
+  S.seriesSaved = true; announce();
 }
 async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/index.json"); if (r.ok) { S.catalogue = await r.json(); render(); } } catch (e) { S.catalogue = null; }
@@ -909,14 +929,18 @@ VIEWS.gaps = {
     const opts = seriesOptions(se.id, s => s.name);
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
     const tag = se.short || se.name;
+    const gridLabels = new Set();
     const cell = (label, txt) => {
+      gridLabels.add(label);
       const o = own.get(label), w = want.get(label);
       if (o) ownIn++; else if (w) wantIn++;
       const cls = o ? "owned" : w ? "wanted" : "";
       return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc((o || w || {}).id || "")}" title="${esc(tag + " " + label + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${esc(txt)}</button>`;
     };
     if (se.numbering === "year") {
-      const y0 = +se.firstYear || 1950, y1 = +se.lastYear || new Date().getFullYear(), per = +se.perYear || 52;
+      const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
+      const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
+      const y0 = Math.min(+se.firstYear || 1950, ...ownYears), y1 = Math.max(+se.lastYear || new Date().getFullYear(), ...ownYears), per = Math.max(+se.perYear || 52, ownMax);
       const unknown = mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const years = [];
       for (let y = y1; y >= y0; y--) years.push(y);
@@ -928,11 +952,22 @@ VIEWS.gaps = {
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
-      const max = +se.latest || Math.max(10, ...mine.map(c => c.issueNum || 0)); total = max; let cells = "";
+      const highest = Math.max(0, ...mine.filter(c => /^\d+$/.test(c.issueLabel || "")).map(c => +c.issueLabel));
+      const max = Math.max(+se.latest || 10, highest); total = max; let cells = "";
       for (let n = 1; n <= max; n++) cells += cell(String(n), n);
       grid = '<div class="cells">' + cells + '</div>';
     }
-    const outside = [...own.keys()].filter(k => !/\?/.test(k)).length - ownIn;   // unknown numbers are reported separately below
+    // every comic of this series the grid can't show, with the reason
+    const firstOf = new Map();
+    const notInGrid = [];
+    mine.forEach(c => {
+      const lab = c.issueLabel || c.issue || "";
+      if (gridLabels.has(lab) && !firstOf.has(lab + c.status)) { firstOf.set(lab + c.status, c); return; }
+      const why = /\?/.test(lab) ? "Number unknown. Edit it, or match it under Series › INDUCKS."
+        : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
+        : !lab ? "No issue number" : "Number “" + lab + "” doesn't fit this series' numbering" + (se.numbering === "year" ? " (year/number, e.g. 1985/12)." : ".");
+      notInGrid.push({ c, why });
+    });
     const ownCount = ownIn, wantCount = wantIn;
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
     return `
@@ -940,11 +975,12 @@ VIEWS.gaps = {
       <div class="card stack">
         <div class="row between">
           <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${opts}</select></label>
-          <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span>${outside ? `<span class="chip">${outside} outside the grid</span>` : ""}</div>
+          <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
         <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>
         <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${esc(se.perYear || 52)} issues a year` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
-        ${mine.some(c => /\?/.test(c.issueLabel || "")) ? `<p class="small muted" style="margin:0">${mine.filter(c => /\?/.test(c.issueLabel || "")).length} issues with an unknown number aren't shown in the grid.</p>` : ""}
+        ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${notInGrid.length} ${notInGrid.length === 1 ? "comic isn't" : "comics aren't"} in the grid</strong> · tap to see why</summary>
+          <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
         <div id="cellpick"></div>
         <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
@@ -956,6 +992,7 @@ VIEWS.gaps = {
     $("#gs") && ($("#gs").onchange = e => { S.gapSeries = e.target.value; render(); });
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+    const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = () => {
       if (b.dataset.id) { open(b.dataset.id); return; }
@@ -1022,9 +1059,10 @@ VIEWS.stats = {
 // ---- Backup ----
 function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" }) : ""; }
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
+function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
   const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics });
-  const name = "dagobert-archiv-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".json.txt" : ".json");
+  const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
 function saveToDevice(file) {
@@ -1060,7 +1098,9 @@ VIEWS.backup = {
           ${canShare ? `<button class="primary" id="bshare"${n ? "" : " disabled"}>Send backup…</button>` : ""}
           <button ${canShare ? "" : 'class="primary" '}id="bsave"${n ? "" : " disabled"}>Save backup to Downloads</button>
           <button id="bcsv"${n ? "" : " disabled"}>Save table for Excel (.csv)</button>
-        </div></div>
+        </div>
+        <div class="banner warn" id="bnote" hidden></div>
+        <p class="small muted" style="margin:0">Backup size about ${(new Blob([JSON.stringify(S.comics)]).size / 1048576).toFixed(1)} MB.</p></div>
       <div class="card stack"><h3>Getting the file to your Windows PC</h3>
         <div class="small" style="display:grid;gap:8px;max-width:68ch">
           <div><strong>Google Drive:</strong> Send backup, choose Drive, then download it on the PC from drive.google.com.</div>
@@ -1075,11 +1115,19 @@ VIEWS.backup = {
   },
   bind() {
     $("#bshare") && ($("#bshare").onclick = async () => {
-      let f = backupFile(false);
-      if (!navigator.canShare({ files: [f] })) f = backupFile(true);
-      if (!navigator.canShare({ files: [f] })) { toast("Sharing files isn't supported here. Use Save backup to Downloads."); return; }
-      try { await navigator.share({ files: [f], title: "Dagobert Ducks Archiv backup" }); await markBackedUp(); toast("Backup sent"); render(); }
-      catch (e) { if (e && e.name !== "AbortError") toast("Sending didn't work. Use Save backup to Downloads."); }
+      // Android only shares files of a few types; a .txt file with text/plain is the one it accepts everywhere
+      const f = backupFile(true);
+      let ok = false;
+      try { ok = navigator.canShare({ files: [f] }); } catch (e) { ok = false; }
+      if (!ok) { saveToDevice(f); await markBackedUp(); showBackupNote("This phone can't share the file directly, so it was saved to Downloads instead. Send it from there (Files app › Downloads › share)."); return; }
+      try {
+        await navigator.share({ files: [f] });
+        await markBackedUp(); toast("Backup sent"); render();
+      } catch (e) {
+        if (e && e.name === "AbortError") return;   // closed the share menu
+        saveToDevice(f); await markBackedUp();
+        showBackupNote("Sending didn't work (" + (e && e.name || "error") + "), so the backup was saved to Downloads instead. Send it from there (Files app › Downloads › share).");
+      }
     });
     $("#bsave") && ($("#bsave").onclick = async () => { saveToDevice(backupFile(false)); await markBackedUp(); toast("Backup saved to Downloads"); render(); });
     $("#bcsv") && ($("#bcsv").onclick = () => { saveToDevice(csvFile()); toast("Table saved to Downloads"); });
