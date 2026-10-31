@@ -13,14 +13,20 @@ jobs:
         run: |
           set +e
           exec > probe-result.txt 2>&1
-          UA="DagobertDucksArchiv-probe/1.0"
-          curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1
-          echo "=== FDLL publication"; grep -i '^it/FDL' isv/inducks_publication.isv | head
-          echo "=== FDLL issues"; grep -c '^[^^]*^[^^]*^it/FDLL^' isv/inducks_issue.isv; grep '^it/FDLL' isv/inducks_issue.isv | head -3
-          echo "=== trilioni issues"; grep -i 'trilioni' isv/inducks_issue.isv | head
-          echo "=== trilioni publications"; grep -i 'trilioni' isv/inducks_publication.isv | head
-          echo "=== trilioni entries (first 10)"; grep -i 'trilioni di paperone' isv/inducks_entry.isv | cut -d^ -f1,2,9 | head -10
-          echo "=== Gatti covers 1977 it"; grep -i '^it/' isv/inducks_issue.isv | grep '\^1977' | grep -i 'paperone' | head
+          UA="DagobertDucksArchiv/1.0 (personal collection app)"
+          O="Origin: https://felixwylt.github.io"
+          W="https://www.wikidata.org/w/api.php"
+          echo "=== search"; curl -s -A "$UA" -D /tmp/h -H "$O" "$W?action=wbsearchentities&search=The%20Kane%20Chronicles&language=en&format=json&limit=5&origin=*"; echo; grep -i access-control /tmp/h
+          curl -s -A "$UA" "$W?action=wbsearchentities&search=Kane%20Chronicles&language=en&format=json&limit=5&origin=*" | head -c 800; echo
+          ID=$(curl -s -A "$UA" "$W?action=wbsearchentities&search=The%20Kane%20Chronicles&language=en&format=json&limit=1&origin=*" | python3 -c "import sys,json;print(json.load(sys.stdin)['search'][0]['id'])")
+          echo "=== entity $ID"; curl -s -A "$UA" "$W?action=wbgetentities&ids=$ID&props=claims|sitelinks&format=json&origin=*" | python3 -c "
+import sys,json;e=list(json.load(sys.stdin)['entities'].values())[0]
+for p in ['P31','P50','P123','P136','P577','P580','P582','P1113','P2635','P179','P527']:
+  v=e['claims'].get(p,[]);print(p,[ (c['mainsnak'].get('datavalue') or {}).get('value') for c in v][:6])
+print({k:v['title'] for k,v in e['sitelinks'].items() if k in ('enwiki','dewiki','svwiki')})"
+          echo "=== summary"; curl -s -A "$UA" -D /tmp/h2 -H "$O" "https://en.wikipedia.org/api/rest_v1/page/summary/The_Kane_Chronicles" | head -c 700; echo; grep -i access-control /tmp/h2
+          echo "=== search sv"; curl -s -A "$UA" "$W?action=wbsearchentities&search=Bamse&language=sv&format=json&limit=5&origin=*" | head -c 600; echo
+          echo "=== search Harry Potter"; curl -s -A "$UA" "$W?action=wbsearchentities&search=Harry%20Potter&language=de&format=json&limit=6&origin=*" | head -c 900; echo
       - name: Save
         if: always()
         run: |
