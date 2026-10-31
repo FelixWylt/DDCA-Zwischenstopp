@@ -13,12 +13,15 @@ jobs:
         run: |
           set +e
           exec > probe-result.txt 2>&1
-          A="https://de.duckipedia.org/api.php?format=json&formatversion=2"
-          UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
-          O="Origin: https://felixwylt.github.io"
-          h() { echo "-- $1"; curl -s -I -L -A "$UA" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; }
-          g() { echo "-- $1"; curl -s -o /tmp/x -D - -L -A "Mozilla/5.0 (Linux; Android 14) Mobile" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; file /tmp/x | cut -c1-120; }
-          for u in "https://wsrv.nl/?url=inducks.org/hr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fde%2Fmm%2Fmm1990%2Fde_mm1990_11a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70" "https://wsrv.nl/?url=https%3A%2F%2Finducks.org%2Fhr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fwebusers%2Fwebusers%2F2018%2F09%2Fse_kap_001a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70" "https://inducks.org/hr.php?image=https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&normalsize=1"; do g "$u"; done
+          UA="DagobertDucksArchiv-probe/1.0"
+          curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1
+          echo "=== entries"; grep '^se/KAPS2017-05' isv/inducks_entry.isv | cut -d^ -f1-3,6,9 | head
+          echo "=== urls"; grep '^se/KAPS2017-05' isv/inducks_entryurl.isv
+          echo "=== issueurl"; head -1 isv/inducks_issueurl.isv; grep 'se/KAPS2017-05' isv/inducks_issueurl.isv | head
+          for sv in $(grep '^se/KAPS2017-05' isv/inducks_entry.isv | cut -d^ -f3 | head -3); do grep -m1 "^$sv^" isv/inducks_storyversion.isv | cut -d^ -f1,2,7; done
+          echo "=== issues without cover in catalogue series: entryurl sitecodes of their 'a' entries (sample)"
+          for ic in "se/KAPS2017-05" "de/LTB  546A"; do grep "^$ic" isv/inducks_entryurl.isv | head -3; done
+          for u in $(grep '^se/KAPS2017-05' isv/inducks_entryurl.isv | cut -d^ -f2,4 | head -4); do s=${u%%^*}; p=${u#*^}; base=$(grep "^$s^" isv/inducks_site.isv | cut -d^ -f2); echo "-- $base$p"; curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" "https://inducks.org/hr.php?image=$base$p&normalsize=1"; done
       - name: Save
         if: always()
         run: |
