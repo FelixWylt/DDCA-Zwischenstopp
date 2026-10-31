@@ -101,28 +101,28 @@
   }
 
   // genre: databases send lists and catalogue codes ("Serie:The_Kane_Chronicles", "Juvenile Fiction / Fantasy & Magic"),
-  // each in its own language. Common names become one German name; up to three genres are kept, comma separated.
+  // each in its own language. Common names become one English name; up to three genres are kept, comma separated.
   const GENRES = {
     "Fantasy": ["fantasy", "fantasy fiction", "fantasy & magic", "fantasyroman", "fantasyromane", "fantasylitteratur", "fantasy-literatur", "fantastik", "fantasyberättelser"],
-    "Science-Fiction": ["science fiction", "science-fiction", "sf", "sci-fi", "scifi", "science fiction-roman", "sciencefiction"],
-    "Krimi": ["krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "kriminalromaner", "detektivgeschichte"],
+    "Science Fiction": ["science-fiction", "science fiction", "science-fiction", "sf", "sci-fi", "scifi", "science fiction-roman", "sciencefiction"],
+    "Crime": ["krimi", "krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "kriminalromaner", "detektivgeschichte"],
     "Thriller": ["thriller", "thrillers", "suspense", "spänning", "spänningsromaner", "psychothriller"],
-    "Abenteuer": ["abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "abenteuerroman", "abenteuergeschichte"],
-    "Kinderbuch": ["kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
-    "Jugendbuch": ["jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
-    "Kinder- und Jugendbuch": ["kinder- und jugendliteratur", "kinder- und jugendbuch", "barn- och ungdomslitteratur", "barn- och ungdomsböcker"],
-    "Roman": ["roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
-    "Historischer Roman": ["historical fiction", "historischer roman", "historiska romaner", "historisk roman", "history fiction"],
+    "Adventure": ["abenteuer", "abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "abenteuerroman", "abenteuergeschichte"],
+    "Children's": ["kinderbuch", "kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
+    "Young Adult": ["jugendbuch", "jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
+    "Children's & Young Adult": ["kinder- und jugendbuch", "kinder- und jugendliteratur", "kinder- und jugendbuch", "barn- och ungdomslitteratur", "barn- och ungdomsböcker"],
+    "Novel": ["roman", "roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
+    "Historical Fiction": ["historischer roman", "historical fiction", "historischer roman", "historiska romaner", "historisk roman", "history fiction"],
     "Horror": ["horror", "horror tales", "horror stories", "skräck", "skräckromaner", "gruselgeschichte", "gruselroman"],
-    "Humor": ["humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk"],
-    "Liebesroman": ["romance", "love stories", "liebesroman", "kärleksromaner", "liebesgeschichte"],
-    "Sachbuch": ["sachbuch", "nonfiction", "non-fiction", "facklitteratur"],
-    "Biografie": ["biografie", "biographie", "biography", "biographies", "autobiography", "biografi", "biografier", "memoarer"],
-    "Comic": ["comic", "comics", "comics & graphic novels", "graphic novels", "graphic novel", "tecknade serier", "serier", "bildgeschichte", "manga"],
-    "Mythologie": ["mythologie", "mythology", "mytologi", "götter und helden"],
-    "Märchen": ["märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
-    "Geschichte": ["geschichte", "history", "historia"],
-    "Gedichte": ["gedichte", "lyrik", "poetry", "dikter"]
+    "Humour": ["humor", "humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk"],
+    "Romance": ["liebesroman", "romance", "love stories", "liebesroman", "kärleksromaner", "liebesgeschichte"],
+    "Non-fiction": ["sachbuch", "sachbuch", "nonfiction", "non-fiction", "facklitteratur"],
+    "Biography": ["biografie", "biografie", "biographie", "biography", "biographies", "autobiography", "biografi", "biografier", "memoarer"],
+    "Comics": ["comic", "comic", "comics", "comics & graphic novels", "graphic novels", "graphic novel", "tecknade serier", "serier", "bildgeschichte", "manga"],
+    "Mythology": ["mythologie", "mythologie", "mythology", "mytologi", "götter und helden"],
+    "Fairy Tales": ["märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
+    "History": ["geschichte", "geschichte", "history", "historia"],
+    "Poetry": ["gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => GENRES[k].forEach(v => { GENRE_OF[v] = k; }));
   const DROP = /^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska)$/i;

@@ -270,11 +270,11 @@ async function boot() {
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
-    // (run again in version 50: genres from different databases now share one German name)
-    if (!(await getConfig("genresMapped")) && window.Books && Books.oneGenre) {
+    // (run again in version 51: genres from different databases now share one English name)
+    if (!(await getConfig("genresEnglish")) && window.Books && Books.oneGenre) {
       const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
       if (fix.length) await saveMany(fix, null, true);
-      await setConfig("genresMapped", true);
+      await setConfig("genresEnglish", true);
     }
     await adoptLooseSeries();
     S.dbState = "ready";
@@ -1192,7 +1192,7 @@ ${isBook ? `
           <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
           ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
-          <label class="wide"><span class="l">Genres</span><input id="f-genre" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Abenteuer (separate with commas)"></label>` : ""}
+          <label class="wide"><span class="l">Genres</span><input id="f-genre" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Adventure (separate with commas)"></label>` : ""}
           <label><span class="l">Book series</span><input id="f-seriesName" list="bookseries" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "e.g. Harry Potter" : "e.g. Carl Barks Collection"}"></label>
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
