@@ -248,6 +248,7 @@ async function boot() {
     S.lastSeries = await getConfig("lastSeries") || null;
     S.barcodes = await getConfig("barcodes") || {};
     S.bookSizes = await getConfig("bookSizes") || {};
+    S.barcodeYears = await getConfig("barcodeYears") || {};
     S.recentSeries = await getConfig("recentSeries") || [];
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
@@ -519,7 +520,21 @@ function sortComics(list) {
 }
 
 // ---------- routing ----------
-function setView(v) { S.view = v; S.confirmDelete = false; render(); window.scrollTo(0, 0); }
+// opening a comic remembers where you were, so Save, Delete and Back return there at the same scroll position
+function scrollState() { const g = document.getElementById("gridbox"); return { y: window.scrollY, gy: g ? g.scrollTop : 0 }; }
+function restoreScroll(st) { if (!st) return; requestAnimationFrame(() => { const g = document.getElementById("gridbox"); if (g) g.scrollTop = st.gy || 0; window.scrollTo(0, st.y || 0); }); }
+function renderKeep() { const st = scrollState(); render(); restoreScroll(st); }
+function setView(v) {
+  if (v === "add" && S.view !== "add") S.returnTo = Object.assign({ view: S.view, col: S.col, shown: S.shown }, scrollState());
+  S.view = v; S.confirmDelete = false; render();
+  if (S.pendingScroll) { restoreScroll(S.pendingScroll); S.pendingScroll = null; } else window.scrollTo(0, 0);
+}
+// back to the screen the comic was opened from; fallback() is used when there is none
+function goBack(fallback) {
+  const r = S.returnTo; S.returnTo = null; S.draft = null; S.editing = null;
+  if (r && r.view && r.view !== "add" && VIEWS[r.view]) { S.col = r.col || {}; S.shown = r.shown || S.shown; S.pendingScroll = r; nav(r.view); }
+  else if (fallback) fallback(); else nav("collection");
+}
 function nav(v) {
   // pushState changes the address without firing hashchange/popstate, so the view state is kept
   if (location.hash !== "#" + v) { try { history.pushState({ col: S.col }, "", "#" + v); } catch (e) { S.navLock = true; location.hash = v; } }
@@ -919,7 +934,7 @@ function bookGapsHtml() {
       <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
       ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
       <div id="cellpick"></div>
-      ${size ? `<div class="cells">${cells}</div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}
+      ${size ? `<div class="cells" id="gridbox">${cells}</div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}
     </div>
     <div class="stack"><h3>Full wishlist</h3>${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3></div>'}</div>`;
 }
@@ -1117,7 +1132,7 @@ ${isBook ? `
       ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
       document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => s[inp.dataset.sf] = inp.value); });
     };
-    $("#cancel") && ($("#cancel").onclick = () => { S.draft = null; S.editing = null; nav("collection"); });
+    $("#cancel") && ($("#cancel").onclick = () => goBack());
     document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { grab(); d.status = b.dataset.st; render(); });
     document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {
       grab();
@@ -1232,7 +1247,7 @@ ${isBook ? `
           $("#dupSep") && ($("#dupSep").onclick = () => { box.innerHTML = ""; S.dupOk = true; doSave(next).finally(() => { S.dupOk = false; }); });
           $("#dupCopy") && ($("#dupCopy").onclick = async () => {
             box.innerHTML = "";
-            try { await saveComic(Object.assign({}, have, { copies: (have.copies || 1) + 1 })); toast(tag + ": now " + ((have.copies || 1) + 1) + " copies"); next ? skipToNext() : (S.draft = null, nav("collection")); }
+            try { await saveComic(Object.assign({}, have, { copies: (have.copies || 1) + 1 })); toast(tag + ": now " + ((have.copies || 1) + 1) + " copies"); next ? skipToNext() : goBack(); }
             catch (e) { toast(errText(e)); }
           });
           return;
@@ -1245,14 +1260,17 @@ ${isBook ? `
         const saved = await saveComic(c);
         const lotNote = await afterLotSave(saved, before);
         for (const id of alsoGone) await deleteComic(id);
-        if (saved.barcode && saved.seriesId) { S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {}); }
+        if (saved.barcode && saved.seriesId) {
+          S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {});
+          if (saved.issueYear) { S.barcodeYears = Object.assign({}, S.barcodeYears, { [saved.barcode]: saved.issueYear }); setConfig("barcodeYears", S.barcodeYears).catch(() => {}); }
+        }
         rememberSeries(saved.seriesId);
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
         toast((moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive") + lotNote);
         if (next) {
           S.lastSaved = (target.short || target.name) + " " + p.label;
           goNext(c, p, se);
-        } else { S.draft = null; S.editing = null; S.col = { p: publisherOf(saved), g: groupOf(saved), s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
+        } else goBack(() => { S.col = { p: publisherOf(saved), g: groupOf(saved), s: seriesKeyOf(saved) }; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); });
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     // the next number in a run, keeping series, status, place and date of purchase
@@ -1296,7 +1314,7 @@ ${isBook ? `
           S.editing = null;
           S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
           render(); $("#f-title") && $("#f-title").focus();
-        } else { S.draft = null; S.editing = null; S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); }
+        } else goBack(() => { S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); });
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
     };
     $("#save").onclick = () => doSave(false);
@@ -1304,7 +1322,7 @@ ${isBook ? `
     $("#del") && ($("#del").onclick = () => {
       $("#confirmBox").innerHTML = '<div class="confirm"><span>Delete this ' + (d.kind === "book" ? "book" : "comic") + ' from your archive? This can\'t be undone.</span><button class="danger" id="yesdel">Delete</button><button id="nodel">Keep it</button></div>';
       $("#nodel").onclick = () => $("#confirmBox").innerHTML = "";
-      $("#yesdel").onclick = async () => { try { const lot = (S.comics.find(x => x.id === d.id) || {}).lotId; await deleteComic(d.id); if (lot) await rebalanceLot(lot); toast("Deleted"); S.draft = null; S.editing = null; nav("collection"); } catch (e) { toast(errText(e)); } };
+      $("#yesdel").onclick = async () => { try { const lot = (S.comics.find(x => x.id === d.id) || {}).lotId; await deleteComic(d.id); if (lot) await rebalanceLot(lot); toast("Deleted"); goBack(); } catch (e) { toast(errText(e)); } };
     });
   }
 };
@@ -1515,7 +1533,7 @@ VIEWS.gaps = {
           ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
         <div id="cellpick"></div>
-        <div style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
+        <div id="gridbox" style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
       <div class="stack"><h3>Full wishlist</h3>
         ${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
@@ -1548,7 +1566,7 @@ VIEWS.gaps = {
       $("#cpWant").onclick = async () => {
         
         const p = parseIssue(se, label);
-        try { await saveComic(Object.assign(blankDraft({ seriesId: se.id, seriesName: se.name, issue: label, status: "wanted" }), { issueLabel: p.label, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n })); toast((se.short || se.name) + " " + label + " added to wishlist"); render(); }
+        try { await saveComic(Object.assign(blankDraft({ seriesId: se.id, seriesName: se.name, issue: label, status: "wanted" }), { issueLabel: p.label, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n })); toast((se.short || se.name) + " " + label + " added to wishlist"); renderKeep(); }
         catch (e) { toast(errText(e)); }
       };
     });
@@ -1754,10 +1772,33 @@ async function comicFromCode(d, code, ext) {
   if (!se) { render(); bookMsg(`<div class="banner">Barcode ${esc(code)}${ext ? " with add-on " + esc(ext) : ""} isn't known yet. Pick the series and the number and save: from then on the app recognises this magazine's barcode.</div>`); return; }
   d.seriesId = se.id; d.seriesName = se.name;
   const n = ext ? +ext.slice(-2) : 0;   // the add-on's last two digits are the issue number
-  if (n) d.issue = se.numbering === "year" ? (d.issue && /^\d{4}/.test(d.issue) ? d.issue.slice(0, 4) : String(new Date().getFullYear())) + "/" + String(n).padStart(2, "0") : String(n);
-  render();
-  bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}${n ? ", number " + n : ""}.${ext && ext.length === 5 ? " The add-on has 5 digits (" + esc(ext) + "); check that the number is right." : ""}${se.numbering === "year" && n ? " Check the year: the barcode only tells the number." : n ? "" : " The add-on with the number wasn't readable; type the number."}</div>`);
+  if (!n) { render(); bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}. The add-on with the number wasn't readable; type the number.</div>`); return; }
+  if (se.numbering !== "year") { d.issue = String(n); render(); bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)} ${n}.</div>`); if (catEntry(se)) setTimeout(() => $("#lookup") && $("#lookup").click(), 50); return; }
+  // weekly/monthly titles: the barcode has the number and (German magazines) the price, but no year.
+  // INDUCKS knows every issue's number and price, so offer the issues that fit, nearest year first.
+  const cents = barcodePrice(code), entry = catEntry(se), file = entry && await catalogueFile(entry);
+  const anchor = (S.barcodeYears || {})[code] || Math.max(0, ...S.comics.filter(c => c.seriesId === se.id && c.status !== "wanted" && c.issueYear).map(c => c.issueYear)) || new Date().getFullYear();
+  let cands = [];
+  if (file) {
+    cands = Object.keys(file.issues).filter(k => { const m = /^(\d{4})(?:\/(\d{1,3})|-(\d{1,3})-(\d{1,3}))$/.exec(k); return m && (+m[2] === n || +m[3] === n || +m[4] === n); });
+    const priced = cents ? cands.filter(k => issuePrice(file.issues[k].pr) === cents) : [];
+    if (priced.length) cands = priced;
+    cands.sort((a, b) => Math.abs(+a.slice(0, 4) - anchor) - Math.abs(+b.slice(0, 4) - anchor) || b.localeCompare(a));
+  }
+  const pick = k => { d.issue = k.replace(/^(\d{4})-(\d+)-(\d+)$/, "$1/$2-$3"); render(); bookMsg(`<div class="banner ok">${esc(se.short || se.name)} ${esc(k)}. Filling in from INDUCKS…</div>`); setTimeout(() => $("#lookup") && $("#lookup").click(), 50); };
+  if (cands.length === 1) { pick(cands[0]); return; }
+  d.issue = anchor + "/" + String(n).padStart(2, "0"); render();
+  if (!cands.length) { bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}, number ${n}. The barcode doesn't say the year, so the app put in ${anchor}: correct it if needed.</div>`); return; }
+  const top = cands.slice(0, 8);
+  bookMsg(`<div class="banner ok"><div>That's ${esc(se.short || se.name)} number ${n}${cents ? ", price " + fmt2(cents / 100) + " €" : ""}. The barcode doesn't contain the year; these issues fit${cents ? " (number and price)" : ""}. Tap yours:</div>
+    <div class="row" style="gap:6px;margin-top:8px">${top.map(k => `<button type="button" class="chipbtn" data-cand="${esc(k)}">${esc(k)} · ${esc(niceDate(file.issues[k].d))}</button>`).join("")}</div>
+    ${cands.length > top.length ? `<div class="small muted" style="margin-top:6px">${cands.length - top.length} more in other years: type the year if it isn't listed.</div>` : ""}</div>`);
+  document.querySelectorAll("[data-cand]").forEach(b => b.onclick = () => pick(b.dataset.cand));
 }
+// German press barcodes (419 / 414): digits 9–12 are the cover price in cents
+function barcodePrice(code) { return /^41[49]\d{10}$/.test(code) ? +code.slice(8, 12) || 0 : 0; }
+// INDUCKS prices like "EUR 3,99(in DE)" or "Euro(D) 1,75"; older DM prices don't count
+function issuePrice(pr) { const t = String(pr || ""); if (!/eur/i.test(t)) return 0; const m = /(\d+)[.,](\d{2})/.exec(t); return m ? +m[1] * 100 + +m[2] : 0; }
 function loadScript(src) { return new Promise((res, rej) => { if (document.querySelector('script[src="' + src + '"]')) return res(); const t = document.createElement("script"); t.src = src; t.onload = res; t.onerror = () => rej(new Error("load")); document.head.appendChild(t); }); }
 // camera barcode scanner: the browser's own detector if it has one, otherwise ZXing (stored with the app)
 // The 2- or 5-digit add-on right of a magazine barcode (EAN-2 / EAN-5), read straight from the
