@@ -382,3 +382,5 @@ body.noscroll { overflow: hidden; }
 .cell { position: relative; }
 .readmode .cell.owned { outline: 2px dashed color-mix(in oklab, var(--owned) 55%, transparent); outline-offset: -3px; }
 .readmode .cell:not(.owned) { opacity: 0.45; }
+
+.serabout { margin: 0 0 10px; padding: 10px 14px; } .serabout summary { cursor: pointer; }

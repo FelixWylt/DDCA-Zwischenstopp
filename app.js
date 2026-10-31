@@ -815,6 +815,15 @@ VIEWS.collection = {
     drawResults();
   }
 };
+// the series' description and facts (filled from INDUCKS / Duckipedia in Series), above its issues
+function seriesAbout(se) {
+  if (!se || !(se.about || se.pubHouse || se.format)) return "";
+  const yrs = se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? "to issue " + se.latest : "";
+  const facts = [esc(se.pubHouse || ""), esc(se.format || ""), esc(yrs), se.code && `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(se.code)}" target="_blank" rel="noopener">INDUCKS ${esc(se.code)}</a>`];
+  return `<details class="card serabout"${S.aboutOpen ? " open" : ""}><summary><strong>About this series</strong></summary>
+    ${se.about ? `<p style="margin:8px 0 6px">${esc(se.about)}</p>` : ""}
+    <p class="small muted" style="margin:0">${facts.filter(Boolean).join(" · ")}${se.aboutSrc ? ` · Text: <a href="${esc(se.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GFDL 1.2)` : ""}</p></details>`;
+}
 function drawResults() {
   const box = $("#results"); if (!box) return;
   const q = norm(S.filters.q), col = S.col || {};
@@ -896,12 +905,13 @@ function drawResults() {
       : isBookUni(col.p)
       ? [{ label: "All", col: {} }, { label: col.p, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }]
       : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }];
-    html = crumbs(trail) +
+    html = crumbs(trail) + seriesAbout(seriesById(col.s)) +
       `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` +
       (list.length ? '<div class="list">' + rows + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
   }
   box.innerHTML = html;
   box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
+  const ab = box.querySelector(".serabout"); if (ab) ab.ontoggle = () => { S.aboutOpen = ab.open; };
   box.querySelectorAll(".item").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
   $("#newbook") && ($("#newbook").onclick = () => { S.editing = null; S.draft = blankDraft({ kind: "book", bookType: "book", seriesId: "_book" }); nav("add"); });
