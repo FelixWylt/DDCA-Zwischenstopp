@@ -1,48 +1,34 @@
-=== Duckipedia imageinfo
-{"batchcomplete":true,"query":{"pages":[{"pageid":2133,"ns":6,"title":"Datei:LTB 001.jpg","imagerepository":"local","imageinfo":[{"thumburl":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg","thumbwidth":200,"thumbheight":305,"responsiveUrls":{"1.5":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/300px-LTB_001.jpg","2":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/400px-LTB_001.jpg"},"url":"https://de.duckipedia.org/images/5/57/LTB_001.jpg","descriptionurl":"https://de.duckipedia.org/Datei:LTB_001.jpg","descriptionshorturl":"https://de.duckipedia.org/index.php?curid=2133"}]},{"pageid":12416,"ns":6,"title":"Datei:LTB 100.JPG","imagerepository":"local","imageinfo":[{"thumburl":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/200px-LTB_100.JPG","thumbwidth":200,"thumbheight":304,"responsiveUrls":{"1.5":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/299px-LTB_100.JPG","2":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/399px-LTB_100.JPG"},"url":"https://de.duckipedia.org/images/3/32/LTB_100.JPG","descriptionurl":"https://de.duckipedia.org/Datei:LTB_100.JPG","descriptionshorturl":"https://de.duckipedia.org/index.php?curid=12416"}]}]}}
--- https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg
-HTTP/2 200 
-content-type: image/jpeg
-content-length: 22084
-x-content-type-options: nosniff
--- https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/200px-LTB_100.JPG
-HTTP/2 200 
-content-type: image/jpeg
-content-length: 19501
-x-content-type-options: nosniff
-=== outducks
--- https://outducks.org/thumbnails/se/kap/se_kap_001a_001.jpg
+-- https://outducks.org/se/kap/se_kap_001a_001.jpg
 HTTP/2 404 
 content-type: text/html
--- https://outducks.org/thumbnails/webusers/2018/09/se_kap_001a_001.jpg
+/tmp/x: HTML document, ASCII text
+-- https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg
 HTTP/2 404 
 content-type: text/html
--- https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg
+/tmp/x: HTML document, ASCII text
+-- https://outducks.org/thumbnails/de/mm/mm1990/de_mm1990_11a_001.jpg
 HTTP/2 404 
 content-type: text/html
--- https://wsrv.nl/?url=outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&w=200&output=jpg
+/tmp/x: HTML document, ASCII text
+-- https://outducks.org/thumbnails2/de/mm/mm1990/de_mm1990_11a_001.jpg
+HTTP/2 404 
+content-type: text/html
+/tmp/x: HTML document, ASCII text
+-- https://inducks.org/hr.php?image=https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&normalsize=1
+HTTP/1.1 200 OK
+Content-Length: 16590
+Content-Type: image/jpeg
+/tmp/x: JPEG image data, JFIF standard 1.01, resolution (DPI), density 150x150, segment length 16, comment: "LEAD Techno
+-- https://wsrv.nl/?url=outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&w=240&output=webp&q=70
 HTTP/2 404 
 content-type: application/json
 access-control-allow-origin: *
 x-content-type-options: nosniff
-=== sites
- 848593 thumbnails2
- 848593 thumbnails
- 727834 webusers
- 201856 thumbnails3
-  32267 renamed
-  25616 us
-   9425 yu
-   9140 nl
-   7550 fi
-   6534 no
-   6458 fr
-   4696 de
-de^https://outducks.org/de/^Y^Outducks^^^
-it^https://outducks.org/it/^Y^Outducks^^^
-no^https://outducks.org/no/^Y^Outducks^^^
-se^https://outducks.org/se/^Y^Outducks^^^
-de/MM1990-11a^de^1^mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
-de/MM1990-11a^thumbnails^1^de/mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
-de/MM1990-11a^thumbnails2^1^de/mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
-de/MM1990-12a^de^1^mm/mm1990/de_mm1990_12a_001.jpg^GC MV1990-19P^Y^
+/tmp/x: JSON text data
+-- https://wsrv.nl/?url=de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg&w=240&output=webp&q=70
+HTTP/2 200 
+content-type: image/webp
+content-length: 16674
+access-control-allow-origin: *
+x-content-type-options: nosniff
+/tmp/x: RIFF (little-endian) data, Web/P image, VP8 encoding, 240x366, Scaling: [none]x[none], YUV color, decoders shoul
