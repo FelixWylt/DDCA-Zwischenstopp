@@ -1,5 +1,5 @@
 {
- "built": "2026-10-31T19:08",
+ "built": "2026-10-31T19:29",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -475,6 +475,14 @@
    "title": "Omaggio Abbonati",
    "file": "inducks-it-ABB.json",
    "issues": 24
+  },
+  "disney lingua latina": {
+   "series": "Disney lingua latina",
+   "aliases": [],
+   "code": "it/DLL",
+   "title": "Disney lingua latina",
+   "file": "inducks-it-DLL.json",
+   "issues": 6
   }
  }
 }

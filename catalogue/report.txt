@@ -61,10 +61,11 @@ PUBLICATIONS
   ✓ Le più belle storie Disney  →  it/PBST  'Le più belle storie Disney'  (by title)
   ✓ Divertiamoci a stare bene  →  it/DSB  'Divertiamoci a stare bene'  (by title)
   ✓ Omaggio Abbonati  →  it/ABB  'Omaggio Abbonati'  (by code)
+  ✓ Disney lingua latina  →  it/DLL  'Disney lingua latina'  (by code)
 
-issues in chosen publications: 21,305
-entries: 229,175, story versions: 116,205
-cover scans: 20,687 of 21,305 issues
+issues in chosen publications: 21,311
+entries: 229,198, story versions: 116,223
+cover scans: 20,693 of 21,311 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -125,6 +126,7 @@ FILES
   inducks-it-PBST.json: 71 issues, 109 KB  e.g. 36 = it/PBST 36 2017-07 (11 stories)
   inducks-it-DSB.json: 8 issues, 9 KB  e.g. 5 = it/DSB   5 2017-03 (7 stories)
   inducks-it-ABB.json: 24 issues, 72 KB  e.g. 1978 = it/ABB1978 1979 (10 stories)
+  inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
 directory.json: 2,592 publications (at, ch, de, dk, fi, it, no, se), 181 KB
 
 files in the ISV export: createtables.sql
