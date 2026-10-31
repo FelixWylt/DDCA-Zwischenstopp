@@ -13,24 +13,20 @@ jobs:
         run: |
           set +e
           exec > probe-result.txt 2>&1
-          UA="DagobertDucksArchiv/1.0 (personal collection app)"
-          O="Origin: https://felixwylt.github.io"
-          W="https://www.wikidata.org/w/api.php"
-          echo "=== search"; curl -s -A "$UA" -D /tmp/h -H "$O" "$W?action=wbsearchentities&search=The%20Kane%20Chronicles&language=en&format=json&limit=5&origin=*"; echo; grep -i access-control /tmp/h
-          curl -s -A "$UA" "$W?action=wbsearchentities&search=Kane%20Chronicles&language=en&format=json&limit=5&origin=*" | head -c 800; echo
-          ID=$(curl -s -A "$UA" "$W?action=wbsearchentities&search=The%20Kane%20Chronicles&language=en&format=json&limit=1&origin=*" | python3 -c "import sys,json;print(json.load(sys.stdin)['search'][0]['id'])")
-          echo "=== entity $ID"; curl -s -A "$UA" "$W?action=wbgetentities&ids=$ID&props=claims|sitelinks&format=json&origin=*" > ent.json
+          UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
+          A="https://de.duckipedia.org/api.php?format=json&formatversion=2"
+          curl -s -A "$UA" -G "$A" --data-urlencode action=parse --data-urlencode page="Ausgabenliste Donald Duck Taschenbuch" --data-urlencode prop=wikitext > al.json
           python3 - <<'EOF'
-          import json
-          e = list(json.load(open('ent.json'))['entities'].values())[0]
-          for p in ['P31','P50','P123','P136','P577','P580','P582','P1113','P2635','P179','P527']:
-              v = e['claims'].get(p, [])
-              print(p, [(c['mainsnak'].get('datavalue') or {}).get('value') for c in v][:6])
-          print({k: v['title'] for k, v in e['sitelinks'].items() if k in ('enwiki','dewiki','svwiki')})
+          import json, re
+          t = json.load(open('al.json'))['parse']['wikitext']
+          print(t[:1500])
+          print('---- lines with Test/Probe/0x')
+          for l in t.split('\n'):
+              if re.search(r'test|probe|\[\[DD 0|DD 0\d', l, re.I): print(l[:300])
+          print('---- links'); print(sorted(set(re.findall(r'\[\[([^\]|]+)', t)))[:80])
           EOF
-          echo "=== summary"; curl -s -A "$UA" -D /tmp/h2 -H "$O" "https://en.wikipedia.org/api/rest_v1/page/summary/The_Kane_Chronicles" | head -c 700; echo; grep -i access-control /tmp/h2
-          echo "=== search sv"; curl -s -A "$UA" "$W?action=wbsearchentities&search=Bamse&language=sv&format=json&limit=5&origin=*" | head -c 600; echo
-          echo "=== search Harry Potter"; curl -s -A "$UA" "$W?action=wbsearchentities&search=Harry%20Potter&language=de&format=json&limit=6&origin=*" | head -c 900; echo
+          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode list=allpages --data-urlencode apprefix="DD 0" --data-urlencode aplimit=20; echo
+          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode list=search --data-urlencode srsearch="Donald Duck Taschenbuch Testausgabe" --data-urlencode srlimit=10; echo
       - name: Save
         if: always()
         run: |
