@@ -330,8 +330,12 @@ async function loadCovers() {
 }
 async function storeCover(c) {
   if (!c.coverUrl || !navigator.onLine) return false;
-  const r = await fetch(smallCopy(c.coverUrl)); if (!r.ok) return false;
-  const blob = await r.blob(); if (!blob.size || !/^image\//.test(blob.type)) return false;
+  // through the image service first; if it can't fetch the picture, straight from its site (works where that site allows it)
+  let blob = null;
+  for (const u of [smallCopy(c.coverUrl), c.coverUrl]) {
+    try { const r = await fetch(u); if (r.ok) { const b = await r.blob(); if (b.size && /^image\//.test(b.type)) { blob = b; break; } } } catch (e) {}
+  }
+  if (!blob) return false;
   await tx("covers", "readwrite", st => st.put({ id: c.id, url: c.coverUrl, blob }));
   if (S.coverObj[c.id]) URL.revokeObjectURL(S.coverObj[c.id]);
   S.coverObj[c.id] = URL.createObjectURL(blob); S.coverHas[c.id + "|" + c.coverUrl] = true;
@@ -339,9 +343,9 @@ async function storeCover(c) {
 }
 function coverBar() {
   if (S.colTab === "books" || !S.comics.length) return "";
-  const noUrl = S.comics.filter(noCoverYet).length, notKept = S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]).length;
+  const noUrl = S.comics.filter(noCoverYet).length, notKept = S.comics.filter(needsKeep).length;
   const run = S.cv && S.cv.running;
-  if (!run && !notKept && (!noUrl || S.cvAsked)) return "";
+  if (!run && !notKept && (!noUrl || S.cvAsked)) return S.cv && S.cv.msg ? `<p class="small muted" style="margin:8px 0">${esc(S.cv.msg)}</p>` : "";
   return `<div class="row small" style="align-items:center;margin:8px 0"><button id="getcv" type="button">${run ? "Stop" : "Get cover pictures"}</button>
     <span class="muted" id="cvprog">${run ? "Working…" : [noUrl ? noUrl + " without a cover" : "", notKept ? notKept + " not stored for offline use yet" : ""].filter(Boolean).join(" · ") + ". Uses the internet once; the pictures are then kept on this phone (about 10 KB each)."}</span></div>`;
 }
@@ -368,15 +372,16 @@ function showCover(id) {
 // capture phase, so tapping a thumbnail inside a list row shows the cover instead of opening the comic
 document.addEventListener("click", e => { const z = e.target.closest && e.target.closest("[data-zoom]"); if (!z) return; e.preventDefault(); e.stopPropagation(); showCover(z.dataset.zoom); }, true);
 // still worth looking for a cover: never found one, or the catalogue is newer than the last try
+const needsKeep = c => c.coverUrl && !/^data:/.test(c.coverUrl) && !S.coverHas[c.id + "|" + c.coverUrl] && c.coverKeepFail !== c.coverUrl;
 const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || !!(S.catalogue && S.catalogue.built && S.catalogue.built > c.coverNone));
 const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
 // finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
 async function fetchAllCovers() {
   if (S.cv && S.cv.running) return;
   const run = S.cv = { running: true, stop: false, found: 0, kept: 0, done: 0, total: 0 };
-  const draw = () => { const el = $("#cvprog"); if (el) el.textContent = run.running ? `Working… ${run.done} of ${run.total}. ${run.found} covers found, ${run.kept} stored.` : `Done. ${run.found} covers found, ${run.kept} stored on this phone.`; };
+  const draw = () => { const el = $("#cvprog"); if (el) el.textContent = run.running ? `Working… ${run.done} of ${run.total}. ${run.found} covers found, ${run.kept} stored.` : `Done. ${run.found} covers found, ${run.kept} stored on this phone.` + (run.failed && run.failed.length ? ` ${run.failed.length} couldn't be stored (the picture's website doesn't allow copies; it still shows when online): ${run.failed.slice(0, 5).map(comicTag).join(", ")}.` : ""); };
   const need = S.comics.filter(noCoverYet);
-  const keep = () => S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]);
+  const keep = () => S.comics.filter(needsKeep);
   run.total = need.length + keep().length; draw();
   for (const c of need) {
     if (run.stop) break;
@@ -391,12 +396,17 @@ async function fetchAllCovers() {
     run.done++; draw();
   }
   const rest = keep(); run.total = run.done + rest.length; draw();
+  run.failed = [];
   for (const c of rest) {
     if (run.stop) break;
     if (await storeCover(c).catch(() => false)) run.kept++;
+    else if (navigator.onLine) {   // this picture can't be copied: remember it, so it isn't counted as "not stored" again
+      run.failed.push(c);
+      await saveComic(Object.assign({}, c, { coverKeepFail: c.coverUrl }), true).catch(() => null);
+    }
     run.done++; draw();
   }
-  run.running = false; S.cvAsked = true; draw(); if (S.view === "collection") renderKeep();
+  run.running = false; S.cvAsked = true; draw(); run.msg = ($("#cvprog") || {}).textContent || ""; if (S.view === "collection") renderKeep();
 }
 // ---- lots: several comics bought together for one price ----
 function lotFields(d) {
