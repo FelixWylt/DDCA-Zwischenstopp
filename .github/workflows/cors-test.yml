@@ -15,24 +15,18 @@ jobs:
           exec > probe-result.txt 2>&1
           A="https://de.duckipedia.org/api.php?format=json&formatversion=2"
           UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
-          q() { curl -s -A "$UA" -G "$A" "$@"; echo; }
-          echo "=== LTB 100 wikitext head"
-          q --data-urlencode action=parse --data-urlencode page="LTB 100" --data-urlencode prop=wikitext | python3 -c "import sys,json; print(json.load(sys.stdin)['parse']['wikitext'][:1500])"
-          echo "=== pageimages"
-          q --data-urlencode action=query --data-urlencode titles="LTB 100|LTB 500" --data-urlencode prop="pageimages|images" --data-urlencode piprop="thumbnail|name" --data-urlencode pithumbsize=300
-          echo "=== series page Lustiges Taschenbuch"
-          q --data-urlencode action=query --data-urlencode titles="Lustiges Taschenbuch" --data-urlencode prop="extracts|pageimages" --data-urlencode exintro=1 --data-urlencode explaintext=1 --data-urlencode exsentences=3 --data-urlencode redirects=1 | head -c 1500
-          echo; echo "=== series page wikitext"
-          q --data-urlencode action=parse --data-urlencode page="Lustiges Taschenbuch" --data-urlencode redirects=1 --data-urlencode prop=wikitext | python3 -c "import sys,json; print(json.load(sys.stdin)['parse']['wikitext'][:2500])"
-          echo "=== INDUCKS"
-          mkdir -p isv && curl -s -L --user-agent "DagobertDucksArchiv-probe" -o isv.tgz https://inducks.org/inducks/isv.tgz && tar -xzf isv.tgz -C isv --strip-components=1
-          ls isv | tr '\n' ' '; echo
-          for t in inducks_publication inducks_issue inducks_entry inducks_entryurl inducks_site inducks_publisher inducks_publishingjob inducks_storyversion; do echo "--- $t"; head -2 isv/$t.isv 2>/dev/null; done
-          grep -m3 '^de/LTB  100' isv/inducks_entryurl.isv; grep -m5 '^de/LTB  100' isv/inducks_entry.isv; grep -m3 '^se/KAP  1a\|^se/KAP   1' isv/inducks_entryurl.isv
-          grep -m3 '^de/LTB  500' isv/inducks_entryurl.isv; grep '^de/LTB\^' isv/inducks_publishingjob.isv | head -3; grep -m2 '^de/LTB\^' isv/inducks_publication.isv
-          grep -m8 'webusers\|thumbnails' isv/inducks_site.isv; head -15 isv/inducks_site.isv
-          echo "=== CORS"
-          for u in "https://de.duckipedia.org/images/thumb/" "https://outducks.org/" "https://inducks.org/hr.php" "https://wsrv.nl/?url=outducks.org/webusers/webusers/2015/03/de_ltb_100a_001.jpg&w=200"; do echo "-- $u"; curl -s -I -H "Origin: https://felixwylt.github.io" "$u" | grep -i 'access-control\|^HTTP\|content-type'; done
+          O="Origin: https://felixwylt.github.io"
+          h() { echo "-- $1"; curl -s -I -L -A "$UA" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; }
+          echo "=== Duckipedia imageinfo"
+          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode titles="Datei:LTB 100.JPG|Datei:LTB 001.jpg" --data-urlencode prop=imageinfo --data-urlencode iiprop=url --data-urlencode iiurlwidth=200 | tee ii.json; echo
+          for u in $(python3 -c "import json;d=json.load(open('ii.json'));[print(p['imageinfo'][0].get('thumburl','')) for p in d['query']['pages'] if 'imageinfo' in p]"); do h "$u"; done
+          echo "=== outducks"
+          for u in https://outducks.org/thumbnails/se/kap/se_kap_001a_001.jpg https://outducks.org/thumbnails/webusers/2018/09/se_kap_001a_001.jpg https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg "https://wsrv.nl/?url=outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&w=200&output=jpg"; do h "$u"; done
+          echo "=== sites"
+          curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1 inducks_entryurl.isv inducks_site.isv 2>/dev/null || tar -xzf isv.tgz -C isv --strip-components=1
+          cut -d^ -f2 isv/inducks_entryurl.isv | sort | uniq -c | sort -rn | head -12
+          grep -E '^(se|de|it|no)\^' isv/inducks_site.isv
+          grep -m4 '^de/LTB  546' isv/inducks_entryurl.isv; grep -m4 '^de/MM1990-' isv/inducks_entryurl.isv
       - name: Save
         if: always()
         run: |
