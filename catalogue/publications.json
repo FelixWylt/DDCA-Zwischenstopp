@@ -201,16 +201,10 @@
       "titles": [
         "Ankeborgs Samlarpocket",
         "Ankeborgs samlarpocket"
-      ]
-    },
-    {
-      "series": "Stål-Kalle Pocket",
-      "country": "se",
-      "title": "Stål-Kalle Pocket",
-      "titles": [
-        "Stål-Kalle Pocket",
-        "Stål-Kalle pocket",
-        "Stål-Kalle"
+      ],
+      "code": "se/ASP",
+      "aliases": [
+        "Stål-Kalle Pocket"
       ]
     },
     {

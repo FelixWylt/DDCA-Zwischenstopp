@@ -429,6 +429,16 @@ function titleWords(t) { return norm(t).split(" ").filter(w => w.length >= 5 && 
 function proposeMatch(c, file) {
   const issues = file.issues || {}, lab = c.issueLabel || c.issue || "";
   if (lab && issues[lab]) return { label: lab, how: "Same number", sure: true };
+  const se = seriesById(c.seriesId);
+  // the issue's own title names it: "Stål-Kalle Pocket 4: Fallen stjärna" (a series INDUCKS keeps inside another one)
+  if (se && /^\d+$/.test(lab)) {
+    const want = norm(se.name) + " " + lab;
+    const hit = Object.keys(issues).filter(k => { const t = norm(issues[k].t); return t === want || t.startsWith(want + " "); });
+    if (hit.length === 1) return { label: hit[0], how: "Issue title “" + issues[hit[0]].t + "”", sure: true, keepNumber: true };
+  }
+  // only variants exist (LTB 546A / 546B)
+  const vars = Object.keys(issues).filter(k => variantOf(k) && sameSlot(k, lab));
+  if (lab && !variantOf(lab) && vars.length) return { label: "", how: "INDUCKS has this number only as variants " + vars.join(", ") + ": pick yours", sure: false, options: vars };
   const date = String(c.date || ""), year = (/^(\d{4})/.exec(lab) || /^(\d{4})/.exec(date) || [])[1];
   const inYear = year ? Object.keys(issues).filter(k => k.startsWith(year) || String(issues[k].d || "").startsWith(year)) : [];
   if (date.length >= 10) {
@@ -453,11 +463,20 @@ function proposeMatch(c, file) {
     if (scored.length && (scored.length === 1 || scored[0][1] > scored[1][1]) && (scored[0][1] >= 2 || scored.length === 1))
       return { label: scored[0][0], how: "Cover text matches a story", sure: false };
   }
+  // a number INDUCKS doesn't have at all, e.g. KA 1948/07 when 1948 only had 1948/01–04
+  const ym = /^(\d{4})\/(\d{1,3})$/.exec(lab);
+  if (ym) {
+    const nums = Object.keys(issues).filter(k => k.startsWith(ym[1] + "/")).sort();
+    if (nums.length) return { label: "", how: "INDUCKS has no " + lab + ": in " + ym[1] + " there were only " + nums[0] + "–" + nums[nums.length - 1] + ". Check the number, or delete the entry", sure: false };
+    return { label: "", how: "INDUCKS has no issues from " + ym[1] + " in this series. Check the year", sure: false };
+  }
   return { label: "", how: inYear.length ? "Pick the issue" : "No match found", sure: false };
 }
 function applyIssueFromCatalogue(c, label, hit) {
-  const p = labelParts(label), out = Object.assign({}, c);
-  out.issue = label; out.issueLabel = label; out.issueYear = p.year; out.issueNum = p.n; out.issueSort = p.sort;
+  const p = labelParts(label), out = Object.assign({}, c), se = seriesById(c.seriesId);
+  // keep your own numbering when INDUCKS files the issue under another series' numbers (Stål-Kalle Pocket 4 = ASP 2016/01)
+  const keep = se && se.numbering !== "year" && /^\d+$/.test(c.issueLabel || "") && /\//.test(label);
+  if (!keep) { out.issue = label; out.issueLabel = label; out.issueYear = p.year; out.issueNum = p.n; out.issueSort = p.sort; }
   if (hit.d && String(hit.d).length >= String(c.date || "").length) out.date = hit.d;
   if (!c.title && hit.t) out.title = hit.t;
   if (!c.pages && hit.pg) out.pages = hit.pg;
@@ -1359,9 +1378,11 @@ async function buildMatchRun() {
       if (c.inducks) { already++; return; }
       const m = proposeMatch(c, file);
       const yr = (/^(\d{4})/.exec(m.label || c.issueLabel || "") || /^(\d{4})/.exec(c.date || "") || [])[1];
-      const options = yr ? Object.keys(file.issues).filter(k => k.startsWith(yr) || String(file.issues[k].d || "").startsWith(yr)) : (m.label ? [m.label] : []);
+      const near = /^\d+$/.test(c.issueLabel || "") ? Object.keys(file.issues).filter(k => Math.abs((parseInt(k, 10) || -99) - +c.issueLabel) <= 3) : [];
+      const options = m.options || (yr ? Object.keys(file.issues).filter(k => k.startsWith(yr) || String(file.issues[k].d || "").startsWith(yr)) : (m.label ? [m.label] : near));
       if (m.label && !options.includes(m.label)) options.unshift(m.label);
-      items.push(Object.assign({ c, file, options: options.slice(0, 120) }, m));
+      const mm = Object.assign({}, m); delete mm.options;
+      items.push(Object.assign({ c, file, options: options.slice(0, 120) }, mm));
     });
   }
   const ord = x => (x.c.seriesName || "") + String(x.c.issueSort || 0).padStart(12, "0");
@@ -1418,6 +1439,9 @@ VIEWS.gaps = {
       const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
       return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info)}">${esc(txt)}${vtxt}</button>`;
     };
+    const ent0 = catEntry(se), cat0 = ent0 && S.catCache[ent0.file], perY = {};
+    if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); });
+    const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     if (se.numbering === "year") {
       const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
       const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
@@ -1425,9 +1449,16 @@ VIEWS.gaps = {
       const unknown = mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const years = [];
       for (let y = y1; y >= y0; y--) years.push(y);
-      total = years.length * per;
+      // with the INDUCKS catalogue, each year shows only the numbers that came out (KA 1948: 1–4)
+      const perFor = y => {
+        if (!cat0 || y > catLast) return per;
+        const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
+        return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
+      };
+      total = years.reduce((a, y) => a + perFor(y), 0);
       grid = years.map(y => {
-        let cells = ""; for (let n = 1; n <= per; n++) cells += cell(y + "/" + String(n).padStart(2, "0"), n);
+        const py = perFor(y); if (!py) return "";
+        let cells = ""; for (let n = 1; n <= py; n++) cells += cell(y + "/" + String(n).padStart(2, "0"), n);
         const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
@@ -1453,6 +1484,7 @@ VIEWS.gaps = {
       const why = sup ? "Supplement (extra booklet) from " + sup[1] + ", not a numbered issue."
         : /\?/.test(lab) ? "Number unknown. Edit it, or match it under Series › INDUCKS."
         : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
+        : (() => { const m = /^(\d{4})\/(\d{1,3})$/.exec(lab); return m && cat0 && perY[m[1]] && +m[2] > perY[m[1]]; })() ? "INDUCKS lists only " + lab.slice(0, 4) + "/01–" + lab.slice(0, 4) + "/" + String(perY[lab.slice(0, 4)]).padStart(2, "0") + " for that year. Check the number, or delete this entry."
         : !lab ? "No issue number" : "Number “" + lab + "” doesn't fit this series' numbering" + (se.numbering === "year" ? " (year/number, e.g. 1985/12)." : ".");
       notInGrid.push({ c, why });
     });
@@ -1475,7 +1507,7 @@ VIEWS.gaps = {
           <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
         <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${esc(se.perYear || 52)} issues a year` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
         ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),
