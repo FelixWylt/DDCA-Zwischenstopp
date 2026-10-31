@@ -82,7 +82,7 @@ const CURRENCIES = ["CHF", "EUR", "SEK"];
 // ---------- state ----------
 const S = {
   db: null, dbState: "loading", series: DEFAULT_SERIES.slice(), seriesSaved: false,
-  comics: [], view: "collection", filters: { q: "", status: "owned" }, shown: 200, col: {},
+  comics: [], coverObj: {}, coverHas: {}, storyRatings: {}, view: "collection", filters: { q: "", status: "owned" }, shown: 200, col: {},
   editing: null, draft: null, gapSeries: DEFAULT_SERIES[0].id, catalogue: null, catCache: {},
   confirmDelete: false
 };
@@ -92,6 +92,21 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+// ---- favourites and half-star ratings (0.5–5) ----
+function starsHtml(v, attr) {
+  v = +v || 0; let h = "";
+  for (let k = 1; k <= 5; k++) { const cls = v >= k ? "full" : v >= k - 0.5 ? "half" : ""; h += `<span class="star ${cls}"><button type="button" data-half="${k - 0.5}" aria-label="${k - 0.5} stars"></button><button type="button" data-half="${k}" aria-label="${k} stars"></button></span>`; }
+  return `<span class="stars" ${attr || ""} data-v="${v}" role="group" aria-label="Rating">${h}</span>`;
+}
+function bindStars(root, onSet) {
+  (root || document).querySelectorAll(".stars").forEach(box => box.querySelectorAll("[data-half]").forEach(b => b.onclick = e => {
+    e.stopPropagation(); const v = +b.dataset.half, nv = +box.dataset.v === v ? 0 : v;   // tapping the same value again clears it
+    box.dataset.v = nv; box.querySelectorAll(".star").forEach((st, i) => { st.className = "star " + (nv >= i + 1 ? "full" : nv >= i + 0.5 ? "half" : ""); });
+    onSet(nv, box);
+  }));
+}
+const heartHtml = (on, attr) => `<button type="button" class="heart${on ? " on" : ""}" ${attr || ""} aria-pressed="${on ? "true" : "false"}" title="Favourite">${on ? "♥" : "♡"}</button>`;
+const ratingTxt = v => v ? "★ " + String(v).replace(".", ",") : "";
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2600); }
 function seriesById(id) { return S.series.find(s => s.id === id); }
 function parseIssue(series, raw) {
@@ -162,7 +177,7 @@ function inducksIssueUrl(series, issue) {
 }
 
 // ---------- data: everything lives in this device's IndexedDB ----------
-const DB_NAME = "dagobert-archiv", DB_VER = 1;
+const DB_NAME = "dagobert-archiv", DB_VER = 2;
 function openDb() {
   return new Promise((res, rej) => {
     const r = indexedDB.open(DB_NAME, DB_VER);
@@ -170,6 +185,7 @@ function openDb() {
       const db = r.result;
       if (!db.objectStoreNames.contains("comics")) db.createObjectStore("comics", { keyPath: "id" });
       if (!db.objectStoreNames.contains("config")) db.createObjectStore("config", { keyPath: "key" });
+      if (!db.objectStoreNames.contains("covers")) db.createObjectStore("covers", { keyPath: "id" });   // small cover pictures, kept for offline use
     };
     r.onsuccess = () => { const db = r.result; db.onversionchange = () => db.close(); res(db); };
     r.onerror = () => rej(r.error);
@@ -252,8 +268,10 @@ async function boot() {
     S.recentSeries = await getConfig("recentSeries") || [];
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
+    S.storyRatings = await getConfig("storyRatings") || {};
     await adoptLooseSeries();
     S.dbState = "ready";
+    loadCovers();
   } catch (e) { S.dbState = "error"; S.dbError = e; }
   refreshStorageInfo();
   loadCatalogueIndex();
@@ -290,11 +308,71 @@ async function reloadFromDb() {
   } catch (e) {}
 }
 if (channel) channel.onmessage = () => reloadFromDb();
-async function saveComic(c) {
+async function saveComic(c, quiet) {
   const body = stamp(c);
   await tx("comics", "readwrite", st => st.put(body));
   remember(body); askPersist(); announce();
+  if (!quiet && body.coverUrl && !S.coverHas[body.id + "|" + body.coverUrl]) storeCover(body).then(ok => ok && S.view === "collection" && renderKeep()).catch(() => {});
   return body;
+}
+// ---- cover pictures: the address is kept on the comic, a small copy (about 10 KB) in the "covers" store ----
+// INDUCKS scans are shown through inducks.org/hr.php; copies are made through the wsrv.nl image service,
+// which shrinks them and allows the app to keep them (the picture sites themselves don't allow that).
+const inducksImg = u => u ? "https://inducks.org/hr.php?image=" + u + "&normalsize=1" : "";
+const smallCopy = u => "https://wsrv.nl/?url=" + encodeURIComponent(u) + "&w=200&output=webp&q=65";
+async function loadCovers() {
+  S.coverObj = S.coverObj || {}; S.coverHas = S.coverHas || {};
+  try {
+    const all = await tx("covers", "readonly", st => st.getAll()) || [];
+    all.forEach(x => { if (x.blob) { S.coverObj[x.id] = URL.createObjectURL(x.blob); S.coverHas[x.id + "|" + x.url] = true; } });
+    if (all.length && S.view === "collection") render();
+  } catch (e) {}
+}
+async function storeCover(c) {
+  if (!c.coverUrl || !navigator.onLine) return false;
+  const r = await fetch(smallCopy(c.coverUrl)); if (!r.ok) return false;
+  const blob = await r.blob(); if (!blob.size || !/^image\//.test(blob.type)) return false;
+  await tx("covers", "readwrite", st => st.put({ id: c.id, url: c.coverUrl, blob }));
+  if (S.coverObj[c.id]) URL.revokeObjectURL(S.coverObj[c.id]);
+  S.coverObj[c.id] = URL.createObjectURL(blob); S.coverHas[c.id + "|" + c.coverUrl] = true;
+  return true;
+}
+function coverBar() {
+  if (S.colTab === "books" || !S.comics.length) return "";
+  const noUrl = S.comics.filter(c => c.kind !== "book" && !c.coverUrl && !c.coverNone).length, notKept = S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]).length;
+  const run = S.cv && S.cv.running;
+  if (!run && !notKept && (!noUrl || S.cvAsked)) return "";
+  return `<div class="row small" style="align-items:center;margin:8px 0"><button id="getcv" type="button">${run ? "Stop" : "Get cover pictures"}</button>
+    <span class="muted" id="cvprog">${run ? "Working…" : [noUrl ? noUrl + " without a cover" : "", notKept ? notKept + " not stored for offline use yet" : ""].filter(Boolean).join(" · ") + ". Uses the internet once; the pictures are then kept on this phone (about 10 KB each)."}</span></div>`;
+}
+const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
+// finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
+async function fetchAllCovers() {
+  if (S.cv && S.cv.running) return;
+  const run = S.cv = { running: true, stop: false, found: 0, kept: 0, done: 0, total: 0 };
+  const draw = () => { const el = $("#cvprog"); if (el) el.textContent = run.running ? `Working… ${run.done} of ${run.total}. ${run.found} covers found, ${run.kept} stored.` : `Done. ${run.found} covers found, ${run.kept} stored on this phone.`; };
+  const need = S.comics.filter(c => !c.coverUrl && !c.coverNone && c.kind !== "book");
+  const keep = () => S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]);
+  run.total = need.length + keep().length; draw();
+  for (const c of need) {
+    if (run.stop) break;
+    const se = seriesById(c.seriesId); let url = "";
+    try {
+      const hit = se && await catalogueLookup(se, c.issueLabel || c.issue);
+      if (hit && hit.cv) url = inducksImg(hit.cv);
+      if (!url && se && Duckipedia.candidates(dkSeries(se), c).length) { const d = await Duckipedia.fetchIssue(dkSeries(se), c); if (d && d.issue.cover) url = d.issue.cover; }
+    } catch (e) {}
+    if (url) { const saved = await saveComic(Object.assign({}, c, { coverUrl: url }), true).catch(() => null); if (saved) run.found++; }
+    else if (!c.coverNone) await saveComic(Object.assign({}, c, { coverNone: todayIso() }), true).catch(() => null);   // not asked again
+    run.done++; draw();
+  }
+  const rest = keep(); run.total = run.done + rest.length; draw();
+  for (const c of rest) {
+    if (run.stop) break;
+    if (await storeCover(c).catch(() => false)) run.kept++;
+    run.done++; draw();
+  }
+  run.running = false; S.cvAsked = true; draw(); if (S.view === "collection") renderKeep();
 }
 // ---- lots: several comics bought together for one price ----
 function lotFields(d) {
@@ -379,6 +457,7 @@ function sameSlot(a, b) {
 }
 async function deleteComic(id) {
   await tx("comics", "readwrite", st => st.delete(id));
+  tx("covers", "readwrite", st => st.delete(id)).catch(() => {});
   S.comics = S.comics.filter(x => x.id !== id); announce();
 }
 async function saveSeries() {
@@ -481,6 +560,7 @@ function applyIssueFromCatalogue(c, label, hit) {
   if (hit.d && String(hit.d).length >= String(c.date || "").length) out.date = hit.d;
   if (!c.title && hit.t) out.title = hit.t;
   if (!c.pages && hit.pg) out.pages = hit.pg;
+  if (!c.coverUrl && hit.cv) out.coverUrl = inducksImg(hit.cv);
   const fromClz = !(c.stories || []).some(x => x.code);
   const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
   if (fromClz && (hit.s || []).length) out.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "" }));
@@ -512,7 +592,7 @@ function searchText(c) {
   const st = (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist, s.hero, s.dTitle, s.original, s.translator, s.characters, s.genre].join(" ")).join(" ");
   const dk = c.duckipedia && c.duckipedia.issue ? [c.duckipedia.issue.translator, c.duckipedia.issue.editor, c.duckipedia.issue.title].join(" ") : "";
   const se = seriesById(c.seriesId);
-  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.location, c.source, c.author, c.publisher, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
+  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.special, c.location, c.source, c.author, c.publisher, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
 }
 function sortComics(list) {
   const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
@@ -575,6 +655,9 @@ function statusMatch(c) {
   if (f === "wanted") return c.status === "wanted";
   if (f === "trade") return c.status !== "wanted" && (c.forTrade || (c.copies || 1) > 1);
   if (f === "unread") return c.status !== "wanted" && !c.read;
+  if (f === "fav") return c.status !== "wanted" && !!c.fav;
+  if (f === "rated") return c.status !== "wanted" && +c.rating > 0;
+  if (f === "special") return !!c.special;
   return true;
 }
 function publisherOf(c) {
@@ -649,6 +732,9 @@ function itemHtml(c, inSeries) {
     if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? "×" + c.copies : "Trade") + '</span>');
     if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
   }
+  if (c.fav && c.status !== "wanted") chips.unshift('<span class="chip fav" title="Favourite">♥</span>');
+  if (+c.rating && c.status !== "wanted") chips.unshift('<span class="chip rate">' + ratingTxt(c.rating) + '</span>');
+  if (c.special) chips.push('<span class="chip special" title="' + esc(c.special) + '">Special</span>');
   if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
   if (c.lotId && c.status !== "wanted") chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
   const numTxt = isBook ? c.issue : (c.issueLabel || c.issue || "");
@@ -656,12 +742,13 @@ function itemHtml(c, inSeries) {
     const sub2 = [inSeries ? "" : c.seriesName && c.seriesName + (c.issue ? " " + c.issue : ""), c.author, c.date, c.lang].filter(Boolean).join(" · ");
     if (c.read && c.status !== "wanted") chips.push('<span class="chip">Read</span>');
     return `<button class="item book" data-id="${esc(c.id)}">
-      <div class="bookthumb">${inSeries && c.issue ? `<span class="vol">${esc(c.issue)}</span>` : ""}${c.coverUrl ? `<img src="${esc(c.coverUrl)}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span class="ini">${esc((c.title || "?").trim()[0] || "?")}</span></div>
+      <div class="bookthumb">${inSeries && c.issue ? `<span class="vol">${esc(c.issue)}</span>` : ""}${coverOf(c) ? `<img src="${esc(coverOf(c))}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span class="ini">${esc((c.title || "?").trim()[0] || "?")}</span></div>
       <div style="min-width:0"><div class="t">${esc(c.title || "Untitled")}</div><div class="s">${esc(sub2)}</div></div>
       <div class="chips">${chips.join("")}</div></button>`;
   }
-  return `<button class="item" data-id="${esc(c.id)}">
-    <div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
+  const cv = !isBook && coverOf(c);
+  return `<button class="item${cv ? " withcover" : ""}" data-id="${esc(c.id)}">
+    ${cv ? `<div class="cthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}<div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
     <div style="min-width:0"><div class="t">${esc(c.title || (inSeries && c.date ? niceDate(c.date) : (se ? se.name : c.seriesName)) || "Untitled")}</div><div class="s">${esc((inSeries && !c.title && !isBook ? creators : sub) || (inSeries ? "" : (se ? se.name : c.seriesName || "")))}</div></div>
     <div class="chips">${chips.join("")}</div></button>`;
 }
@@ -694,8 +781,11 @@ VIEWS.collection = {
           <option value="wanted"${f.status === "wanted" ? " selected" : ""}>Wishlist</option>
           <option value="trade"${f.status === "trade" ? " selected" : ""}>Duplicates for trade</option>
           <option value="unread"${f.status === "unread" ? " selected" : ""}>Unread</option>
+          <option value="fav"${f.status === "fav" ? " selected" : ""}>Favourites</option>
+          <option value="rated"${f.status === "rated" ? " selected" : ""}>Rated</option>
+          <option value="special"${f.status === "special" ? " selected" : ""}>Special copies</option>
           <option value="all"${f.status === "all" ? " selected" : ""}>Everything</option></select></label>
-      </div>`;
+      </div>` + coverBar();
     if (!S.comics.length) {
       return head + `<div class="empty"><h3>Your archive is empty</h3><p>Add your first comic or book, or load a backup under Backup.</p>
         <div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="new2">Add comic or book</button><button id="gobk">Go to Backup</button></div></div>`;
@@ -720,6 +810,7 @@ VIEWS.collection = {
     $("#new") && ($("#new").onclick = go); $("#new2") && ($("#new2").onclick = go);
     $("#gobk") && ($("#gobk").onclick = () => { nav("backup"); });
     $("#fq").oninput = e => { S.filters.q = e.target.value; S.shown = 200; drawResults(); };
+    $("#getcv") && ($("#getcv").onclick = () => { fetchAllCovers(); const b = $("#getcv"); if (b) { b.textContent = "Stop"; b.onclick = () => { if (S.cv) S.cv.stop = true; }; } });
     $("#fst").onchange = e => { S.filters.status = e.target.value; S.shown = 200; drawResults(); };
     drawResults();
   }
@@ -1016,7 +1107,7 @@ ${isBook ? `
         </div>
         <div id="bookmsg"></div>
         <div class="grid-form">
-          ${d.coverUrl ? `<div class="wide coverrow"><img class="cover" src="${esc(d.coverUrl)}" alt="Cover" loading="lazy" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
+          ${d.coverUrl ? `<div class="wide coverrow"><img class="cover" src="${esc(coverOf(d))}" alt="Cover" loading="lazy" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
           <label class="wide"><span class="l">Title</span><input id="f-title" value="${esc(d.title)}" placeholder="${isNovel(d) ? "e.g. Der kleine Hobbit" : "e.g. Carl Barks: Die Ducks"}"></label>
           <label class="wide"><span class="l">${isNovel(d) ? "Author" : "Author or editor"}</span><input id="f-author" value="${esc(d.author)}" placeholder="${isNovel(d) ? "e.g. J. R. R. Tolkien" : "e.g. Carl Barks, Don Rosa"}"></label>
           <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
@@ -1069,7 +1160,7 @@ ${isBook ? `
         <div class="grid-form"><label><span class="l">Maximum price</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>
         <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
         <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label></div></div>` : `
-      <div class="card stack"><h3>Your copy</h3>
+      <div class="card stack"><div class="row between"><h3>Your copy</h3><span class="row" style="gap:10px">${heartHtml(d.fav, 'id="f-fav"')}${starsHtml(d.rating, 'id="f-rating"')}</span></div>
         <div class="grid-form">
           <label><span class="l">Condition</span><select id="f-grade">${grades}</select></label>
           <label><span class="l">Copies</span><input id="f-copies" type="number" min="1" value="${esc(d.copies || 1)}"></label>
@@ -1085,6 +1176,7 @@ ${isBook ? `
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
           ${isBook ? "" : `<label class="check"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
+          <label class="wide"><span class="l">Special about my copy</span><textarea id="f-special" rows="2" placeholder="Misprint, missing page, signed, first print…">${esc(d.special || "")}</textarea></label>
         </div></div>`}
       <div class="row">
         <button class="primary" id="save"${S.db ? "" : " disabled"}>${editing ? "Save changes" : "Save to archive"}</button>
@@ -1098,6 +1190,8 @@ ${isBook ? `
     const d = S.draft;
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
+    $("#f-fav") && ($("#f-fav").onclick = e => { d.fav = !d.fav; const b = e.currentTarget; b.classList.toggle("on", d.fav); b.textContent = d.fav ? "♥" : "♡"; b.setAttribute("aria-pressed", d.fav); });
+    bindStars($("#app"), (v, box) => { if (box.id === "f-rating") d.rating = v; });
     // ticking "Read" notes today's date (it can be changed); unticking clears it
     $("#f-read") && ($("#f-read").onchange = e => { grab(); d.readDate = e.target.checked ? (d.readDate || todayIso()) : ""; renderKeep(); });
     $("#f-inlot") && ($("#f-inlot").onchange = e => {
@@ -1129,7 +1223,7 @@ ${isBook ? `
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
@@ -1187,7 +1281,7 @@ ${isBook ? `
         toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return;
       }
       if (hit.ic) {   // compact catalogue format
-        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages;
+        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (!d.coverUrl && hit.cv) d.coverUrl = inducksImg(hit.cv);
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
         d.inducks = hit.ic; render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
       }
@@ -1456,7 +1550,7 @@ VIEWS.gaps = {
       if (o) ownIn++; else if (w) wantIn++;
       const all = inSquare.get(label) || [];
       const vars = all.filter(c => variantOf(c.issueLabel || c.issue));
-      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" : "") + (o && w && !clashSq.has(label) ? " alsowant" : "");
+      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => c.status !== "wanted") && all.filter(c => c.status !== "wanted").every(c => c.read) ? " read" : "");
       const vtxt = vars.length ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
       const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
       return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info)}">${esc(txt)}${vtxt}</button>`;
@@ -1536,8 +1630,10 @@ VIEWS.gaps = {
             (k => k ? k + (k === 1 ? " comic isn't" : " comics aren't") + " in the grid" : "")(notInGrid.filter(x => !x.conflict && !x.hint).length)
           ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
+        <div class="row" style="align-items:center"><button id="readmode" type="button"${S.readMode ? ' class="primary"' : ""}>${S.readMode ? "Done marking" : "Mark as read"}</button>
+          <span class="small muted">${S.readMode ? "Tap an owned issue to mark it read today; tap again to undo." : "✓ = read"}</span></div>
         <div id="cellpick"></div>
-        <div id="gridbox" style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
+        <div id="gridbox" class="${S.readMode ? "readmode" : ""}" style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
       </div>
       <div class="stack"><h3>Full wishlist</h3>
         ${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
@@ -1550,7 +1646,19 @@ VIEWS.gaps = {
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
-    document.querySelectorAll(".cell").forEach(b => b.onclick = () => {
+    $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; renderKeep(); });
+    document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
+      if (S.readMode) {   // quick reading log: toggles "read" on the owned comic(s) in this square
+        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
+        if (!mine.length) { toast("Only owned issues can be marked as read"); return; }
+        const read = !mine.every(c => c.read), se = seriesById(S.gapSeries) || S.series[0] || {};
+        try {
+          for (const c of mine) await saveComic(Object.assign({}, c, { read, readDate: read ? (c.readDate || todayIso()) : "" }));
+          b.classList.toggle("read", read);
+          toast((se.short || se.name || "") + " " + b.dataset.issue + (read ? " marked as read" : ": read mark removed"));
+        } catch (e) { toast(errText(e)); }
+        return;
+      }
       if (b.dataset.id) { open(b.dataset.id); return; }
       const se = seriesById(S.gapSeries) || S.series[0], label = b.dataset.issue;
       const box = $("#cellpick");
@@ -1669,6 +1777,7 @@ VIEWS.stats = {
       ${completion}
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${readingCard(own, "comics")}
+      ${ratedCard(own, "comics")}
       ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
       <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>
       ${novels.length || novelsWanted.length ? bookStats(novels, novelsWanted) : ""}`;
@@ -1677,6 +1786,7 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; nav("gaps"); });
+    document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
     const show = b => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
@@ -1685,6 +1795,25 @@ VIEWS.stats = {
   }
 };
 // ---- Reading: what was marked as read, by month (dates are kept since 31.10.2026) ----
+// ---- Favourites and ratings ----
+function ratedCard(list, word) {
+  const rated = list.filter(c => +c.rating > 0).sort((a, b) => b.rating - a.rating || String(b.readDate || "").localeCompare(String(a.readDate || "")));
+  const favs = list.filter(c => c.fav).length;
+  let stories = [];
+  if (word === "comics") {
+    const idx = storyIndex("owned");
+    stories = idx.filter(e => +storyRate(e).rating > 0).sort((a, b) => storyRate(b).rating - storyRate(a).rating).slice(0, 5);
+  }
+  const sFav = word === "comics" ? Object.values(S.storyRatings).filter(x => x.fav).length : 0;
+  if (!rated.length && !favs && !stories.length && !sFav) return "";
+  const name = c => c.kind === "book" ? c.title : comicTag(c) + (c.title ? ": " + c.title : "");
+  const avg = rated.length ? (rated.reduce((a, c) => a + +c.rating, 0) / rated.length).toFixed(1).replace(".", ",") : "–";
+  return `<div class="card stack"><h3>Favourites and ratings</h3>
+    <div class="row" style="gap:24px"><div><div class="v2">${favs}</div><div class="k small muted">favourite ${word}</div></div><div><div class="v2">${rated.length}</div><div class="k small muted">rated · average ★ ${avg}</div></div>${word === "comics" ? `<div><div class="v2">${sFav}</div><div class="k small muted">favourite stories</div></div>` : ""}</div>
+    ${rated.length ? `<div class="small"><strong>Top rated ${word}</strong><ol style="margin:4px 0 0;padding-left:20px">${rated.slice(0, 5).map(c => `<li><button class="link" data-open="${esc(c.id)}">${esc(name(c))}</button> <span class="muted">${ratingTxt(c.rating)}${c.fav ? " ♥" : ""}</span></li>`).join("")}</ol></div>` : ""}
+    ${stories.length ? `<div class="small"><strong>Top rated stories</strong><ol style="margin:4px 0 0;padding-left:20px">${stories.map(e => `<li>${esc((e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1"))} <span class="muted">${ratingTxt(storyRate(e).rating)}${storyRate(e).fav ? " ♥" : ""}</span></li>`).join("")}</ol></div>` : ""}
+  </div>`;
+}
 function readingCard(list, word) {
   const dated = list.filter(c => c.read && /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""));
   if (!dated.length) return "";
@@ -1719,6 +1848,7 @@ function bookStats(own, wanted) {
       </div>
     </div>
     ${readingCard(own, "books")}
+    ${ratedCard(own, "books")}
     ${own.length ? `<div class="two">
       <div class="card stack"><div class="cardhead"><h3>Top authors</h3><span class="muted small">books</span></div>${authors.length ? bars(authors) : '<p class="muted small" style="margin:0">Add authors to your books to see them here.</p>'}</div>
       <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${bars(langs)}
@@ -1929,6 +2059,14 @@ function splitChars(v) {
 }
 const storyCode = v => String(v || "").replace(/\s+/g, " ").trim();
 // every story once, with the comics it appears in (a reprinted story is one story)
+// story ratings are kept per story (INDUCKS story code, or the title when there is no code), in the config store
+const storyKey = e => e.code ? "c:" + String(e.code).replace(/\s+/g, "").toLowerCase() : "t:" + norm(e.titles[0] || "");
+const storyRate = e => S.storyRatings[storyKey(e)] || {};
+async function setStoryRate(key, patch) {
+  const cur = Object.assign({}, S.storyRatings[key] || {}, patch);
+  if (!cur.fav && !+cur.rating) delete S.storyRatings[key]; else S.storyRatings[key] = cur;
+  await setConfig("storyRatings", S.storyRatings);
+}
 function storyIndex(status) {
   const map = new Map();
   S.comics.forEach(c => {
@@ -1965,7 +2103,7 @@ VIEWS.stories = {
         <div class="filters two-col">
           <label class="q"><span class="l">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.mode === "stories" ? "Title, code, writer, artist, character" : "Name"}"></label>
           <label><span class="l">In</span><select id="stst"><option value="owned"${st.status === "owned" ? " selected" : ""}>Comics I own</option><option value="wanted"${st.status === "wanted" ? " selected" : ""}>My wishlist</option><option value="all"${st.status === "all" ? " selected" : ""}>Both</option></select></label>
-          ${st.mode === "stories" ? `<label><span class="l">Sort</span><select id="stsort"><option value="title"${st.sort === "title" ? " selected" : ""}>Title</option><option value="comics"${st.sort === "comics" ? " selected" : ""}>Most reprinted</option><option value="code"${st.sort === "code" ? " selected" : ""}>Story code</option></select></label>` : ""}
+          ${st.mode === "stories" ? `<label><span class="l">Sort</span><select id="stsort"><option value="title"${st.sort === "title" ? " selected" : ""}>Title</option><option value="comics"${st.sort === "comics" ? " selected" : ""}>Most reprinted</option><option value="code"${st.sort === "code" ? " selected" : ""}>Story code</option><option value="rating"${st.sort === "rating" ? " selected" : ""}>My rating</option><option value="fav"${st.sort === "fav" ? " selected" : ""}>Favourites only</option></select></label>` : ""}
         </div>
         ${st.who ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role])}: ${esc(st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
       </div><div id="stres"></div>`;
@@ -1998,15 +2136,18 @@ function drawStories() {
     if (st.who) list = list.filter(e => e[st.who.role === "chars" ? "chars" : st.who.role].has(st.who.name));
     if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
     const title = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
-    list = list.slice().sort(st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de") : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de"));
+    if (st.sort === "fav") list = list.filter(e => storyRate(e).fav);
+    list = list.slice().sort(st.sort === "rating" || st.sort === "fav" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || title(a).localeCompare(title(b), "de") : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de") : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de"));
     const reprints = list.filter(e => e.items.length > 1).length;
     box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
       (list.length ? '<div class="list">' + list.slice(0, st.shown).map(e => {
         const people = [[...e.writers].join(", "), [...e.artists].join(", ")];
         const by = people[0] && people[0] === people[1] ? people[0] : [people[0] && "W: " + people[0], people[1] && "A: " + people[1]].filter(Boolean).join(" · ");
         const plotSrc = e.plot && e.plotFrom ? ` <span class="muted">(<a href="${esc(e.plotFrom.url)}" target="_blank" rel="noopener">Duckipedia</a>, GFDL 1.2, <a href="${esc(e.plotFrom.authors)}" target="_blank" rel="noopener">authors</a>)</span>` : "";
-        return `<details class="storyit"><summary><div style="min-width:0"><div class="t">${esc(title(e) || "Untitled")}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
+        const sr = storyRate(e), sk = storyKey(e);
+        return `<details class="storyit"><summary><div style="min-width:0"><div class="t">${sr.fav ? '<span style="color:#c8102e">♥</span> ' : ""}${esc(title(e) || "Untitled")}${+sr.rating ? ` <span class="chip rate">${ratingTxt(sr.rating)}</span>` : ""}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
           <div class="stbody small">
+            <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
             ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
             ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
             ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(niceDate(e.first))}` : ""}</div>` : ""}
@@ -2019,6 +2160,12 @@ function drawStories() {
           </div></details>`;
       }).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or change "In".</p></div>') + more(list.length);
     box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
+    box.querySelectorAll("[data-sfav]").forEach(b => b.onclick = async () => {
+      const k = b.dataset.sfav, on = !(S.storyRatings[k] || {}).fav;
+      b.classList.toggle("on", on); b.textContent = on ? "♥" : "♡";
+      try { await setStoryRate(k, { fav: on }); } catch (e) { toast(errText(e)); }
+    });
+    bindStars(box, async (v, el) => { try { await setStoryRate(el.dataset.sk, { rating: v }); } catch (e) { toast(errText(e)); } });
     box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   }
   $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
@@ -2028,7 +2175,7 @@ function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
-  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics });
+  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings });
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
@@ -2048,7 +2195,7 @@ function saveToDevice(file) {
 // backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
 const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
 async function backupText() {
-  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics });
+  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings });
   let bytes = new TextEncoder().encode(json), gz = false;
   if (typeof CompressionStream !== "undefined") {
     bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
@@ -2171,6 +2318,7 @@ VIEWS.backup = {
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
+            if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
             await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + (n === 1 ? " entry" : " entries")); render();
@@ -2229,6 +2377,44 @@ async function duckipediaBulk() {
   S.dk.running = false; S.dk.finished = true;
   refreshDkCard();
   toast("Duckipedia: " + S.dk.found + " comics got details");
+}
+// ---- fill a series' details from INDUCKS (offline catalogue) and Duckipedia (German series, needs internet) ----
+async function fillSeriesInfo(se) {
+  const got = [], set = (k, v, label) => { if (v && !se[k]) { se[k] = v; if (!got.includes(label)) got.push(label); } };
+  if (!S.inducksDir) { try { const r = await fetch("catalogue/directory.json"); if (r.ok) S.inducksDir = (await r.json()).publications || []; } catch (e) {} }
+  let p = se.code && (S.inducksDir || []).find(x => x[0] === se.code);
+  if (!p) { const c = inducksCandidates(se); if (c.length === 1 || (c.length && norm(c[0][1]) === norm(se.name))) p = c[0]; }
+  const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
+  if (p) {
+    set("code", p[0], "INDUCKS code"); set("name", p[1], "name");
+    set("country", p[0].split("/")[0].toUpperCase(), "country");
+    set("pubHouse", p[5] || "", "publisher"); set("format", p[6] || "", "format");
+  }
+  if (entry) {
+    const before = JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest]);
+    const file = await catalogueFile(entry).catch(() => null);
+    if (file) {
+      seriesFromCatalogue(se, file, entry);
+      // keep the latest issue up to date, not only when it was empty
+      if (se.numbering === "year") { const ys = Object.keys(file.issues || {}).map(l => +(/^(\d{4})\//.exec(l) || [])[1]).filter(Boolean); if (ys.length && Math.max(...ys) > (se.lastYear || 0)) se.lastYear = Math.max(...ys); }
+      else { const ns = Object.keys(file.issues || {}).filter(l => /^\d+$/.test(l)).map(Number); if (ns.length && Math.max(...ns) > (se.latest || 0)) se.latest = Math.max(...ns); }
+    }
+    if (JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest]) !== before) got.push(se.numbering === "year" ? "years" : "latest issue");
+  } else if (p && se.numbering === "year") {
+    if (!se.firstYear && p[3]) { se.firstYear = p[3]; got.push("years"); } if (p[4] && p[4] > (se.lastYear || 0)) { se.lastYear = p[4]; if (!got.includes("years")) got.push("years"); }
+  } else if (p && !se.latest && p[2]) { se.latest = p[2]; got.push("latest issue"); }
+  if (seriesLang(se) === "German" && (se.publisher || DISNEY) === DISNEY && typeof Duckipedia !== "undefined") {
+    try {
+      const short = se.short && /^[A-Z]/.test(se.short) ? se.short : "";
+      const d = await Duckipedia.fetchSeries([se.name, p && p[1], short]);
+      if (d) {
+        set("about", d.description, "description");
+        if (d.description && !se.aboutSrc) se.aboutSrc = d.url;
+        set("pubHouse", d.publisher, "publisher"); set("format", [d.size, d.pages && d.pages + " pages"].filter(Boolean).join(", "), "format");
+      }
+    } catch (e) { got.warn = "Duckipedia couldn't be reached"; }
+  }
+  return got;
 }
 // ---- INDUCKS status of a series: in the offline catalogue, only on INDUCKS, or not found ----
 function inducksCandidates(se) {
@@ -2306,6 +2492,11 @@ VIEWS.series = {
       ${s.numbering === "year"
         ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
         : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
+      <label><span class="l">Publisher</span><input data-k="pubHouse" value="${esc(s.pubHouse || "")}" placeholder="Egmont Ehapa"></label>
+      <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label>
+      <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="3">${esc(s.about || "")}</textarea></label>
+      ${s.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GNU FDL 1.2)</div>` : ""}
+      <div class="wide row"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button></div>
       <button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`;
     // universe › group › series, each series a row that opens for editing
     const tree = {};
@@ -2368,6 +2559,17 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    document.querySelectorAll("[data-fillser]").forEach(b => b.onclick = async () => {
+      grab(); const se = S.series[+b.dataset.fillser];
+      if (!se.name && !se.code) { toast("Give the series a name or INDUCKS code first"); return; }
+      b.disabled = true; b.textContent = "Looking up…";
+      const got = await fillSeriesInfo(se);
+      if (!se.id) { const base = (se.code || se.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== se && x.id === id)) id = base + "-" + k++; se.id = id; }
+      S.serOpen[se.id] = true;
+      try { if (got.length) await saveSeries(); } catch (e) { toast(errText(e)); }
+      toast((got.length ? "Filled in: " + got.join(", ") : "Nothing new found for this series") + (got.warn ? ". " + got.warn : ""));
+      render();
+    });
     $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
     $("#addser").onclick = () => {
       grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" });

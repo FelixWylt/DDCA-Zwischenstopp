@@ -38,7 +38,7 @@ targets = cfg["targets"]
 
 # 1. publications -------------------------------------------------------------------
 pubs = {}
-for r in rows("inducks_publication", ["publicationcode", "countrycode", "languagecode", "title"]):
+for r in rows("inducks_publication", ["publicationcode", "countrycode", "languagecode", "title", "size"]):
     pubs[r["publicationcode"]] = r
 log(f"INDUCKS publications: {len(pubs):,}")
 
@@ -87,6 +87,16 @@ for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "
         y = int(r["oldestdate"][:4]) if re.match(r"\d{4}", r["oldestdate"] or "") else 0
         if y: e[1] = min(e[1], y); e[2] = max(e[2], y)
 log(f"\nissues in chosen publications: {len(issues):,}")
+issue_pub = {}   # publication -> {publisher: issues}
+dir_issues = {}
+for r in rows("inducks_issue", ["issuecode", "publicationcode"]):
+    if r["publicationcode"] in directory: dir_issues[r["issuecode"]] = r["publicationcode"]
+for r in rows("inducks_publishingjob", ["publisherid", "issuecode"]):
+    pc = dir_issues.get(r["issuecode"])
+    if pc and r["publisherid"]: d = issue_pub.setdefault(pc, {}); d[r["publisherid"]] = d.get(r["publisherid"], 0) + 1
+def main_publisher(pc):
+    d = issue_pub.get(pc) or {}
+    return max(d, key=d.get) if d else ""
 
 # 3. entries (contents of each issue) -------------------------------------------------
 entries = {}
@@ -98,6 +108,23 @@ log(f"entries: {sum(len(v) for v in entries.values()):,}, story versions: {len(s
 versions = {}
 for r in rows("inducks_storyversion", ["storyversioncode", "storycode", "kind", "entirepages"]):
     if r["storyversioncode"] in svcs: versions[r["storyversioncode"]] = r
+# cover picture per issue: the first cover entry, then its scan on outducks (shown through inducks.org/hr.php)
+cover_entry = {}
+for ic, es in entries.items():
+    for e in sorted(es, key=lambda e: e["position"] or ""):
+        if (versions.get(e["storyversioncode"]) or {}).get("kind") == "c": cover_entry[e["entrycode"]] = ic; break
+sites = {r["sitecode"]: r["urlbase"] for r in rows("inducks_site", ["sitecode", "urlbase", "images"]) if r["images"] == "Y"}
+def site_rank(code):
+    if code == "webusers": return 0
+    if code.startswith("thumbnails") or code == "renamed": return 9
+    return 1
+covers = {}
+for r in rows("inducks_entryurl", ["entrycode", "sitecode", "pagenumber", "url", "public"]):
+    ic = cover_entry.get(r["entrycode"])
+    if not ic or r["public"] == "N" or r["sitecode"] not in sites or r["pagenumber"] not in ("", "1"): continue
+    rank = site_rank(r["sitecode"])
+    if rank < 9 and (ic not in covers or rank < covers[ic][0]): covers[ic] = (rank, sites[r["sitecode"]] + r["url"])
+log(f"cover scans: {len(covers):,} of {len(issues):,} issues")
 storycodes = {v["storycode"] for v in versions.values() if v["storycode"]}
 stories = {}
 for r in rows("inducks_story", ["storycode", "title"]):
@@ -144,7 +171,8 @@ for code, t in chosen.items():
                        "w": names(js, "pw"), "a": names(js, "ai"), "h": e["printedhero"] or "", "p": v.get("entirepages", "")})
         lab = label_for(i["issuenumber"])
         rec = {"ic": ic, "n": i["issuenumber"], "t": i["title"], "d": i["oldestdate"], "pg": i["pages"], "s": st}
-        if i.get("price"): rec["pr"] = i["price"].strip()   # cover price, helps tell years apart when scanning a barcode
+        if i.get("price"): rec["pr"] = i["price"].strip()
+        if ic in covers: rec["cv"] = covers[ic][1]   # cover price, helps tell years apart when scanning a barcode
         if lab in out and out[lab]["ic"] != ic: lab = f"{lab} ({i['issuenumber']})"
         out[lab] = rec
     fname = "inducks-" + re.sub(r"[^A-Za-z0-9]+", "-", code).strip("-") + ".json"
@@ -157,7 +185,7 @@ for code, t in chosen.items():
 
 json.dump(index, open(os.path.join(out_dir, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 # directory of all publications, so the app can say "this series is on INDUCKS as ..." even if it isn't in the catalogue
-dir_out = sorted([[pc, pubs[pc]["title"], n, (y0 if y0 < 9999 else 0), y1] for pc, (n, y0, y1) in directory.items()], key=lambda x: x[0])
+dir_out = sorted([[pc, pubs[pc]["title"], n, (y0 if y0 < 9999 else 0), y1, main_publisher(pc), (pubs[pc].get("size") or "").strip()] for pc, (n, y0, y1) in directory.items()], key=lambda x: x[0])
 json.dump({"built": index["built"], "publications": dir_out}, open(os.path.join(out_dir, "directory.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 log(f"directory.json: {len(dir_out):,} publications ({', '.join(sorted(DIR_COUNTRIES))}), {os.path.getsize(os.path.join(out_dir, 'directory.json'))/1024:,.0f} KB")
 for lic in glob.glob(os.path.join(isv_dir, "*icen*")) + glob.glob(os.path.join(isv_dir, "..", "*icen*")):

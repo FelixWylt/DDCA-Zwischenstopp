@@ -90,6 +90,7 @@
       translator: clean(pick(box, ["UEB", "ÜBERSETZER", "ÜBERSETZUNG"])),
       pages: clean(pick(box, ["PAG", "SEITEN NEU", "SEITEN"])),
       isbn: clean(pick(box, ["ISBN"])),
+      image: clean(pick(box, ["BILD", "COVER"])).replace(/^(Datei|File|Bild):/i, "").split("|")[0].trim(),
       notes: bes.split(/\n\s*\*|^\s*\*/).map(clean).filter(Boolean).join(" · ")
     };
     const sec = /^==\s*(?:\[\[)?\s*(Inhalt|Geschichten)\b[^\n]*==\s*$/mi.exec(text);
@@ -142,7 +143,40 @@
     if (!found) return null;
     const p = await api({ action: "parse", page: found.title, prop: "wikitext", redirects: "1" });
     if (!p.parse) return null;
-    return parsePage(p.parse.title, p.parse.wikitext || "");
+    const out = parsePage(p.parse.title, p.parse.wikitext || "");
+    if (out.issue.image) out.issue.cover = await imageUrl(out.issue.image).catch(() => "");
+    return out;
+  }
+  // a small copy (300 px wide) of a picture on Duckipedia
+  async function imageUrl(file) {
+    const q = await api({ action: "query", titles: "Datei:" + file, prop: "imageinfo", iiprop: "url", iiurlwidth: "300" });
+    const pg = ((q.query && q.query.pages) || [])[0], ii = pg && pg.imageinfo && pg.imageinfo[0];
+    return ii ? ii.thumburl || ii.url || "" : "";
+  }
+  // a series' own page: the facts box (years, publisher, pages, size) and the first paragraph
+  async function fetchSeries(names) {
+    const titles = [...new Set(names.filter(Boolean))]; if (!titles.length) return null;
+    const q = await api({ action: "query", titles: titles.join("|"), redirects: "1" });
+    const pages = (q.query && q.query.pages) || [];
+    const hit = titles.map(t => {
+      const n = ((q.query.normalized || []).find(x => x.from === t) || {}).to || t;
+      const red = ((q.query.redirects || []).find(x => x.from === n) || {}).to || n;
+      return pages.find(p => p.title === red && !p.missing && !p.invalid);
+    }).find(Boolean);
+    if (!hit) return null;
+    const p = await api({ action: "parse", page: hit.title, prop: "wikitext", redirects: "1" });
+    const text = (p.parse && p.parse.wikitext) || "";
+    const facts = {};
+    text.replace(/^\|\s*([^|\n]+?):?\s*\|\|\s*(.+)$/gm, (m, k, v) => { facts[clean(k).toLowerCase()] = clean(v); return m; });
+    const box = infobox(text);
+    const get = (re, keys) => { const k = Object.keys(facts).find(x => re.test(x)); return k ? facts[k] : clean(pick(box, keys || [])); };
+    // first real paragraph: skip tables, templates, pictures and headings
+    const body = text.replace(/\{\|[\s\S]*?\|\}/g, "").replace(/\{\{Infobox[\s\S]*?\n\}\}/i, "");
+    const para = body.split(/\n/).map(x => x.trim()).find(x => x && !/^(\{\{|\[\[(Datei|File|Bild)|=|\{\||\||:|\*)/i.test(x) && clean(x).length > 60) || "";
+    const slug = hit.title.replace(/ /g, "_");
+    return { page: hit.title, url: BASE + encodeURIComponent(slug).replace(/%2F/g, "/"),
+             publisher: get(/^verlag/, ["VERLAG"]), years: get(/^(produktionsjahre|erscheinungszeitraum|erscheinungsjahre)/), schedule: get(/turnus|erscheinungsweise/),
+             pages: get(/^seiten/), size: get(/^(maße|format)/).replace(/\s*x,\s*/, " × "), description: clean(para).slice(0, 700) };
   }
 
   const key = c => String(c || "").replace(/\s+/g, "").toLowerCase();
@@ -166,7 +200,8 @@
     }
     if (!out.title && d.issue.title) out.title = d.issue.title;
     if (!out.pages && d.issue.pages) out.pages = d.issue.pages;
+    if (!out.coverUrl && d.issue.cover) out.coverUrl = d.issue.cover;
     return out;
   }
-  root.Duckipedia = { candidates, parsePage, fetchIssue, merge, clean };
+  root.Duckipedia = { candidates, parsePage, fetchIssue, fetchSeries, imageUrl, merge, clean };
 })(typeof window !== "undefined" ? window : globalThis);
