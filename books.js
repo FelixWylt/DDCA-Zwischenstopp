@@ -122,6 +122,7 @@
     "Mythology": ["mythologie", "mythologie", "mythology", "mytologi", "götter und helden"],
     "Fairy Tales": ["märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
     "History": ["geschichte", "geschichte", "history", "historia"],
+    "Short Stories": ["short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
     "Poetry": ["gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => GENRES[k].forEach(v => { GENRE_OF[v] = k; }));
