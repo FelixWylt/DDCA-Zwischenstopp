@@ -15,7 +15,7 @@ jobs:
           exec > probe-result.txt 2>&1
           UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
           A="https://de.duckipedia.org/api.php?format=json&formatversion=2"
-          curl -s -A "$UA" -G "$A" --data-urlencode action=parse --data-urlencode page="Ausgabenliste Donald Duck Taschenbuch" --data-urlencode prop=wikitext > al.json
+          curl -s -A "$UA" -G "$A" --data-urlencode action=parse --data-urlencode page="Ausgabenliste Donald Duck Taschenbuch" --data-urlencode redirects=1 --data-urlencode prop=wikitext > al.json
           python3 - <<'EOF'
           import json, re
           t = json.load(open('al.json'))['parse']['wikitext']
