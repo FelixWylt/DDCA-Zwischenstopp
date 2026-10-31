@@ -1,28 +1,11 @@
-=== entries
-se/KAPS2017-05a^se/KAPS2017-05^se/KAPS2017-05a^a^
-se/KAPS2017-05m^se/KAPS2017-05^D 92000^m^Et hårresande uppdrag
-se/KAPS2017-05j^se/KAPS2017-05^D 92268^j^Skurkstreck i safariparken
-se/KAPS2017-05l^se/KAPS2017-05^I TL 1032-A^l^Farbror Joakim och mångdubblingens hemlighet
-se/KAPS2017-05g^se/KAPS2017-05^I TL 1226-B^g^Betarna i djungeln
-se/KAPS2017-05h^se/KAPS2017-05^I TL 1254-C^h^Storslukarna i 'Ngoro 'Ngoro
-se/KAPS2017-05i^se/KAPS2017-05^I TL 1322-A^i^Prima primater
-se/KAPS2017-05t^se/KAPS2017-05^I TL 1494-A^t^Mystiskt försvinnande
-se/KAPS2017-05o^se/KAPS2017-05^I TL 1644-A^o^"Insanus tropicalis"
-se/KAPS2017-05u^se/KAPS2017-05^I TL 2328-02^u^Djungelns lag
-=== urls
-se/KAPS2017-05a^thumbnails^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
-se/KAPS2017-05a^thumbnails2^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
-se/KAPS2017-05a^webusers^1^2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
-=== issueurl
-issuecode^sitecode^url^
-se/KAPS2017-05a^D 27692^i
-=== issues without cover in catalogue series: entryurl sitecodes of their 'a' entries (sample)
-se/KAPS2017-05a^thumbnails^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
-se/KAPS2017-05a^thumbnails2^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
-se/KAPS2017-05a^webusers^1^2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
--- https://outducks.org/thumbnails/webusers/2017/12/se_kaps2017_05a_001.jpg
-200 image/jpeg 6013
--- https://outducks.org/thumbnails2/webusers/2017/12/se_kaps2017_05a_001.jpg
-200 image/jpeg 12402
--- https://outducks.org/webusers/webusers/2017/12/se_kaps2017_05a_001.jpg
-200 image/jpeg 43355
+=== pubs FDL
+=== it pubs total
+667
+=== issues trilioni
+it/ABB1977^it/ABB^1977^I trilioni di Paperone^1977-10
+it/NLI   3^it/NLI^3^I Trilioni di Paperone^1984-04
+=== pubs trilioni
+=== MM 2017-23
+de/MM2017-22^de/MM^2017-22^2017-05-26
+de/MM2017-23-24^de/MM^2017-23-24^2017-06-02
+de/MM2017-25^de/MM^2017-25^2017-06-16
