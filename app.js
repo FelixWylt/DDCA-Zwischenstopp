@@ -1025,24 +1025,16 @@ function bookGapsHtml() {
   const noVol = mine.filter(c => !vol(c));
   const ownCount = [...own.keys()].length, wantCount = [...want.keys()].filter(k => !own.has(k)).length;
   const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-  return `
-    <div><h2>Gaps &amp; wishlist</h2><p class="lede">Every volume of a book series at a glance. Tap a missing number to add it as owned or put it on your wishlist.</p></div>
-    <div class="card stack">
-      <div class="row between">
-        ${gapPicker(S.gapSeries)}
-        <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, size - ownCount)} missing</span></div>
-      </div>
-      <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
-      ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
-      <div id="cellpick"></div>
-      ${size ? `<div class="cells" id="gridbox">${cells}</div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}
-    </div>
-    <div class="stack"><h3>Full wishlist</h3>${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3></div>'}</div>`;
+  return gapTabs() + gapHead(ownCount, wantCount, size, { read: false, legend: '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
+    <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
+    ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
+    <div id="cellpick"></div>
+    ${size ? `<div class="${gridClass()}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
 }
 function bindBookGaps() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const proto = mine[0] || {};
-  bindGapPicker();
+  bindGapTabs(); bindGapHead(); bindGapPicker();
   $("#bsizego").onclick = async () => { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: parseInt($("#bsize").value, 10) || "" }); await setConfig("bookSizes", S.bookSizes); toast("Saved"); render(); };
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
@@ -1050,8 +1042,8 @@ function bindBookGaps() {
     if (b.dataset.id) { S.editing = b.dataset.id; S.draft = null; nav("add"); return; }
     const v = b.dataset.vol, base = { kind: "book", bookType: proto.bookType || "", seriesId: "_book", seriesName: name, issue: v, author: proto.author || "", publisher: proto.publisher || "", lang: proto.lang || "" };
     const box = $("#cellpick");
-    box.innerHTML = `<div class="confirm"><strong>${esc(name)} ${esc(v)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist…</button><button class="ghost" id="cpX">Cancel</button></div>`;
-    $("#cpX").onclick = () => box.innerHTML = "";
+    sheetOpen(`<div class="confirm"><strong>${esc(name)} ${esc(v)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist…</button><button class="ghost" id="cpX">Cancel</button></div>`);
+    $("#cpX").onclick = sheetClose;
     $("#cpOwn").onclick = () => { S.editing = null; S.draft = blankDraft(base); nav("add"); };
     $("#cpWant").onclick = () => { S.editing = null; S.draft = blankDraft(Object.assign(base, { status: "wanted" })); nav("add"); };
   });
@@ -1517,9 +1509,66 @@ async function buildMatchRun() {
 }
 
 // wishlist: one folder per series, opened by tapping
+// ---- Gaps & wishlist: phone-first layout ----
+function gapTabs() {
+  const nw = S.comics.filter(c => c.status === "wanted").length, t = S.gapTab || "gaps";
+  return `<h2 style="margin:0">Gaps &amp; wishlist</h2>
+    <div class="subtabs" role="tablist" aria-label="Show">
+      <button role="tab" type="button" data-gtab="gaps" aria-selected="${t === "gaps"}">Gaps</button>
+      <button role="tab" type="button" data-gtab="wishlist" aria-selected="${t === "wishlist"}">Wishlist <span class="muted">${nw}</span></button></div>`;
+}
+function bindGapTabs() {
+  document.querySelectorAll("[data-gtab]").forEach(b => b.onclick = () => { S.gapTab = b.dataset.gtab; render(); window.scrollTo(0, 0); });
+}
+// header of the grid: series, progress, filter chips (all / missing / wishlist / unread) and reading mode
+function gapHead(owned, wanted, total, info) {
+  const pct = total ? Math.round(owned / total * 100) : 0, f = S.gapFilter || "all";
+  const chip = (k, label) => `<button type="button" class="fchip${f === k ? " on" : ""}" data-gf="${k}" aria-pressed="${f === k}">${label}</button>`;
+  return `<div class="card stack gaphead">
+      ${gapPicker(info.cur || S.gapSeries)}
+      <div><div class="row between small"><span><strong>${owned}</strong> of ${total} owned · ${pct}%</span><span class="muted">${wanted} wanted · ${Math.max(0, total - owned)} missing</span></div>
+        <div class="meter" style="margin-top:4px"><span style="width:${pct}%"></span></div></div>
+      <div class="fchips">${chip("all", "All")}${chip("missing", "Missing")}${chip("wanted", "Wishlist")}${info.read === false ? "" : chip("unread", "Unread")}
+        ${info.read === false ? "" : `<button type="button" class="fchip readchip${S.readMode ? " on" : ""}" id="readmode" aria-pressed="${!!S.readMode}">✓ Mark read</button>`}
+        <details class="ginfo"><summary aria-label="What the colours mean">ⓘ</summary><div class="legend small">${info.legend}</div></details></div>
+      ${S.readMode ? '<p class="small muted" style="margin:0">Reading mode: tap an owned issue to mark it read today; tap again to undo.</p>' : ""}
+    </div>`;
+}
+function bindGapHead() {
+  document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
+  $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; renderKeep(); });
+}
+const gridClass = () => [S.readMode ? "readmode" : "", "gf-" + (S.gapFilter || "all")].join(" ");
+// the choice for a tapped number slides up from the bottom of the screen
+function sheetClose() { const b = $("#cellpick"); if (b) b.innerHTML = ""; }
+function sheetOpen(html) { const b = $("#cellpick"); b.innerHTML = `<div class="sheetbg" id="sheetbg"></div><div class="sheet" role="dialog">${html}</div>`; $("#sheetbg").onclick = sheetClose; }
+// ---- Wishlist sub tab ----
+function wishlistView() {
+  const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
+  return gapTabs() + (wl.length ? `<p class="small muted" style="margin:0">${wl.length} ${wl.length === 1 ? "issue" : "issues"} wanted. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
+    : '<div class="empty"><h3>Your wishlist is empty</h3><p>In Gaps, tap a grey number to put it on your wishlist.</p></div>') + '<div id="cellpick"></div>';
+}
+function bindWishlist() {
+  bindGapTabs();
+  document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
+  document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
+  document.querySelectorAll("[data-got]").forEach(b => b.onclick = async e => {
+    e.stopPropagation();
+    const c = S.comics.find(x => x.id === b.dataset.got); if (!c) return;
+    try {
+      // the wishlist's maximum price isn't the price paid, so it is cleared
+      await saveComic(Object.assign({}, c, { status: "owned", pricePaid: "", purchaseDate: todayIso(), copies: c.copies || 1 }));
+      toast(comicTag(c) + " moved to your collection"); renderKeep();
+    } catch (x) { toast(errText(x)); }
+  });
+}
 function wishItem(c) {
-  const s = seriesById(c.seriesId), bk = c.kind === "book";
-  return `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc([c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || (s ? s.name : c.seriesName))}</div></div><div class="chips"><span class="chip wanted">Wishlist</span></div></button>`;
+  const s = seriesById(c.seriesId), bk = c.kind === "book", cv = coverOf(c);
+  const sub = [c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || "";
+  return `<div class="item wishrow">${cv ? `<div class="cthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
+    <button class="wishmain" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div>
+      <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc(sub)}</div></div></button>
+    <button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div>`;
 }
 function wishlistBySeries(wl) {
   const groups = {};
@@ -1537,6 +1586,7 @@ function wishlistBySeries(wl) {
 // ---- Gaps & wishlist ----
 VIEWS.gaps = {
   html() {
+    if (S.gapTab === "wishlist") return wishlistView();
     if (String(S.gapSeries || "").startsWith("book:") && S.comics.some(c => c.kind === "book" && c.seriesName === S.gapSeries.slice(5))) return bookGapsHtml();
     const se = seriesById(S.gapSeries) || S.series[0];
     if (!se) return '<h2>Gaps &amp; wishlist</h2><div class="empty"><h3>No series set up</h3><p>Add your series under the Series tab first.</p></div>';
@@ -1586,7 +1636,7 @@ VIEWS.gaps = {
         const py = perFor(y); if (!py) return "";
         let cells = ""; for (let n = 1; n <= py; n++) cells += cell(y + "/" + String(n).padStart(2, "0"), n);
         const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
-        return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt}</div></div><div class="cells">${cells}</div></div>`;
+        return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${py}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
@@ -1625,38 +1675,26 @@ VIEWS.gaps = {
     });
     const ownCount = ownIn, wantCount = wantIn;
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-    return `
-      <div><h2>Gaps &amp; wishlist</h2><p class="lede">Every issue of a series at a glance. Tap a missing number to add it as owned or put it on your wishlist.</p></div>
-      <div class="card stack">
-        <div class="row between">
-          ${gapPicker(se.id)}
-          <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
-        </div>
-        <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span></div>
-        ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
+    if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
+    return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
+      ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),
             (k => k ? k + (k === 1 ? " comic isn't" : " comics aren't") + " in the grid" : "")(notInGrid.filter(x => !x.conflict && !x.hint).length)
           ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
-        <div class="row" style="align-items:center"><button id="readmode" type="button"${S.readMode ? ' class="primary"' : ""}>${S.readMode ? "Done marking" : "Mark as read"}</button>
-          <span class="small muted">${S.readMode ? "Tap an owned issue to mark it read today; tap again to undo." : "✓ = read"}</span></div>
-        <div id="cellpick"></div>
-        <div id="gridbox" class="${S.readMode ? "readmode" : ""}" style="max-height:62vh;overflow:auto;padding-right:2px">${grid}</div>
-      </div>
-      <div class="stack"><h3>Full wishlist</h3>
-        ${wl.length ? wishlistBySeries(wl) : '<div class="empty"><h3>Your wishlist is empty</h3><p>Tap a grey number in the grid above to add an issue you\'re looking for.</p></div>'}
-      </div>`;
+      <div id="cellpick"></div>
+      <div id="gridbox" class="${gridClass()}">${grid}</div>`;
   },
   bind() {
+    if (S.gapTab === "wishlist") return bindWishlist();
     if (String(S.gapSeries || "").startsWith("book:") && $("#bsize")) return bindBookGaps();
-    bindGapPicker();
+    bindGapTabs(); bindGapHead(); bindGapPicker();
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
-    $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; renderKeep(); });
     document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
       if (S.readMode) {   // quick reading log: toggles "read" on the owned comic(s) in this square
         const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
@@ -1675,15 +1713,14 @@ VIEWS.gaps = {
       const ids = (b.dataset.ids || "").split(",").filter(Boolean);
       if (ids.length) {   // several comics in one square: variants, or owned and wished
         const cs = ids.map(id => S.comics.find(c => c.id === id)).filter(Boolean);
-        box.innerHTML = `<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong>${cs.map(c => `<button data-pick="${esc(c.id)}">${esc(c.issueLabel || c.issue)} · ${c.status === "wanted" ? "wishlist" : "owned"}</button>`).join("")}<button id="cpAdd">Add another variant…</button><button class="ghost" id="cpX">Cancel</button></div>`;
+        sheetOpen(`<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong>${cs.map(c => `<button data-pick="${esc(c.id)}">${esc(c.issueLabel || c.issue)} · ${c.status === "wanted" ? "wishlist" : "owned"}</button>`).join("")}<button id="cpAdd">Add another variant…</button><button class="ghost" id="cpX">Cancel</button></div>`);
         box.querySelectorAll("[data-pick]").forEach(x => x.onclick = () => open(x.dataset.pick));
         $("#cpAdd").onclick = () => { S.editing = null; S.draft = blankDraft({ seriesId: se.id, issue: label }); nav("add"); };
-        $("#cpX").onclick = () => box.innerHTML = "";
-        box.scrollIntoView({ block: "nearest" });
+        $("#cpX").onclick = sheetClose;
         return;
       }
-      box.innerHTML = `<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist</button><button class="ghost" id="cpX">Cancel</button></div>`;
-      $("#cpX").onclick = () => box.innerHTML = "";
+      sheetOpen(`<div class="confirm"><strong>${esc(se.short || se.name)} ${esc(label)}</strong><button class="primary" id="cpOwn">I own it…</button><button id="cpWant">Add to wishlist</button><button class="ghost" id="cpX">Cancel</button></div>`);
+      $("#cpX").onclick = sheetClose;
       $("#cpOwn").onclick = () => { S.editing = null; S.draft = blankDraft({ seriesId: se.id, issue: label }); nav("add"); };
       $("#cpWant").onclick = async () => {
         
@@ -2388,6 +2425,60 @@ async function duckipediaBulk() {
   refreshDkCard();
   toast("Duckipedia: " + S.dk.found + " comics got details");
 }
+// ---- Refresh all comics: INDUCKS and Duckipedia details fetched again; their data wins, personal fields stay ----
+const fromSources = u => !u || /inducks\.org|outducks\.org|duckipedia\.org/.test(u);   // a cover you pasted yourself is kept
+function refreshCard() {
+  const r = S.rf, nDe = S.comics.filter(c => c.kind !== "book" && Duckipedia.candidates(dkSeries(seriesById(c.seriesId)), c).length).length;
+  return `<div class="card stack" id="rfbox"><h3>Refresh all comics</h3>
+    <p class="small muted" style="margin:0">Fetches INDUCKS and Duckipedia details again for every comic: story lists, titles, dates, pages and covers are replaced with the current data. Condition, prices, notes, ratings, read marks and covers you pasted yourself are kept. INDUCKS comes from the catalogue on this phone; Duckipedia needs internet and takes about ${Math.max(1, Math.round(nDe * 2 / 60))} min for your ${nDe} German comics. Worth doing every few months.</p>
+    ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rfstop">Stop</button></div>`
+      : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} comics updated${r.failed ? ", Duckipedia failed for " + r.failed : ""}.</p>` : ""}<div class="row"><button id="rfall"${S.db ? "" : " disabled"}>Refresh all comics</button></div>`}
+  </div>`;
+}
+function drawRefresh() { const b = $("#rfbox"); if (b) { b.outerHTML = refreshCard(); bindRefresh(); } }
+function bindRefresh() {
+  $("#rfall") && ($("#rfall").onclick = () => refreshAll());
+  $("#rfstop") && ($("#rfstop").onclick = () => { if (S.rf) S.rf.stop = true; });
+}
+async function refreshAll() {
+  const list = S.comics.filter(c => c.kind !== "book");
+  const r = S.rf = { running: true, total: list.length, done: 0, changed: 0, failed: 0 };
+  drawRefresh();
+  for (const c0 of list) {
+    if (r.stop) { r.stopped = true; break; }
+    let c = Object.assign({}, c0);
+    const se = seriesById(c.seriesId), entry = se && catEntry(se);
+    // INDUCKS, from the catalogue on this phone
+    if (entry) {
+      const file = await catalogueFile(entry).catch(() => null), lab = c.issueLabel || c.issue || "";
+      const hit = file && ((c.inducks && Object.values(file.issues || {}).find(x => x.ic === c.inducks)) || (file.issues || {})[lab]);
+      if (hit) {
+        if (hit.d) c.date = hit.d; if (hit.t) c.title = hit.t; if (hit.pg) c.pages = hit.pg;
+        if (hit.cv && fromSources(c.coverUrl)) c.coverUrl = inducksImg(hit.cv);
+        const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
+        if ((hit.s || []).length) c.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "" }));
+        c.inducks = hit.ic;
+      }
+    }
+    // Duckipedia, German comics only
+    if (se && Duckipedia.candidates(dkSeries(se), c).length) {
+      try {
+        const d = await Duckipedia.fetchIssue(dkSeries(se), c);
+        if (d) {
+          c = Duckipedia.merge(c, d); delete c.duckipediaNone;
+          if (d.issue.title) c.title = d.issue.title; if (d.issue.pages) c.pages = d.issue.pages;
+          if (d.issue.cover && fromSources(c.coverUrl) && !(entry && /outducks/.test(c.coverUrl))) c.coverUrl = d.issue.cover;
+        }
+      } catch (e) { r.failed++; if (!navigator.onLine) { toast("No internet: Duckipedia part stopped"); r.stop = true; } }
+      await sleep(1200);
+    }
+    const strip = x => JSON.stringify(Object.assign({}, x, { updatedAt: 0, duckipedia: x.duckipedia && Object.assign({}, x.duckipedia, { fetched: 0 }) }));
+    if (strip(c) !== strip(c0)) { try { await saveComic(c); r.changed++; } catch (e) {} }
+    r.done++; if (r.done % 5 === 0 || r.done === r.total) drawRefresh();
+  }
+  r.running = false; r.finished = true; drawRefresh();
+  toast("Refresh: " + r.changed + " comics updated");
+}
 // ---- fill a series' details from INDUCKS (offline catalogue) and Duckipedia (German series, needs internet) ----
 async function fillSeriesInfo(se) {
   const got = [], set = (k, v, label) => { if (v && !se[k]) { se[k] = v; if (!got.includes(label)) got.push(label); } };
@@ -2536,6 +2627,7 @@ VIEWS.series = {
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
       ${duckipediaBulkCard()}
+      ${refreshCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
           <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
@@ -2572,6 +2664,7 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    bindRefresh();
     $("#fillall") && ($("#fillall").onclick = async () => {
       if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
       grab();
