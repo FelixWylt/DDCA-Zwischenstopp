@@ -1302,7 +1302,9 @@ ${isBook ? `
           ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
           <label class="wide"><span class="l">Genres</span><input id="f-genre" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Adventure (separate with commas)"></label>` : ""}
-          <label><span class="l">Book series</span><input id="f-seriesName" list="bookseries" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "e.g. Harry Potter" : "e.g. Carl Barks Collection"}"></label>
+          <label><span class="l">Book series</span>${d.newBookSeries
+            ? `<input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "Name of the new series, e.g. Harry Potter" : "Name of the new series, e.g. Carl Barks Collection"}">`
+            : `<span class="row" style="gap:6px;flex-wrap:nowrap"><button type="button" class="pickbtn" id="f-bseries-btn"><span>${esc(d.seriesName || "No series (single book)")}</span><span class="chev" aria-hidden="true">▾</span></button>${d.seriesName ? '<button type="button" class="ghost tiny" id="f-bseries-x" aria-label="No series">✕</button>' : ""}</span><input type="hidden" id="f-seriesName" value="${esc(d.seriesName)}">`}</label>
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
           <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
@@ -1436,6 +1438,18 @@ ${isBook ? `
       render();
     });
     $("#f-series") && ($("#f-series").onchange = e => { grab(); d.seriesId = e.target.value; rememberSeries(d.seriesId); render(); });
+    // book series: the same searchable picker; choosing a comic series turns the entry into a comic issue of it
+    $("#f-bseries-btn") && ($("#f-bseries-btn").onclick = async () => {
+      const k = await pickSeries({ current: d.seriesName ? "book:" + d.seriesName : "", books: true, allowNew: true, title: "Series for this book" });
+      if (!k) return;
+      grab();
+      if (k === "_other") { d.newBookSeries = true; d.seriesName = ""; render(); setTimeout(() => $("#f-seriesName") && $("#f-seriesName").focus(), 50); return; }
+      if (k.startsWith("book:")) { d.seriesName = k.slice(5); d.newBookSeries = false; render(); return; }
+      const se = seriesById(k); if (!se) return;
+      d.kind = "issue"; d.seriesId = se.id; d.seriesName = se.name; d.newBookSeries = false;
+      render(); toast(se.name + " is a comic series: this is now a comic issue in it. Enter the issue number, then Fill from INDUCKS.");
+    });
+    $("#f-bseries-x") && ($("#f-bseries-x").onclick = () => { grab(); d.seriesName = ""; render(); });
     $("#f-series-btn") && ($("#f-series-btn").onclick = async () => { const k = await pickSeries({ current: d.seriesId, allowNew: true, title: "Series" }); if (k) { grab(); d.seriesId = k; render(); } });
     $("#f-issue").oninput = e => {
       d.issue = e.target.value;
