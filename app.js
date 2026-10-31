@@ -1003,7 +1003,7 @@ VIEWS.add = {
     return `
       <div class="row between"><div><h2>${editing ? (isBook ? "Edit book" : "Edit comic") : "Add to archive"}</h2>
       <p class="lede">${editing ? "Change any detail and save." : isBook ? "Type or scan the ISBN and tap “Fill from book databases”, or fill in what you know. Only the title is needed." : "Pick the series and issue, then fill in your copy's details. Fields left empty are fine."}</p></div>
-      ${editing ? '<button id="cancel">Back to collection</button>' : ""}</div>
+      ${editing ? '<button id="cancel">Back</button>' : ""}</div>
       <div class="card stack">
         <div class="row between">
           <div class="seg" role="group" aria-label="Type"><button type="button" data-kind="issue" aria-pressed="${!isBook}">Comic issue</button><button type="button" data-kind="book" aria-pressed="${isBook && !isNovel(d)}">Comic book</button><button type="button" data-kind="novel" aria-pressed="${isNovel(d)}">Book</button></div>
@@ -1778,20 +1778,20 @@ async function comicFromCode(d, code, ext) {
   // INDUCKS knows every issue's number and price, so offer the issues that fit, nearest year first.
   const cents = barcodePrice(code), entry = catEntry(se), file = entry && await catalogueFile(entry);
   const anchor = (S.barcodeYears || {})[code] || Math.max(0, ...S.comics.filter(c => c.seriesId === se.id && c.status !== "wanted" && c.issueYear).map(c => c.issueYear)) || new Date().getFullYear();
-  let cands = [];
+  let cands = [], priceUsed = false;
   if (file) {
     cands = Object.keys(file.issues).filter(k => { const m = /^(\d{4})(?:\/(\d{1,3})|-(\d{1,3})-(\d{1,3}))$/.exec(k); return m && (+m[2] === n || +m[3] === n || +m[4] === n); });
     const priced = cents ? cands.filter(k => issuePrice(file.issues[k].pr) === cents) : [];
-    if (priced.length) cands = priced;
+    if (priced.length) { cands = priced; priceUsed = true; }
     cands.sort((a, b) => Math.abs(+a.slice(0, 4) - anchor) - Math.abs(+b.slice(0, 4) - anchor) || b.localeCompare(a));
   }
-  const pick = k => { d.issue = k.replace(/^(\d{4})-(\d+)-(\d+)$/, "$1/$2-$3"); render(); bookMsg(`<div class="banner ok">${esc(se.short || se.name)} ${esc(k)}. Filling in from INDUCKS…</div>`); setTimeout(() => $("#lookup") && $("#lookup").click(), 50); };
+  const pick = k => { d.issue = k.replace(/^(\d{4})-(\d+)-(\d+)$/, "$1/$2-$3"); render(); bookMsg(`<div class="banner ok">${esc(se.short || se.name)} ${esc(d.issue)}. Filling in from INDUCKS…</div>`); setTimeout(() => $("#lookup") && $("#lookup").click(), 50); };
   if (cands.length === 1) { pick(cands[0]); return; }
   d.issue = anchor + "/" + String(n).padStart(2, "0"); render();
   if (!cands.length) { bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}, number ${n}. The barcode doesn't say the year, so the app put in ${anchor}: correct it if needed.</div>`); return; }
   const top = cands.slice(0, 8);
-  bookMsg(`<div class="banner ok"><div>That's ${esc(se.short || se.name)} number ${n}${cents ? ", price " + fmt2(cents / 100) + " €" : ""}. The barcode doesn't contain the year; these issues fit${cents ? " (number and price)" : ""}. Tap yours:</div>
-    <div class="row" style="gap:6px;margin-top:8px">${top.map(k => `<button type="button" class="chipbtn" data-cand="${esc(k)}">${esc(k)} · ${esc(niceDate(file.issues[k].d))}</button>`).join("")}</div>
+  bookMsg(`<div class="banner ok"><div>That's ${esc(se.short || se.name)} number ${n}${priceUsed ? ", price " + fmt2(cents / 100) + " €" : ""}. The barcode doesn't contain the year; these issues fit${priceUsed ? " (number and price)" : ""}. Tap yours:</div>
+    <div class="row" style="gap:6px;margin-top:8px">${top.map(k => `<button type="button" class="chipbtn" data-cand="${esc(k)}">${esc(k.replace(/^(\d{4})-(\d+)-(\d+)$/, "$1/$2-$3"))} · ${esc(niceDate(file.issues[k].d))}</button>`).join("")}</div>
     ${cands.length > top.length ? `<div class="small muted" style="margin-top:6px">${cands.length - top.length} more in other years: type the year if it isn't listed.</div>` : ""}</div>`);
   document.querySelectorAll("[data-cand]").forEach(b => b.onclick = () => pick(b.dataset.cand));
 }
