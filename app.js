@@ -1223,14 +1223,9 @@ function bindBookGaps() {
 function duckipediaCard(c) {
   const dk = c.duckipedia, i = dk.issue || {};
   const facts = [["Title", i.title], ["Released", i.date], ["Price", i.price], ["Editor-in-chief", i.editor], ["Translation", i.translator], ["Pages", i.pages], ["ISBN", i.isbn], ["Notes", i.notes]].filter(x => x[1]);
-  const stories = (c.stories || []).filter(s => s.dTitle || s.plot || s.translator || s.characters);
-  return `<div class="card stack dkcard"><div class="row between"><h3>From Duckipedia</h3><span class="small muted">${esc(dk.fetched || "")}</span></div>
+  return `<div class="card stack dkcard"><div class="row between"><h3>Issue details from Duckipedia</h3><span class="small muted">${esc(dk.fetched || "")}</span></div>
     ${facts.length ? `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
-    ${stories.map(s => `<div class="dkstory"><div class="t">${esc(s.dTitle || s.title)}${s.code ? ` <span class="mono muted small">${esc(s.code)}</span>` : ""}</div>
-      <div class="s">${esc([s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · "))}</div>
-      ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
-      ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`).join("")}
-    <p class="small muted" style="margin:0">Text from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
+    <p class="small muted" style="margin:0">Text (also the story details and plots below) from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
 }
 // ---- Add / edit ----
 function defaultSeriesId() {
@@ -1245,7 +1240,7 @@ VIEWS.add = {
   html() {
     if (!S.draft) {
       const c = S.editing && S.comics.find(x => x.id === S.editing);
-      S.draft = c ? JSON.parse(JSON.stringify(c)) : blankDraft();
+      S.draft = c ? JSON.parse(JSON.stringify(c)) : blankDraft(); S.storyEdit = false;
       if (!S.draft.stories) S.draft.stories = [];
     }
     const d = S.draft, editing = !!d.id, isBook = d.kind === "book";
@@ -1258,7 +1253,18 @@ VIEWS.add = {
       : se && d.issue ? inducksIssueUrl(se, d.issue) : (icode ? "https://inducks.org/publication.php?c=" + encodeURIComponent(icode) : "");
     const grades = '<option value="">Not graded</option>' + GRADES.map(([v, l]) => `<option value="${v}"${d.grade === v ? " selected" : ""}>${l}</option>`).join("");
     const curs = CURRENCIES.map(c => `<option${d.currency === c ? " selected" : ""}>${c}</option>`).join("");
-    const stories = d.stories.map((s, i) => `<div class="story" data-i="${i}">
+    // one view per story with INDUCKS (title, code, writer, artist) and Duckipedia (German title, original, translator, characters, plot) together
+    const storyEdit = S.storyEdit || !d.stories.length;
+    const storyView = s => {
+      const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + s.writer : s.writer && "Writer: " + s.writer, s.artist && s.artist !== s.writer ? "Artist: " + s.artist : "", s.hero].filter(Boolean).join(" · ");
+      const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
+      const other = s.dTitle && norm(s.dTitle) !== norm(s.title) ? s.dTitle : "";
+      return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
+        ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${esc(by)}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
+        ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
+        ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`;
+    };
+    const stories = !storyEdit ? d.stories.map(storyView).join("") : d.stories.map((s, i) => `<div class="story" data-i="${i}">
         <label class="st-title"><span class="l">Story title</span><input data-sf="title" value="${esc(s.title)}"></label>
         <label><span class="l">Story code</span><input data-sf="code" class="mono" placeholder="I TL 1234-A" value="${esc(s.code)}"></label>
         <label><span class="l">Writer</span><input data-sf="writer" value="${esc(s.writer)}"></label>
@@ -1329,7 +1335,7 @@ ${isBook ? `
       </div>
       ${d.duckipedia ? duckipediaCard(d) : ""}
       <div class="card stack">
-        <div class="row between"><h3>Stories</h3><button id="addstory">Add story</button></div>
+        <div class="row between"><h3>Stories${d.stories.length ? ` <span class="muted small">${d.stories.length}</span>` : ""}</h3><span class="row" style="gap:6px">${d.stories.length ? `<button id="editstories" class="ghost" type="button">${storyEdit ? "Done" : "Edit stories"}</button>` : ""}<button id="addstory">Add story</button></span></div>
         ${d.stories.length ? '<div class="stories">' + stories + '</div>' : '<p class="muted small" style="margin:0">No stories listed yet. Add them so you can search by story, writer or artist later.</p>'}
         <datalist id="heroes"><option>Donald Duck</option><option>Micky Maus / Topolino</option><option>Dagobert / Zio Paperone / Joakim</option><option>Phantomias / Paperinik</option><option>Daniel Düsentrieb / Archimede</option><option>Goofy / Pippo / Långben</option><option>Gustav Gans / Gastone / Alexander Lukas</option><option>Die Panzerknacker / Bassotti / Björnligan</option><option>Tick, Trick und Track</option></datalist>
       </div>
@@ -1445,7 +1451,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : ""}</div>
       const ic = se && (se.code || (catEntry(se) || {}).code);
       if (se && l) l.innerHTML = ic ? ` <a href="${esc(d.issue ? inducksIssueUrl(se, d.issue) : "https://inducks.org/publication.php?c=" + encodeURIComponent(ic))}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : "";
     };
-    $("#addstory").onclick = () => { grab(); d.stories.push({ title: "", code: "", writer: "", artist: "", hero: "" }); render(); const rows = document.querySelectorAll(".story input"); rows.length && rows[rows.length - 5].focus(); };
+    $("#editstories") && ($("#editstories").onclick = () => { grab(); S.storyEdit = !(S.storyEdit || !d.stories.length); renderKeep(); });
+    $("#addstory").onclick = () => { grab(); S.storyEdit = true; d.stories.push({ title: "", code: "", writer: "", artist: "", hero: "" }); render(); const rows = document.querySelectorAll(".story input"); rows.length && rows[rows.length - 5].focus(); };
     document.querySelectorAll("[data-del]").forEach(b => b.onclick = () => { grab(); d.stories.splice(+b.dataset.del, 1); render(); });
     $("#dkfetch") && ($("#dkfetch").onclick = async () => {
       grab(); const btn = $("#dkfetch");
