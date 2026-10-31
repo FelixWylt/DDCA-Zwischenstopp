@@ -378,7 +378,7 @@ body.noscroll { overflow: hidden; }
 .chip.rate { color: #8a6500; background: color-mix(in oklab, #e0a800 20%, var(--surface)); }
 .chip.special { color: var(--wanted); background: var(--wanted-soft); }
 /* gap grid: reading mode */
-.cell.read::after { content: "✓"; position: absolute; right: 2px; top: 0; font-size: 0.7rem; font-weight: 800; }
+.cell.read::before { content: "✓"; position: absolute; right: 2px; bottom: 1px; font-size: 0.55rem; line-height: 1; font-weight: 800; }   /* bottom corner, so it never meets the variant letters (top) or the "!" mark */
 .cell { position: relative; }
 .readmode .cell.owned { outline: 2px dashed color-mix(in oklab, var(--owned) 55%, transparent); outline-offset: -3px; }
 .readmode .cell:not(.owned) { opacity: 0.45; }
