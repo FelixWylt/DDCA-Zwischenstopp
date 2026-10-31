@@ -1,0 +1,7 @@
+=== publications
+=== issues
+se/WS2006-04^se/WS2006^se/WS^2006-04^En tecknad julsaga^^52^42 SEK^^^2006-Q4^Y^[TIDSAM 0941-04] [ISSN 1650-6677] [org. equiv fi/WE  17,it/DF   16]^Y^2006-12-31^N^N^1993^Team_se^
+=== entries
+=== publishers
+issuecode^issuerangecode^publicationcode^issuenumber^title^size^pages^price^printrun^attached^oldestdate^fullyindexed^issuecomment^error^filledoldestdate^locked^inxforbidden^inputfilecode^maintenanceteamcode^
+entrycode^issuecode^storyversioncode^languagecode^includedinentrycode^position^printedcode^guessedcode^title^reallytitle^printedhero^changes^cut^minorchanges^missingpanels^mirrored^sideways^startdate^enddate^identificationuncertain^alsoreprint^part^entrycomment^error^
