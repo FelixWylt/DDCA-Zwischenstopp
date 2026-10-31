@@ -383,7 +383,7 @@ function lotFields(d) {
   const total = parseAmt(d.lotTotal);
   return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${lots.map(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`).join("")}</select></label>
     <label><span class="l">Price for the whole lot</span><input id="f-lotTotal" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.lotTotal))}"></label>
-    <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together. Add the others with “Save and add next”, which keeps the lot."}</span>
+    <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${total === 0 ? `A free lot: ${n === 1 ? "this comic gets" : "all " + n + " comics get"} the price 0.00.` : typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."}</span>
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
 function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && c.status !== "wanted") : []; }
@@ -412,7 +412,7 @@ async function rebalanceLot(id, total, currency) {
 function prepareLot(d, c, before) {
   if (c.status === "wanted" || !d.lotId) { c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; return true; }
   const total = parseAmt(d.lotTotal);
-  if (!(typeof total === "number" && total > 0)) { toast("Enter the price for the whole lot"); $("#f-lotTotal") && $("#f-lotTotal").focus(); return false; }
+  if (!(typeof total === "number" && total >= 0)) { toast("Enter the price for the whole lot (0 if you got it for free)"); $("#f-lotTotal") && $("#f-lotTotal").focus(); return false; }
   if (d.lotId === "new") d.lotId = newId();
   c.lotId = d.lotId; c.lotTotal = total; c.lotCurrency = c.currency; c.pricePaid = "";
   return true;
@@ -1204,7 +1204,7 @@ ${isBook ? `
     });
     $("#f-lot") && ($("#f-lot").onchange = e => { grab(); d.lotId = e.target.value; const l = lotInfo(d.lotId); if (l) { d.lotTotal = l.total; d.currency = l.currency; if (!d.source) d.source = l.source; if (!d.purchaseDate) d.purchaseDate = l.date; } else d.lotTotal = ""; render(); });
     // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
-    $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together. Add the others with “Save and add next”, which keeps the lot."; });
+    $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this comic gets" : "all " + n + " comics get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
     document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
     $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
     $("#comicscan") && ($("#comicscan").onclick = async () => {
