@@ -355,3 +355,4 @@ body.noscroll { overflow: hidden; }
 .pk-uni { border-bottom: 1px solid var(--line); }
 .pk-uni > summary { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 4px; cursor: pointer; list-style: none; font-family: var(--f-display); font-weight: 800; font-size: 1.05rem; color: var(--accent); }
 .pk-uni > summary::-webkit-details-marker { display: none; }
+.cols.short { height: 110px; }

@@ -1668,6 +1668,7 @@ VIEWS.stats = {
       <div class="two">${comp}${years}</div>
       ${completion}
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
+      ${readingCard(own, "comics")}
       ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
       <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>
       ${novels.length || novelsWanted.length ? bookStats(novels, novelsWanted) : ""}`;
@@ -1678,10 +1679,28 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; nav("gaps"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
-    const show = b => { document.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
-    document.querySelectorAll(".col").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
+    const show = b => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
+    document.querySelectorAll(".col:not([data-rd])").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
+    document.querySelectorAll(".col[data-rd]").forEach(b => { const f = () => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#" + b.dataset.rd).textContent = b.dataset.lab; }; b.onclick = f; b.onmouseenter = f; });
   }
 };
+// ---- Reading: what was marked as read, by month (dates are kept since 31.10.2026) ----
+function readingCard(list, word) {
+  const dated = list.filter(c => c.read && /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""));
+  if (!dated.length) return "";
+  const now = new Date(), ym = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+  const months = []; for (let i = 11; i >= 0; i--) months.push(ym(new Date(now.getFullYear(), now.getMonth() - i, 1)));
+  const per = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; });
+  const year = String(now.getFullYear()), thisYear = dated.filter(c => c.readDate.startsWith(year));
+  const pages = thisYear.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
+  const max = Math.max(1, ...months.map(m => per[m] || 0)), M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 3);
+  const id = "rd" + word.replace(/\W/g, ""), w = n => n === 1 ? word.replace(/s$/, "") : word;
+  return `<div class="card stack"><div class="cardhead"><h3>Reading</h3><span class="muted small" id="${id}">${M[now.getMonth()]}: ${per[months[11]] || 0} ${w(per[months[11]] || 0)}</span></div>
+    <div class="row" style="gap:24px"><div><div class="v2">${thisYear.length}</div><div class="k small muted">${w(thisYear.length)} read in ${year}</div></div>${pages ? `<div><div class="v2">${pages.toLocaleString("de-CH")}</div><div class="k small muted">pages in ${year}</div></div>` : ""}<div><div class="v2">${per[months[11]] || 0}</div><div class="k small muted">this month</div></div></div>
+    <div class="cols short" role="img" aria-label="${word} read per month">${months.map(m => `<button class="col${m === months[11] ? " on" : ""}" data-rd="${id}" data-lab="${M[+m.slice(5) - 1]} ${m.slice(0, 4)}: ${per[m] || 0} ${w(per[m] || 0)}"><span class="bar" style="height:${((per[m] || 0) / max * 100).toFixed(1)}%"></span><span class="x">${M[+m.slice(5) - 1].slice(0, 1)}</span></button>`).join("")}</div>
+    <p class="small muted" style="margin:0">Last read: ${last.map(c => esc((c.kind === "book" ? c.title : comicTag(c)) + " (" + niceDate(c.readDate) + ")")).join(", ")}. Counts only what was marked as read since 31.10.2026.</p></div>`;
+}
 // ---- Stats for normal books, kept apart from the comics ----
 function bookStats(own, wanted) {
   const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -1699,6 +1718,7 @@ function bookStats(own, wanted) {
         <div><div class="v2">${nf(pagesRead)}</div><div class="k">pages read</div></div>
       </div>
     </div>
+    ${readingCard(own, "books")}
     ${own.length ? `<div class="two">
       <div class="card stack"><div class="cardhead"><h3>Top authors</h3><span class="muted small">books</span></div>${authors.length ? bars(authors) : '<p class="muted small" style="margin:0">Add authors to your books to see them here.</p>'}</div>
       <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${bars(langs)}
