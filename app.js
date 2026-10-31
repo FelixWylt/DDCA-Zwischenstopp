@@ -34,12 +34,12 @@ const GROUP_RULES = [
 ];
 // ---- arrangement: universe › group (Disney by country and format, the rest by franchise) ----
 const UNIVERSES = { "Dargaud": "Franco-Belgian", "Dupuis": "Franco-Belgian", "Casterman": "Franco-Belgian", "Lombard": "Franco-Belgian", "Hanna-Barbera": OTHER_PUB };
-const DE_LTB = "Deutschland – Lustiges Taschenbuch", DE_MAG = "Deutschland – Hefte & Magazine", DE_ALB = "Deutschland – Alben & Sammlerbände";
+const DE_LTB = "Deutschland – Lustiges Taschenbuch", DE_MAG = "Deutschland – Hefte & Magazine", DE_ALB = "Deutschland – Alben & Sammlerbände", DE_TB = "Deutschland – Taschenbücher";
 const SE_MAG = "Sverige – Tidningar", SE_POC = "Sverige – Pocket", SE_ALB = "Sverige – Album & böcker";
-const IT_ALL = "Italia", NO_ALL = "Norge";
+const IT_ALL = "Italia", NO_ALL = "Norge", CH_ALL = "Schweiz", AT_ALL = "Österreich";
 // series that the rules below would place differently
 const ARRANGE_IDS = {
-  "donald-duck-taschenbuch": DE_ALB, "micky-maus-taschenbuch": DE_ALB, "mammut-comics": DE_ALB, "x-micky-maus-prasentiert": DE_ALB,
+  "donald-duck-taschenbuch": DE_TB, "micky-maus-taschenbuch": DE_TB, "mammut-comics": DE_ALB, "x-micky-maus-prasentiert": DE_ALB,
   "x-micky-maus-comics": DE_MAG, "x-panzerknacker-co": DE_MAG, "x-die-tollsten-geschichten-von-donald-duck-sonderheft": DE_MAG,
   "x-musiksaga": SE_ALB, "farbror-joakims-liv": SE_ALB, "x-walt-disney-s-godbitar": SE_ALB, "x-walt-disney-s-klassiker": SE_ALB,
   "x-walt-disney-s-serier": SE_MAG, "x-donald-duck-co": NO_ALL, "donald-duck-co-germany": DE_MAG
@@ -62,13 +62,16 @@ function arrangeSeries(se) {
   if (uni !== DISNEY) return { publisher: uni, group: se.group || franchiseOf(se.name) };
   if (ARRANGE_IDS[se.id]) return { publisher: DISNEY, group: ARRANGE_IDS[se.id] };
   const n = norm(se.name), lang = seriesLang(se);
-  if (lang === "German") return { publisher: DISNEY, group: /(taschenbuch|\bltb\b)/.test(n) ? DE_LTB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
-  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) ? SE_POC : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
+  const cc = String(se.country || (se.code || "").split("/")[0] || "").toLowerCase();
+  if (cc === "ch") return { publisher: DISNEY, group: CH_ALL };   // Swiss (Bollmann's Micky Maus Zeitung) and Austrian editions aren't German ones
+  if (cc === "at") return { publisher: DISNEY, group: AT_ALL };
+  if (lang === "German") return { publisher: DISNEY, group: /^(lustiges taschenbuch|ltb)\b|\bltb\b/.test(n) ? DE_LTB : /taschenb/.test(n) || se.code === "de/DD" ? DE_TB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
+  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" ? SE_POC : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
   if (lang === "Italian") return { publisher: DISNEY, group: IT_ALL };
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
 }
-const NEW_GROUPS = [DE_LTB, DE_MAG, DE_ALB, SE_MAG, SE_POC, SE_ALB, IT_ALL, NO_ALL];
+const NEW_GROUPS = [DE_LTB, DE_TB, DE_MAG, DE_ALB, SE_MAG, SE_POC, SE_ALB, IT_ALL, NO_ALL, CH_ALL, AT_ALL];
 // the new arrangement is in use once any Disney series sits in one of its groups
 function arrangedInUse() { return S.series.some(se => se.publisher === DISNEY && NEW_GROUPS.includes(se.group)); }
 // series still arranged the old way (by publisher, or Disney groups by character)
@@ -366,6 +369,7 @@ async function boot() {
       await setConfig("ddTestFix", true);
     }
     S.valueRules = await getConfig("valueRules") || [];
+    S.groupKeep = await getConfig("groupKeep") || [];
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
@@ -2739,6 +2743,24 @@ async function loadInducksDir() {
   try { const r = await fetch("catalogue/directory.json"); if (r.ok) { S.inducksDir = (await r.json()).publications || []; document.querySelectorAll(".inducksnote[data-ni]").forEach(el => { const se = S.series[+el.dataset.ni]; if (se) el.innerHTML = inducksNote(se); }); } } catch (e) {}
 }
 // ---- one-time rearrangement: universe › country/format ----
+// ---- group check: Disney series whose group differs from the arrangement rules; you pick which ones to move ----
+function groupCheckCard() {
+  if (!arrangedInUse()) return "";
+  const diff = S.series.filter(se => se.id && (se.publisher || DISNEY) === DISNEY && arrangeSeries(se).group !== se.group && !(S.groupKeep || []).includes(se.id));
+  if (!diff.length) return "";
+  return `<div class="card stack" id="gcbox"><h3>Check series groups</h3>
+    <p class="small muted" style="margin:0">These ${diff.length} Disney series aren't in the group the rules suggest. Tick the ones to move; unticked ones stay where they are and aren't suggested again.</p>
+    <div class="stack" style="gap:6px">${diff.map(se => `<label class="check" style="min-height:0"><input type="checkbox" data-gc="${esc(se.id)}" checked> <span><strong>${esc(se.name)}</strong><br><span class="small muted">${esc(se.group || "no group")} → ${esc(arrangeSeries(se).group)}</span></span></label>`).join("")}</div>
+    <div class="row"><button class="primary" id="gcgo" type="button">Apply</button></div></div>`;
+}
+function bindGroupCheck() {
+  $("#gcgo") && ($("#gcgo").onclick = async () => {
+    const keep = (S.groupKeep || []).slice(); let moved = 0;
+    document.querySelectorAll("[data-gc]").forEach(b => { const se = seriesById(b.dataset.gc); if (!se) return; if (b.checked) { se.group = arrangeSeries(se).group; moved++; } else keep.push(se.id); });
+    S.groupKeep = keep; await setConfig("groupKeep", keep);
+    try { await saveSeries(); S.col = {}; toast(moved + (moved === 1 ? " series moved" : " series moved")); render(); } catch (e) { toast(errText(e)); }
+  });
+}
 function arrangeCard() {
   const pending = arrangePending();
   if (!pending.length) return "";
@@ -2938,6 +2960,7 @@ VIEWS.series = {
     }).join("") + bookSeriesGroup();
     return `
       ${arrangeCard()}
+      ${groupCheckCard()}
       <div><h2>Series</h2><p class="lede">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
       ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
       <div class="card stack">
@@ -2971,7 +2994,7 @@ VIEWS.series = {
     });
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
     $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
-    bindArrangeCard();
+    bindArrangeCard(); bindGroupCheck();
     document.querySelectorAll("details.sgroup").forEach(el => el.ontoggle = () => { S.serOpen["u:" + el.dataset.u] = el.open; });
     document.querySelectorAll("details.sitem").forEach(el => el.ontoggle = () => { S.serOpen[el.dataset.k] = el.open; });
     const find = () => {
