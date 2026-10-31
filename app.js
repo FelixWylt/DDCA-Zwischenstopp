@@ -2661,6 +2661,47 @@ function bindArrangeCard() {
     } catch (e) { toast(errText(e)); go.disabled = false; }
   };
 }
+// ---- book series (kept as a name on each book) in the Series tab: rename, number of volumes ----
+function bookSeriesGroup() {
+  const bySer = {};
+  S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (bySer[c.seriesName] = bySer[c.seriesName] || []).push(c); });
+  const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de"));
+  if (!names.length) return "";
+  const part = (label, list) => list.length ? `<h4 class="sghead">${label}</h4>` + list.map(n => {
+    const bs = bySer[n], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, k = "book:" + n;
+    const authors = [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
+    const size = (S.bookSizes || {})[n] || "";
+    const meta = [authors, own + (own === 1 ? " book" : " books"), want ? want + " wanted" : "", size ? size + " volumes" : ""].filter(Boolean).join(" · ");
+    return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([n, authors, "book"].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(n)}</span><span class="muted small">${esc(meta)}</span></summary>
+      <div class="seriesrow bookrow" data-old="${esc(n)}">
+        <label class="sr-name"><span class="l">Name</span><input data-bk="name" value="${esc(n)}"></label>
+        <label><span class="l">Volumes in the series</span><input data-bk="size" type="number" min="1" inputmode="numeric" value="${esc(size)}" placeholder="${Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)) || ""}"></label>
+        <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}. ${size ? "" : "With the number of volumes, the gap grid and stats know what's missing."}</div>
+        <div class="wide row"><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button></div>
+      </div></details>`;
+  }).join("") : "";
+  const novels = names.filter(n => bySer[n].some(isNovel)), cbooks = names.filter(n => !novels.includes(n));
+  return `<details class="sgroup" data-u="Book series"${S.serOpen["u:Book series"] ? " open" : ""}><summary><span class="t">Book series</span><span class="muted small">${names.length} series</span></summary>${part("Books", novels)}${part("Comic books", cbooks)}</details>`;
+}
+// saves renamed book series and volume counts (called by "Save series")
+async function saveBookSeries() {
+  const sizes = Object.assign({}, S.bookSizes || {}), fix = [];
+  let changed = false;
+  document.querySelectorAll(".bookrow").forEach(row => {
+    const old = row.dataset.old, name = row.querySelector('[data-bk="name"]').value.trim(), size = parseInt(row.querySelector('[data-bk="size"]').value, 10) || "";
+    const to = name || old;
+    if (to !== old) {
+      S.comics.filter(c => c.kind === "book" && c.seriesName === old).forEach(c => fix.push(Object.assign({}, c, { seriesName: to })));
+      if (sizes[old] && !sizes[to]) sizes[to] = sizes[old]; delete sizes[old];
+      if (S.gapSeries === "book:" + old) S.gapSeries = "book:" + to;
+      changed = true;
+    }
+    if ((sizes[to] || "") !== size) { if (size) sizes[to] = size; else delete sizes[to]; changed = true; }
+  });
+  if (fix.length) await saveMany(fix, null, true);
+  if (changed) { S.bookSizes = sizes; await setConfig("bookSizes", sizes); }
+  return changed;
+}
 // ---- Series ----
 VIEWS.series = {
   html() {
@@ -2697,7 +2738,7 @@ VIEWS.series = {
           const meta = [s.short, cnt === 1 ? "1 comic" : cnt + " comics", s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
           return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([s.name, s.short, s.group, u, s.code].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(seriesLabel(s) || "New series")}</span><span class="muted small">${esc(meta)}</span></summary>${fields(s, i)}</details>`;
         }).join("")).join("") + '</details>';
-    }).join("");
+    }).join("") + bookSeriesGroup();
     return `
       ${arrangeCard()}
       <div><h2>Series</h2><p class="lede">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
@@ -2721,7 +2762,7 @@ VIEWS.series = {
           : `<p class="small muted" style="margin:0">Not loaded yet. Once it is, Add fills in titles, dates and full story lists from INDUCKS.</p>`}</div>`;
   },
   bind() {
-    const grab = () => document.querySelectorAll(".seriesrow").forEach(row => {
+    const grab = () => document.querySelectorAll(".seriesrow:not(.bookrow)").forEach(row => {
       const s = S.series[+row.dataset.i];
       row.querySelectorAll("[data-k]").forEach(inp => {
         const k = inp.dataset.k, v = inp.value.trim();
@@ -2749,6 +2790,7 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
     bindRefresh();
     $("#fillall") && ($("#fillall").onclick = async () => {
       if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
@@ -2796,7 +2838,7 @@ VIEWS.series = {
       S.series.forEach(s => { if (!s.group) s.group = OTHER_GROUP; if (!s.publisher) s.publisher = OTHER_PUB; });
       S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group));
       const ids = S.series.map(s => s.id); if (new Set(ids).size !== ids.length) { toast("Two series have the same INDUCKS code"); return; }
-      try { await saveSeries(); toast("Series saved"); render(); } catch (e) { toast(errText(e)); }
+      try { await saveBookSeries(); await saveSeries(); toast("Series saved"); render(); } catch (e) { toast(errText(e)); }
     };
   }
 };
