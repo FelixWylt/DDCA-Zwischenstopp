@@ -248,6 +248,7 @@ async function boot() {
     S.lastSeries = await getConfig("lastSeries") || null;
     S.barcodes = await getConfig("barcodes") || {};
     S.bookSizes = await getConfig("bookSizes") || {};
+    S.recentSeries = await getConfig("recentSeries") || [];
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     await adoptLooseSeries();
@@ -789,6 +790,86 @@ function seriesOptions(selected, label) {
   return Object.keys(groups).sort((a, b) => pubCompare(key(a)[0], key(b)[0]) || groupCompare(key(a)[1], key(b)[1])).map(g =>
     `<optgroup label="${esc(g)}">` + groups[g].map(s => `<option value="${esc(s.id)}"${selected === s.id ? " selected" : ""}>${esc(label(s))}</option>`).join("") + "</optgroup>").join("");
 }
+// ---- series picker: a searchable full-screen list instead of a long drop-down ----
+function pickerItems(opts) {
+  const cnt = {}; S.comics.forEach(c => { const k = c.kind === "book" ? "book:" + (c.seriesName || "") : c.seriesId; cnt[k] = (cnt[k] || 0) + 1; });
+  const items = S.series.map(s => ({ key: s.id, label: seriesLabel(s), short: s.short || "", group: (s.publisher || OTHER_PUB) + " · " + (s.group || OTHER_GROUP), uni: s.publisher || OTHER_PUB, code: (catEntry(s) || {}).code || s.code || "", n: cnt[s.id] || 0 }));
+  if (opts.books) { const names = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); }); Object.keys(names).forEach(n => items.push({ key: "book:" + n, label: n, short: "", group: names[n] ? "Book series" : "Book series (comic books)", uni: "Book series", code: "", n: cnt["book:" + n] || 0 })); }
+  return items;
+}
+function seriesKeyLabel(key) {
+  if (!key) return "Choose a series";
+  if (key === "_other") return "New series…";
+  if (key.startsWith("book:")) return key.slice(5);
+  const se = seriesById(key); return se ? seriesLabel(se) : "Choose a series";
+}
+function rememberSeries(key) {
+  if (!key || key === "_other") return;
+  S.recentSeries = [key].concat((S.recentSeries || []).filter(k => k !== key)).slice(0, 6);
+  setConfig("recentSeries", S.recentSeries).catch(() => {});
+}
+// opts: { current, allowNew, books, onlyMine, title }; resolves to the chosen key or null
+function pickSeries(opts) {
+  return new Promise(resolve => {
+    const all = pickerItems(opts), byKey = Object.fromEntries(all.map(x => [x.key, x]));
+    let onlyMine = !!opts.onlyMine;
+    const box = document.createElement("div"); box.className = "picker"; box.setAttribute("role", "dialog"); box.setAttribute("aria-label", opts.title || "Choose a series");
+    box.innerHTML = `<div class="pk-head"><strong>${esc(opts.title || "Choose a series")}</strong><button class="ghost" type="button" data-x>Close</button></div>
+      <input type="search" class="pk-q" placeholder="Type to search: name, short name, group or code" autocomplete="off">
+      ${opts.books !== undefined || opts.onlyMine !== undefined ? `<label class="check pk-mine" style="min-height:0"><input type="checkbox"${onlyMine ? " checked" : ""}> Only series I have comics in</label>` : ""}
+      <div class="pk-list"></div>`;
+    document.body.appendChild(box); document.body.classList.add("noscroll");
+    const list = box.querySelector(".pk-list"), q = box.querySelector(".pk-q");
+    const close = v => { box.remove(); document.body.classList.remove("noscroll"); if (v) rememberSeries(v); resolve(v || null); };
+    const row = x => `<button type="button" class="pk-item${x.key === opts.current ? " on" : ""}" data-k="${esc(x.key)}"><span class="t">${esc(x.label)}${x.short ? ` <span class="chip">${esc(x.short)}</span>` : ""}</span><span class="s">${esc([x.group.replace(/^Disney · /, ""), x.code].filter(Boolean).join(" · "))}</span><span class="n">${x.n || ""}</span></button>`;
+    const draw = () => {
+      const words = norm(q.value).split(" ").filter(Boolean);
+      const pool = all.filter(x => !onlyMine || x.n || x.key === opts.current);
+      let html = "";
+      if (words.length) {
+        const hits = pool.filter(x => { const t = norm([x.label, x.short, x.group, x.code].join(" ")); return words.every(w => t.includes(w)); })
+          .sort((a, b) => (norm(a.short) === words.join(" ") ? -1 : 0) - (norm(b.short) === words.join(" ") ? -1 : 0) || b.n - a.n || a.label.localeCompare(b.label, "de"));
+        html = hits.length ? hits.map(row).join("") : '<p class="muted small" style="padding:12px">No series matches. Try fewer letters.</p>';
+      } else {
+        const recent = (S.recentSeries || []).map(k => byKey[k]).filter(x => x && pool.includes(x));
+        if (opts.allowNew) html += '<button type="button" class="pk-item pk-new" data-k="_other"><span class="t">+ New series…</span></button>';
+        if (recent.length) html += '<h4 class="pk-h">Recently used</h4>' + recent.map(row).join("");
+        const unis = {}; pool.forEach(x => { (unis[x.uni] = unis[x.uni] || {}); (unis[x.uni][x.group] = unis[x.uni][x.group] || []).push(x); });
+        Object.keys(unis).sort((a, b) => a === "Book series" ? 1 : b === "Book series" ? -1 : pubCompare(a, b)).forEach(u => {
+          const groups = unis[u], n = Object.values(groups).reduce((a, l) => a + l.length, 0), open = Object.values(groups).some(l => l.some(x => x.key === opts.current));
+          html += `<details class="pk-uni"${open ? " open" : ""}><summary><span>${esc(u)}</span><span class="muted small">${n}</span></summary>` +
+            Object.keys(groups).sort(groupCompare).map(g => `${Object.keys(groups).length > 1 || g.split(" · ")[1] !== u ? `<h4 class="pk-h">${esc(g.split(" · ").slice(1).join(" · ") || g)}</h4>` : ""}` + groups[g].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "de")).map(row).join("")).join("") + "</details>";
+        });
+      }
+      list.innerHTML = html;
+      list.querySelectorAll("[data-k]").forEach(b => b.onclick = () => close(b.dataset.k));
+    };
+    q.oninput = draw;
+    box.querySelector("[data-x]").onclick = () => close(null);
+    const mine = box.querySelector(".pk-mine input"); if (mine) mine.onchange = () => { onlyMine = mine.checked; draw(); };
+    box.addEventListener("keydown", e => { if (e.key === "Escape") close(null); if (e.key === "Enter") { const f = list.querySelector("[data-k]"); if (f && q.value) close(f.dataset.k); } });
+    draw(); setTimeout(() => q.focus(), 50);
+    const cur = list.querySelector(".pk-item.on"); if (cur) cur.scrollIntoView({ block: "center" });
+  });
+}
+// series button with ‹ › to step through the series you have comics in
+function gapOrder() {
+  const has = new Set(S.comics.map(c => c.kind === "book" ? "book:" + (c.seriesName || "") : c.seriesId));
+  return pickerItems({ books: true }).filter(x => has.has(x.key) && x.key !== "book:").map(x => x.key);
+}
+function gapPicker(cur) {
+  return `<div class="gappick" style="flex:1 1 260px"><span class="l">Series</span><div class="row" style="gap:6px;flex-wrap:nowrap">
+    <button type="button" class="ghost stepbtn" id="gsPrev" aria-label="Previous series">‹</button>
+    <button type="button" class="pickbtn" id="gsBtn"><span>${esc(seriesKeyLabel(cur))}</span><span class="chev" aria-hidden="true">▾</span></button>
+    <button type="button" class="ghost stepbtn" id="gsNext" aria-label="Next series">›</button></div></div>`;
+}
+function bindGapPicker() {
+  const go = k => { if (k) { S.gapSeries = k; rememberSeries(k); render(); } };
+  $("#gsBtn") && ($("#gsBtn").onclick = async () => go(await pickSeries({ current: S.gapSeries, books: true, onlyMine: true, title: "Gap grid for" })));
+  const step = dir => { const o = gapOrder(); if (!o.length) return; const i = o.indexOf(S.gapSeries); go(o[(i < 0 ? 0 : i + dir + o.length) % o.length]); };
+  $("#gsPrev") && ($("#gsPrev").onclick = () => step(-1));
+  $("#gsNext") && ($("#gsNext").onclick = () => step(1));
+}
 function bookSeriesOptions(selected) {
   const names = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); });
   const keys = Object.keys(names).sort((a, b) => a.localeCompare(b, "de"));
@@ -813,7 +894,7 @@ function bookGapsHtml() {
     <div><h2>Gaps &amp; wishlist</h2><p class="lede">Every volume of a book series at a glance. Tap a missing number to add it as owned or put it on your wishlist.</p></div>
     <div class="card stack">
       <div class="row between">
-        <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${seriesOptions("", s => s.name)}${bookSeriesOptions(S.gapSeries)}</select></label>
+        ${gapPicker(S.gapSeries)}
         <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, size - ownCount)} missing</span></div>
       </div>
       <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
@@ -826,7 +907,7 @@ function bookGapsHtml() {
 function bindBookGaps() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const proto = mine[0] || {};
-  $("#gs").onchange = e => { S.gapSeries = e.target.value; render(); };
+  bindGapPicker();
   $("#bsizego").onclick = async () => { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: parseInt($("#bsize").value, 10) || "" }); await setConfig("bookSizes", S.bookSizes); toast("Saved"); render(); };
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
@@ -922,7 +1003,7 @@ ${isBook ? `
         <datalist id="publishers">${[...new Set(["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"].concat(S.comics.map(c => c.publisher).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
         <div class="lookup">
-          <label><span class="l">Series</span><select id="f-series">${sopts}</select></label>
+          <label><span class="l">Series</span><button type="button" class="pickbtn" id="f-series-btn"><span>${esc(se ? seriesLabel(se) : "New series…")}</span><span class="chev" aria-hidden="true">▾</span></button><select id="f-series" class="visually-hidden" tabindex="-1" aria-hidden="true">${sopts}</select></label>
           <label><span class="l">Issue</span><input id="f-issue" placeholder="${esc(hint)}" value="${esc(d.issue)}"></label>
           <button id="lookup" ${catReady ? "" : "disabled"}>Fill from INDUCKS</button>
         </div>
@@ -1029,7 +1110,8 @@ ${isBook ? `
       else if (!seriesById(d.seriesId)) { d.seriesId = defaultSeriesId(); d.seriesName = ""; }
       render();
     });
-    $("#f-series") && ($("#f-series").onchange = e => { grab(); d.seriesId = e.target.value; render(); });
+    $("#f-series") && ($("#f-series").onchange = e => { grab(); d.seriesId = e.target.value; rememberSeries(d.seriesId); render(); });
+    $("#f-series-btn") && ($("#f-series-btn").onclick = async () => { const k = await pickSeries({ current: d.seriesId, allowNew: true, title: "Series" }); if (k) { grab(); d.seriesId = k; render(); } });
     $("#f-issue").oninput = e => {
       d.issue = e.target.value;
       const se = seriesById(d.seriesId), l = $("#ilink");
@@ -1145,6 +1227,7 @@ ${isBook ? `
         const lotNote = await afterLotSave(saved, before);
         for (const id of alsoGone) await deleteComic(id);
         if (saved.barcode && saved.seriesId) { S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {}); }
+        rememberSeries(saved.seriesId);
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
         toast((moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive") + lotNote);
         if (next) {
@@ -1388,7 +1471,7 @@ VIEWS.gaps = {
       <div><h2>Gaps &amp; wishlist</h2><p class="lede">Every issue of a series at a glance. Tap a missing number to add it as owned or put it on your wishlist.</p></div>
       <div class="card stack">
         <div class="row between">
-          <label style="flex:1 1 220px"><span class="l">Series</span><select id="gs">${opts}</select></label>
+          ${gapPicker(se.id)}
           <div class="row small"><span class="chip owned">${ownCount} owned</span><span class="chip wanted">${wantCount} wanted</span><span class="chip">${Math.max(0, total - ownCount)} missing</span></div>
         </div>
         <div class="legend"><span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
@@ -1408,7 +1491,7 @@ VIEWS.gaps = {
   },
   bind() {
     if (String(S.gapSeries || "").startsWith("book:") && $("#bsize")) return bindBookGaps();
-    $("#gs") && ($("#gs").onchange = e => { S.gapSeries = e.target.value; render(); });
+    bindGapPicker();
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
