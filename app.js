@@ -214,6 +214,9 @@ function parseIssue(series, raw) {
     if (r) m = [r[0], r[2], r[1]];
     if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2], label: m[1] + "/" + String(+m[2]).padStart(2, "0") };
   }
+  // test issues: "T4", "Test 4", "Testausgabe 4", "Probeheft 4" -> "T4" (INDUCKS de/DD has test issues 1974 besides the regular 1-4)
+  const tm = /^\s*(?:t|test|testausgabe|testheft|probe|probeheft|probenummer)\s*[-.:#]?\s*0*(\d{1,3})\s*$/i.exec(s);
+  if (tm) return { n: +tm[1], sort: +tm[1] / 100 - 1, label: "T" + +tm[1] };
   // variants: "546A", "LTB 546 b", "546-B" -> "546A"
   const pv = !(series && series.numbering === "year") && /^[A-Za-zÄÖÜäöüß.:#\s-]*?0*(\d{1,5})\s*[-\/]?\s*([A-Za-z])\s*$/.exec(s);
   if (pv) {
@@ -357,6 +360,11 @@ async function boot() {
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
     S.bookMeta = await getConfig("bookSeriesInfo") || {};
+    if (!(await getConfig("ddTestFix"))) {
+      const fix = S.comics.filter(c => /^de\/DD\s+0\d$/.test(c.inducks || "") && !/^T/.test(c.issueLabel || "")).map(c => Object.assign({}, c, { inducks: "" }));
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("ddTestFix", true);
+    }
     S.valueRules = await getConfig("valueRules") || [];
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
@@ -655,6 +663,7 @@ async function catalogueLookup(series, issue) {
 
 // ---------- INDUCKS matching ----------
 function labelParts(lab) {
+  const tl = /^T(\d{1,3})$/.exec(lab || ""); if (tl) return { year: null, n: +tl[1], sort: +tl[1] / 100 - 1 };
   let m = /^(\d{4})\/(\d{1,3})$/.exec(lab || "");
   if (m) return { year: +m[1], n: +m[2], sort: +m[1] * 1000 + +m[2] };
   if (/^\d+$/.test(lab || "")) return { year: null, n: +lab, sort: +lab };
@@ -1835,7 +1844,8 @@ VIEWS.gaps = {
       if (variantOf(lab) && covered(lab).every(k => gridLabels.has(k))) return;              // variant, shown in its number's square
       if (gridLabels.has(lab) && !firstOf.has(lab + c.status)) { firstOf.set(lab + c.status, c); return; }
       const sup = /^(\d{4})X(\d{1,3})$/.exec(lab);
-      const why = sup ? "Supplement (extra booklet) from " + sup[1] + ", not a numbered issue."
+      const why = /^T\d+$/.test(lab) ? "Test issue (Testausgabe), outside the numbered run."
+        : sup ? "Supplement (extra booklet) from " + sup[1] + ", not a numbered issue."
         : /\?/.test(lab) ? "Number unknown. Edit it, or match it under Series › INDUCKS."
         : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
         : (() => { const m = /^(\d{4})\/(\d{1,3})$/.exec(lab); return m && cat0 && perY[m[1]] && +m[2] > perY[m[1]]; })() ? "INDUCKS lists only " + lab.slice(0, 4) + "/01–" + lab.slice(0, 4) + "/" + String(perY[lab.slice(0, 4)]).padStart(2, "0") + " for that year. Check the number, or delete this entry."

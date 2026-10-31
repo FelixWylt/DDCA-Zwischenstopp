@@ -176,7 +176,13 @@ for code, t in chosen.items():
         rec = {"ic": ic, "n": i["issuenumber"], "t": i["title"], "d": i["oldestdate"], "pg": i["pages"], "s": st}
         if i.get("price"): rec["pr"] = i["price"].strip()
         if ic in covers: rec["cv"] = covers[ic][1]   # cover price, helps tell years apart when scanning a barcode
-        if lab in out and out[lab]["ic"] != ic: lab = f"{lab} ({i['issuenumber']})"
+        if lab in out and out[lab]["ic"] != ic:
+            # two issues with the same number: de/DD has test issues "01"-"04" (1974) besides the regular 1-4.
+            # The one written with a leading zero is the test issue and gets "T4"; the regular one keeps "4".
+            other = out[lab]
+            if re.fullmatch(r"0\d+", (i["issuenumber"] or "").strip()): lab = "T" + lab
+            elif re.fullmatch(r"0\d+", (other["n"] or "").strip()): out["T" + lab] = other
+            else: lab = f"{lab} ({i['issuenumber']})"
         out[lab] = rec
     fname = "inducks-" + re.sub(r"[^A-Za-z0-9]+", "-", code).strip("-") + ".json"
     json.dump({"code": code, "title": pubs[code]["title"], "issues": out}, open(os.path.join(out_dir, fname), "w", encoding="utf-8"),
