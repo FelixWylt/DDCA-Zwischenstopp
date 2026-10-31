@@ -120,9 +120,26 @@ function valueOf(c) {
 // searches for finished sales of this comic or book on the marketplaces
 function soldLinks(c) {
   const se = seriesById(c.seriesId);
-  const q = c.kind === "book" ? [c.title, splitPeople(c.author)[0]].filter(Boolean).join(" ") : [(se ? se.name : c.seriesName) || "", showLabel(c.issueLabel || c.issue || "")].join(" ").trim();
-  const e = encodeURIComponent(q), sw = se && seriesLang(se) === "Swedish";
-  const L = [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${e}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${e}`], ["Ricardo", `https://www.ricardo.ch/de/s/${e}`], ["Catawiki", `https://www.catawiki.com/de/s?q=${e}`]];
+  let name, num = "", minus = [];
+  if (c.kind === "book") name = c.title || "", num = splitPeople(c.author)[0] || "";
+  else {
+    name = ((se ? se.name : c.seriesName) || "").replace(/\s*\([^)]*\)\s*$/, "");
+    const lab = String(c.issueLabel || c.issue || ""), m = /^(\d{4})[\/-](\d{1,3})(?:-(\d{1,3}))?/.exec(lab);
+    num = m ? [+m[2], m[3] ? +m[3] : "", m[1]].filter(Boolean).join(" ") : lab.replace(/^0+/, "");   // "1952/05" -> "5 1952", how sellers write it
+    // other series of yours that start the same way ("Micky Maus Magazin" for "Micky Maus Zeitung"): leave out their extra words
+    const words = norm(name).split(" "), mine = new Set(words);
+    S.series.forEach(o => {
+      if (!se || o.id === se.id) return;
+      const raw = String(o.name).replace(/\s*\([^)]*\)\s*$/, "").split(/\s+/), ow = raw.map(w => norm(w));
+      if (ow.length > 1 && ow[0] === words[0] && ow[1] === words[1]) raw.forEach((w, i) => { const lw = w.toLowerCase(); if (!mine.has(ow[i]) && ow[i].length > 2 && !minus.includes(lw)) minus.push(lw); });
+    });
+  }
+  const plain = encodeURIComponent([name, num].join(" ").trim());
+  // the INDUCKS title is how sellers usually write it ("Micky Maus" for the Magazin)
+  const ce = se && catEntry(se), phrase = (ce && ce.title && ce.title.length <= name.length ? ce.title : name).replace(/\s*\([^)]*\)\s*$/, "");
+  const ebay = encodeURIComponent([`"${phrase}"`, num].concat(minus.slice(0, 5).map(w => "-" + w)).join(" ").trim());   // eBay: exact phrase, minus words
+  const sw = se && seriesLang(se) === "Swedish";
+  const L = [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${ebay}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${plain}`], ["Ricardo", `https://www.ricardo.ch/de/s/${plain}`], ["Catawiki", `https://www.catawiki.com/de/s?q=${plain}`]];
   if (sw) L.unshift(L.splice(1, 1)[0]);
   return L.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ");
 }
