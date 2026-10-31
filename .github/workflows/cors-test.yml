@@ -7,18 +7,31 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Check CORS headers of book databases
+      - name: Duckipedia page names
         run: |
-          exec > cors-result.txt 2>&1
-          O="Origin: https://felixwylt.github.io"
-          curl -s "https://libris.kb.se/xsearch?query=pippi%20l%C3%A5ngstrump%20lindgren&format=json&n=3" ; echo
-          I=$(curl -s "https://libris.kb.se/xsearch?query=pippi%20l%C3%A5ngstrump%20lindgren&format=json&n=10" | grep -oE '"isbn":"[0-9X]{10,13}' | head -1 | cut -d'"' -f4); echo "ISBN=$I"
-          curl -s "https://libris.kb.se/xsearch?query=isbn:$I&format=json" ; echo
-          curl -s "https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&query=isbn%3D9783423214124&recordSchema=MARC21-xml"; echo
-          curl -s "https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&query=tit%3Dtintenherz%20and%20per%3Dfunke&recordSchema=MARC21-xml&maximumRecords=2" | head -c 3000; echo
-      - name: Save result
+          A="https://de.duckipedia.org/api.php?action=query&list=allpages&aplimit=500&format=json&apprefix="
+          enc() { python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1"; }
+          for p in "MM " "Micky Maus" "Mega" "MMP" "MMM" "LTB P" "LTB C" "LTB E" "LTB Y" "LTB U" "LTB S" "LTB R" "LTB W" "LTB X" "LTB H" "LTB A" "LTB O" "LTB 546" "LTB 548" "LTB 455" "Lustiges Taschenbuch" "Mammut" "Donald Duck" "DD " "Panzerknacker" "MMZ" "Micky-Maus"; do
+            echo "=== $p"
+            curl -s -A "DagobertDucksArchiv-check" "$A$(enc "$p")" | python3 -c "import json,sys; d=json.load(sys.stdin); t=[x['title'] for x in d['query']['allpages']]; print(len(t)); print(' | '.join(t[:70])); print(' ... '+' | '.join(t[-20:]) if len(t)>70 else '')"
+          done > duck.txt 2>&1
+          S="https://de.duckipedia.org/api.php?action=query&list=search&srlimit=10&format=json&srsearch="
+          for q in "Micky Maus 2019 Heft 21" "Micky Maus 1966 13" "Mega Micky Maus 2018" "Micky Maus präsentiert 35" "LTB Premium 7"; do
+            echo "=== search $q"; curl -s -A "DagobertDucksArchiv-check" "$S$(enc "$q")" | python3 -c "import json,sys; d=json.load(sys.stdin); print([x['title'] for x in d['query']['search']])"
+          done >> duck.txt 2>&1
+      - name: INDUCKS search for Musiksaga
         run: |
-          git config user.name "cors-test"; git config user.email "cors-test@users.noreply.github.com"
-          git add cors-result.txt; git commit -m "CORS result [skip ci]"; git push
+          mkdir -p isv && curl -s -L -A "DagobertDucksArchiv-check" -o isv.tgz https://inducks.org/inducks/isv.tgz && tar -xzf isv.tgz -C isv --strip-components=1
+          { echo "=== publications"; grep -i -E "musiksag|musik-sag|musiksagor|sagoskiv|select video" isv/inducks_publication.isv | head -20
+            echo "=== issues"; grep -i -E "musiksag|julsaga|select video" isv/inducks_issue.isv | head -40
+            echo "=== entries"; grep -i "Musse Piggs julsaga" isv/inducks_entry.isv | head -20
+            echo "=== publishers"; grep -i "select" isv/inducks_publisher.isv | head
+            head -1 isv/inducks_issue.isv; head -1 isv/inducks_entry.isv; } > musik.txt 2>&1
+          for c in $(grep -i "Musse Piggs julsaga" isv/inducks_entry.isv | head -8 | cut -d^ -f2 | sort -u); do echo "--- issue $c"; grep -F "$c^" isv/inducks_issue.isv | head -3; done >> musik.txt 2>&1
+      - name: Save
+        run: |
+          git config user.name "check"; git config user.email "check@users.noreply.github.com"
+          git add duck.txt musik.txt; git commit -m "results [skip ci]"; git push
