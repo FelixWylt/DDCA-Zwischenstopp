@@ -40,9 +40,9 @@ const IT_ALL = "Italia", NO_ALL = "Norge", CH_ALL = "Schweiz", AT_ALL = "Österr
 // series that the rules below would place differently
 const ARRANGE_IDS = {
   "donald-duck-taschenbuch": DE_TB, "micky-maus-taschenbuch": DE_TB, "mammut-comics": DE_ALB, "x-micky-maus-prasentiert": DE_ALB,
-  "x-micky-maus-comics": DE_MAG, "x-panzerknacker-co": DE_MAG, "x-die-tollsten-geschichten-von-donald-duck-sonderheft": DE_MAG,
+  "x-micky-maus-comics": DE_MAG, "x-panzerknacker-co": DE_TB, "x-die-tollsten-geschichten-von-donald-duck-sonderheft": DE_MAG,
   "x-musiksaga": SE_ALB, "farbror-joakims-liv": SE_ALB, "x-walt-disney-s-godbitar": SE_ALB, "x-walt-disney-s-klassiker": SE_ALB,
-  "x-walt-disney-s-serier": SE_MAG, "x-donald-duck-co": NO_ALL, "donald-duck-co-germany": DE_MAG
+  "x-walt-disney-s-serier": SE_MAG, "x-donald-duck-co": NO_ALL, "donald-duck-co-germany": DE_TB
 };
 const LANG_OF = { de: "German", ger: "German", deu: "German", se: "Swedish", swe: "Swedish", sv: "Swedish", it: "Italian", ita: "Italian", no: "Norwegian", nor: "Norwegian", en: "English", eng: "English", us: "English", gb: "English", fr: "French", fra: "French" };
 function seriesLang(se) {
@@ -65,8 +65,8 @@ function arrangeSeries(se) {
   const cc = String(se.country || (se.code || "").split("/")[0] || "").toLowerCase();
   if (cc === "ch") return { publisher: DISNEY, group: CH_ALL };   // Swiss (Bollmann's Micky Maus Zeitung) and Austrian editions aren't German ones
   if (cc === "at") return { publisher: DISNEY, group: AT_ALL };
-  if (lang === "German") return { publisher: DISNEY, group: /^(lustiges taschenbuch|ltb)\b|\bltb\b/.test(n) ? DE_LTB : /taschenb/.test(n) || se.code === "de/DD" ? DE_TB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
-  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" ? SE_POC : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
+  if (lang === "German") return { publisher: DISNEY, group: /^(lustiges taschenbuch|ltb)\b|\bltb\b/.test(n) ? DE_LTB : /taschenb|^panzerknacker|^donald duck (co|und co)\b/.test(n) || ["de/DD", "de/PK", "de/DDCO"].includes(se.code) ? DE_TB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
+  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" || /^bjornligan\b/.test(n) ? SE_POC : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
   if (lang === "Italian") return { publisher: DISNEY, group: IT_ALL };
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
