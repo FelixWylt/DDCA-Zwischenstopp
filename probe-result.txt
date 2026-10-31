@@ -1,11 +1,29 @@
-=== FDLL publication
-=== FDLL issues
-0
-=== trilioni issues
-it/ABB1977^^it/ABB^1977^I trilioni di Paperone^^^^^^1977-10^Y^^N^1977-10-31^N^N^1545^Team_it^
-it/NLI   3^^it/NLI^3^I Trilioni di Paperone^^160^15000 Lit.^^^1984-04^Y^^N^1984-04-31^N^N^1784^Team_it^
-=== trilioni publications
-=== trilioni entries (first 10)
-=== Gatti covers 1977 it
-it/ABB1977^^it/ABB^1977^I trilioni di Paperone^^^^^^1977-10^Y^^N^1977-10-31^N^N^1545^Team_it^
-it/PRPAV 3^^it/PRPAV^3^Zio Paperone 'topo' di cucina^^12^^^^1977-06^Y^^N^1977-06-31^N^N^1835^Team_it^
+=== search
+{"searchinfo":{"search":"The Kane Chronicles"},"search":[{"id":"Q2516759","title":"Q2516759","pageid":2429153,"concepturi":"http://www.wikidata.org/entity/Q2516759","repository":"wikidata","url":"//www.wikidata.org/wiki/Q2516759","display":{"label":{"value":"The Kane Chronicles","language":"en"},"description":{"value":"fictional modern-mythological book series","language":"en"}},"label":"The Kane Chronicles","description":"fictional modern-mythological book series","match":{"type":"label","language":"en","text":"The Kane Chronicles"}},{"id":"Q2636237","title":"Q2636237","pageid":2541651,"concepturi":"http://www.wikidata.org/entity/Q2636237","repository":"wikidata","url":"//www.wikidata.org/wiki/Q2636237","display":{"label":{"value":"The Red Pyramid","language":"en"},"description":{"value":"novel by Rick Riordan","language":"en"}},"label":"The Red Pyramid","description":"novel by Rick Riordan","match":{"type":"alias","language":"en","text":"the Kane Chronicles book 1"},"aliases":["the Kane Chronicles book 1"]},{"id":"Q7763362","title":"Q7763362","pageid":7692764,"concepturi":"http://www.wikidata.org/entity/Q7763362","repository":"wikidata","url":"//www.wikidata.org/wiki/Q7763362","display":{"label":{"value":"The Serpent's Shadow","language":"en"},"description":{"value":"novel by Rick Riordan","language":"en"}},"label":"The Serpent's Shadow","description":"novel by Rick Riordan","match":{"type":"alias","language":"en","text":"the Kane Chronicles book 3"},"aliases":["the Kane Chronicles book 3"]},{"id":"Q9632280","title":"Q9632280","pageid":9807639,"concepturi":"http://www.wikidata.org/entity/Q9632280","repository":"wikidata","url":"//www.wikidata.org/wiki/Q9632280","display":{"label":{"value":"The Kane Crhonicles: Survival Guide","language":"en"},"description":{"value":"book by Rick Riordan","language":"en"}},"label":"The Kane Crhonicles: Survival Guide","description":"book by Rick Riordan","match":{"type":"alias","language":"pt","text":"The Kane Chronicles: Survival Guide"},"aliases":["The Kane Chronicles: Survival Guide"]}],"success":1}
+access-control-allow-origin: *
+access-control-allow-credentials: false
+access-control-expose-headers: MediaWiki-API-Error, Retry-After, X-Database-Lag, MediaWiki-Login-Suppressed
+{"searchinfo":{"search":"Kane Chronicles"},"search":[],"success":1}
+=== entity Q2516759
+P31 [{'entity-type': 'item', 'numeric-id': 1667921, 'id': 'Q1667921'}, {'entity-type': 'item', 'numeric-id': 47068459, 'id': 'Q47068459'}]
+P50 [{'entity-type': 'item', 'numeric-id': 212727, 'id': 'Q212727'}]
+P123 [{'entity-type': 'item', 'numeric-id': 55233, 'id': 'Q55233'}]
+P136 [{'entity-type': 'item', 'numeric-id': 132311, 'id': 'Q132311'}, {'entity-type': 'item', 'numeric-id': 21802675, 'id': 'Q21802675'}, {'entity-type': 'item', 'numeric-id': 1233720, 'id': 'Q1233720'}]
+P577 [{'time': '+2010-00-00T00:00:00Z', 'timezone': 0, 'before': 0, 'after': 0, 'precision': 9, 'calendarmodel': 'http://www.wikidata.org/entity/Q1985727'}]
+P580 []
+P582 []
+P1113 []
+P2635 []
+P179 []
+P527 [{'entity-type': 'item', 'numeric-id': 2636237, 'id': 'Q2636237'}, {'entity-type': 'item', 'numeric-id': 282284, 'id': 'Q282284'}, {'entity-type': 'item', 'numeric-id': 7763362, 'id': 'Q7763362'}]
+{'dewiki': 'Die Kane-Chroniken', 'enwiki': 'The Kane Chronicles'}
+=== summary
+{"type":"standard","title":"The Kane Chronicles","displaytitle":"<i>The Kane Chronicles</i>","namespace":{"id":0,"text":""},"wikibase_item":"Q2516759","titles":{"canonical":"The_Kane_Chronicles","normalized":"The Kane Chronicles","display":"<i>The Kane Chronicles</i>"},"pageid":26271979,"thumbnail":{"source":"https://upload.wikimedia.org/wikipedia/en/0/0f/The_Kane_Chronicles_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled","width":279,"height":201},"originalimage":{"source":"https://upload.wikimedia.org/wikipedia/en/0/0f/The_Kane_Chronicles_logo.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled","width":279,"height":201},"lan
+access-control-allow-origin: *
+access-control-allow-methods: GET,HEAD
+access-control-allow-headers: accept, content-type, content-length, cache-control, accept-language, api-user-agent, if-match, if-modified-since, if-none-match, dnt, accept-encoding
+access-control-expose-headers: etag
+=== search sv
+{"searchinfo":{"search":"Bamse"},"search":[{"id":"Q252480","title":"Q252480","pageid":245063,"concepturi":"http://www.wikidata.org/entity/Q252480","repository":"wikidata","url":"//www.wikidata.org/wiki/Q252480","display":{"label":{"value":"Bamse","language":"en"},"description":{"value":"comic book","language":"en"}},"label":"Bamse","description":"comic book","match":{"type":"label","language":"sv","text":"Bamse"}},{"id":"Q1849777","title":"Q1849777","pageid":1780326,"concepturi":"http://www.wikidata.org/entity/Q1849777","repository":"wikidata","url":"//www.wikidata.org/wiki/Q1849777","display"
+=== search Harry Potter
+{"searchinfo":{"search":"Harry Potter"},"search":[{"id":"Q3244512","title":"Q3244512","pageid":3096692,"concepturi":"http://www.wikidata.org/entity/Q3244512","repository":"wikidata","url":"//www.wikidata.org/wiki/Q3244512","display":{"label":{"value":"Harry Potter","language":"en"},"description":{"value":"main character of the book, film and video game series of the same name","language":"en"}},"label":"Harry Potter","description":"main character of the book, film and video game series of the same name","match":{"type":"label","language":"de","text":"Harry Potter"}},{"id":"Q8337","title":"Q8337","pageid":9634,"concepturi":"http://www.wikidata.org/entity/Q8337","repository":"wikidata","url":"//www.wikidata.org/wiki/Q8337","display":{"label":{"value":"Harry Potter","language":"mul"},"description":{"value":"1997\u20132007 fantasy book series by J. K. Rowling","language":"en"}},"label":"Harr
