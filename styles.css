@@ -423,3 +423,12 @@ body.noscroll { overflow: hidden; }
 .cvclose { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; background: rgb(255 255 255 / 0.9); color: #111; border-radius: 99px; width: 40px; height: 40px; padding: 0; font-size: 1.1rem; }
 
 .item .num.xlong { font-size: 0.74rem; letter-spacing: -0.02em; }
+
+/* value table in Series, value line in the form */
+.valrules { display: grid; gap: 6px; padding: 8px 0; border-top: 1px dashed var(--line); }
+.vrow { display: grid; grid-template-columns: 1fr 1fr 1.2fr 78px auto; gap: 6px; align-items: center; }
+.vrow .vnote { grid-column: 1 / -1; font-size: 0.85rem; }
+.vrow input, .vrow select { min-width: 0; }
+.valueline { line-height: 1.6; }
+.gfactors { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; margin-top: 6px; }
+.gfactors input { width: 100%; }

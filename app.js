@@ -92,6 +92,76 @@ const $ = (s, r = document) => r.querySelector(s);
 const esc = v => String(v == null ? "" : v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const norm = s => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+// ---- collection value: price ranges per series (for condition Z1), adjusted by condition; checked sold prices win ----
+const GRADE_FACTOR_DEFAULT = { "0": 1.5, "0-1": 1.25, "1": 1, "1-2": 0.8, "2": 0.6, "2-3": 0.45, "3": 0.3, "3-4": 0.2, "4": 0.1, "4-5": 0.07, "5": 0.05, "": 0.6 };
+const FACSIMILE_FACTOR = 0.3;
+const gradeFactor = g => { const f = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {}); return f[g || ""] != null ? +f[g || ""] : 0.6; };
+const valueKeyOf = c => c.kind === "book" ? (c.seriesName ? "book:" + c.seriesName : "") : c.seriesId || "";
+function valueNumber(c) {   // the number a price range is compared with: issue number, year for yearly series, volume for books
+  if (c.kind === "book") return parseInt(c.issue, 10) || null;
+  const se = seriesById(c.seriesId), lab = String(c.issueLabel || c.issue || "");
+  if (se && se.numbering === "year") return c.issueYear || +((/^(\d{4})/.exec(lab) || [])[1]) || null;
+  return c.issueNum || parseInt(lab, 10) || null;
+}
+function valueRuleFor(c) {
+  const k = valueKeyOf(c); if (!k) return null;
+  const n = valueNumber(c), rules = (S.valueRules || []).filter(r => r.s === k && typeof r.price === "number");
+  const fits = rules.filter(r => { const a = parseInt(r.from, 10), b = parseInt(r.to, 10); if (isNaN(a) && isNaN(b)) return true; if (n == null) return false; return (isNaN(a) || n >= a) && (isNaN(b) || n <= b); });
+  const width = r => { const a = parseInt(r.from, 10), b = parseInt(r.to, 10); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
+  return fits.sort((x, y) => width(x) - width(y))[0] || null;   // the narrowest range wins
+}
+function valueOf(c) {
+  if (typeof c.valueChecked === "number") return { amount: c.valueChecked, cur: c.valueCur || c.currency || "CHF", how: "checked" };
+  const r = valueRuleFor(c);
+  if (r) return { amount: Math.round(r.price * gradeFactor(c.grade) * (c.facsimile ? FACSIMILE_FACTOR : 1) * 100) / 100, cur: r.cur || "CHF", how: "table", rule: r };
+  if (typeof c.value === "number") return { amount: c.value, cur: c.currency || "CHF", how: "estimate" };
+  return null;
+}
+// searches for finished sales of this comic or book on the marketplaces
+function soldLinks(c) {
+  const se = seriesById(c.seriesId);
+  const q = c.kind === "book" ? [c.title, splitPeople(c.author)[0]].filter(Boolean).join(" ") : [(se ? se.name : c.seriesName) || "", showLabel(c.issueLabel || c.issue || "")].join(" ").trim();
+  const e = encodeURIComponent(q), sw = se && seriesLang(se) === "Swedish";
+  const L = [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${e}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${e}`], ["Ricardo", `https://www.ricardo.ch/de/s/${e}`], ["Catawiki", `https://www.catawiki.com/de/s?q=${e}`]];
+  if (sw) L.unshift(L.splice(1, 1)[0]);
+  return L.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ");
+}
+// the price ranges of one series, edited in the Series tab (saved as you type)
+function valueRulesHtml(key) {
+  if (!key) return "";
+  const rows = (S.valueRules || []).filter(r => r.s === key);
+  const cur = r => CURRENCIES.map(x => `<option${(r.cur || "CHF") === x ? " selected" : ""}>${x}</option>`).join("");
+  return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
+    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" inputmode="numeric" placeholder="from" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" inputmode="numeric" placeholder="to" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : seriesById(key) && seriesById(key).numbering === "year" ? "From/to are years." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div></div>`;
+}
+function bindValueRules(root) {
+  const save = () => setConfig("valueRules", S.valueRules || []).catch(() => {});
+  (root || document).querySelectorAll(".vrow").forEach(row => row.querySelectorAll("[data-vf]").forEach(inp => inp.onchange = () => {
+    const r = (S.valueRules || []).find(x => x.id === row.dataset.vid); if (!r) return;
+    const k = inp.dataset.vf; r[k] = k === "price" ? parseAmt(inp.value) : inp.value.trim(); save();
+  }));
+  (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
+  (root || document).querySelectorAll("[data-vdel]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).filter(r => r.id !== b.dataset.vdel); save(); renderKeep(); });
+}
+// Stats card: value per currency, how sure it is, the comics most worth checking
+function valueCard(own) {
+  const per = {}, list = []; let none = 0;
+  own.forEach(c => { const v = valueOf(c); if (!v) { none++; return; } const n = c.copies || 1, x = per[v.cur] = per[v.cur] || { checked: 0, table: 0, estimate: 0 }; x[v.how] += v.amount * n; list.push({ c, v, total: v.amount * n }); });
+  const curs = Object.keys(per).sort();
+  const fx = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {});
+  const factors = `<details class="small"><summary>Condition factors</summary><div class="gfactors">${GRADES.map(([g, l]) => `<label><span class="l">${esc(l.split(" ")[0])}</span><input data-gf2="${g}" inputmode="decimal" value="${fx[g]}"></label>`).join("")}<label><span class="l">Not graded</span><input data-gf2="" inputmode="decimal" value="${fx[""]}"></label></div>
+    <p class="muted" style="margin:4px 0 0">The price ranges are for Z1; other conditions are multiplied by these. Facsimiles count ${FACSIMILE_FACTOR * 100}%.</p></details>`;
+  if (!curs.length) return `<div class="card stack"><h3>Collection value</h3><p class="small muted" style="margin:0">No values yet. Add price ranges to your series in the Series tab (open a series › Value per issue), using sold prices from eBay, Tradera or Ricardo. Each comic also has links to its sold listings.</p>${factors}</div>`;
+  const top = list.sort((a, b) => b.total - a.total).slice(0, 20);
+  const how = { checked: "checked", table: "table", estimate: "own estimate" };
+  return `<div class="card stack"><div class="cardhead"><h3>Collection value</h3><span class="muted small">per currency, not converted</span></div>
+    <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Likely</th><th>Range</th><th>Checked</th><th>Table</th><th>Own est.</th></tr></thead><tbody>${curs.map(k => { const x = per[k], t = x.checked + x.table + x.estimate, lo = x.checked * 0.9 + (x.table + x.estimate) * 0.6, hi = x.checked * 1.1 + (x.table + x.estimate) * 1.4;
+      return `<tr><td>${k}</td><td><strong>${fmt2(t)}</strong></td><td>${fmt2(lo)}–${fmt2(hi)}</td><td>${fmt2(x.checked)}</td><td>${fmt2(x.table)}</td><td>${fmt2(x.estimate)}</td></tr>`; }).join("")}</tbody></table></div>
+    <p class="small muted" style="margin:0">${list.length} of ${own.length.toLocaleString("de-CH")} have a value${none ? ", " + none + " none yet" : ""}. The range allows ±10% for checked prices and −40%/+40% for table values and own estimates. Dealers usually pay well below these values.</p>
+    <div class="small"><strong>Most valuable: check these first</strong><ol style="margin:4px 0 0;padding-left:20px">${top.map(({ c, v, total }) => `<li><button class="link" data-open="${esc(c.id)}">${esc(c.kind === "book" ? c.title : comicTag(c))}</button> <span class="muted">${money(total, v.cur)} · ${how[v.how]}</span></li>`).join("")}</ol></div>
+    ${factors}</div>`;
+}
 // ---- favourites and half-star ratings (0.5–5) ----
 function starsHtml(v, attr) {
   v = +v || 0; let h = "";
@@ -270,6 +340,8 @@ async function boot() {
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
     S.bookMeta = await getConfig("bookSeriesInfo") || {};
+    S.valueRules = await getConfig("valueRules") || [];
+    S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     if (!(await getConfig("genresEnglish2")) && window.Books && Books.oneGenre) {
@@ -1254,7 +1326,10 @@ ${isBook ? `
           <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
           ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
-          <label><span class="l">Estimated value</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
+          <label><span class="l">Checked value <span class="muted">(sold price)</span></span><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"></label>
+          <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
+          <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
+            <br>Sold prices: ${soldLinks(d)}</div>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
@@ -1311,7 +1386,7 @@ ${isBook ? `
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
@@ -1401,7 +1476,7 @@ ${isBook ? `
         seriesId: target.id, seriesName: target.name, issueLabel: p.label, issueSort: p.sort,
         issueYear: p.year || null, issueNum: p.n, copies: Math.max(1, parseInt(d.copies, 10) || 1),
         pricePaid: parseAmt(d.pricePaid),
-        value: parseAmt(d.value),
+        value: parseAmt(d.value), valueChecked: parseAmt(d.valueChecked),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
       let moved = false, alsoGone = [];
@@ -1486,7 +1561,7 @@ ${isBook ? `
       const c = Object.assign({}, d, {
         kind: "book", seriesId: "_book", seriesName: d.seriesName.trim(), title: d.title.trim(), issue: vol, issueLabel: vol,
         issueSort: vm ? +vm[0] : 1e9, issueYear: null, issueNum: vm ? +vm[0] : null, copies: Math.max(1, parseInt(d.copies, 10) || 1),
-        isbn: d.isbn.trim(), pricePaid: parseAmt(d.pricePaid), value: parseAmt(d.value),
+        isbn: d.isbn.trim(), pricePaid: parseAmt(d.pricePaid), value: parseAmt(d.value), valueChecked: parseAmt(d.valueChecked),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
@@ -1888,10 +1963,10 @@ VIEWS.stats = {
       <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></span>`).join("")}</div>
       <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade.</p></div>` : "";
     const sums = {}, vals = {}; let priced = 0, valued = 0;
-    own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") { priced++; sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); } if (typeof c.value === "number") { valued++; vals[cur] = (vals[cur] || 0) + c.value * (c.copies || 1); } });
+    own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") { priced++; sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); } const v = valueOf(c); if (v) { valued++; vals[v.cur] = (vals[v.cur] || 0) + v.amount * (c.copies || 1); } });
     const moneyRows = Object.keys(Object.assign({}, sums, vals)).sort();
     const money = moneyRows.length ? `<div class="card stack"><div class="cardhead"><h3>Money</h3><span class="muted small">per currency, not converted</span></div>
-      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Est. value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}</tbody></table></div>
+      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}</tbody></table></div>
       <p class="small muted" style="margin:0">Price paid is filled in for ${priced} of ${nf(own.length)} comics, value for ${valued}.</p></div>` : "";
 
     return `
@@ -1911,6 +1986,7 @@ VIEWS.stats = {
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${readingCard(own, "comics")}
       ${ratedCard(own, "comics")}
+      ${valueCard(own.concat(novels))}
       ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
       <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>
       ${novels.length || novelsWanted.length ? bookStats(novels, novelsWanted) : ""}`;
@@ -1919,6 +1995,7 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
+    document.querySelectorAll("[data-gf2]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); S.gradeFactors = Object.assign({}, S.gradeFactors); if (isNaN(v)) delete S.gradeFactors[inp.dataset.gf2]; else S.gradeFactors[inp.dataset.gf2] = v; await setConfig("gradeFactors", S.gradeFactors); renderKeep(); });
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
@@ -2308,7 +2385,7 @@ function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
-  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta });
+  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors });
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
@@ -2328,7 +2405,7 @@ function saveToDevice(file) {
 // backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
 const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
 async function backupText() {
-  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta });
+  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors });
   let bytes = new TextEncoder().encode(json), gz = false;
   if (typeof CompressionStream !== "undefined") {
     bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
@@ -2451,6 +2528,8 @@ VIEWS.backup = {
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
+            if (Array.isArray(b.valueRules)) { const ids = new Set((S.valueRules || []).map(r => r.id)); S.valueRules = (S.valueRules || []).concat(b.valueRules.filter(r => r && !ids.has(r.id))); await setConfig("valueRules", S.valueRules); }
+            if (b.gradeFactors && typeof b.gradeFactors === "object") { S.gradeFactors = Object.assign({}, b.gradeFactors, S.gradeFactors); await setConfig("gradeFactors", S.gradeFactors); }
             if (b.bookSizes && typeof b.bookSizes === "object") { S.bookSizes = Object.assign({}, S.bookSizes, b.bookSizes); await setConfig("bookSizes", S.bookSizes); }
             if (b.bookSeriesInfo && typeof b.bookSeriesInfo === "object") { S.bookMeta = Object.assign({}, S.bookMeta, b.bookSeriesInfo); await setConfig("bookSeriesInfo", S.bookMeta); }
             if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
@@ -2690,6 +2769,7 @@ function bookSeriesGroup() {
         ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}
         <label class="wide"><span class="l">About this series</span><textarea data-bk="about" rows="3">${esc(m.about || "")}</textarea></label>
         ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}
+        ${valueRulesHtml("book:" + n)}
         <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div>
         <div class="wide row"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button></div>
       </div></details>`;
@@ -2778,6 +2858,7 @@ async function saveBookSeries() {
       if (sizes[old] && !sizes[to]) sizes[to] = sizes[old]; delete sizes[old];
       if (S.gapSeries === "book:" + old) S.gapSeries = "book:" + to;
       if (meta[old]) { meta[to] = meta[to] || meta[old]; delete meta[old]; }
+      (S.valueRules || []).forEach(r => { if (r.s === "book:" + old) r.s = "book:" + to; }); setConfig("valueRules", S.valueRules || []).catch(() => {});
       changed = true;
     }
     if ((sizes[to] || "") !== size) { if (size) sizes[to] = size; else delete sizes[to]; changed = true; }
@@ -2809,6 +2890,7 @@ VIEWS.series = {
         : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
       <label><span class="l">Publisher</span><input data-k="pubHouse" value="${esc(s.pubHouse || "")}" placeholder="Egmont Ehapa"></label>
       <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label>
+      ${valueRulesHtml(s.id)}
       <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="3">${esc(s.about || "")}</textarea></label>
       ${s.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GNU FDL 1.2)</div>` : ""}
       <div class="wide row"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button></div>
@@ -2878,6 +2960,7 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    bindValueRules();
     document.querySelectorAll("[data-bkfill]").forEach(b => b.onclick = async () => {
       grab(); try { await saveBookSeries(); } catch (e) {}   // keep what was typed
       b.disabled = true; b.textContent = "Looking up…";
