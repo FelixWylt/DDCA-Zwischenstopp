@@ -1,19 +1,28 @@
--- https://wsrv.nl/?url=inducks.org/hr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fde%2Fmm%2Fmm1990%2Fde_mm1990_11a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70
-HTTP/2 200 
-content-type: image/webp
-content-length: 23162
-access-control-allow-origin: *
-x-content-type-options: nosniff
-/tmp/x: RIFF (little-endian) data, Web/P image, VP8 encoding, 240x353, Scaling: [none]x[none], YUV color, decoders shoul
--- https://wsrv.nl/?url=https%3A%2F%2Finducks.org%2Fhr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fwebusers%2Fwebusers%2F2018%2F09%2Fse_kap_001a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70
-HTTP/2 200 
-content-type: image/webp
-content-length: 17892
-access-control-allow-origin: *
-x-content-type-options: nosniff
-/tmp/x: RIFF (little-endian) data, Web/P image, VP8 encoding, 240x364, Scaling: [none]x[none], YUV color, decoders shoul
--- https://inducks.org/hr.php?image=https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&normalsize=1
-HTTP/1.1 200 OK
-Content-Length: 31510
-Content-Type: image/jpeg
-/tmp/x: JPEG image data, JFIF standard 1.01, aspect ratio, density 100x100, segment length 16, baseline, precision 8, 26
+=== entries
+se/KAPS2017-05a^se/KAPS2017-05^se/KAPS2017-05a^a^
+se/KAPS2017-05m^se/KAPS2017-05^D 92000^m^Et hårresande uppdrag
+se/KAPS2017-05j^se/KAPS2017-05^D 92268^j^Skurkstreck i safariparken
+se/KAPS2017-05l^se/KAPS2017-05^I TL 1032-A^l^Farbror Joakim och mångdubblingens hemlighet
+se/KAPS2017-05g^se/KAPS2017-05^I TL 1226-B^g^Betarna i djungeln
+se/KAPS2017-05h^se/KAPS2017-05^I TL 1254-C^h^Storslukarna i 'Ngoro 'Ngoro
+se/KAPS2017-05i^se/KAPS2017-05^I TL 1322-A^i^Prima primater
+se/KAPS2017-05t^se/KAPS2017-05^I TL 1494-A^t^Mystiskt försvinnande
+se/KAPS2017-05o^se/KAPS2017-05^I TL 1644-A^o^"Insanus tropicalis"
+se/KAPS2017-05u^se/KAPS2017-05^I TL 2328-02^u^Djungelns lag
+=== urls
+se/KAPS2017-05a^thumbnails^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+se/KAPS2017-05a^thumbnails2^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+se/KAPS2017-05a^webusers^1^2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+=== issueurl
+issuecode^sitecode^url^
+se/KAPS2017-05a^D 27692^i
+=== issues without cover in catalogue series: entryurl sitecodes of their 'a' entries (sample)
+se/KAPS2017-05a^thumbnails^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+se/KAPS2017-05a^thumbnails2^1^webusers/2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+se/KAPS2017-05a^webusers^1^2017/12/se_kaps2017_05a_001.jpg^D 27692^Y^
+-- https://outducks.org/thumbnails/webusers/2017/12/se_kaps2017_05a_001.jpg
+200 image/jpeg 6013
+-- https://outducks.org/thumbnails2/webusers/2017/12/se_kaps2017_05a_001.jpg
+200 image/jpeg 12402
+-- https://outducks.org/webusers/webusers/2017/12/se_kaps2017_05a_001.jpg
+200 image/jpeg 43355
