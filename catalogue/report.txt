@@ -60,10 +60,11 @@ PUBLICATIONS
   ✓ Panzerknacker & Co  →  de/PK  'Panzerknacker & Co'  (by title)
   ✓ Le più belle storie Disney  →  it/PBST  'Le più belle storie Disney'  (by title)
   ✓ Divertiamoci a stare bene  →  it/DSB  'Divertiamoci a stare bene'  (by title)
+  ✓ Omaggio Abbonati  →  it/ABB  'Omaggio Abbonati'  (by code)
 
-issues in chosen publications: 21,281
-entries: 228,295, story versions: 115,409
-cover scans: 20,663 of 21,281 issues
+issues in chosen publications: 21,305
+entries: 229,175, story versions: 116,205
+cover scans: 20,687 of 21,305 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -123,6 +124,7 @@ FILES
   inducks-de-PK.json: 17 issues, 9 KB  e.g. 9 = de/PK  9 1987-01-08 (3 stories)
   inducks-it-PBST.json: 71 issues, 109 KB  e.g. 36 = it/PBST 36 2017-07 (11 stories)
   inducks-it-DSB.json: 8 issues, 9 KB  e.g. 5 = it/DSB   5 2017-03 (7 stories)
+  inducks-it-ABB.json: 24 issues, 72 KB  e.g. 1978 = it/ABB1978 1979 (10 stories)
 directory.json: 2,592 publications (at, ch, de, dk, fi, it, no, se), 181 KB
 
 files in the ISV export: createtables.sql

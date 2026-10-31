@@ -1,5 +1,5 @@
 {
- "built": "2026-10-31T14:13",
+ "built": "2026-10-31T19:08",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -467,6 +467,14 @@
    "title": "Divertiamoci a stare bene",
    "file": "inducks-it-DSB.json",
    "issues": 8
+  },
+  "omaggio abbonati": {
+   "series": "Omaggio Abbonati",
+   "aliases": [],
+   "code": "it/ABB",
+   "title": "Omaggio Abbonati",
+   "file": "inducks-it-ABB.json",
+   "issues": 24
   }
  }
 }
