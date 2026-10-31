@@ -1,126 +1,48 @@
-=== LTB 100 wikitext head
-{{Rezi}}
-{{Infobox LTB 
-| LTBNR = 100
-| LTBTITEL = Ein Fest für Donald
-| NEU = Jubiläumsausgabe
-| EDATUM = 9. November 1984
-| CRED = [[Dorit Kinkel]]
-| UEB = [[Gudrun Penndorf]] M. A.
-| BES = *Cover der Neuauflage in metallischrotem Hintergrund
-*Neuauflage als Jubiläumsausgabe zum 100. LTB
-* '''Preiserhöhung:'''<br>D: 10 Pfennig mehr<br>A: 1 Schilling mehr<br>CH: 10 Rappen mehr
-| NRGESCH =  11
-| PREIS = D: DM 5,90<br>A: öS 47<br>CH: SFR 5.90 
-| BILD = Datei:LTB 100.JPG
-| NEU-BILD = Datei:LTB-AK-300-100.jpg
-}}
-
-== Original ==
-Die LTB-Bände 1 bis 116 sind bis auf wenige Sonderfälle Übernahmen aus der italienischen Reihe ''I Classici di Walt Disney''. Die Vorlage für das LTB 100 ist der Band '''''Megapaperone''' I Classici di Walt Disney, Seconda Serie # 82'' (Okt. 1983).
-
-Im Laufe der Jahre wurden immer häufiger einzelne oder mehrere Geschichten für die deutschsprachige Ausgabe ausgetauscht, teils weil sie bereits in Deutschland veröffentlicht worden waren, teils weil Inhalte für das deutsche Publikum problematisch schienen (Thema [[Zensur]]). Auch andere Gründe mag es gelegentlich gegeben haben. Für das LTB 100 wurden „Das Sicherheitschloß“, die in Deutschland noch immer unveröffentlichte Geschichte „Zio Paperone e l'influsso monetario“ sowie das [[Cover]] ausgetauscht.
-
-Vom I Classici der Seconda Serie # 58 an (Okt. 1981) gab es im italienischen Original keine Rahmengeschichte mehr, was es ermöglichte, die Geschichten im LTB in veränderter Reihenfolge abzudrucken, so auch in 
-=== pageimages
-{"continue":{"imcontinue":"18190|Ind.PNG","continue":"||"},"warnings":{"main":{"warnings":"Unrecognized parameters: piprop, pithumbsize."},"query":{"warnings":"Unrecognized value for parameter \"prop\": pageimages"}},"query":{"pages":[{"pageid":4859,"ns":0,"title":"LTB 100","images":[{"ns":6,"title":"Datei:Ind.PNG"},{"ns":6,"title":"Datei:LTB-AK-300-100.jpg"},{"ns":6,"title":"Datei:LTB 100-1.jpg"},{"ns":6,"title":"Datei:LTB 100-2.jpg"},{"ns":6,"title":"Datei:LTB 100-3.jpg"},{"ns":6,"title":"Datei:LTB 100-4.jpg"},{"ns":6,"title":"Datei:LTB 100-5.jpg"},{"ns":6,"title":"Datei:LTB 100.JPG"},{"ns":6,"title":"Datei:Partitur 4.jpg"}]},{"pageid":18190,"ns":0,"title":"LTB 500","images":[{"ns":6,"title":"Datei:Das große Rennen-4.jpg"}]}]}}
-=== series page Lustiges Taschenbuch
-{"batchcomplete":true,"warnings":{"main":{"warnings":"Unrecognized parameters: exintro, explaintext, exsentences."},"query":{"warnings":"Unrecognized values for parameter \"prop\": extracts, pageimages"}},"query":{"pages":[{"pageid":4601,"ns":0,"title":"Lustiges Taschenbuch"}]}}
-
-=== series page wikitext
-{| border="0" cellpadding="3" cellspacing="1" align="right" style="margin-left:1em; background:#f0f0f0;width:310px;"
-|-
-! colspan="2" | <big>Lustiges Taschenbuch<big>
-|- bgcolor="#ffffff"
-| Produktionsjahre: || seit 1967
-|- bgcolor="#ffffff"
-| Erscheinungsturnus: || 4-wöchentlich
-|- bgcolor="#ffffff"
-| Seitenanzahl pro Band: || 256
-|- bgcolor="#ffffff"
-| Maße: || 188 mm (Höhe) x<br> 125 mm (Breite)
-|- bgcolor="#ffffff"
-| Preis (aktuell): || D: 8,99 €<br>A: 9,50 €<br>CH: SFR 14.90
-|- bgcolor="#ffffff"
-| Verlag: || [[Egmont Ehapa Verlag]], [[Egmont Ehapa Media]] (seit September 2014)
-|- bgcolor="#ffffff"
-| Chefredakteur: || z. Zt. [[Stephanie Bens]]
-|}
-[[Bild:LTB 001.jpg|thumb|link=LTB 1|[[LTB 1]]: ''Der Kolumbusfalter und andere Abenteuer'' (© Egmont Ehapa)]]
-'''Walt Disneys Lustiges Taschenbuch''', kurz '''LTB''' (früher auch '''LT'''), ist eine deutschsprachige [[Comicreihe]], die seit Oktober 1967 bei ''[[Egmont Ehapa Media]]'' (bis 2014: ''Egmont Ehapa Verlag''; vormals ''Ehapa Verlag'') erscheint. Enthalten sind [[The Walt Disney Company|Disney]]-[[Comic]]s im [[Taschenbuch]]-typischen Dreireiher-Format, bei denen es sich bis auf wenige Ausnahmen um deutschsprachige Erstveröffentlichungen handelt. Sie stammen meistens aus dem italienischen ''[[Topolino]]'' oder sind direkt von [[Egmont]] in Dänemark produziert worden.
-
-Das LTB erschien in den ersten Jahren recht unregelmäßig. Zu Beginn kam alle drei Monate ein neuer Band heraus; im Laufe der Zeit steigerte sich die Auflage auf bis zu acht Bände pro Jahr. Ab [[LTB 119|Band 119]] wurde monatlich ein Band herausgegeben und seit 1994 erscheint das LTB im vierwöchigen Rhythmus, so dass in der Regel 13 Ausgaben pro Jahr herausgegeben werden. Vorbild war zu Beginn die italienische Reihe ''[[I Classici di Walt Disney]]''.
-
-{{Liste|Ausgabenliste Lustiges Taschenbuch}}<br>
-{{Liste|Covergalerie Lustiges Taschenbuch}}<br>
-{{Liste|LTB Topliste}} (bis [[LTB 492]])
-
-== Allgemein ==
-:→ ''Siehe auch den Hauptartikel'' [[Qualitative Phasen des Lustigen Taschenbuchs]] ''über die qualitative Entwicklung des LTB aus Sicht der Fans.''
-=== Äußeres Erscheinungsbild im Wandel ===
-==== Cover ====
-Einer der wichtigsten Punkte für den Verkauf eines Bandes ist das [[Cover]]. Dementsprechend entwickelten sich die Covers des LTB mit der Zeit, um immer zu aktuellen Trends bedacht zu sein und die Leserschaft anzusprechen. Die ersten Cover wurden meistens einfach von der italienischen Reihe ''[[I Classici di Walt Disney]]'' übernommen,
-=== INDUCKS
-createtables.sql inducks_appearance.isv inducks_character.isv inducks_characteralias.isv inducks_characterdetail.isv inducks_charactername.isv inducks_characterreference.isv inducks_characterurl.isv inducks_country.isv inducks_countryname.isv inducks_currency.isv inducks_currencyname.isv inducks_entry.isv inducks_entrycharactername.isv inducks_entryjob.isv inducks_entryurl.isv inducks_equiv.isv inducks_herocharacter.isv inducks_inputfile.isv inducks_issue.isv inducks_issuecollecting.isv inducks_issuedate.isv inducks_issuejob.isv inducks_issueprice.isv inducks_issuerange.isv inducks_issueurl.isv inducks_language.isv inducks_languagename.isv inducks_log.isv inducks_logdata.isv inducks_logocharacter.isv inducks_movie.isv inducks_moviecharacter.isv inducks_moviejob.isv inducks_moviereference.isv inducks_person.isv inducks_personalias.isv inducks_personurl.isv inducks_publication.isv inducks_publicationcategory.isv inducks_publicationname.isv inducks_publicationurl.isv inducks_publisher.isv inducks_publishingjob.isv inducks_referencereason.isv inducks_referencereasonname.isv inducks_site.isv inducks_statcharactercharacter.isv inducks_statcharactercountry.isv inducks_statcharacterstory.isv inducks_statpersoncharacter.isv inducks_statpersoncountry.isv inducks_statpersonperson.isv inducks_statpersonstory.isv inducks_story.isv inducks_storycodes.isv inducks_storycreationdate.isv inducks_storydescription.isv inducks_storyheader.isv inducks_storyjob.isv inducks_storyreference.isv inducks_storysubseries.isv inducks_storyurl.isv inducks_storyversion.isv inducks_studio.isv inducks_studiowork.isv inducks_subseries.isv inducks_subseriesname.isv inducks_substory.isv inducks_team.isv inducks_teammember.isv inducks_ucrelation.isv inducks_universe.isv inducks_universename.isv 
---- inducks_publication
-publicationcode^countrycode^languagecode^title^size^publicationcomment^circulation^numbersarefake^error^locked^inxforbidden^inputfilecode^maintenanceteamcode^
-ae/DC^ae^ar^مدينة البط- (Duck City)^^^^N^N^N^N^514^Team_eg^
---- inducks_issue
-issuecode^issuerangecode^publicationcode^issuenumber^title^size^pages^price^printrun^attached^oldestdate^fullyindexed^issuecomment^error^filledoldestdate^locked^inxforbidden^inputfilecode^maintenanceteamcode^
-ae/DC    0^^ae/DC^0^^^^^^^1997^N^^N^1997-12-31^N^N^514^Team_eg^
---- inducks_entry
-entrycode^issuecode^storyversioncode^languagecode^includedinentrycode^position^printedcode^guessedcode^title^reallytitle^printedhero^changes^cut^minorchanges^missingpanels^mirrored^sideways^startdate^enddate^identificationuncertain^alsoreprint^part^entrycomment^error^
-ae/DC    1a^ae/DC    1^ae/DC    1a^ar^^a^^^^Y^^^^^^N^N^^^N^^^^N^
---- inducks_entryurl
-entrycode^sitecode^pagenumber^url^storycode^public^
-ae/DC   10a^thumbnails^1^webusers/2021/12/ae_dc_0010a_001.jpg^^Y^
---- inducks_site
-sitecode^urlbase^images^sitename^sitelogo^properties^
-dbp/akuankka^https://www.akuankka.fi/lehti/^N^Aku Ankka -digipalvelu^https://www.akuankka.fi/img/akuankka_logo.png^dbp/barksbase^
---- inducks_publisher
-publisherid^publishername^
-Al-Futtaim Universal Trade Publications^Al-Futtaim Universal Trade Publications^
---- inducks_publishingjob
-publisherid^issuecode^publishingjobcomment^
-Al-Futtaim Universal Trade Publications^ae/DC    0^^
---- inducks_storyversion
-storyversioncode^storycode^entirepages^brokenpagenumerator^brokenpagedenominator^brokenpageunspecified^kind^rowsperpage^columnsperpage^appisxapp^what^appsummary^plotsummary^writsummary^artsummary^inksummary^creatorrefsummary^keywordsummary^estimatedpanels^
-I DMR   3-1^I DMR   3-1^1^0^1^N^n^4^2^Y^s^,GO,^,TFa,^,TFa,^,SZi,^,SZi,^^^8^
-se/KAP   1a^se^1^kap/se_kap_001a_001.jpg^IC CWD  23^Y^
-se/KAP   1a^thumbnails^1^se/kap/se_kap_001a_001.jpg^IC CWD  23^Y^
-se/KAP   1a^thumbnails^1^webusers/2018/09/se_kap_001a_001.jpg^IC CWD  23^Y^
-de/LTB^de^de^Lustiges Taschenbuch^12,5×19,0 cm^^^N^N^N^Y^890^Team_de^
-thumbnails^https://outducks.org/thumbnails/^Y^Outducks^^^
-thumbnails2^https://outducks.org/thumbnails2/^Y^Outducks^^^
-thumbnails3^https://outducks.org/thumbnails3/^Y^Outducks^^^
-webusers^https://outducks.org/webusers/webusers/^Y^Outducks^^^
-sitecode^urlbase^images^sitename^sitelogo^properties^
-dbp/akuankka^https://www.akuankka.fi/lehti/^N^Aku Ankka -digipalvelu^https://www.akuankka.fi/img/akuankka_logo.png^dbp/barksbase^
-dbp/bradbury^http://jbrad.org/^N^The Comic Art of Jack Bradbury^http://jbrad.org/images/jb1.jpg^^
-dbp/cbguidebook^http://www.seriesam.com/barks/^N^Carl Barks guidebook^http://www.seriesam.com/barks/guide02.gif^^
-dbp/dd50^http://inducks.org/nl/dd50/xindexeng.html^N^DD50^http://inducks.org/nl/dd50/pics/logo.jpg^^
-dbp/delta^http://www.dimensionedelta.net/scarpa/^N^Romano Scarpa, un artista inusitato^http://www.romanoscarpa.net/img/imgTopolino.png^^
-dbp/lambiek^https://www.lambiek.net/artists/^N^Lambiek Comiclopedia^^^
-dbp/librish1^https://libris.kb.se/^N^Libris (National Library of Sweden)^^^
-dbp/librish3^https://libris.kb.se/^N^Libris (National Library of Sweden)^^^
-dbp/pap-creator^http://www.papersera.net/cgi-bin/yabb/YaBB.cgi?num=^N^Papersera forum (in Italian)^^^
-dbp/picsouman^http://picsouman.free.fr/^N^Picsouman (in French)^http://inducks.org/fr/richard/picsouman.jpg^^
-dbp/vintagebooks^http://www.vintagebooks.de/^N^vintagebooks (in German)^^^
-dbp/ndlh1^http://id.ndl.go.jp/bib/^N^国立国会図書館 (National Diet Library)^^^
-dbp/ndlh3^http://id.ndl.go.jp/bib/^N^国立国会図書館 (National Diet Library)^^^
-dbp/zeitlupe^http://www.zeitlupe.co.at/^N^Zeitlupe (in German)^^^
-=== CORS
--- https://de.duckipedia.org/images/thumb/
-HTTP/2 403 
-content-type: text/html; charset=iso-8859-1
--- https://outducks.org/
+=== Duckipedia imageinfo
+{"batchcomplete":true,"query":{"pages":[{"pageid":2133,"ns":6,"title":"Datei:LTB 001.jpg","imagerepository":"local","imageinfo":[{"thumburl":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg","thumbwidth":200,"thumbheight":305,"responsiveUrls":{"1.5":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/300px-LTB_001.jpg","2":"https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/400px-LTB_001.jpg"},"url":"https://de.duckipedia.org/images/5/57/LTB_001.jpg","descriptionurl":"https://de.duckipedia.org/Datei:LTB_001.jpg","descriptionshorturl":"https://de.duckipedia.org/index.php?curid=2133"}]},{"pageid":12416,"ns":6,"title":"Datei:LTB 100.JPG","imagerepository":"local","imageinfo":[{"thumburl":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/200px-LTB_100.JPG","thumbwidth":200,"thumbheight":304,"responsiveUrls":{"1.5":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/299px-LTB_100.JPG","2":"https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/399px-LTB_100.JPG"},"url":"https://de.duckipedia.org/images/3/32/LTB_100.JPG","descriptionurl":"https://de.duckipedia.org/Datei:LTB_100.JPG","descriptionshorturl":"https://de.duckipedia.org/index.php?curid=12416"}]}]}}
+-- https://de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg
 HTTP/2 200 
+content-type: image/jpeg
+content-length: 22084
+x-content-type-options: nosniff
+-- https://de.duckipedia.org/images/thumb/3/32/LTB_100.JPG/200px-LTB_100.JPG
+HTTP/2 200 
+content-type: image/jpeg
+content-length: 19501
+x-content-type-options: nosniff
+=== outducks
+-- https://outducks.org/thumbnails/se/kap/se_kap_001a_001.jpg
+HTTP/2 404 
 content-type: text/html
--- https://inducks.org/hr.php
-HTTP/1.1 200 OK
-Content-Type: text/html; charset=UTF-8
--- https://wsrv.nl/?url=outducks.org/webusers/webusers/2015/03/de_ltb_100a_001.jpg&w=200
+-- https://outducks.org/thumbnails/webusers/2018/09/se_kap_001a_001.jpg
+HTTP/2 404 
+content-type: text/html
+-- https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg
+HTTP/2 404 
+content-type: text/html
+-- https://wsrv.nl/?url=outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&w=200&output=jpg
 HTTP/2 404 
 content-type: application/json
 access-control-allow-origin: *
 x-content-type-options: nosniff
+=== sites
+ 848593 thumbnails2
+ 848593 thumbnails
+ 727834 webusers
+ 201856 thumbnails3
+  32267 renamed
+  25616 us
+   9425 yu
+   9140 nl
+   7550 fi
+   6534 no
+   6458 fr
+   4696 de
+de^https://outducks.org/de/^Y^Outducks^^^
+it^https://outducks.org/it/^Y^Outducks^^^
+no^https://outducks.org/no/^Y^Outducks^^^
+se^https://outducks.org/se/^Y^Outducks^^^
+de/MM1990-11a^de^1^mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
+de/MM1990-11a^thumbnails^1^de/mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
+de/MM1990-11a^thumbnails2^1^de/mm/mm1990/de_mm1990_11a_001.jpg^D  8013^Y^
+de/MM1990-12a^de^1^mm/mm1990/de_mm1990_12a_001.jpg^GC MV1990-19P^Y^
