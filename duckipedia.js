@@ -20,6 +20,7 @@
     "de/LTBPS": ["LTB präsentiert {n}"], "de/LTBSBM": ["LTB Sonderband {n}"], "de/DDCO": ["Donald Duck & Co {n}"],
     "de/DD": ["DD {n}"], "de/PK": ["Panzerknacker & Co {n}"], "de/MMT": ["Micky Maus Taschenbuch {n}", "MMT {n}"]
   };
+  const TEST_PAGES = { "de/DD": "DD {n}/1974" };   // see "Ausgabenliste Donald Duck Taschenbücher"
   // Duckipedia has no pages for single issues of these (checked October 2026), so they aren't asked for
   const NO_ISSUE_PAGES = new Set(["de/MM", "de/MMM", "de/MC", "ch/MMZ"]);
   function candidates(series, comic) {
@@ -29,6 +30,9 @@
     const german = /^(de|at|ch)\//.test(code) || (disney && (/^(DE|GER|DEU)$/.test(String(series.country || "").toUpperCase()) || /german/i.test(comic.lang || "")));
     if (!german || NO_ISSUE_PAGES.has(code)) return [];
     const lab = String(comic.issueLabel || comic.issue || "");
+    // test issues (T1-T4): Duckipedia names them after their year, e.g. "DD 4/1974"
+    const tl = /^T(\d{1,3})$/.exec(lab);
+    if (tl) return TEST_PAGES[code] ? [TEST_PAGES[code].replace("{n}", +tl[1])] : [];
     let m = /^(\d{4})\/(\d{1,3})$/.exec(lab), y = "", n = "";
     const v = /^(\d+)[A-Z]$/.exec(lab);   // variants (LTB 546A) share one page
     if (m) { y = m[1]; n = String(+m[2]); } else if (/^\d+$/.test(lab)) n = String(+lab); else if (v) n = String(+v[1]); else return [];
