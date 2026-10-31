@@ -339,7 +339,7 @@ async function storeCover(c) {
 }
 function coverBar() {
   if (S.colTab === "books" || !S.comics.length) return "";
-  const noUrl = S.comics.filter(c => c.kind !== "book" && !c.coverUrl && !c.coverNone).length, notKept = S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]).length;
+  const noUrl = S.comics.filter(noCoverYet).length, notKept = S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]).length;
   const run = S.cv && S.cv.running;
   if (!run && !notKept && (!noUrl || S.cvAsked)) return "";
   return `<div class="row small" style="align-items:center;margin:8px 0"><button id="getcv" type="button">${run ? "Stop" : "Get cover pictures"}</button>
@@ -367,13 +367,15 @@ function showCover(id) {
 }
 // capture phase, so tapping a thumbnail inside a list row shows the cover instead of opening the comic
 document.addEventListener("click", e => { const z = e.target.closest && e.target.closest("[data-zoom]"); if (!z) return; e.preventDefault(); e.stopPropagation(); showCover(z.dataset.zoom); }, true);
+// still worth looking for a cover: never found one, or the catalogue is newer than the last try
+const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || !!(S.catalogue && S.catalogue.built && S.catalogue.built > c.coverNone));
 const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
 // finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
 async function fetchAllCovers() {
   if (S.cv && S.cv.running) return;
   const run = S.cv = { running: true, stop: false, found: 0, kept: 0, done: 0, total: 0 };
   const draw = () => { const el = $("#cvprog"); if (el) el.textContent = run.running ? `Working… ${run.done} of ${run.total}. ${run.found} covers found, ${run.kept} stored.` : `Done. ${run.found} covers found, ${run.kept} stored on this phone.`; };
-  const need = S.comics.filter(c => !c.coverUrl && !c.coverNone && c.kind !== "book");
+  const need = S.comics.filter(noCoverYet);
   const keep = () => S.comics.filter(c => c.coverUrl && !S.coverHas[c.id + "|" + c.coverUrl]);
   run.total = need.length + keep().length; draw();
   for (const c of need) {
@@ -385,7 +387,7 @@ async function fetchAllCovers() {
       if (!url && se && Duckipedia.candidates(dkSeries(se), c).length) { const d = await Duckipedia.fetchIssue(dkSeries(se), c); if (d && d.issue.cover) url = d.issue.cover; }
     } catch (e) {}
     if (url) { const saved = await saveComic(Object.assign({}, c, { coverUrl: url }), true).catch(() => null); if (saved) run.found++; }
-    else if (!c.coverNone) await saveComic(Object.assign({}, c, { coverNone: todayIso() }), true).catch(() => null);   // not asked again
+    else await saveComic(Object.assign({}, c, { coverNone: new Date().toISOString().slice(0, 16) }), true).catch(() => null);   // not asked again
     run.done++; draw();
   }
   const rest = keep(); run.total = run.done + rest.length; draw();
@@ -2654,7 +2656,7 @@ VIEWS.series = {
       ${duckipediaBulkCard()}
       ${refreshCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
-        ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
+        ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(niceDate(String(S.catalogue.built || "").slice(0, 10)))} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
           <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
           <div class="row"><button class="primary" id="gomatch">Match my comics with INDUCKS</button></div>
           <p class="small muted" style="margin:0">Story data from <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>, used under the Inducks licence. Thanks to its indexers.</p>`

@@ -111,8 +111,11 @@ for r in rows("inducks_storyversion", ["storyversioncode", "storycode", "kind", 
 # cover picture per issue: the first cover entry, then its scan on outducks (shown through inducks.org/hr.php)
 cover_entry = {}
 for ic, es in entries.items():
-    for e in sorted(es, key=lambda e: e["position"] or ""):
-        if (versions.get(e["storyversioncode"]) or {}).get("kind") == "c": cover_entry[e["entrycode"]] = ic; break
+    es = sorted(es, key=lambda e: e["position"] or "")
+    hit = next((e for e in es if (versions.get(e["storyversioncode"]) or {}).get("kind") == "c"), None)
+    # some cover entries aren't marked as covers (e.g. se/KAPS2017-05a): then the entry in position "a"
+    hit = hit or next((e for e in es if (e["position"] or "").lower() == "a" or e["entrycode"].endswith("a")), None)
+    if hit: cover_entry[hit["entrycode"]] = ic
 sites = {r["sitecode"]: r["urlbase"] for r in rows("inducks_site", ["sitecode", "urlbase", "images"]) if r["images"] == "Y"}
 def site_rank(code):
     if code == "webusers": return 0
@@ -154,7 +157,7 @@ def names(pairs, roles):
             if n and n.strip() not in ("?", "") and n not in seen: seen.append(n)
     return ", ".join(seen)
 
-index = {"built": datetime.date.today().isoformat(), "source": "I.N.D.U.C.K.S. (https://inducks.org)",
+index = {"built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M"), "source": "I.N.D.U.C.K.S. (https://inducks.org)",
          "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).", "series": {}}
 for f in glob.glob(os.path.join(out_dir, "inducks-*.json")): os.remove(f)
 log("\nFILES")
@@ -186,7 +189,7 @@ for code, t in chosen.items():
 json.dump(index, open(os.path.join(out_dir, "index.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 # directory of all publications, so the app can say "this series is on INDUCKS as ..." even if it isn't in the catalogue
 dir_out = sorted([[pc, pubs[pc]["title"], n, (y0 if y0 < 9999 else 0), y1, main_publisher(pc), (pubs[pc].get("size") or "").strip()] for pc, (n, y0, y1) in directory.items()], key=lambda x: x[0])
-json.dump({"built": index["built"], "publications": dir_out}, open(os.path.join(out_dir, "directory.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+json.dump({"built": index["built"][:10], "publications": dir_out}, open(os.path.join(out_dir, "directory.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 log(f"directory.json: {len(dir_out):,} publications ({', '.join(sorted(DIR_COUNTRIES))}), {os.path.getsize(os.path.join(out_dir, 'directory.json'))/1024:,.0f} KB")
 for lic in glob.glob(os.path.join(isv_dir, "*icen*")) + glob.glob(os.path.join(isv_dir, "..", "*icen*")):
     shutil.copy(lic, os.path.join(out_dir, "INDUCKS-" + os.path.basename(lic)))
