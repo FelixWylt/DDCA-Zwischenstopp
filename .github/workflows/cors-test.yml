@@ -18,7 +18,7 @@ jobs:
           O="Origin: https://felixwylt.github.io"
           h() { echo "-- $1"; curl -s -I -L -A "$UA" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; }
           g() { echo "-- $1"; curl -s -o /tmp/x -D - -L -A "Mozilla/5.0 (Linux; Android 14) Mobile" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; file /tmp/x | cut -c1-120; }
-          for u in https://outducks.org/se/kap/se_kap_001a_001.jpg https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg https://outducks.org/thumbnails/de/mm/mm1990/de_mm1990_11a_001.jpg https://outducks.org/thumbnails2/de/mm/mm1990/de_mm1990_11a_001.jpg "https://inducks.org/hr.php?image=https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&normalsize=1" "https://wsrv.nl/?url=outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&w=240&output=webp&q=70" "https://wsrv.nl/?url=de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg&w=240&output=webp&q=70"; do g "$u"; done
+          for u in "https://wsrv.nl/?url=inducks.org/hr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fde%2Fmm%2Fmm1990%2Fde_mm1990_11a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70" "https://wsrv.nl/?url=https%3A%2F%2Finducks.org%2Fhr.php%3Fimage%3Dhttps%3A%2F%2Foutducks.org%2Fwebusers%2Fwebusers%2F2018%2F09%2Fse_kap_001a_001.jpg%26normalsize%3D1&w=240&output=webp&q=70" "https://inducks.org/hr.php?image=https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&normalsize=1"; do g "$u"; done
       - name: Save
         if: always()
         run: |
