@@ -17,16 +17,8 @@ jobs:
           UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
           O="Origin: https://felixwylt.github.io"
           h() { echo "-- $1"; curl -s -I -L -A "$UA" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; }
-          echo "=== Duckipedia imageinfo"
-          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode titles="Datei:LTB 100.JPG|Datei:LTB 001.jpg" --data-urlencode prop=imageinfo --data-urlencode iiprop=url --data-urlencode iiurlwidth=200 | tee ii.json; echo
-          for u in $(python3 -c "import json;d=json.load(open('ii.json'));[print(p['imageinfo'][0].get('thumburl','')) for p in d['query']['pages'] if 'imageinfo' in p]"); do h "$u"; done
-          echo "=== outducks"
-          for u in https://outducks.org/thumbnails/se/kap/se_kap_001a_001.jpg https://outducks.org/thumbnails/webusers/2018/09/se_kap_001a_001.jpg https://outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg "https://wsrv.nl/?url=outducks.org/webusers/webusers/2018/09/se_kap_001a_001.jpg&w=200&output=jpg"; do h "$u"; done
-          echo "=== sites"
-          curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1 inducks_entryurl.isv inducks_site.isv 2>/dev/null || tar -xzf isv.tgz -C isv --strip-components=1
-          cut -d^ -f2 isv/inducks_entryurl.isv | sort | uniq -c | sort -rn | head -12
-          grep -E '^(se|de|it|no)\^' isv/inducks_site.isv
-          grep -m4 '^de/LTB  546' isv/inducks_entryurl.isv; grep -m4 '^de/MM1990-' isv/inducks_entryurl.isv
+          g() { echo "-- $1"; curl -s -o /tmp/x -D - -L -A "Mozilla/5.0 (Linux; Android 14) Mobile" -H "$O" "$1" | grep -i 'access-control\|^HTTP\|content-type\|content-length'; file /tmp/x | cut -c1-120; }
+          for u in https://outducks.org/se/kap/se_kap_001a_001.jpg https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg https://outducks.org/thumbnails/de/mm/mm1990/de_mm1990_11a_001.jpg https://outducks.org/thumbnails2/de/mm/mm1990/de_mm1990_11a_001.jpg "https://inducks.org/hr.php?image=https://outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&normalsize=1" "https://wsrv.nl/?url=outducks.org/de/mm/mm1990/de_mm1990_11a_001.jpg&w=240&output=webp&q=70" "https://wsrv.nl/?url=de.duckipedia.org/images/thumb/5/57/LTB_001.jpg/200px-LTB_001.jpg&w=240&output=webp&q=70"; do g "$u"; done
       - name: Save
         if: always()
         run: |
