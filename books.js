@@ -100,11 +100,18 @@
     return (j.items || []).map(fromGoogle);
   }
 
+  // genre: databases send lists and catalogue codes ("Serie:The_Kane_Chronicles", "Juvenile Fiction / Fantasy & Magic"):
+  // keep the first real genre only
+  function oneGenre(g) {
+    const parts = String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").trim())
+      .filter(x => x && !/:/.test(x) && !/^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books)$/i.test(x) && x.length <= 40);
+    return parts[0] ? parts[0][0].toUpperCase() + parts[0].slice(1) : "";
+  }
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
-    KEYS.forEach(k => { for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
+    KEYS.forEach(k => { for (const r of list) { const v = k === "genre" ? oneGenre(r && r.genre) : r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
     // library catalogues abbreviate publishers ("Dt. Taschenbuch-Verl."): take a written-out name if another source has one
     const full = list.map(r => r && r.publisher).filter(p => p && !/\.\s*$|\b[A-ZÄÖÜ][a-zäöü]{0,4}\./.test(p));
     if (out.publisher && /\./.test(out.publisher) && full.length) out.publisher = full[0];
@@ -138,5 +145,5 @@
     return out.slice(0, 30);
   }
 
-  root.Books = { normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName };
+  root.Books = { normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre };
 })(typeof window !== "undefined" ? window : globalThis);

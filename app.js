@@ -269,6 +269,12 @@ async function boot() {
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
+    // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
+    if (!(await getConfig("genresCleaned")) && window.Books && Books.oneGenre) {
+      const fix = S.comics.filter(c => c.kind === "book" && c.genre && /[,;:_\/|]/.test(c.genre)).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("genresCleaned", true);
+    }
     await adoptLooseSeries();
     S.dbState = "ready";
     loadCovers();
@@ -409,15 +415,44 @@ async function fetchAllCovers() {
   run.running = false; S.cvAsked = true; draw(); run.msg = ($("#cvprog") || {}).textContent || ""; if (S.view === "collection") renderKeep();
 }
 // ---- lots: several comics bought together for one price ----
+// ---- "you already have this": shown while typing the number or ISBN, or right after a scan ----
+function findDup(d) {
+  const other = c => c.id !== d.id;
+  if (d.kind === "book") {
+    const isbn = d.isbn && window.Books && Books.normalize(d.isbn);
+    return (isbn && S.comics.find(c => other(c) && c.isbn && Books.normalize(c.isbn) === isbn))
+      || (d.seriesName && String(d.issue || "").trim() && S.comics.find(c => other(c) && c.kind === "book" && c.seriesName === d.seriesName && String(c.issue).trim() === String(d.issue).trim()))
+      || (d.title && S.comics.find(c => other(c) && c.kind === "book" && norm(c.title) === norm(d.title) && norm(c.author || "") === norm(d.author || "") && !c.seriesName === !d.seriesName))
+      || null;
+  }
+  const se = seriesById(d.seriesId); if (!se || !String(d.issue || "").trim()) {
+    const raw = String(d.isbn || "").replace(/\D/g, ""), isbn = window.Books && Books.normalize(raw);   // the ISBN-or-barcode field of comics
+    return (isbn && S.comics.find(c => other(c) && c.isbn && Books.normalize(c.isbn) === isbn)) || null;
+  }
+  const p = parseIssue(se, d.issue); if (!p.label || /\?/.test(p.label)) return null;
+  return S.comics.find(c => other(c) && c.kind !== "book" && !c.facsimile === !d.facsimile && c.seriesId === se.id && sameSlot(c.issueLabel || c.issue, p.label)) || null;
+}
+function dupHtml(d) {
+  const c = findDup(d);
+  if (!c) return '<div id="dupnote"></div>';
+  const where = c.status === "wanted" ? (d.status === "wanted" ? "is already on your wishlist" : "is on your wishlist: saving moves it to your collection")
+    : "is already in your collection" + ((c.copies || 1) > 1 ? " (" + c.copies + " copies)" : "");
+  return `<div id="dupnote" class="banner ${c.status === "wanted" && d.status !== "wanted" ? "" : "warn"}">${esc(c.kind === "book" ? c.title + (c.issue ? " (" + c.issue + ")" : "") : comicTag(c))} ${where}. <button type="button" class="link" data-dupopen="${esc(c.id)}">Open it</button></div>`;
+}
+function refreshDup(d) {
+  const el = $("#dupnote"); if (!el) return;
+  el.outerHTML = dupHtml(d);
+  const b = document.querySelector("[data-dupopen]"); if (b) b.onclick = () => { S.editing = b.dataset.dupopen; S.draft = null; nav("add"); };
+}
 function lotFields(d) {
   const lots = recentLots(), cur = d.lotId && d.lotId !== "new" ? lotInfo(d.lotId) : null;
   if (cur && !lots.some(l => l.id === cur.id)) lots.unshift(cur);
   const others = cur ? cur.members.filter(c => c.id !== d.id) : [];
   const n = (cur ? cur.members.length + (cur.members.some(c => c.id === d.id) ? 0 : 1) : 1);
-  const total = parseAmt(d.lotTotal);
+  const total = parseAmt(d.lotTotal), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s";
   return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${lots.map(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`).join("")}</select></label>
     <label><span class="l">Price for the whole lot</span><input id="f-lotTotal" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.lotTotal))}"></label>
-    <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${total === 0 ? `A free lot: ${n === 1 ? "this comic gets" : "all " + n + " comics get"} the price 0.00.` : typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."}</span>
+    <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${total === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."}</span>
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
 function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && c.status !== "wanted") : []; }
@@ -430,7 +465,11 @@ function recentLots() {
   const ids = [...new Set(S.comics.filter(c => c.lotId && c.status !== "wanted").map(c => c.lotId))];
   return ids.map(lotInfo).filter(Boolean).sort((a, b) => String(b.created).localeCompare(String(a.created))).slice(0, 6);
 }
-function lotLabel(l) { return [money(l.total, l.currency), l.members.length + (l.members.length === 1 ? " comic" : " comics"), l.source, l.date ? niceDate(l.date) : ""].filter(Boolean).join(" · "); }
+function lotLabel(l) {
+  const bk = l.members.filter(c => c.kind === "book").length, n = l.members.length;
+  const w = bk === n ? (n === 1 ? " book" : " books") : bk ? (n === 1 ? " item" : " items") : (n === 1 ? " comic" : " comics");   // a lot can mix both
+  return [money(l.total, l.currency), n + w, l.source, l.date ? niceDate(l.date) : ""].filter(Boolean).join(" · ");
+}
 // spreads the lot price over its comics to the cent: 20.00 for 3 -> 6.67, 6.67, 6.66
 async function rebalanceLot(id, total, currency) {
   const m = lotMembers(id).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
@@ -752,6 +791,8 @@ function isoDate(v) {
   return t;
 }
 function todayIso() { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+// INDUCKS-style labels shown the readable way: 2017-23-24 -> 2017/23-24, 1984-19A -> 1984/19A
+const showLabel = l => String(l).replace(/^(\d{4})-(\d{1,3}(?:-\d{1,3}|[A-Z]))$/, "$1/$2");
 function itemHtml(c, inSeries) {
   const se = seriesById(c.seriesId);
   const st = (c.stories || []);
@@ -771,7 +812,7 @@ function itemHtml(c, inSeries) {
   if (c.special) chips.push('<span class="chip special" title="' + esc(c.special) + '">Special</span>');
   if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
   if (c.lotId && c.status !== "wanted") chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
-  const numTxt = isBook ? c.issue : (c.issueLabel || c.issue || "");
+  const numTxt = isBook ? c.issue : showLabel(c.issueLabel || c.issue || "");
   if (isNovel(c)) {   // a book: its cover (or its initial), then title, author and year
     const sub2 = [inSeries ? "" : c.seriesName && c.seriesName + (c.issue ? " " + c.issue : ""), c.author, c.date, c.lang].filter(Boolean).join(" · ");
     if (c.read && c.status !== "wanted") chips.push('<span class="chip">Read</span>');
@@ -782,7 +823,7 @@ function itemHtml(c, inSeries) {
   }
   const cv = !isBook && coverOf(c);
   return `<button class="item${cv ? " withcover" : ""}" data-id="${esc(c.id)}">
-    ${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}<div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
+    ${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}<div class="num${String(numTxt).length > 8 ? " long xlong" : String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
     <div style="min-width:0"><div class="t">${esc(c.title || (inSeries && c.date ? niceDate(c.date) : (se ? se.name : c.seriesName)) || "Untitled")}</div><div class="s">${esc((inSeries && !c.title && !isBook ? creators : sub) || (inSeries ? "" : (se ? se.name : c.seriesName || "")))}</div></div>
     <div class="chips">${chips.join("")}</div></button>`;
 }
@@ -930,8 +971,8 @@ function drawResults() {
     const byYear = list.some(c => /^\d{4}\//.test(c.issueLabel || ""));
     list.slice(0, S.shown).forEach(c => {
       if (byYear) {
-        const y = (/^(\d{4})\//.exec(c.issueLabel || "") || [])[1] || "Other";
-        if (y !== lastYear) { const n = list.filter(x => ((/^(\d{4})\//.exec(x.issueLabel || "") || [])[1] || "Other") === y).length; rows += `<h4 class="yearhead">${esc(y)}<span>${n}</span></h4>`; lastYear = y; }
+        const y = (/^(\d{4})[\/-]/.exec(c.issueLabel || "") || [])[1] || "Other";
+        if (y !== lastYear) { const n = list.filter(x => ((/^(\d{4})[\/-]/.exec(x.issueLabel || "") || [])[1] || "Other") === y).length; rows += `<h4 class="yearhead">${esc(y)}<span>${n}</span></h4>`; lastYear = y; }
       }
       rows += itemHtml(c, true);
     });
@@ -1135,6 +1176,7 @@ VIEWS.add = {
         <div class="row between">
           <div class="seg" role="group" aria-label="Type"><button type="button" data-kind="issue" aria-pressed="${!isBook}">Comic issue</button><button type="button" data-kind="book" aria-pressed="${isBook && !isNovel(d)}">Comic book</button><button type="button" data-kind="novel" aria-pressed="${isNovel(d)}">Book</button></div>
           <div class="seg" role="group" aria-label="Status"><button type="button" data-st="owned" aria-pressed="${d.status !== "wanted"}">I own it</button><button type="button" data-st="wanted" aria-pressed="${d.status === "wanted"}">Wishlist</button></div></div>
+${dupHtml(d)}
 ${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
         <div class="isbnrow">
@@ -1228,6 +1270,8 @@ ${isBook ? `
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     $("#f-fav") && ($("#f-fav").onclick = e => { d.fav = !d.fav; const b = e.currentTarget; b.classList.toggle("on", d.fav); b.textContent = d.fav ? "♥" : "♡"; b.setAttribute("aria-pressed", d.fav); });
     bindStars($("#app"), (v, box) => { if (box.id === "f-rating") d.rating = v; });
+    refreshDup(d);
+    ["issue", "isbn", "title", "author", "seriesName"].forEach(k => { const el = $("#f-" + k); if (el) el.addEventListener("input", () => { d[k] = el.value; refreshDup(d); }); });
     // ticking "Read" notes today's date (it can be changed); unticking clears it
     $("#f-read") && ($("#f-read").onchange = e => { grab(); d.readDate = e.target.checked ? (d.readDate || todayIso()) : ""; renderKeep(); });
     $("#f-inlot") && ($("#f-inlot").onchange = e => {
@@ -1238,7 +1282,7 @@ ${isBook ? `
     });
     $("#f-lot") && ($("#f-lot").onchange = e => { grab(); d.lotId = e.target.value; const l = lotInfo(d.lotId); if (l) { d.lotTotal = l.total; d.currency = l.currency; if (!d.source) d.source = l.source; if (!d.purchaseDate) d.purchaseDate = l.date; } else d.lotTotal = ""; render(); });
     // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
-    $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this comic gets" : "all " + n + " comics get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? "comic" : "comics"}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more comics join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
+    $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s", el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
     document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
     $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
     $("#comicscan") && ($("#comicscan").onclick = async () => {
@@ -2172,7 +2216,7 @@ function storyIndex(status) {
   });
   return [...map.values()];
 }
-function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short || se.name : c.seriesName || "") + " " + (c.issueLabel || c.issue || ""); }
+function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short || se.name : c.seriesName || "") + " " + showLabel(c.issueLabel || c.issue || ""); }
 VIEWS.stories = {
   html() {
     const st = S.st = S.st || { q: "", mode: "stories", who: null, status: "owned", sort: "title", shown: 100 };
@@ -2522,6 +2566,7 @@ async function fillSeriesInfo(se) {
     const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), exact = inducksCandidates(se).filter(x => norm(x[1]) === n);
     if (exact.length === 1) p = exact[0];
   }
+  if (se.code && !p && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi)\//.test(se.code)) got.warn = "INDUCKS has no publication with the code " + se.code + ": check it on inducks.org";
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
   if (p) {
     set("code", p[0], "INDUCKS code"); set("name", p[1], "name");

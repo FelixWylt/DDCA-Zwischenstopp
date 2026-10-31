@@ -468,6 +468,12 @@
       "series": "Divertiamoci a stare bene",
       "country": "it",
       "title": "Divertiamoci a stare bene"
+    },
+    {
+      "series": "Omaggio Abbonati",
+      "country": "it",
+      "code": "it/ABB",
+      "title": "Omaggio Abbonati"
     }
   ]
 }
