@@ -79,7 +79,7 @@ for t in targets:
 issues = {}
 DIR_COUNTRIES = {"de", "ch", "at", "se", "it", "no", "dk", "fi"}
 directory = {}   # every publication of these countries: how many issues, which years
-for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "title", "pages", "oldestdate"]):
+for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "title", "pages", "oldestdate", "price"]):
     if r["publicationcode"] in chosen: issues[r["issuecode"]] = r
     pc = r["publicationcode"]
     if pubs.get(pc, {}).get("countrycode") in DIR_COUNTRIES:
@@ -144,6 +144,7 @@ for code, t in chosen.items():
                        "w": names(js, "pw"), "a": names(js, "ai"), "h": e["printedhero"] or "", "p": v.get("entirepages", "")})
         lab = label_for(i["issuenumber"])
         rec = {"ic": ic, "n": i["issuenumber"], "t": i["title"], "d": i["oldestdate"], "pg": i["pages"], "s": st}
+        if i.get("price"): rec["pr"] = i["price"].strip()   # cover price, helps tell years apart when scanning a barcode
         if lab in out and out[lab]["ic"] != ic: lab = f"{lab} ({i['issuenumber']})"
         out[lab] = rec
     fname = "inducks-" + re.sub(r"[^A-Za-z0-9]+", "-", code).strip("-") + ".json"
