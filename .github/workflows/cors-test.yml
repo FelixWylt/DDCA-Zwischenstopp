@@ -15,11 +15,12 @@ jobs:
           exec > probe-result.txt 2>&1
           UA="DagobertDucksArchiv-probe/1.0"
           curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1
-          echo "=== pubs FDL"; grep -i '^it/FDL\|\^it\^.*fdl' isv/inducks_publication.isv | cut -d^ -f1-5 | head
-          echo "=== it pubs total"; grep -c '^it/' isv/inducks_publication.isv
-          echo "=== issues trilioni"; grep -i 'trilioni' isv/inducks_issue.isv | cut -d^ -f1,3,4,5,11 | head -20
-          echo "=== pubs trilioni"; grep -i 'trilioni' isv/inducks_publication.isv | cut -d^ -f1-5 | head
-          echo "=== MM 2017-23"; grep '^de/MM2017-2[2-5]' isv/inducks_issue.isv | cut -d^ -f1,3,4,11 | head
+          echo "=== FDLL publication"; grep -i '^it/FDL' isv/inducks_publication.isv | head
+          echo "=== FDLL issues"; grep -c '^[^^]*^[^^]*^it/FDLL^' isv/inducks_issue.isv; grep '^it/FDLL' isv/inducks_issue.isv | head -3
+          echo "=== trilioni issues"; grep -i 'trilioni' isv/inducks_issue.isv | head
+          echo "=== trilioni publications"; grep -i 'trilioni' isv/inducks_publication.isv | head
+          echo "=== trilioni entries (first 10)"; grep -i 'trilioni di paperone' isv/inducks_entry.isv | cut -d^ -f1,2,9 | head -10
+          echo "=== Gatti covers 1977 it"; grep -i '^it/' isv/inducks_issue.isv | grep '\^1977' | grep -i 'paperone' | head
       - name: Save
         if: always()
         run: |
