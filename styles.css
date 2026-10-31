@@ -415,3 +415,9 @@ body.noscroll { overflow: hidden; }
 .item.wishrow:has(.cthumb) { grid-template-columns: 42px minmax(0, 1fr) auto; }
 .wishmain { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; align-items: center; text-align: left; border: 0; background: transparent; padding: 0; min-height: 0; color: inherit; font: inherit; min-width: 0; }
 .gotit { padding: 8px 12px; min-height: 40px; font-size: 0.86rem; border-color: var(--owned); color: var(--owned); font-weight: 700; }
+
+/* big cover viewer */
+[data-zoom] { cursor: zoom-in; }
+.coverview { position: fixed; inset: 0; z-index: 60; background: rgb(0 0 0 / 0.85); display: grid; place-items: center; padding: 16px; cursor: zoom-out; }
+.coverview img { width: 100%; height: 100%; max-width: 760px; object-fit: contain; }   /* small copies are stretched to fill; the sharp scan replaces them online */
+.cvclose { position: fixed; top: calc(10px + env(safe-area-inset-top)); right: 12px; background: rgb(255 255 255 / 0.9); color: #111; border-radius: 99px; width: 40px; height: 40px; padding: 0; font-size: 1.1rem; }

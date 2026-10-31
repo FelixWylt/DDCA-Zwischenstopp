@@ -345,6 +345,28 @@ function coverBar() {
   return `<div class="row small" style="align-items:center;margin:8px 0"><button id="getcv" type="button">${run ? "Stop" : "Get cover pictures"}</button>
     <span class="muted" id="cvprog">${run ? "Working…" : [noUrl ? noUrl + " without a cover" : "", notKept ? notKept + " not stored for offline use yet" : ""].filter(Boolean).join(" · ") + ". Uses the internet once; the pictures are then kept on this phone (about 10 KB each)."}</span></div>`;
 }
+// ---- big cover: tap a cover picture anywhere to see it large (the full-size scan online, the stored copy offline) ----
+function bigCover(u) {
+  if (!u) return "";
+  if (/inducks\.org\/hr\.php/.test(u)) return u.replace(/&normalsize=1/, "");
+  const m = /^(https:\/\/de\.duckipedia\.org\/images)\/thumb\/(.+?)\/\d+px-[^/]+$/.exec(u); if (m) return m[1] + "/" + m[2];
+  return u;
+}
+function showCover(id) {
+  const c = S.comics.find(x => x.id === id) || (S.draft && (S.draft.id === id || !id) ? S.draft : null);
+  if (!c || !coverOf(c)) return;
+  const small = coverOf(c), big = navigator.onLine && c.coverUrl ? bigCover(c.coverUrl) : small;
+  const v = document.createElement("div"); v.className = "coverview"; v.setAttribute("role", "dialog"); v.setAttribute("aria-label", "Cover");
+  v.innerHTML = `<img src="${esc(small)}" alt="Cover"><button type="button" class="cvclose" aria-label="Close">✕</button>`;
+  document.body.appendChild(v);
+  const img = v.querySelector("img");
+  if (big !== small) { const hi = new Image(); hi.onload = () => { img.src = big; }; hi.src = big; }   // sharp version replaces the small one once loaded
+  const close = () => { v.remove(); document.removeEventListener("keydown", esc_); };
+  const esc_ = e => { if (e.key === "Escape") close(); };
+  v.onclick = close; document.addEventListener("keydown", esc_);
+}
+// capture phase, so tapping a thumbnail inside a list row shows the cover instead of opening the comic
+document.addEventListener("click", e => { const z = e.target.closest && e.target.closest("[data-zoom]"); if (!z) return; e.preventDefault(); e.stopPropagation(); showCover(z.dataset.zoom); }, true);
 const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
 // finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
 async function fetchAllCovers() {
@@ -742,13 +764,13 @@ function itemHtml(c, inSeries) {
     const sub2 = [inSeries ? "" : c.seriesName && c.seriesName + (c.issue ? " " + c.issue : ""), c.author, c.date, c.lang].filter(Boolean).join(" · ");
     if (c.read && c.status !== "wanted") chips.push('<span class="chip">Read</span>');
     return `<button class="item book" data-id="${esc(c.id)}">
-      <div class="bookthumb">${inSeries && c.issue ? `<span class="vol">${esc(c.issue)}</span>` : ""}${coverOf(c) ? `<img src="${esc(coverOf(c))}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span class="ini">${esc((c.title || "?").trim()[0] || "?")}</span></div>
+      <div class="bookthumb"${coverOf(c) ? ` data-zoom="${esc(c.id)}"` : ""}>${inSeries && c.issue ? `<span class="vol">${esc(c.issue)}</span>` : ""}${coverOf(c) ? `<img src="${esc(coverOf(c))}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span class="ini">${esc((c.title || "?").trim()[0] || "?")}</span></div>
       <div style="min-width:0"><div class="t">${esc(c.title || "Untitled")}</div><div class="s">${esc(sub2)}</div></div>
       <div class="chips">${chips.join("")}</div></button>`;
   }
   const cv = !isBook && coverOf(c);
   return `<button class="item${cv ? " withcover" : ""}" data-id="${esc(c.id)}">
-    ${cv ? `<div class="cthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}<div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
+    ${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}<div class="num${String(numTxt).length > 4 ? " long" : ""}">${isBook && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(numTxt || "–")}<small>${isBook ? (c.issue ? "VOL." : "") + " BOOK" : esc(se ? (se.short || "") : (c.seriesName || ""))}</small></div>
     <div style="min-width:0"><div class="t">${esc(c.title || (inSeries && c.date ? niceDate(c.date) : (se ? se.name : c.seriesName)) || "Untitled")}</div><div class="s">${esc((inSeries && !c.title && !isBook ? creators : sub) || (inSeries ? "" : (se ? se.name : c.seriesName || "")))}</div></div>
     <div class="chips">${chips.join("")}</div></button>`;
 }
@@ -1101,6 +1123,7 @@ VIEWS.add = {
         <div class="row between">
           <div class="seg" role="group" aria-label="Type"><button type="button" data-kind="issue" aria-pressed="${!isBook}">Comic issue</button><button type="button" data-kind="book" aria-pressed="${isBook && !isNovel(d)}">Comic book</button><button type="button" data-kind="novel" aria-pressed="${isNovel(d)}">Book</button></div>
           <div class="seg" role="group" aria-label="Status"><button type="button" data-st="owned" aria-pressed="${d.status !== "wanted"}">I own it</button><button type="button" data-st="wanted" aria-pressed="${d.status === "wanted"}">Wishlist</button></div></div>
+${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
         <div class="isbnrow">
           <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="978-3-…"></label>
@@ -1109,7 +1132,6 @@ ${isBook ? `
         </div>
         <div id="bookmsg"></div>
         <div class="grid-form">
-          ${d.coverUrl ? `<div class="wide coverrow"><img class="cover" src="${esc(coverOf(d))}" alt="Cover" loading="lazy" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
           <label class="wide"><span class="l">Title</span><input id="f-title" value="${esc(d.title)}" placeholder="${isNovel(d) ? "e.g. Der kleine Hobbit" : "e.g. Carl Barks: Die Ducks"}"></label>
           <label class="wide"><span class="l">${isNovel(d) ? "Author" : "Author or editor"}</span><input id="f-author" value="${esc(d.author)}" placeholder="${isNovel(d) ? "e.g. J. R. R. Tolkien" : "e.g. Carl Barks, Don Rosa"}"></label>
           <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
@@ -1565,7 +1587,7 @@ function bindWishlist() {
 function wishItem(c) {
   const s = seriesById(c.seriesId), bk = c.kind === "book", cv = coverOf(c);
   const sub = [c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || "";
-  return `<div class="item wishrow">${cv ? `<div class="cthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
+  return `<div class="item wishrow">${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
     <button class="wishmain" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div>
       <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc(sub)}</div></div></button>
     <button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div>`;
