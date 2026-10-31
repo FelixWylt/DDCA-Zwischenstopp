@@ -15,13 +15,11 @@ jobs:
           exec > probe-result.txt 2>&1
           UA="DagobertDucksArchiv-probe/1.0"
           curl -s -L -A "$UA" -o isv.tgz https://inducks.org/inducks/isv.tgz && mkdir -p isv && tar -xzf isv.tgz -C isv --strip-components=1
-          echo "=== entries"; grep '^se/KAPS2017-05' isv/inducks_entry.isv | cut -d^ -f1-3,6,9 | head
-          echo "=== urls"; grep '^se/KAPS2017-05' isv/inducks_entryurl.isv
-          echo "=== issueurl"; head -1 isv/inducks_issueurl.isv; grep 'se/KAPS2017-05' isv/inducks_issueurl.isv | head
-          for sv in $(grep '^se/KAPS2017-05' isv/inducks_entry.isv | cut -d^ -f3 | head -3); do grep -m1 "^$sv^" isv/inducks_storyversion.isv | cut -d^ -f1,2,7; done
-          echo "=== issues without cover in catalogue series: entryurl sitecodes of their 'a' entries (sample)"
-          for ic in "se/KAPS2017-05" "de/LTB  546A"; do grep "^$ic" isv/inducks_entryurl.isv | head -3; done
-          for u in $(grep '^se/KAPS2017-05' isv/inducks_entryurl.isv | cut -d^ -f2,4 | head -4); do s=${u%%^*}; p=${u#*^}; base=$(grep "^$s^" isv/inducks_site.isv | cut -d^ -f2); echo "-- $base$p"; curl -s -o /dev/null -w "%{http_code} %{content_type} %{size_download}\n" "https://inducks.org/hr.php?image=$base$p&normalsize=1"; done
+          echo "=== pubs FDL"; grep -i '^it/FDL\|\^it\^.*fdl' isv/inducks_publication.isv | cut -d^ -f1-5 | head
+          echo "=== it pubs total"; grep -c '^it/' isv/inducks_publication.isv
+          echo "=== issues trilioni"; grep -i 'trilioni' isv/inducks_issue.isv | cut -d^ -f1,3,4,5,11 | head -20
+          echo "=== pubs trilioni"; grep -i 'trilioni' isv/inducks_publication.isv | cut -d^ -f1-5 | head
+          echo "=== MM 2017-23"; grep '^de/MM2017-2[2-5]' isv/inducks_issue.isv | cut -d^ -f1,3,4,11 | head
       - name: Save
         if: always()
         run: |
