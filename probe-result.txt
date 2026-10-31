@@ -1,11 +1,11 @@
-=== pubs FDL
-=== it pubs total
-667
-=== issues trilioni
-it/ABB1977^it/ABB^1977^I trilioni di Paperone^1977-10
-it/NLI   3^it/NLI^3^I Trilioni di Paperone^1984-04
-=== pubs trilioni
-=== MM 2017-23
-de/MM2017-22^de/MM^2017-22^2017-05-26
-de/MM2017-23-24^de/MM^2017-23-24^2017-06-02
-de/MM2017-25^de/MM^2017-25^2017-06-16
+=== FDLL publication
+=== FDLL issues
+0
+=== trilioni issues
+it/ABB1977^^it/ABB^1977^I trilioni di Paperone^^^^^^1977-10^Y^^N^1977-10-31^N^N^1545^Team_it^
+it/NLI   3^^it/NLI^3^I Trilioni di Paperone^^160^15000 Lit.^^^1984-04^Y^^N^1984-04-31^N^N^1784^Team_it^
+=== trilioni publications
+=== trilioni entries (first 10)
+=== Gatti covers 1977 it
+it/ABB1977^^it/ABB^1977^I trilioni di Paperone^^^^^^1977-10^Y^^N^1977-10-31^N^N^1545^Team_it^
+it/PRPAV 3^^it/PRPAV^3^Zio Paperone 'topo' di cucina^^12^^^^1977-06^Y^^N^1977-06-31^N^N^1835^Team_it^
