@@ -1029,7 +1029,7 @@ function bookGapsHtml() {
     <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
     ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
     <div id="cellpick"></div>
-    ${size ? `<div class="${gridClass()}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
+    ${size ? `<div class="${gridClass(true)}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
 }
 function bindBookGaps() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
@@ -1535,10 +1535,10 @@ function gapHead(owned, wanted, total, info) {
     </div>`;
 }
 function bindGapHead() {
-  document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
+  document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(!$("#readmode")); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
   $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; renderKeep(); });
 }
-const gridClass = () => [S.readMode ? "readmode" : "", "gf-" + (S.gapFilter || "all")].join(" ");
+const gridClass = noRead => [S.readMode && !noRead ? "readmode" : "", "gf-" + (noRead && S.gapFilter === "unread" ? "all" : S.gapFilter || "all")].join(" ");
 // the choice for a tapped number slides up from the bottom of the screen
 function sheetClose() { const b = $("#cellpick"); if (b) b.innerHTML = ""; }
 function sheetOpen(html) { const b = $("#cellpick"); b.innerHTML = `<div class="sheetbg" id="sheetbg"></div><div class="sheet" role="dialog">${html}</div>`; $("#sheetbg").onclick = sheetClose; }
@@ -1832,7 +1832,7 @@ VIEWS.stats = {
   bind() {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
-    document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; nav("gaps"); });
+    document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
@@ -2484,7 +2484,10 @@ async function fillSeriesInfo(se) {
   const got = [], set = (k, v, label) => { if (v && !se[k]) { se[k] = v; if (!got.includes(label)) got.push(label); } };
   if (!S.inducksDir) { try { const r = await fetch("catalogue/directory.json"); if (r.ok) S.inducksDir = (await r.json()).publications || []; } catch (e) {} }
   let p = se.code && (S.inducksDir || []).find(x => x[0] === se.code);
-  if (!p) { const c = inducksCandidates(se); if (c.length === 1 || (c.length && norm(c[0][1]) === norm(se.name))) p = c[0]; }
+  if (!p) {   // without a code, only an exact name match counts (no guessing: "Kalle Anka" is not "Kalle Anka & C:o")
+    const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), exact = inducksCandidates(se).filter(x => norm(x[1]) === n);
+    if (exact.length === 1) p = exact[0];
+  }
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
   if (p) {
     set("code", p[0], "INDUCKS code"); set("name", p[1], "name");
