@@ -1,5 +1,5 @@
 {
- "built": "2026-10-30",
+ "built": "2026-10-31",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -241,19 +241,13 @@
   },
   "ankeborgs samlarpocket": {
    "series": "Ankeborgs Samlarpocket",
-   "aliases": [],
+   "aliases": [
+    "Stål-Kalle Pocket"
+   ],
    "code": "se/ASP",
    "title": "Ankeborgs samlarpocket",
    "file": "inducks-se-ASP.json",
    "issues": 51
-  },
-  "stal kalle pocket": {
-   "series": "Stål-Kalle Pocket",
-   "aliases": [],
-   "code": "se/SK",
-   "title": "Stål-Kalle",
-   "file": "inducks-se-SK.json",
-   "issues": 113
   },
   "farbror joakims liv": {
    "series": "Farbror Joakims liv",

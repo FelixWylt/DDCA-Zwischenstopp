@@ -31,8 +31,7 @@ PUBLICATIONS
   ✓ Paperino Mese  →  it/PM  'Paperino Mese'  (by title)
   ✓ Kalle Ankas julbok  →  se/KAJ  'Kalle Ankas julbok'  (by title)
   ✓ Kalle Ankas Pocket Special  →  se/KAPS  'Kalle Ankas Pocket Special'  (by title)
-  ✓ Ankeborgs Samlarpocket  →  se/ASP  'Ankeborgs samlarpocket'  (by title)
-  ✓ Stål-Kalle Pocket  →  se/SK  'Stål-Kalle'  (by title)
+  ✓ Ankeborgs Samlarpocket  →  se/ASP  'Ankeborgs samlarpocket'  (by code)
   ✓ Farbror Joakims liv  →  se/FJL  'Joakim von Anka: Farbror Joakims Liv'  (by code)
   ✓ Lustiges Taschenbuch Ultimate Phantomias  →  de/LTBUP  'Lustiges Taschenbuch Ultimate Phantomias'  (by title)
   ✓ Lustiges Taschenbuch Young Comics  →  de/LTBYC  'Lustiges Taschenbuch Young Comics'  (by title)
@@ -62,8 +61,8 @@ PUBLICATIONS
   ✓ Le più belle storie Disney  →  it/PBST  'Le più belle storie Disney'  (by title)
   ✓ Divertiamoci a stare bene  →  it/DSB  'Divertiamoci a stare bene'  (by title)
 
-issues in chosen publications: 21,392
-entries: 228,746, story versions: 115,761
+issues in chosen publications: 21,279
+entries: 228,265, story versions: 115,394
 
 FILES
   inducks-de-LTB.json: 666 issues, 809 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -96,7 +95,6 @@ FILES
   inducks-se-KAJ.json: 77 issues, 304 KB  e.g. 1980 = se/KAJ 1980 1979-12 (64 stories)
   inducks-se-KAPS.json: 158 issues, 325 KB  e.g. 2015/06 = se/KAPS2015-06 2015 (15 stories)
   inducks-se-ASP.json: 51 issues, 71 KB  e.g. 2019/05 = se/ASP2019-05 2019 (9 stories)
-  inducks-se-SK.json: 113 issues, 33 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
   inducks-se-FJL.json: 4 issues, 7 KB  e.g. 2019 = se/FJL 2019 2019 (16 stories)
   inducks-de-LTBUP.json: 48 issues, 56 KB  e.g. 25 = de/LTBUP25 2019-01-19 (12 stories)
   inducks-de-LTBYC.json: 22 issues, 24 KB  e.g. 12 = de/LTBYC12 2024-03-25 (8 stories)
