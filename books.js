@@ -100,20 +100,47 @@
     return (j.items || []).map(fromGoogle);
   }
 
-  // genre: databases send lists and catalogue codes ("Serie:The_Kane_Chronicles", "Juvenile Fiction / Fantasy & Magic"):
-  // keep up to three real genres, comma separated
+  // genre: databases send lists and catalogue codes ("Serie:The_Kane_Chronicles", "Juvenile Fiction / Fantasy & Magic"),
+  // each in its own language. Common names become one German name; up to three genres are kept, comma separated.
+  const GENRES = {
+    "Fantasy": ["fantasy", "fantasy fiction", "fantasy & magic", "fantasyroman", "fantasyromane", "fantasylitteratur", "fantasy-literatur", "fantastik", "fantasyberättelser"],
+    "Science-Fiction": ["science fiction", "science-fiction", "sf", "sci-fi", "scifi", "science fiction-roman", "sciencefiction"],
+    "Krimi": ["krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "kriminalromaner", "detektivgeschichte"],
+    "Thriller": ["thriller", "thrillers", "suspense", "spänning", "spänningsromaner", "psychothriller"],
+    "Abenteuer": ["abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "abenteuerroman", "abenteuergeschichte"],
+    "Kinderbuch": ["kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
+    "Jugendbuch": ["jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
+    "Kinder- und Jugendbuch": ["kinder- und jugendliteratur", "kinder- und jugendbuch", "barn- och ungdomslitteratur", "barn- och ungdomsböcker"],
+    "Roman": ["roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
+    "Historischer Roman": ["historical fiction", "historischer roman", "historiska romaner", "historisk roman", "history fiction"],
+    "Horror": ["horror", "horror tales", "horror stories", "skräck", "skräckromaner", "gruselgeschichte", "gruselroman"],
+    "Humor": ["humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk"],
+    "Liebesroman": ["romance", "love stories", "liebesroman", "kärleksromaner", "liebesgeschichte"],
+    "Sachbuch": ["sachbuch", "nonfiction", "non-fiction", "facklitteratur"],
+    "Biografie": ["biografie", "biographie", "biography", "biographies", "autobiography", "biografi", "biografier", "memoarer"],
+    "Comic": ["comic", "comics", "comics & graphic novels", "graphic novels", "graphic novel", "tecknade serier", "serier", "bildgeschichte", "manga"],
+    "Mythologie": ["mythologie", "mythology", "mytologi", "götter und helden"],
+    "Märchen": ["märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
+    "Geschichte": ["geschichte", "history", "historia"],
+    "Gedichte": ["gedichte", "lyrik", "poetry", "dikter"]
+  };
+  const GENRE_OF = {}; Object.keys(GENRES).forEach(k => GENRES[k].forEach(v => { GENRE_OF[v] = k; }));
+  const DROP = /^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska)$/i;
   function oneGenre(g) {
     const seen = new Set(), out = [];
-    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").trim())
-      .filter(x => x && !/:/.test(x) && !/^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books)$/i.test(x) && x.length <= 40)
-      .forEach(x => { const k = x.toLowerCase(); if (!seen.has(k) && out.length < 3) { seen.add(k); out.push(x[0].toUpperCase() + x.slice(1)); } });
+    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").trim())
+      .filter(x => x && !/:/.test(x) && !DROP.test(x) && x.length <= 40)
+      .map(x => GENRE_OF[x.toLowerCase()] || x[0].toUpperCase() + x.slice(1))
+      .forEach(x => { const k = x.toLowerCase(); if (!seen.has(k) && out.length < 3) { seen.add(k); out.push(x); } });
     return out.join(", ");
   }
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
-    KEYS.forEach(k => { for (const r of list) { const v = k === "genre" ? oneGenre(r && r.genre) : r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
+    KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
+    // genres from all databases together; the shared names make the same genre count once
+    out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
     // library catalogues abbreviate publishers ("Dt. Taschenbuch-Verl."): take a written-out name if another source has one
     const full = list.map(r => r && r.publisher).filter(p => p && !/\.\s*$|\b[A-ZÄÖÜ][a-zäöü]{0,4}\./.test(p));
     if (out.publisher && /\./.test(out.publisher) && full.length) out.publisher = full[0];

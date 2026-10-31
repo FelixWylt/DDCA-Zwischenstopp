@@ -270,10 +270,11 @@ async function boot() {
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
-    if (!(await getConfig("genresCleaned")) && window.Books && Books.oneGenre) {
-      const fix = S.comics.filter(c => c.kind === "book" && c.genre && /[,;:_\/|]/.test(c.genre)).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
+    // (run again in version 50: genres from different databases now share one German name)
+    if (!(await getConfig("genresMapped")) && window.Books && Books.oneGenre) {
+      const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
       if (fix.length) await saveMany(fix, null, true);
-      await setConfig("genresCleaned", true);
+      await setConfig("genresMapped", true);
     }
     await adoptLooseSeries();
     S.dbState = "ready";
