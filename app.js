@@ -1030,7 +1030,7 @@ ${isBook ? `
         <div id="bookmsg"></div>
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
         <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from INDUCKS." : S.catalogue ? "This series isn't in the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
-          ${!isBook && window.Duckipedia && Duckipedia.candidates(se, { issueLabel: "1" }).length ? `<button class="ghost" id="dkfetch" type="button">${d.duckipedia ? "Refresh" : "Get"} details from Duckipedia</button>` : ""}
+          ${!isBook && window.Duckipedia && Duckipedia.candidates(dkSeries(se), { issueLabel: "1" }).length ? `<button class="ghost" id="dkfetch" type="button">${d.duckipedia ? "Refresh" : "Get"} details from Duckipedia</button>` : ""}
           <span id="ilink">${link ? ` <a href="${esc(link)}" target="_blank" rel="noopener">Open this ${d.issue ? "issue" : "series"} on INDUCKS</a>` : ""}</span></p>
         <div class="grid-form">
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
@@ -1142,10 +1142,10 @@ ${isBook ? `
     $("#dkfetch") && ($("#dkfetch").onclick = async () => {
       grab(); const btn = $("#dkfetch");
       const se0 = seriesById(d.seriesId), probe = Object.assign({}, d, { issueLabel: d.id && d.issueLabel && String(d.issue).trim() === String((S.comics.find(x => x.id === d.id) || {}).issue || "").trim() ? d.issueLabel : parseIssue(se0, d.issue).label });
-      if (!Duckipedia.candidates(se0, probe).length) { toast("Enter the issue number first"); $("#f-issue").focus(); return; }
+      if (!Duckipedia.candidates(dkSeries(se0), probe).length) { toast("Enter the issue number first"); $("#f-issue").focus(); return; }
       btn.disabled = true; btn.textContent = "Asking Duckipedia…";
       try {
-        const res = await Duckipedia.fetchIssue(se0, probe);
+        const res = await Duckipedia.fetchIssue(dkSeries(se0), probe);
         if (!res) { toast("Duckipedia has no page for this issue"); btn.disabled = false; btn.textContent = "Get details from Duckipedia"; return; }
         S.draft = Duckipedia.merge(d, res); render();
         toast("Duckipedia details added (" + res.stories.length + " stories). Tap Save to keep them.");
@@ -2119,10 +2119,14 @@ VIEWS.backup = {
 };
 
 // ---- Duckipedia for all German comics ----
+// Duckipedia's page names go by INDUCKS code, so give the series the code the catalogue knows
+const DK_RULES_DATE = "2026-10-31";
+function dkSeries(se) { if (!se) return se; const ce = !se.code && catEntry(se); return ce ? Object.assign({}, se, { code: ce.code }) : se; }
 function duckipediaTodo() {
   if (!window.Duckipedia) return [];
   // comics without a page are asked again after 90 days, in case the wiki has added one
-  return S.comics.filter(c => c.kind !== "book" && !c.duckipedia && !(c.duckipediaNone && daysSince(c.duckipediaNone) < 90) && Duckipedia.candidates(seriesById(c.seriesId), c).length);
+  // "no page" answers from before the page rules were widened (31.10.2026) are asked again
+  return S.comics.filter(c => c.kind !== "book" && !c.duckipedia && !(c.duckipediaNone && c.duckipediaNone >= DK_RULES_DATE && daysSince(c.duckipediaNone) < 90) && Duckipedia.candidates(dkSeries(seriesById(c.seriesId)), c).length);
 }
 function refreshDkCard() {
   const box = $("#dkbox"); if (!box || S.view !== "series") return;
@@ -2136,7 +2140,7 @@ function duckipediaBulkCard() {
   const dk = S.dk, todo = duckipediaTodo().length, have = S.comics.filter(c => c.duckipedia).length;
   if (!todo && !have && !dk) return "";
   return `<div class="card stack" id="dkbox"><h3>Duckipedia</h3>
-    <p class="small muted" style="margin:0">German comics can get extra details from <a href="https://de.duckipedia.org" target="_blank" rel="noopener">Duckipedia</a>: translator, price, characters, plot and more. They're saved with each comic, so they stay available offline. ${have === 1 ? "1 comic has" : have + " comics have"} them already.</p>
+    <p class="small muted" style="margin:0">German comics can get extra details from <a href="https://de.duckipedia.org" target="_blank" rel="noopener">Duckipedia</a>: translator, price, characters, plot and more. They're saved with each comic, so they stay available offline. ${have === 1 ? "1 comic has" : have + " comics have"} them already.${(() => { const sk = [...new Set(S.comics.filter(c => { const se = dkSeries(seriesById(c.seriesId)); return se && ["de/MM", "de/MMM", "de/MC", "ch/MMZ"].includes(se.code); }).map(c => seriesById(c.seriesId).name))]; return sk.length ? " Duckipedia has no pages for single issues of " + sk.join(", ") + ", so those are skipped." : ""; })()}</p>
     ${dk && dk.running ? `<div class="progress"><div style="width:${(dk.done / dk.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${dk.done} of ${dk.total} checked · ${dk.found} with details · ${dk.none} without a Duckipedia page</p><div class="row"><button id="dkstop">Stop</button></div>`
       : dk && dk.finished ? `<p class="small" style="margin:0">Finished: ${dk.found} comics got details, ${dk.none} have no Duckipedia page${dk.failed ? ", " + dk.failed + " could not be fetched" : ""}.</p>` : ""}
     ${!(dk && dk.running) && todo ? `<div class="row"><button class="primary" id="dkall">Get details for ${todo} German comics</button></div><p class="small muted" style="margin:0">Needs internet. Takes about ${Math.max(1, Math.round(todo * 1.8 / 60))} min; the app asks slowly to be gentle on the volunteer-run wiki.</p>` : ""}
@@ -2149,7 +2153,7 @@ async function duckipediaBulk() {
   for (const c of todo) {
     if (S.dk.stop) break;
     try {
-      const res = await Duckipedia.fetchIssue(seriesById(c.seriesId), c);
+      const res = await Duckipedia.fetchIssue(dkSeries(seriesById(c.seriesId)), c);
       if (res) { await saveComic(Duckipedia.merge(c, res)); S.dk.found++; }
       else { await saveComic(Object.assign({}, c, { duckipediaNone: new Date().toISOString().slice(0, 10) })); S.dk.none++; }
     } catch (e) { S.dk.failed++; if (!navigator.onLine) { toast("No internet. Duckipedia stopped."); break; } }

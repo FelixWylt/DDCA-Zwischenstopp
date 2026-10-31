@@ -11,17 +11,27 @@
     "de/LTBEX": ["LTB Exklusiv {n}"], "de/LTBGA": ["LTB Galaxy {n}"], "de/TGDD": ["TGDD {n}", "DDSH {n}"],
     "de/EEDCB": ["Entenhausen-Edition {n}", "Barks Library {n}"], "de/MMC": ["Micky Maus Comics {n}", "MMC {n}"],
     "de/MMP": ["Micky Maus präsentiert {n}", "MMP {n}"], "de/MMM": ["Mega Micky Maus {n}"],
-    "de/MM": ["MM {n}/{y}", "Micky Maus {n}/{y}", "MM {y}/{nn}"]
+    "de/LTBPR": ["LTB Premium {n}"], "de/LTBPRP": ["LTB Premium + {n}"], "de/LTBCR": ["LTB Crime {n}"],
+    "de/LTBE": ["LTB Enten-Edition {n}"], "de/LTBYC": ["LTB Young Comics {n}"], "de/LTBUP": ["LTB Ultimate {n}"],
+    "de/LTBRO": ["LTB Royal {n}"], "de/LTBWR": ["LTB Weltreise {n}"], "de/LTBX": ["LTB Extra {n}"],
+    "de/LTBHA": ["LTB Halloween {n}"], "de/LTBAV": ["LTB Advent {n}"], "de/LTBOS": ["LTB Ostern {n}", "LTB Sonderband Ostern {n}"],
+    "de/LTBSB": ["LTB Weihnachten {n}", "LTB Sonderband Weihnachten {n}"], "de/LTBW": ["LTB Winter {n}", "LTB Sonderband Winter {n}"],
+    "de/LTBCE": ["LTB Classic Edition {n}"], "de/LTBSE": ["LTB Sonderedition {n}"], "de/LTBEHS": ["LTB Entenhausen Stars {n}"],
+    "de/LTBPS": ["LTB präsentiert {n}"], "de/LTBSBM": ["LTB Sonderband {n}"], "de/DDCO": ["Donald Duck & Co {n}"],
+    "de/DD": ["DD {n}"], "de/PK": ["Panzerknacker & Co {n}"], "de/MMT": ["Micky Maus Taschenbuch {n}", "MMT {n}"]
   };
+  // Duckipedia has no pages for single issues of these (checked October 2026), so they aren't asked for
+  const NO_ISSUE_PAGES = new Set(["de/MM", "de/MMM", "de/MC", "ch/MMZ"]);
   function candidates(series, comic) {
     if (!series || !comic) return [];
     const code = series.code || "";
     const disney = !series.publisher || series.publisher === "Disney";   // Duckipedia covers Disney comics only
-    const german = code.startsWith("de/") || (disney && (String(series.country || "").toUpperCase() === "DE" || /german/i.test(comic.lang || "")));
-    if (!german) return [];
+    const german = /^(de|at|ch)\//.test(code) || (disney && (/^(DE|GER|DEU)$/.test(String(series.country || "").toUpperCase()) || /german/i.test(comic.lang || "")));
+    if (!german || NO_ISSUE_PAGES.has(code)) return [];
     const lab = String(comic.issueLabel || comic.issue || "");
     let m = /^(\d{4})\/(\d{1,3})$/.exec(lab), y = "", n = "";
-    if (m) { y = m[1]; n = String(+m[2]); } else if (/^\d+$/.test(lab)) n = String(+lab); else return [];
+    const v = /^(\d+)[A-Z]$/.exec(lab);   // variants (LTB 546A) share one page
+    if (m) { y = m[1]; n = String(+m[2]); } else if (/^\d+$/.test(lab)) n = String(+lab); else if (v) n = String(+v[1]); else return [];
     const pats = (PAGES[code] || []).concat(m ? [] : [series.name + " {n}"].concat(series.short ? [series.short + " {n}"] : []));
     return [...new Set(pats.filter(p => !p.includes("{y}") || y).map(p => p.replace("{n}", n).replace("{y}", y).replace("{nn}", String(n).padStart(2, "0"))))];
   }
