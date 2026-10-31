@@ -2522,6 +2522,9 @@ VIEWS.series = {
         <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row savebar"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+      <div class="card stack"><h3>Fill all Disney series</h3>
+        <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
+        <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
       ${duckipediaBulkCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(S.catalogue.built || "")} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
@@ -2559,6 +2562,23 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    $("#fillall") && ($("#fillall").onclick = async () => {
+      if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
+      grab();
+      const run = S.fillAll = { running: true, stop: false, msg: "" }, btn = $("#fillall"), prog = $("#fillprog");
+      btn.textContent = "Stop";
+      const list = S.series.filter(se => (se.publisher || DISNEY) === DISNEY && (se.name || se.code));
+      let changed = 0, warn = "";
+      for (let k = 0; k < list.length && !run.stop; k++) {
+        if (prog && prog.isConnected) prog.textContent = `${k + 1} of ${list.length}: ${list[k].name}`;
+        const got = await fillSeriesInfo(list[k]).catch(() => []);
+        if (got.length) changed++; if (got.warn) warn = got.warn;
+      }
+      try { if (changed) await saveSeries(); } catch (e) { warn = errText(e); }
+      run.running = false;
+      run.msg = (run.stop ? "Stopped. " : "Done. ") + changed + (changed === 1 ? " series got" : " series got") + " new details" + (warn ? ". " + warn : ".");
+      toast(run.msg); if (S.view === "series") renderKeep();
+    });
     document.querySelectorAll("[data-fillser]").forEach(b => b.onclick = async () => {
       grab(); const se = S.series[+b.dataset.fillser];
       if (!se.name && !se.code) { toast("Give the series a name or INDUCKS code first"); return; }
