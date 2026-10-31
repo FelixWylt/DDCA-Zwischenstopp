@@ -63,7 +63,7 @@ PUBLICATIONS
 
 issues in chosen publications: 21,281
 entries: 228,295, story versions: 115,409
-cover scans: 20,181 of 21,281 issues
+cover scans: 20,663 of 21,281 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -78,23 +78,23 @@ FILES
   inducks-de-MMP.json: 40 issues, 45 KB  e.g. 21 = de/MMP 21 1997-03 (6 stories)
   inducks-de-EEDCB.json: 100 issues, 65 KB  e.g. 51 = de/EEDCB 51 2018-08-03 (6 stories)
   inducks-it-TL.json: 3,793 issues, 3,823 KB  e.g. 1899 = it/TL 1899 1992-04-19 (5 stories)
-  inducks-it-TG.json: 739 issues, 710 KB  e.g. 369 = it/TG  369 1940-01-18 (9 stories)
-  inducks-se-KA.json: 3,631 issues, 3,659 KB  e.g. 1990/23 = se/KA1990-23 1990-06-04 (5 stories)
+  inducks-it-TG.json: 739 issues, 742 KB  e.g. 369 = it/TG  369 1940-01-18 (9 stories)
+  inducks-se-KA.json: 3,631 issues, 3,660 KB  e.g. 1990/23 = se/KA1990-23 1990-06-04 (5 stories)
   inducks-se-KAP.json: 589 issues, 800 KB  e.g. 318 = se/KAP 318 2005 (10 stories)
   inducks-se-X.json: 96 issues, 56 KB  e.g. 2012/04 = se/X 2012-04 2012 (4 stories)
   inducks-se-KABS.json: 25 issues, 42 KB  e.g. 2019/02 = se/KABS2019-02 2019 (11 stories)
-  inducks-se-WDS.json: 211 issues, 106 KB  e.g. 1969/10 = se/WDS1969-10 1969-10-06 (2 stories)
+  inducks-se-WDS.json: 211 issues, 107 KB  e.g. 1969/10 = se/WDS1969-10 1969-10-06 (2 stories)
   inducks-se-WDG.json: 20 issues, 6 KB  e.g. 1983/03 = se/WDG1983-03 1983-05-11 (1 stories)
   inducks-se-WDK.json: 32 issues, 13 KB  e.g. 1979/01 = se/WDK1979-01 1979 (8 stories)
   inducks-se-J.json: 224 issues, 144 KB  e.g. 1986/01 = se/J 1986-01 1986-01 (4 stories)
   inducks-se-BL.json: 53 issues, 28 KB  e.g. 1990/06 = se/BL 1990-06 1990-11-23 (3 stories)
   inducks-se-MP.json: 319 issues, 203 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
-  inducks-no-DD.json: 4,066 issues, 3,644 KB  e.g. 1993B35 = no/DD1993B35 1993-08-31 (3 stories)
+  inducks-no-DD.json: 4,066 issues, 3,645 KB  e.g. 1993B35 = no/DD1993B35 1993-08-31 (3 stories)
   inducks-ch-MMZ.json: 19 issues, 8 KB  e.g. 9 = ch/MMZ  9 1937-05 (1 stories)
   inducks-de-DDCO.json: 104 issues, 52 KB  e.g. 53 = de/DDCO 53 2018-04-13 (3 stories)
   inducks-it-PM.json: 495 issues, 593 KB  e.g. 314 = it/PM  314 2006-08 (8 stories)
   inducks-se-KAJ.json: 77 issues, 310 KB  e.g. 1980 = se/KAJ 1980 1979-12 (64 stories)
-  inducks-se-KAPS.json: 158 issues, 337 KB  e.g. 2015/06 = se/KAPS2015-06 2015 (15 stories)
+  inducks-se-KAPS.json: 158 issues, 338 KB  e.g. 2015/06 = se/KAPS2015-06 2015 (15 stories)
   inducks-se-ASP.json: 51 issues, 76 KB  e.g. 2019/05 = se/ASP2019-05 2019 (9 stories)
   inducks-se-FJL.json: 4 issues, 8 KB  e.g. 2019 = se/FJL 2019 2019 (16 stories)
   inducks-de-LTBUP.json: 48 issues, 61 KB  e.g. 25 = de/LTBUP25 2019-01-19 (12 stories)
