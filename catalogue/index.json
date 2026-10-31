@@ -9,7 +9,7 @@
    "code": "de/LTB",
    "title": "Lustiges Taschenbuch",
    "file": "inducks-de-LTB.json",
-   "issues": 666
+   "issues": 667
   },
   "ltb spezial": {
    "series": "LTB Spezial",
@@ -115,7 +115,7 @@
    "code": "se/KA",
    "title": "Kalle Anka & C:o",
    "file": "inducks-se-KA.json",
-   "issues": 3630
+   "issues": 3631
   },
   "kalle ankas pocket": {
    "series": "Kalle Ankas Pocket",
