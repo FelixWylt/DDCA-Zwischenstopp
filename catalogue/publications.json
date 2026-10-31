@@ -474,6 +474,12 @@
       "country": "it",
       "code": "it/ABB",
       "title": "Omaggio Abbonati"
+    },
+    {
+      "series": "Disney lingua latina",
+      "country": "it",
+      "code": "it/DLL",
+      "title": "Disney lingua latina"
     }
   ]
 }

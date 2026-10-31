@@ -1191,7 +1191,7 @@ ${isBook ? `
           <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
           ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
-          <label><span class="l">Genre</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Krimi"></label>` : ""}
+          <label class="wide"><span class="l">Genres</span><input id="f-genre" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Abenteuer (separate with commas)"></label>` : ""}
           <label><span class="l">Book series</span><input id="f-seriesName" list="bookseries" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "e.g. Harry Potter" : "e.g. Carl Barks Collection"}"></label>
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
@@ -2566,7 +2566,9 @@ async function fillSeriesInfo(se) {
     const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), exact = inducksCandidates(se).filter(x => norm(x[1]) === n);
     if (exact.length === 1) p = exact[0];
   }
-  if (se.code && !p && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi)\//.test(se.code)) got.warn = "INDUCKS has no publication with the code " + se.code + ": check it on inducks.org";
+  const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
+  if (badCode && p) { got.push("INDUCKS code corrected from " + se.code + " to " + p[0]); se.code = p[0]; }
+  else if (badCode) got.warn = "INDUCKS has no publication with the code " + se.code + ": check it on inducks.org";
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
   if (p) {
     set("code", p[0], "INDUCKS code"); set("name", p[1], "name");

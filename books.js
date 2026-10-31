@@ -101,11 +101,13 @@
   }
 
   // genre: databases send lists and catalogue codes ("Serie:The_Kane_Chronicles", "Juvenile Fiction / Fantasy & Magic"):
-  // keep the first real genre only
+  // keep up to three real genres, comma separated
   function oneGenre(g) {
-    const parts = String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").trim())
-      .filter(x => x && !/:/.test(x) && !/^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books)$/i.test(x) && x.length <= 40);
-    return parts[0] ? parts[0][0].toUpperCase() + parts[0].slice(1) : "";
+    const seen = new Set(), out = [];
+    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").trim())
+      .filter(x => x && !/:/.test(x) && !/^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books)$/i.test(x) && x.length <= 40)
+      .forEach(x => { const k = x.toLowerCase(); if (!seen.has(k) && out.length < 3) { seen.add(k); out.push(x[0].toUpperCase() + x.slice(1)); } });
+    return out.join(", ");
   }
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
