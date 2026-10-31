@@ -121,30 +121,11 @@ function valueOf(c) {
   return null;
 }
 // searches for finished sales of this comic or book on the marketplaces
-function soldLinks(c) {
-  const se = seriesById(c.seriesId);
-  let name, num = "", minus = [];
-  if (c.kind === "book") name = c.title || "", num = splitPeople(c.author)[0] || "";
-  else {
-    name = ((se ? se.name : c.seriesName) || "").replace(/\s*\([^)]*\)\s*$/, "");
-    const lab = String(c.issueLabel || c.issue || ""), m = /^(\d{4})[\/-](\d{1,3})(?:-(\d{1,3}))?/.exec(lab);
-    num = m ? [+m[2], m[3] ? +m[3] : "", m[1]].filter(Boolean).join(" ") : lab.replace(/^0+/, "");   // "1952/05" -> "5 1952", how sellers write it
-    // other series of yours that start the same way ("Micky Maus Magazin" for "Micky Maus Zeitung"): leave out their extra words
-    const words = norm(name).split(" "), mine = new Set(words);
-    S.series.forEach(o => {
-      if (!se || o.id === se.id) return;
-      const raw = String(o.name).replace(/\s*\([^)]*\)\s*$/, "").split(/\s+/), ow = raw.map(w => norm(w));
-      if (ow.length > 1 && ow[0] === words[0] && ow[1] === words[1]) raw.forEach((w, i) => { const lw = w.toLowerCase(); if (!mine.has(ow[i]) && ow[i].length > 2 && !minus.includes(lw)) minus.push(lw); });
-    });
-  }
-  const plain = encodeURIComponent([name, num].join(" ").trim());
-  // the INDUCKS title is how sellers usually write it ("Micky Maus" for the Magazin)
-  const ce = se && catEntry(se), phrase = (ce && ce.title && ce.title.length <= name.length ? ce.title : name).replace(/\s*\([^)]*\)\s*$/, "");
-  const ebay = encodeURIComponent([`"${phrase}"`, num].concat(minus.slice(0, 5).map(w => "-" + w)).join(" ").trim());   // eBay: exact phrase, minus words
-  const sw = se && seriesLang(se) === "Swedish";
-  const L = [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${ebay}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${plain}`], ["Ricardo", `https://www.ricardo.ch/de/s/${plain}`], ["Catawiki", `https://www.catawiki.com/de/s?q=${plain}`]];
-  if (sw) L.unshift(L.splice(1, 1)[0]);
-  return L.map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ");
+function soldLinks(c) {   // books only: single comic issues rarely sell on their own, so a search found nothing useful
+  if (c.kind !== "book") return "";
+  const e = encodeURIComponent([c.title, splitPeople(c.author)[0]].filter(Boolean).join(" "));
+  return [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${e}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${e}`], ["Ricardo", `https://www.ricardo.ch/de/s/${e}`]]
+    .map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ");
 }
 // the price ranges of one series, edited in the Series tab (saved as you type)
 function valueRulesHtml(key) {
@@ -172,7 +153,7 @@ function valueCard(own) {
   const fx = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {});
   const factors = `<details class="small"><summary>Condition factors</summary><div class="gfactors">${GRADES.map(([g, l]) => `<label><span class="l">${esc(l.split(" ")[0])}</span><input data-gf2="${g}" inputmode="decimal" value="${fx[g]}"></label>`).join("")}<label><span class="l">Not graded</span><input data-gf2="" inputmode="decimal" value="${fx[""]}"></label></div>
     <p class="muted" style="margin:4px 0 0">The price ranges are for Z1; other conditions are multiplied by these. Facsimiles count ${FACSIMILE_FACTOR * 100}%.</p></details>`;
-  if (!curs.length) return `<div class="card stack"><h3>Collection value</h3><p class="small muted" style="margin:0">No values yet. Add price ranges to your series in the Series tab (open a series › Value per issue), using sold prices from eBay, Tradera or Ricardo. Each comic also has links to its sold listings.</p>${factors}</div>`;
+  if (!curs.length) return `<div class="card stack"><h3>Collection value</h3><p class="small muted" style="margin:0">No values yet. Add price ranges to your series in the Series tab (open a series › Value per issue), using sold prices from eBay, Tradera or Ricardo. Books also have links to their sold listings.</p>${factors}</div>`;
   const top = list.sort((a, b) => b.total - a.total).slice(0, 20);
   const how = { checked: "checked", table: "table", estimate: "own estimate" };
   return `<div class="card stack"><div class="cardhead"><h3>Collection value</h3><span class="muted small">per currency, not converted</span></div>
@@ -1363,7 +1344,7 @@ ${isBook ? `
           <label><span class="l">Checked value <span class="muted">(sold price)</span></span><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
-            <br>Sold prices: ${soldLinks(d)}</div>
+${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : ""}</div>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
