@@ -269,6 +269,7 @@ async function boot() {
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
+    S.bookMeta = await getConfig("bookSeriesInfo") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     if (!(await getConfig("genresEnglish2")) && window.Books && Books.oneGenre) {
@@ -891,14 +892,20 @@ VIEWS.collection = {
     drawResults();
   }
 };
+// a book series shown like a comic series in "About this series"
+function bookAboutObj(key) {
+  if (!String(key || "").startsWith("book:")) return null;
+  const n = key.slice(5), m = bookInfo(n), size = (S.bookSizes || {})[n];
+  return { about: m.about, aboutSrc: m.aboutSrc, srcName: "Wikipedia", srcLic: "CC BY-SA", pubHouse: [m.author, m.publisher].filter(Boolean).join(" · "), format: m.genres, latestTxt: [m.years, size ? size + " volumes" : ""].filter(Boolean).join(" · ") };
+}
 // the series' description and facts (filled from INDUCKS / Duckipedia in Series), above its issues
 function seriesAbout(se) {
   if (!se || !(se.about || se.pubHouse || se.format)) return "";
-  const yrs = se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? "to issue " + se.latest : "";
+  const yrs = se.latestTxt != null ? se.latestTxt : se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? "to issue " + se.latest : "";
   const facts = [esc(se.pubHouse || ""), esc(se.format || ""), esc(yrs), se.code && `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(se.code)}" target="_blank" rel="noopener">INDUCKS ${esc(se.code)}</a>`];
   return `<details class="card serabout"${S.aboutOpen ? " open" : ""}><summary><strong>About this series</strong></summary>
     ${se.about ? `<p style="margin:8px 0 6px">${esc(se.about)}</p>` : ""}
-    <p class="small muted" style="margin:0">${facts.filter(Boolean).join(" · ")}${se.aboutSrc ? ` · Text: <a href="${esc(se.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GFDL 1.2)` : ""}</p></details>`;
+    <p class="small muted" style="margin:0">${facts.filter(Boolean).join(" · ")}${se.aboutSrc ? ` · Text: <a href="${esc(se.aboutSrc)}" target="_blank" rel="noopener">${se.srcName || "Duckipedia"}</a> (${se.srcLic || "GFDL 1.2"})` : ""}</p></details>`;
 }
 function drawResults() {
   const box = $("#results"); if (!box) return;
@@ -981,7 +988,7 @@ function drawResults() {
       : isBookUni(col.p)
       ? [{ label: "All", col: {} }, { label: col.p, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }]
       : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }];
-    html = crumbs(trail) + seriesAbout(seriesById(col.s)) +
+    html = crumbs(trail) + seriesAbout(seriesById(col.s) || bookAboutObj(col.s)) +
       `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` +
       (list.length ? '<div class="list">' + rows + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
   }
@@ -2301,7 +2308,7 @@ function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
-  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings });
+  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta });
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
@@ -2321,7 +2328,7 @@ function saveToDevice(file) {
 // backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
 const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
 async function backupText() {
-  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings });
+  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta });
   let bytes = new TextEncoder().encode(json), gz = false;
   if (typeof CompressionStream !== "undefined") {
     bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
@@ -2444,6 +2451,8 @@ VIEWS.backup = {
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
+            if (b.bookSizes && typeof b.bookSizes === "object") { S.bookSizes = Object.assign({}, S.bookSizes, b.bookSizes); await setConfig("bookSizes", S.bookSizes); }
+            if (b.bookSeriesInfo && typeof b.bookSeriesInfo === "object") { S.bookMeta = Object.assign({}, S.bookMeta, b.bookSeriesInfo); await setConfig("bookSeriesInfo", S.bookMeta); }
             if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
@@ -2661,31 +2670,105 @@ function bindArrangeCard() {
     } catch (e) { toast(errText(e)); go.disabled = false; }
   };
 }
-// ---- book series (kept as a name on each book) in the Series tab: rename, number of volumes ----
+// ---- book series (kept as a name on each book) in the Series tab: rename, volumes, info from Wikidata / Wikipedia ----
+const bookInfo = n => (S.bookMeta || {})[n] || {};
 function bookSeriesGroup() {
   const bySer = {};
   S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (bySer[c.seriesName] = bySer[c.seriesName] || []).push(c); });
   const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de"));
   if (!names.length) return "";
-  const part = (label, list) => list.length ? `<h4 class="sghead">${label}</h4>` + list.map(n => {
-    const bs = bySer[n], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, k = "book:" + n;
-    const authors = [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
+  const item = n => {
+    const bs = bySer[n], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, k = "book:" + n, m = bookInfo(n);
+    const authors = m.author || [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
     const size = (S.bookSizes || {})[n] || "";
     const meta = [authors, own + (own === 1 ? " book" : " books"), want ? want + " wanted" : "", size ? size + " volumes" : ""].filter(Boolean).join(" · ");
+    const f = (key, label, ph) => `<label><span class="l">${label}</span><input data-bk="${key}" value="${esc(m[key] || "")}" placeholder="${esc(ph || "")}"></label>`;
     return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([n, authors, "book"].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(n)}</span><span class="muted small">${esc(meta)}</span></summary>
       <div class="seriesrow bookrow" data-old="${esc(n)}">
         <label class="sr-name"><span class="l">Name</span><input data-bk="name" value="${esc(n)}"></label>
         <label><span class="l">Volumes in the series</span><input data-bk="size" type="number" min="1" inputmode="numeric" value="${esc(size)}" placeholder="${Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)) || ""}"></label>
-        <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}. ${size ? "" : "With the number of volumes, the gap grid and stats know what's missing."}</div>
-        <div class="wide row"><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button></div>
+        ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}
+        <label class="wide"><span class="l">About this series</span><textarea data-bk="about" rows="3">${esc(m.about || "")}</textarea></label>
+        ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}
+        <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div>
+        <div class="wide row"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button></div>
       </div></details>`;
-  }).join("") : "";
+  };
   const novels = names.filter(n => bySer[n].some(isNovel)), cbooks = names.filter(n => !novels.includes(n));
-  return `<details class="sgroup" data-u="Book series"${S.serOpen["u:Book series"] ? " open" : ""}><summary><span class="t">Book series</span><span class="muted small">${names.length} series</span></summary>${part("Books", novels)}${part("Comic books", cbooks)}</details>`;
+  const grp = (u, list) => list.length ? `<details class="sgroup" data-u="${u}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${u}</span><span class="muted small">${list.length} series</span></summary>${list.map(item).join("")}</details>` : "";
+  return grp("Book series", novels) + grp("Comic book series", cbooks);
+}
+// ---- Wikidata (facts) and Wikipedia (description) for a book series; empty fields only, then your own books fill the rest ----
+const WD = "https://www.wikidata.org/w/api.php";
+async function wdGet(params) {
+  const r = await fetch(WD + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)), { headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } });
+  if (!r.ok) throw new Error("Wikidata answered " + r.status); return r.json();
+}
+async function findSeriesEntity(name, author) {
+  const tries = [];
+  for (const q of [name, /^(the|die|der|das) /i.test(name) ? "" : "The " + name]) for (const lang of ["en", "de", "sv"]) if (q) tries.push([q, lang]);
+  const seen = new Set();
+  for (const [q, lang] of tries) {
+    const j = await wdGet({ action: "wbsearchentities", search: q, language: lang, uselang: "en", limit: "7", type: "item" });
+    const hits = (j.search || []).filter(x => !seen.has(x.id)); hits.forEach(x => seen.add(x.id));
+    const series = hits.filter(x => /\b(series|serie|reihe|trilogy|trilogie|saga|cycle|zyklus)\b/i.test(x.description || ""));
+    const sur = String(author || "").split(/\s+/).pop();
+    const best = (sur && series.find(x => norm(x.description).includes(norm(sur)))) || series[0];
+    if (best) return best.id;
+  }
+  return null;
+}
+async function wikiSummary(sitelinks) {
+  for (const w of ["enwiki", "dewiki", "svwiki"]) {
+    const t = sitelinks && sitelinks[w] && sitelinks[w].title; if (!t) continue;
+    try {
+      const r = await fetch(`https://${w.slice(0, 2)}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, "_"))}`);
+      if (r.ok) { const j = await r.json(); if (j.extract) return { text: j.extract.slice(0, 700), url: (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || `https://${w.slice(0, 2)}.wikipedia.org/wiki/${encodeURIComponent(t)}` }; }
+    } catch (e) {}
+  }
+  return null;
+}
+async function fillBookSeries(name) {
+  const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
+  const m = Object.assign({}, bookInfo(name)), got = [];
+  const set = (k, v, label) => { if (v && !m[k]) { m[k] = v; got.push(label); } };
+  const ownAuthor = [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
+  try {
+    const id = m.wikidata || await findSeriesEntity(name, ownAuthor);
+    if (id) {
+      m.wikidata = id;
+      const e = Object.values((await wdGet({ action: "wbgetentities", ids: id, props: "claims|sitelinks" })).entities || {})[0] || {};
+      const cl = p => ((e.claims || {})[p] || []).map(c => (c.mainsnak || {}).datavalue && c.mainsnak.datavalue.value).filter(Boolean);
+      const ids = p => cl(p).map(v => v.id).filter(Boolean);
+      const want = [...ids("P50"), ...ids("P123"), ...ids("P136")];
+      const labels = {};
+      if (want.length) { const j = await wdGet({ action: "wbgetentities", ids: [...new Set(want)].slice(0, 40).join("|"), props: "labels", languages: "en|de|sv" }); Object.values(j.entities || {}).forEach(x => { const l = x.labels || {}; labels[x.id] = (l.en || l.de || l.sv || {}).value || ""; }); }
+      const lab = p => ids(p).map(x => labels[x]).filter(Boolean);
+      set("author", lab("P50").slice(0, 2).join(", "), "author");
+      set("publisher", lab("P123").slice(0, 2).join(", "), "publisher");
+      set("genres", window.Books && Books.oneGenre ? Books.oneGenre(lab("P136").join(", ")) : lab("P136").slice(0, 3).join(", "), "genres");
+      const yr = p => cl(p).map(v => +(String(v.time || "").match(/^\+?(\d{4})/) || [])[1]).filter(Boolean);
+      const y0 = Math.min(...yr("P580"), ...yr("P577")), y1 = Math.max(...yr("P582"), ...yr("P577"));
+      if (isFinite(y0)) set("years", y0 + (isFinite(y1) && y1 > y0 ? "–" + y1 : ""), "years");
+      const parts = (cl("P2635")[0] || cl("P1113")[0] || {}).amount;
+      const vols = parts ? Math.round(+parts) : ids("P527").length;
+      if (vols && !(S.bookSizes || {})[name]) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: vols }); await setConfig("bookSizes", S.bookSizes); got.push("volumes"); }
+      if (!m.about) { const w = await wikiSummary(e.sitelinks); if (w) { m.about = w.text; m.aboutSrc = w.url; got.push("description"); } }
+    }
+  } catch (e) { got.warn = "Wikidata couldn't be reached"; }
+  // what the databases don't know comes from your own books
+  set("author", ownAuthor, "author");
+  set("publisher", [...new Set(bs.map(c => c.publisher).filter(Boolean))].slice(0, 2).join(", "), "publisher");
+  const ys = bs.map(c => +(String(c.date || "").match(/(\d{4})/) || [])[1]).filter(Boolean);
+  if (ys.length) set("years", Math.min(...ys) + (Math.max(...ys) > Math.min(...ys) ? "–" + Math.max(...ys) : ""), "years");
+  if (window.Books && Books.oneGenre) set("genres", Books.oneGenre(bs.map(c => c.genre).filter(Boolean).join(", ")), "genres");
+  S.bookMeta = Object.assign({}, S.bookMeta, { [name]: m });
+  await setConfig("bookSeriesInfo", S.bookMeta);
+  return got;
 }
 // saves renamed book series and volume counts (called by "Save series")
 async function saveBookSeries() {
-  const sizes = Object.assign({}, S.bookSizes || {}), fix = [];
+  const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}), fix = [];
   let changed = false;
   document.querySelectorAll(".bookrow").forEach(row => {
     const old = row.dataset.old, name = row.querySelector('[data-bk="name"]').value.trim(), size = parseInt(row.querySelector('[data-bk="size"]').value, 10) || "";
@@ -2694,10 +2777,15 @@ async function saveBookSeries() {
       S.comics.filter(c => c.kind === "book" && c.seriesName === old).forEach(c => fix.push(Object.assign({}, c, { seriesName: to })));
       if (sizes[old] && !sizes[to]) sizes[to] = sizes[old]; delete sizes[old];
       if (S.gapSeries === "book:" + old) S.gapSeries = "book:" + to;
+      if (meta[old]) { meta[to] = meta[to] || meta[old]; delete meta[old]; }
       changed = true;
     }
     if ((sizes[to] || "") !== size) { if (size) sizes[to] = size; else delete sizes[to]; changed = true; }
+    const m = Object.assign({}, meta[to] || {});
+    row.querySelectorAll("[data-bk]").forEach(inp => { const k = inp.dataset.bk; if (!["name", "size"].includes(k)) m[k] = inp.value.trim(); });
+    meta[to] = m;
   });
+  S.bookMeta = meta; await setConfig("bookSeriesInfo", meta);
   if (fix.length) await saveMany(fix, null, true);
   if (changed) { S.bookSizes = sizes; await setConfig("bookSizes", sizes); }
   return changed;
@@ -2749,8 +2837,8 @@ VIEWS.series = {
         <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
         <div class="row savebar"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
-      <div class="card stack"><h3>Fill all Disney series</h3>
-        <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
+      <div class="card stack"><h3>Fill all series</h3>
+        <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
       ${duckipediaBulkCard()}
       ${refreshCard()}
@@ -2790,6 +2878,13 @@ VIEWS.series = {
     $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    document.querySelectorAll("[data-bkfill]").forEach(b => b.onclick = async () => {
+      grab(); try { await saveBookSeries(); } catch (e) {}   // keep what was typed
+      b.disabled = true; b.textContent = "Looking up…";
+      const got = await fillBookSeries(b.dataset.bkfill);
+      toast((got.length ? "Filled in: " + got.join(", ") : "Nothing new found") + (got.warn ? ". " + got.warn : ""));
+      S.serOpen["book:" + b.dataset.bkfill] = true; renderKeep();
+    });
     document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
     bindRefresh();
     $("#fillall") && ($("#fillall").onclick = async () => {
@@ -2798,11 +2893,18 @@ VIEWS.series = {
       const run = S.fillAll = { running: true, stop: false, msg: "" }, btn = $("#fillall"), prog = $("#fillprog");
       btn.textContent = "Stop";
       const list = S.series.filter(se => (se.publisher || DISNEY) === DISNEY && (se.name || se.code));
+      const books = [...new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName))];
       let changed = 0, warn = "";
       for (let k = 0; k < list.length && !run.stop; k++) {
         if (prog && prog.isConnected) prog.textContent = `${k + 1} of ${list.length}: ${list[k].name}`;
         const got = await fillSeriesInfo(list[k]).catch(() => []);
         if (got.length) changed++; if (got.warn) warn = got.warn;
+      }
+      for (let k = 0; k < books.length && !run.stop; k++) {
+        if (prog && prog.isConnected) prog.textContent = `Book series ${k + 1} of ${books.length}: ${books[k]}`;
+        const got = await fillBookSeries(books[k]).catch(() => []);
+        if (got.length) changed++; if (got.warn) warn = got.warn;
+        await sleep(300);
       }
       try { if (changed) await saveSeries(); } catch (e) { warn = errText(e); }
       run.running = false;
