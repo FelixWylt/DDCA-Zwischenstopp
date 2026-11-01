@@ -42,12 +42,22 @@
     if (/\b(hft|häftad|flexband|broschur|broschiert|klappenbroschur|softcover|soft cover|trade paperback)\b/.test(t)) return "Softcover";
     return "";
   }
+  const NOT_SERIES = /\b(werk|werke|werkausgabe|ausgabe|gesammelte|sämtliche|classics|klassiker|bibliothek|bibliothèque|library|taschenbuch|taschenbücher|erläuterungen|lektüre|lektürehilfe|edition|reihe|collection|meisterwerke|bücherei|samlade|verk)\b|^(dtv|rororo|detebe|fischer|btb|suhrkamp|insel|reclam|goldmann|heyne|diogenes)\b/i;
+  function storySeries(fields, sub) {
+    const authorWorks = new Set(fields("800").map(f => tidy(sub(f, "t")[0]).toLowerCase()).filter(Boolean));
+    for (const f of fields("490")) {
+      const name = tidy(sub(f, "a")[0]), vol = tidy(sub(f, "v")[0]), n = +String(vol).replace(/[^\d.]/g, "");
+      if (!name || authorWorks.has(name.toLowerCase()) || NOT_SERIES.test(name) || n > 200) continue;
+      return { series: name, volume: vol };
+    }
+    return null;
+  }
   // DNB subject groups (Sachgruppen) that say something about the genre
   const SDNB = { B: "Fiction", K: "Kinder- und Jugendliteratur", "741.5": "Comics", "830": "Fiction", "833": "Fiction", "823": "Fiction", "839": "Fiction", "S": "" };
   // ---- Deutsche Nationalbibliothek (MARC 21 over SRU) ----
   function parseMarc(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
-    const recs = [...doc.getElementsByTagNameNS("*", "record")].filter(r => (r.getAttribute("type") || "Bibliographic") === "Bibliographic" && r.getElementsByTagNameNS("*", "datafield").length);
+    const recs = [...doc.getElementsByTagNameNS("*", "record")].filter(r => (r.getAttribute("type") || "Bibliographic") === "Bibliographic" && [...r.children].some(x => x.localName === "datafield"));
     return recs.map(rec => {
       const fields = tag => [...rec.getElementsByTagNameNS("*", "datafield")].filter(f => f.getAttribute("tag") === tag);
       const sub = (f, code) => f ? [...f.getElementsByTagNameNS("*", "subfield")].filter(s => s.getAttribute("code") === code).map(s => s.textContent) : [];
@@ -68,8 +78,9 @@
         title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
         publisher: tidy(first("264", "b") || first("260", "b")), year: year(first("264", "c") || first("260", "c")),
         pages, lang,
-        // a publisher's paperback number (dtv 21412, rororo 23315) isn't a book series
-        ...(+tidy(first("490", "v")).replace(/\D/g, "") > 200 ? {} : { series: tidy(first("490", "a")), volume: tidy(first("490", "v")) }),
+        // a publisher's paperback number (dtv 21412, rororo 23315), an author's collected works ("Das dramatische Werk", Werkausgabe)
+        // or a publisher's line ("Modern classics", "Königs Erläuterungen") isn't a book series
+        ...(storySeries(fields, sub) || {}),
         rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
         genre: fields("655").map(f => sub(f, "a")[0]).filter(Boolean)
           .concat(oneGenre(fields("650").map(f => sub(f, "a")[0]).filter(Boolean).join(", "), true))
