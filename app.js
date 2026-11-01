@@ -372,6 +372,7 @@ async function boot() {
     }
     S.valueRules = await getConfig("valueRules") || [];
     S.groupKeep = await getConfig("groupKeep") || [];
+    S.bookSeriesExtra = await getConfig("bookSeriesExtra") || [];
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
@@ -1117,7 +1118,7 @@ function seriesOptions(selected, label) {
 function pickerItems(opts) {
   const cnt = {}; S.comics.forEach(c => { const k = c.kind === "book" ? "book:" + (c.seriesName || "") : c.seriesId; cnt[k] = (cnt[k] || 0) + 1; });
   const items = S.series.map(s => ({ key: s.id, label: seriesLabel(s), short: s.short || "", group: (s.publisher || OTHER_PUB) + " · " + (s.group || OTHER_GROUP), uni: s.publisher || OTHER_PUB, code: (catEntry(s) || {}).code || s.code || "", n: cnt[s.id] || 0 }));
-  if (opts.books) { const names = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); }); Object.keys(names).forEach(n => items.push({ key: "book:" + n, label: n, short: "", group: names[n] ? "Book series" : "Book series (comic books)", uni: "Book series", code: "", n: cnt["book:" + n] || 0 })); }
+  if (opts.books) { const names = {}; (S.bookSeriesExtra || []).forEach(x => { names[x.name] = !!x.novel; }); S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); }); Object.keys(names).forEach(n => items.push({ key: "book:" + n, label: n, short: "", group: names[n] ? "Book series" : "Book series (comic books)", uni: "Book series", code: "", n: cnt["book:" + n] || 0 })); }
   return items;
 }
 function seriesKeyLabel(key) {
@@ -1221,7 +1222,8 @@ function bookGapsHtml() {
 }
 function bindBookGaps() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
-  const proto = mine[0] || {};
+  const extra = (S.bookSeriesExtra || []).find(x => x.name === name);
+  const proto = mine[0] || { bookType: extra && extra.novel ? "book" : "" };
   bindGapTabs(); bindGapHead(); bindGapPicker();
   $("#bsizego").onclick = async () => { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: parseInt($("#bsize").value, 10) || "" }); await setConfig("bookSizes", S.bookSizes); toast("Saved"); render(); };
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
@@ -1846,7 +1848,7 @@ function wishlistBySeries(wl) {
 VIEWS.gaps = {
   html() {
     if (S.gapTab === "wishlist") return wishlistView();
-    if (String(S.gapSeries || "").startsWith("book:") && S.comics.some(c => c.kind === "book" && c.seriesName === S.gapSeries.slice(5))) return bookGapsHtml();
+    if (String(S.gapSeries || "").startsWith("book:") && (S.comics.some(c => c.kind === "book" && c.seriesName === S.gapSeries.slice(5)) || (S.bookSeriesExtra || []).some(x => x.name === S.gapSeries.slice(5)))) return bookGapsHtml();
     const se = seriesById(S.gapSeries) || S.series[0];
     if (!se) return '<h2>Gaps &amp; wishlist</h2><div class="empty"><h3>No series set up</h3><p>Add your series under the Series tab first.</p></div>';
     const mine = S.comics.filter(c => c.seriesId === se.id);
@@ -2484,7 +2486,7 @@ function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 function backupFile(asText) {
-  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors });
+  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra });
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
@@ -2504,7 +2506,7 @@ function saveToDevice(file) {
 // backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
 const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
 async function backupText() {
-  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors });
+  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra });
   let bytes = new TextEncoder().encode(json), gz = false;
   if (typeof CompressionStream !== "undefined") {
     bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
@@ -2627,6 +2629,7 @@ VIEWS.backup = {
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
+            if (Array.isArray(b.bookSeriesExtra)) { const have = new Set((S.bookSeriesExtra || []).map(x => x.name)); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat(b.bookSeriesExtra.filter(x => x && x.name && !have.has(x.name))); await setConfig("bookSeriesExtra", S.bookSeriesExtra); }
             if (Array.isArray(b.valueRules)) { const ids = new Set((S.valueRules || []).map(r => r.id)); S.valueRules = (S.valueRules || []).concat(b.valueRules.filter(r => r && !ids.has(r.id))); await setConfig("valueRules", S.valueRules); }
             if (b.gradeFactors && typeof b.gradeFactors === "object") { S.gradeFactors = Object.assign({}, b.gradeFactors, S.gradeFactors); await setConfig("gradeFactors", S.gradeFactors); }
             if (b.bookSizes && typeof b.bookSizes === "object") { S.bookSizes = Object.assign({}, S.bookSizes, b.bookSizes); await setConfig("bookSizes", S.bookSizes); }
@@ -2870,6 +2873,7 @@ function bindArrangeCard() {
 const bookInfo = n => (S.bookMeta || {})[n] || {};
 function bookSeriesGroup() {
   const bySer = {};
+  (S.bookSeriesExtra || []).forEach(x => { bySer[x.name] = bySer[x.name] || []; });   // set up in the Series tab, no book yet
   S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (bySer[c.seriesName] = bySer[c.seriesName] || []).push(c); });
   const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de"));
   if (!names.length) return "";
@@ -2888,10 +2892,11 @@ function bookSeriesGroup() {
         ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}
         ${valueRulesHtml("book:" + n)}
         <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div>
-        <div class="wide row"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button></div>
+        <div class="wide row"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div>
       </div></details>`;
   };
-  const novels = names.filter(n => bySer[n].some(isNovel)), cbooks = names.filter(n => !novels.includes(n));
+  const isNovelSer = n => bySer[n].length ? bySer[n].some(isNovel) : !!((S.bookSeriesExtra || []).find(x => x.name === n) || {}).novel;
+  const novels = names.filter(isNovelSer), cbooks = names.filter(n => !novels.includes(n));
   const grp = (u, list) => list.length ? `<details class="sgroup" data-u="${u}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${u}</span><span class="muted small">${list.length} series</span></summary>${list.map(item).join("")}</details>` : "";
   return grp("Book series", novels) + grp("Comic book series", cbooks);
 }
@@ -2975,6 +2980,7 @@ async function saveBookSeries() {
       if (sizes[old] && !sizes[to]) sizes[to] = sizes[old]; delete sizes[old];
       if (S.gapSeries === "book:" + old) S.gapSeries = "book:" + to;
       if (meta[old]) { meta[to] = meta[to] || meta[old]; delete meta[old]; }
+      (S.bookSeriesExtra || []).forEach(x => { if (x.name === old) x.name = to; }); setConfig("bookSeriesExtra", S.bookSeriesExtra || []).catch(() => {});
       (S.valueRules || []).forEach(r => { if (r.s === "book:" + old) r.s = "book:" + to; }); setConfig("valueRules", S.valueRules || []).catch(() => {});
       changed = true;
     }
@@ -3036,7 +3042,8 @@ VIEWS.series = {
         <div class="serieslist">${rows}</div>
         <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
-        <div class="row savebar"><button id="addser">Add series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+        <div id="newbook"></div>
+        <div class="row savebar"><button id="addser">Add series</button><button id="addbookser" type="button">Add book series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
@@ -3124,6 +3131,29 @@ VIEWS.series = {
       render();
     });
     $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
+    $("#addbookser").onclick = () => {
+      const box = $("#newbook");
+      box.innerHTML = `<div class="confirm" style="display:grid;gap:8px"><label><span class="l">Name of the book series</span><input id="nbname" placeholder="e.g. Harry Potter, Carl Barks Collection"></label>
+        <div class="seg" role="group" aria-label="Kind"><button type="button" data-nbk="1" aria-pressed="true">Books</button><button type="button" data-nbk="0" aria-pressed="false">Comic books</button></div>
+        <div class="row"><button class="primary" id="nbgo" type="button">Create</button><button class="ghost" id="nbx" type="button">Cancel</button></div></div>`;
+      let novel = true;
+      box.querySelectorAll("[data-nbk]").forEach(b => b.onclick = () => { novel = b.dataset.nbk === "1"; box.querySelectorAll("[data-nbk]").forEach(x => x.setAttribute("aria-pressed", x === b)); });
+      $("#nbx").onclick = () => box.innerHTML = "";
+      $("#nbgo").onclick = async () => {
+        const name = $("#nbname").value.trim(); if (!name) { toast("Give the series a name"); return; }
+        const exists = (S.bookSeriesExtra || []).some(x => x.name === name) || S.comics.some(c => c.kind === "book" && c.seriesName === name);
+        if (exists) { toast(name + " already exists"); return; }
+        grab(); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat([{ name, novel }]);
+        await setConfig("bookSeriesExtra", S.bookSeriesExtra);
+        S.serOpen["u:" + (novel ? "Book series" : "Comic book series")] = true; S.serOpen["book:" + name] = true;
+        toast(name + " created. Add its number of volumes, then Fill from Wikidata."); render();
+      };
+      setTimeout(() => $("#nbname").focus(), 50);
+    };
+    document.querySelectorAll("[data-bkrm]").forEach(b => b.onclick = async () => {
+      S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== b.dataset.bkrm); await setConfig("bookSeriesExtra", S.bookSeriesExtra);
+      toast(b.dataset.bkrm + " removed"); renderKeep();
+    });
     $("#addser").onclick = () => {
       grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" });
       S.serFind = ""; S.serOpen["u:No universe yet"] = true; S.serOpen["new:" + (S.series.length - 1)] = true; render();
