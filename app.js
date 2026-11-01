@@ -1892,7 +1892,7 @@ VIEWS.gaps = {
     const clashSq = new Set(live.filter(c => clash.has(c.id)).flatMap(c => covered(c.issueLabel || c.issue)));
     const opts = seriesOptions(se.id, s => s.name) + bookSeriesOptions("");
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
-    const tag = se.short || se.name;
+    const tag = shortTag(se);
     const gridLabels = new Set();
     const cell = (label, txt) => {
       gridLabels.add(label);
@@ -2433,6 +2433,13 @@ function storyIndex(status) {
     });
   });
   return [...map.values()];
+}
+// a series' short name, or its initials when none is set: "Donald Duck (Taschenbuch)" -> "DD"
+function shortTag(se) {
+  if (!se) return "";
+  if (se.short) return se.short;
+  const w = String(se.name || "").replace(/\s*\([^)]*\)\s*$/, "").split(/[\s&+-]+/).filter(x => /^[A-Za-zÄÖÜÅäöüå0-9]/.test(x));
+  return w.length > 1 ? w.map(x => /^\d+$/.test(x) ? x : x[0].toUpperCase()).join("").slice(0, 5) : se.name;
 }
 function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short || se.name : c.seriesName || "") + " " + showLabel(c.issueLabel || c.issue || ""); }
 VIEWS.stories = {

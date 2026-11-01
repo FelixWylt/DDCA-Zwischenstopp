@@ -450,3 +450,7 @@ body.noscroll { overflow: hidden; }
 .gaphead .gappick .row { min-width: 0; }
 .gaphead .pickbtn { min-width: 0; flex: 1 1 auto; }
 .gaphead .row.between { flex-wrap: wrap; gap: 2px 10px; }
+
+/* the small series label under an issue number never runs into the next column */
+.item .num { min-width: 0; overflow: hidden; }
+.item .num small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
