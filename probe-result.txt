@@ -1,69 +1,18 @@
-
-===== LIBRIS xsearch json
-{"title": "Den nya lärlingen", "creator": "Flanagan, John", "isbn": "9789132198700", "type": "sound recording", "publisher": "B Wahlströms", "date": "2014", "language": "swe"}
-{"title": "Den nya lärlingen", "creator": "Flanagan, John", "type": "", "publisher": ["Johanneshov : MTM", ""], "date": ["2015", "[2021-04-27]"], "language": "swe"}
-{"title": "Den nya lärlingen", "creator": "Flanagan, John, 1944-2026", "isbn": "9789132163838", "type": "book", "publisher": ["Stockholm : B. Wahlström", "Falun : Scandbook"], "date": "2014", "language": "swe"}
-{"title": "Den nya lärlingen", "creator": "Flanagan, John, 1944-2026", "isbn": "9789132163845", "type": "E-book", "publisher": "B Wahlströms", "date": "2015", "language": "swe"}
-{"title": "Den nya lärlingen", "creator": "Flanagan, John", "type": "software, multimedia", "publisher": ["Johanneshov : MTM", ""], "date": ["2014", "[2014-08-14]"], "language": "swe"}
-{"title": "Krigarkungens sal", "creator": "Flanagan, John", "isbn": "9789132151347", "type": "book", "publisher": "B Wahlströms", "date": "2007", "language": "swe"}
-
-===== LIBRIS xsearch marcxml (CORS?)
-CORS: *
-008 251016s2014    sw | ||jo||||||   | swe|d | 020 $a9789132198700 $qMP3 format | 041 $aswe | 245 $aDen nya lärlingen / $cJohn Flanagan, Ingmar Wennerberg. | 300 $a11 tim., 34 min. | 490 $aSpejarens lärling | 655 $aLjudböcker $0https://id.kb.se/term/saogf/Ljudb%C3%B6cker $2saogf
---
-008 210427s2015    sw ||||jf|||||000 1|swe|c | 041 $aswe $heng | 084 $aHcg/P $2kssb/8 | 245 $aDen nya lärlingen / $cJohn Flanagan ; översättning: Ingmar Wennerberg. | 300 $a10 vol. (979 s. tryckt punktskrift) | 490 $aSpejarens lärling. | 650 $aFlickor $0https://id.kb.se/term/barn/Flickor $2barn | 650 $aHämnd $0https://id.kb.se/term/barn/H%C3%A4mnd $2barn | 650 $aKidnappningar $0https://id.kb.se/term/barn/Kidnappningar $2barn | 650 $aLärlingar $0https://id.kb.se/term/barn/L%C3%A4rlingar $2barn | 650 $aPrinsessor $0https://id.kb.se/term/barn/Prinsessor $2barn | 650 $aRiddare $0https://id.kb.se/term/barn/Riddare $2barn | 655 $aSkönlitteratur $0https://id.kb.se/term/saogf/Sk%C3%B6nlitteratur $2saogf | 655 $aÄventyrsböcker $0https://id.kb.se/term/barngf/%C3%84ventyrsb%C3%B6cker $2barngf | 655 $aFantasy $0https://id.kb.se/term/barngf/Fantasy $2barngf
---
-008 140206s2014    sw ||||j||||||000 1|swe|d | 020 $a9789132163838 $qinb. | 041 $aswe $heng | 084 $aHcg $2kssb/8 | 245 $aDen nya lärlingen / $cJohn Flanagan ; översättning: Ingmar Wennerberg. | 300 $a463 s. $c20 cm | 490 $aSpejarens lärling ; $v12 | 650 $aSpioner $0https://id.kb.se/term/barn/Spioner $2barn | 650 $aLärlingar $0https://id.kb.se/term/barn/L%C3%A4rlingar $2barn | 650 $aHämnd $0https://id.kb.se/term/barn/H%C3%A4mnd $2barn | 655 $aSkönlitteratur $0https://id.kb.se/term/saogf/Sk%C3%B6nlitteratur $2saogf | 655 $aUngdomsböcker $0https://id.kb.se/term/barngf/Ungdomsb%C3%B6cker $2barngf | 655 $aFantasy $0https://id.kb.se/term/barngf/Fantasy $2barngf
---
-008 140505s2015    sw ||||jo|||||000 1|swe|d | 020 $a9789132163845 | 041 $aswe $heng | 084 $aHcg $2kssb/8 | 245 $aDen nya lärlingen | 490 $aSpejarens lärling | 650 $aSpioner $0https://id.kb.se/term/barn/Spioner $2barn | 650 $aLärlingar $0https://id.kb.se/term/barn/L%C3%A4rlingar $2barn | 650 $aHämnd $0https://id.kb.se/term/barn/H%C3%A4mnd $2barn | 655 $aSkönlitteratur $0https://id.kb.se/term/saogf/Sk%C3%B6nlitteratur $2saogf | 655 $aUngdomsböcker $0https://id.kb.se/term/barngf/Ungdomsb%C3%B6cker $2barngf | 655 $aFantasy $0https://id.kb.se/term/barngf/Fantasy $2barngf
---
-
-===== LIBRIS XL find (json-ld) CORS + extent/genre
-CORS: https://felixwylt.github.io
-extent: []
-genreForm: []
-subject: ['"subject": [{"inScheme": {"code": "barn", "@type": "TopicScheme", "@id": "https://id.kb.se/term/barn", "titleByLang": {"sv": "Barnämnesord"}}, "@type": "Topic", "meta": {"mainEntity": {"@id": "https://id.kb.se/term/barn/Spioner"}, "@type": "Record", "@id": "https://libris.kb.se/rp358wk92hv3jrg"}, "prefLabel": "Spioner", "@id": "https://id.kb.se/term/barn/Spioner", "sameAs": [{"@id": "http://libris.kb.se/re']
-classification: ['"classification": [{"code": "He=c,u", "inScheme": {"code": "kssb", "@type": "ConceptScheme", "version": "8", "sameAs": [{"@id": "https://id.kb.se/term/kssb%2F8/"}']
---
-extent: []
-genreForm: []
-subject: ['"subject": [{"inScheme": {"code": "barn", "@type": "TopicScheme", "@id": "https://id.kb.se/term/barn", "titleByLang": {"sv": "Barnämnesord"}}, "@type": "Topic", "meta": {"mainEntity": {"@id": "https://id.kb.se/term/barn/Gisslan"}, "@type": "Record", "@id": "https://libris.kb.se/rp358vr92z7cqm8"}, "prefLabel": "Gisslan", "@id": "https://id.kb.se/term/barn/Gisslan", "sameAs": [{"@id": "http://libris.kb.se/re']
-classification: ['"classification": [{"code": "He=c,u", "inScheme": {"code": "kssb", "@type": "ConceptScheme", "version": "8", "sameAs": [{"@id": "https://id.kb.se/term/kssb%2F8/"}']
---
-
-===== ISBN 9789132198700
-OL data: pages None pagination None subjects []
-OL ed Expecting value: line 1 column 1 (char 0) ERR HTTP Error 404: Not Found
-Google Expecting value: line 1 column 1 (char 0) ERR HTTP Error 429: Too Many Requests
-DNB 300: [] 
-DNB 650/655: []
-
-===== ISBN 9789132163838
-OL data: pages None pagination None subjects []
-OL ed Expecting value: line 1 column 1 (char 0) ERR HTTP Error 404: Not Found
-Google Expecting value: line 1 column 1 (char 0) ERR HTTP Error 429: Too Many Requests
-DNB 300: [] 
-DNB 650/655: []
-
-===== ISBN 9789132163845
-OL data: pages None pagination None subjects []
-OL ed Expecting value: line 1 column 1 (char 0) ERR HTTP Error 404: Not Found
-Google Expecting value: line 1 column 1 (char 0) ERR HTTP Error 429: Too Many Requests
-DNB 300: [] 
-DNB 650/655: []
-
-===== ISBN 9783551354013
-OL data: pages 335 pagination None subjects ['series:Harry_Potter', 'Ghosts', 'Monsters', 'Vampires', 'Witches', 'Challenges and Overcoming Obstacles', 'Magic and Supernatural', 'Cleverness', 'School Life', 'school stories', 'Wizards', 'Magic']
-OL edition: pages 335 pagination None subjects None works [{'key': '/works/OL82563W'}]
-OL work subjects: ['series:Harry_Potter', 'Ghosts', 'Monsters', 'Vampires', 'Witches', 'Challenges and Overcoming Obstacles', 'Magic and Supernatural', 'Cleverness', 'School Life', 'school stories', 'Wizards', 'Magic', 'MAGIA', 'MAGOS', 'Juvenile fiction']
-Google Expecting value: line 1 column 1 (char 0) ERR HTTP Error 429: Too Many Requests
-DNB 300: ['tag="300" ind1=" " ind2=" ">\n      <subfield code="a">334 S.</subfield>\n      <subfield code="b">Ill.</subfield>\n      <subfield code="c">19 cm</subfield>\n    </datafield>'] 
-DNB 650/655: []
-
-===== ISBN 9780439023481
-OL data: pages 384 pagination None subjects ['severe poverty', 'starvation', 'oppression', 'effects of war', 'self-sacrifice', 'Science fiction', 'Apocalyptic fiction', 'Dystopian fiction', 'Fiction', 'Juvenile works', 'Novels', 'Young adult works']
-OL edition: pages 374 pagination 374p. subjects None works [{'key': '/works/OL5735363W'}]
-OL work subjects: ['severe poverty', 'starvation', 'oppression', 'effects of war', 'self-sacrifice', 'Science fiction', 'Apocalyptic fiction', 'Dystopian fiction', 'Fiction', 'Juvenile works', 'Novels', 'Young adult works', 'Juvenile fiction', 'contensts', 'Young adult fiction']
-Google Expecting value: line 1 column 1 (char 0) ERR HTTP Error 429: Too Many Requests
-DNB 300: [] 
-DNB 650/655: []
+percy jackson grekiska gudarna | 020 9789178033713 q=danskt band c=
+percy jackson grekiska gudarna | 020 9789178036004 q= c=
+spejarens lärling | 020 9789132198700 q=MP3 format c=
+spejarens lärling | 020 9789132163838 q=inb. c=
+spejarens lärling | 020 9789132163845 q= c=
+harry potter och de vises sten | 020 9177118111 q= c=59:90
+harry potter och de vises sten | 020 9789979865551 q=inbunden c=
+harry potter och de vises sten | 020 9789179532109 q=CD-skiva c=
+ISBN 9789178033713: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Percy Jackson och de grekiska gudarna format=- pages=446 genre=Fantasy, Young Adult
+ISBN 9789178036004: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Percy Jackson och de grekiska gudarna format=- pages=451 genre=Fantasy, Young Adult
+ISBN 9789132198700: LIBRIS isbn-query records=1 fmt=Audiobook | lookup sources=LIBRIS title=Den nya lärlingen format=Audiobook pages=- genre=-
+ISBN 9789132163838: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS title=Den nya lärlingen format=Hardcover pages=463 genre=Fantasy, Young Adult
+ISBN 9789132163845: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Den nya lärlingen format=- pages=- genre=Fantasy, Young Adult
+ISBN 9789979865551: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS+Open Library title=Harry Potter och de Vises Sten format=Hardcover pages=274 genre=Fantasy, Children's
+ISBN 9789179532109: LIBRIS isbn-query records=1 fmt=Audiobook | lookup sources=LIBRIS title=Harry Potter och de vises sten format=Audiobook pages=- genre=-
+ISBN 9783551354013: LIBRIS isbn-query records=1 fmt=- | lookup sources=Deutsche Nationalbibliothek+LIBRIS+Open Library title=Harry Potter und der Stein der Weisen format=Softcover pages=334 genre=Fantasy, Children's & Young Adult, Children's
+ISBN 9780439023481: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS+Open Library title=The Hunger Games format=Hardcover pages=374 genre=Science Fiction, Children's & Young Adult, Children's
+ISBN 9783423214124: LIBRIS isbn-query records=1 fmt=- | lookup sources=Deutsche Nationalbibliothek+LIBRIS+Open Library title=Der kleine Hobbit format=Softcover pages=333 genre=Fantasy, Young Adult, Children's
