@@ -52,7 +52,7 @@
     const books = fields("490").concat(fields("830"));
     if (partNo && !books.some(f => COLLECTED.test(tidy(sub(f, "a")[0]).normalize("NFC")))) return { series: tidy(sub(t245, "a")[0]).replace(/^\[([^\]]+)\]\s*/, "$1 "), volume: partNo };
     for (const f of books) {
-      const name = tidy(sub(f, "a")[0]), vol = tidy(sub(f, "v")[0]), n = +String(vol).replace(/[^\d.]/g, "");
+      const name = tidy(sub(f, "a")[0]).replace(/(\S)[\s-]+(serie|serien|series)$/i, "$1"), vol = tidy(sub(f, "v")[0]), n = +String(vol).replace(/[^\d.]/g, "");
       if (name && COLLECTED.test(name.normalize("NFC"))) return { series: name.replace(/\s*;.*$/, ""), volume: vol.replace(/^\D+/, "") };
       if (!name || authorWorks.has(name.toLowerCase()) || NOT_SERIES.test(name.normalize("NFC")) || n > 200) continue;
       return { series: name, volume: vol };
@@ -278,7 +278,9 @@
     return oneGenre(specific.length === 1 ? specific[0] : ranked[0] || "");
   }
   function langFromIsbn(isbn) {
-    const g = String(isbn).slice(3);
+    const t = String(isbn);
+    if (t.startsWith("979")) { const g9 = t.slice(3); return g9.startsWith("8") ? "English" : g9.startsWith("10") ? "French" : g9.startsWith("12") ? "Italian" : ""; }
+    const g = t.slice(3);
     const groups = [["0", "English"], ["1", "English"], ["2", "French"], ["3", "German"], ["82", "Norwegian"], ["87", "Danish"], ["88", "Italian"], ["91", "Swedish"], ["90", "Dutch"], ["94", "Dutch"], ["84", "Spanish"]];
     const hit = groups.find(([p]) => g.startsWith(p));
     return hit ? hit[1] : "";
