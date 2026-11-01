@@ -2799,7 +2799,7 @@ async function fillSeriesInfo(se) {
     const exact = exactInducks(se);
     if (exact.length === 1) p = exact[0];
   }
-  const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi|us|uk)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
+  const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|us|uk)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
   if (badCode && p) { got.push("INDUCKS code corrected from " + se.code + " to " + p[0]); se.code = p[0]; }
   else if (badCode) got.warn = "INDUCKS has no publication with the code " + se.code + ": check it on inducks.org";
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));

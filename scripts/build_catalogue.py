@@ -77,7 +77,7 @@ for t in targets:
 
 # 2. issues ---------------------------------------------------------------------------
 issues = {}
-DIR_COUNTRIES = {"de", "ch", "at", "se", "it", "dk", "fi", "us", "uk"}   # the languages collected, plus Danish/Finnish neighbours
+DIR_COUNTRIES = {"de", "ch", "at", "se", "it", "us", "uk"}   # the languages collected: German, Swedish, Italian, English
 directory = {}   # every publication of these countries: how many issues, which years
 for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "title", "pages", "oldestdate", "price"]):
     if r["publicationcode"] in chosen: issues[r["issuecode"]] = r
