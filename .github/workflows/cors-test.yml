@@ -13,10 +13,7 @@ jobs:
         run: |
           set +e
           exec > probe-result.txt 2>&1
-          UA="Mozilla/5.0 (Linux; Android 14) Mobile"
-          echo "=== seriekatalogen forms/scripts"; curl -s -L -A "$UA" https://www.seriekatalogen.se/ > sk.html; grep -io '<form[^>]*>\|<input[^>]*>\|/search[^"]*\|sok[^"]*"' sk.html | head -20; grep -o 'href="/[a-z]*/[^"]*"' sk.html | head -15
-          for u in magazine/kalle-anka-och-co magazine/kalle-ankas-pocket magazine/bjornligan magazine/farbror-joakim magazine/kalle-ankas-pocket-special "search?q=kalle" "sok?q=kalle" "?s=kalle"; do printf "%s -> " "$u"; curl -s -o /tmp/p -w "%{http_code} %{url_effective}\n" -L -A "$UA" "https://www.seriekatalogen.se/$u"; grep -o '<title>[^<]*' /tmp/p | head -1; done
-          echo "=== comicguide forms"; curl -s -L -A "$UA" https://www.comicguide.de/ > cg.html; grep -io '<form[^>]*>\|<input[^>]*name="[^"]*"[^>]*>' cg.html | head -12
+          python3 probe.py
       - name: Save
         if: always()
         run: |
