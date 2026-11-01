@@ -516,3 +516,9 @@ label.inline .l { margin: 0; }
 .sthumb { flex: none; width: 34px; height: 48px; border-radius: 3px; overflow: hidden; background: var(--line); }
 .sthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .sthumb.none { background: color-mix(in oklab, var(--accent) 10%, var(--surface)); }
+/* Stats: most valuable list – long titles shortened to one line, amount always on the right */
+.toplist { margin: 4px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; counter-reset: top; }
+.toplist li { counter-increment: top; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 6px; align-items: baseline; }
+.toplist li::before { content: counter(top) "."; color: var(--muted); }
+.toplist button.link { min-height: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
+.toplist .muted { white-space: nowrap; text-align: right; }

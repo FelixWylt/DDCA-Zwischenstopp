@@ -329,7 +329,7 @@ function valueCard(own) {
     <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Likely</th><th>Range</th><th>Checked</th><th>Table</th><th>Own est.</th></tr></thead><tbody>${curs.map(k => { const x = per[k], t = x.checked + x.table + x.estimate, lo = x.checked * 0.9 + (x.table + x.estimate) * 0.6, hi = x.checked * 1.1 + (x.table + x.estimate) * 1.4;
       return `<tr><td>${k}</td><td><strong>${fmt2(t)}</strong></td><td>${fmt2(lo)}–${fmt2(hi)}</td><td>${fmt2(x.checked)}</td><td>${fmt2(x.table)}</td><td>${fmt2(x.estimate)}</td></tr>`; }).join("")}</tbody></table></div>
     <p class="small muted" style="margin:0">${list.length} of ${own.length.toLocaleString("de-CH")} have a value${none ? ", " + none + " none yet" : ""}. The range allows ±10% for checked prices and −40%/+40% for table values and own estimates. Dealers usually pay well below these values.</p>
-    <div class="small"><strong>Most valuable: check these first</strong><ol style="margin:4px 0 0;padding-left:20px">${top.map(({ c, v, total }) => `<li><button class="link" data-open="${esc(c.id)}">${esc(c.kind === "book" ? c.title : comicTag(c))}</button> <span class="muted">${money(total, v.cur)} · ${how[v.how]}</span></li>`).join("")}</ol></div>
+    <div class="small"><strong>Most valuable: check these first</strong><ol class="toplist">${top.map(({ c, v, total }) => { const nm = c.kind === "book" ? c.title || "Untitled" : comicTag(c); return `<li><button class="link" data-open="${esc(c.id)}" title="${esc(nm)}">${esc(nm)}</button><span class="muted">${money(total, v.cur)} · ${how[v.how]}</span></li>`; }).join("")}</ol></div>
     ${factors}</div>`;
 }
 // ---- favourites and half-star ratings (0.5–5) ----

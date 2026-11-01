@@ -35,19 +35,20 @@
   // ---- Deutsche Nationalbibliothek (MARC 21 over SRU) ----
   function parseMarc(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
-    const recs = [...doc.getElementsByTagNameNS("*", "record")].filter(r => r.getAttribute("type") === "Bibliographic");
+    const recs = [...doc.getElementsByTagNameNS("*", "record")].filter(r => (r.getAttribute("type") || "Bibliographic") === "Bibliographic" && r.getElementsByTagNameNS("*", "datafield").length);
     return recs.map(rec => {
       const fields = tag => [...rec.getElementsByTagNameNS("*", "datafield")].filter(f => f.getAttribute("tag") === tag);
       const sub = (f, code) => f ? [...f.getElementsByTagNameNS("*", "subfield")].filter(s => s.getAttribute("code") === code).map(s => s.textContent) : [];
       const first = (tag, code) => { for (const f of fields(tag)) { const v = sub(f, code)[0]; if (v) return v; } return ""; };
       const authors = fields("100").map(f => personName(sub(f, "a")[0]));
       const others = fields("700").filter(f => !sub(f, "t").length);
-      const translator = others.filter(f => /bersetz/i.test(sub(f, "e").join(" "))).map(f => personName(sub(f, "a")[0])).join(", ");
+      const translator = others.filter(f => /bersetz|översätt|translat|trl/i.test(sub(f, "e").concat(sub(f, "4")).join(" "))).map(f => personName(sub(f, "a")[0])).join(", ");
       if (!authors.length) others.filter(f => /(Verfasser|Hrsg|Herausgeber)/i.test(sub(f, "e").join(" "))).forEach(f => authors.push(personName(sub(f, "a")[0])));
       const t245 = fields("245")[0];
       const title = tidy([tidy(sub(t245, "a")[0]), tidy(sub(t245, "b")[0])].filter(Boolean).join(" – "));
       const orig = fields("700").map(f => sub(f, "t")[0]).filter(Boolean)[0] || fields("240").map(f => sub(f, "a")[0])[0] || "";
-      const pages = (/(\d+)\s*S\b/.exec(first("300", "a")) || /(\d+)/.exec(first("300", "a")) || [])[1] || "";
+      const extent = first("300", "a");
+      const pages = (/(\d+)\s*(?:s\.|s\b|seiten|sidor|p\.|pages?\b)/i.exec(extent) || (/tim|min|vol|band|cd|mp3|punktskrift/i.test(extent) ? null : /^\s*\[?(\d+)\]?\s*$/.exec(extent)) || [])[1] || "";
       const isbn = fields("020").map(f => clean(sub(f, "a")[0])).find(x => x.length === 13) || fields("020").map(f => clean(sub(f, "a")[0]))[0] || "";
       return {
         title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig),
@@ -56,7 +57,8 @@
         // a publisher's paperback number (dtv 21412, rororo 23315) isn't a book series
         ...(+tidy(first("490", "v")).replace(/\D/g, "") > 200 ? {} : { series: tidy(first("490", "a")), volume: tidy(first("490", "v")) }),
         rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
-        genre: fields("655").concat(fields("650")).map(f => sub(f, "a")[0]).filter(Boolean)
+        genre: fields("655").map(f => sub(f, "a")[0]).filter(Boolean)
+          .concat(oneGenre(fields("650").map(f => sub(f, "a")[0]).filter(Boolean).join(", "), true))
           .concat(fields("084").filter(f => sub(f, "2")[0] === "sdnb").map(f => SDNB[sub(f, "a")[0]] || "")).filter(Boolean).join(", "), isbn
       };
     });
@@ -73,6 +75,11 @@
     return { title: tidy(x.title), authors: [].concat(x.creator || []).map(personName), publisher: tidy(p), year: year(x.date), lang: langName(x.language), genre: [].concat(x.subject || [], x.genre || []).filter(v => typeof v === "string").join(", "), isbn: clean([].concat(x.isbn || [])[0]) };
   }
   async function libris(query, n) {
+    try {
+      const xml = await getText("https://libris.kb.se/xsearch?format=marcxml&n=" + (n || 1) + "&query=" + encodeURIComponent(query));
+      const recs = parseMarc(xml).filter(r => r.title);
+      if (recs.length) return recs;
+    } catch (e) {}
     const j = await getJson("https://libris.kb.se/xsearch?format=json&n=" + (n || 1) + "&query=" + encodeURIComponent(query));
     return ((j.xsearch || {}).list || []).map(fromLibris);
   }
@@ -107,18 +114,18 @@
   // each in its own language. Common names become one English name; up to three genres are kept, comma separated.
   const GENRES = {
     "Fantasy": ["fantasy literature", "high fantasy", "urban fantasy", "fantasy", "fantasy fiction", "fantasy & magic", "fantasyroman", "fantasyromane", "fantasylitteratur", "fantasy-literatur", "fantastik", "fantasyberättelser"],
-    "Science Fiction": ["science fiction literature", "science fiction novel", "science-fiction", "science fiction", "science-fiction", "sf", "sci-fi", "scifi", "science fiction-roman", "sciencefiction"],
-    "Crime": ["crime novel", "detective fiction", "detective novel", "mystery fiction", "krimi", "krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "kriminalromaner", "detektivgeschichte"],
-    "Thriller": ["thriller", "thrillers", "suspense", "spänning", "spänningsromaner", "psychothriller"],
-    "Adventure": ["adventure fiction", "adventure novel", "abenteuer", "abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "abenteuerroman", "abenteuergeschichte"],
-    "Children's": ["juvenile fiction", "juvenile literature", "children's literature", "children's books", "children's novel", "kinderbuch", "kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
-    "Young Adult": ["young adult fiction", "young adult literature", "young adult novel", "jugendbuch", "jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
+    "Science Fiction": ["science fiction literature", "dystopian fiction", "dystopias", "dystopier", "apocalyptic fiction", "science fiction novel", "science-fiction", "science fiction", "science-fiction", "sf", "sci-fi", "scifi", "science fiction-roman", "sciencefiction"],
+    "Crime": ["crime novel", "detective fiction", "detective novel", "mystery fiction", "krimi", "krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "detektivböcker", "kriminalromaner", "detektivgeschichte"],
+    "Thriller": ["thriller", "thrillers", "suspense", "spänning", "spänningsromaner", "spänningsböcker", "psychothriller"],
+    "Adventure": ["adventure fiction", "adventure novel", "abenteuer", "abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "äventyrsböcker", "abenteuerroman", "abenteuergeschichte"],
+    "Children's": ["juvenile fiction", "juvenile literature", "juvenile works", "kapitelböcker", "barnböcker", "bilderböcker", "children's literature", "children's books", "children's novel", "kinderbuch", "kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
+    "Young Adult": ["young adult fiction", "young adult literature", "young adult works", "young adult novel", "jugendbuch", "jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
     "Children's & Young Adult": ["kinder- und jugendbuch", "kinder- und jugendliteratur", "kinder- und jugendbuch", "barn- och ungdomslitteratur", "barn- och ungdomsböcker"],
     "Novel": ["fiction", "general fiction", "literary fiction", "roman", "roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
-    "Historical Fiction": ["historical novel", "historischer roman", "historical fiction", "historischer roman", "historiska romaner", "historisk roman", "history fiction"],
-    "Horror": ["horror fiction", "horror literature", "horror", "horror tales", "horror stories", "skräck", "skräckromaner", "gruselgeschichte", "gruselroman"],
-    "Humour": ["comedy", "humorous fiction", "humor", "humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk"],
-    "Romance": ["romance novel", "liebesroman", "romance", "love stories", "liebesroman", "kärleksromaner", "liebesgeschichte"],
+    "Historical Fiction": ["historical novel", "historischer roman", "historical fiction", "historischer roman", "historiska romaner", "historisk roman", "historiska böcker", "history fiction"],
+    "Horror": ["horror fiction", "horror literature", "horror", "horror tales", "horror stories", "skräck", "skräckromaner", "skräckböcker", "gruselgeschichte", "gruselroman"],
+    "Humour": ["comedy", "humorous fiction", "humor", "humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk", "humoristiska böcker"],
+    "Romance": ["romance novel", "liebesroman", "romance", "love stories", "liebesroman", "kärleksromaner", "kärleksböcker", "liebesgeschichte"],
     "Non-fiction": ["sachbuch", "sachbuch", "nonfiction", "non-fiction", "facklitteratur"],
     "Biography": ["biografie", "biografie", "biographie", "biography", "biographies", "autobiography", "biografi", "biografier", "memoarer"],
     "Comics": ["comic book", "comic book series", "comic strip", "comic", "comic", "comics", "comics & graphic novels", "graphic novels", "graphic novel", "tecknade serier", "serier", "bildgeschichte", "manga"],
@@ -129,7 +136,7 @@
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => { GENRE_OF[k.toLowerCase()] = k; GENRES[k].forEach(v => { GENRE_OF[v] = k; }); });
-  const DROP = /^(serie|series|reihe|general|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
+  const DROP = /^(serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
   const GENERIC = new Set(["Novel", "Children's", "Young Adult", "Children's & Young Adult"]);
   function oneGenre(g, knownOnly) {
     const seen = new Set(), known = [], other = [];
