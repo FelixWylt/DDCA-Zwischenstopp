@@ -474,8 +474,6 @@ nav.tabs .short, nav.tabs .morebtn, nav.tabs .moremenu { display: none; }
   nav.tabs .short, nav.tabs .morebtn { display: flex; }
   nav.tabs .short { display: inline; }
   nav.tabs > a[aria-current="page"], nav.tabs .morebtn[aria-current="page"] { color: var(--accent); background: var(--accent-soft); border-bottom: 0; }
-  nav.tabs > a.addtab .ic { width: 30px; height: 30px; padding: 4px; border-radius: 50%; background: var(--accent); color: var(--surface); stroke-width: 2.6; margin-top: -10px; box-shadow: 0 2px 8px rgb(0 0 0 / 0.2); }
-  nav.tabs > a.addtab[aria-current="page"] { background: transparent; }
   nav.tabs .moremenu:not([hidden]) { display: grid; position: absolute; right: 8px; bottom: calc(100% + 6px); background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 6px; box-shadow: 0 8px 24px rgb(0 0 0 / 0.18); min-width: 170px; }
   nav.tabs .moremenu a { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; text-decoration: none; color: var(--ink); font-weight: 700; }
   nav.tabs .moremenu a[aria-current="page"] { color: var(--accent); background: var(--accent-soft); }
