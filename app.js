@@ -75,9 +75,31 @@ function arrangeSeries(se) {
 // in a comic, "Komödie" or "Gag" is humour, not a stage play
 function storyGenres(c) {
   if (!(window.Books && Books.oneGenre)) return "";
-  const g = (c.stories || []).map(s => s.genre).filter(Boolean).join(", ")
-    .replace(/\b(komödie|komödien|komik|gags?|slapstick|parodie|satire|witz|humoreske|comedy)\b/gi, "Humour").replace(/\b(schatzsuche|expedition|reise)\b/gi, "Adventure");
-  return Books.oneGenre(g, true);
+  const MAP = [[/gagstory|einseiter|gag|komödie|komik|slapstick|parodie|satire|humoreske|witz|comedy/i, "Humour"], [/kriminal|krimi|detektiv|mystery|agenten|spionage/i, "Crime"],
+    [/abenteuer|schatzsuche|expedition|reise|western|piraten|dschungel/i, "Adventure"], [/science-fiction|science fiction|weltraum|zeitreise|zukunft|erfindung|düsentrieb/i, "Science Fiction"],
+    [/superheld|phantomias|paperinik|duck avenger/i, "Superheroes"], [/horror|grusel|gespenst|geister/i, "Horror"], [/magie|zauber|hexe|fantasy|märchen|sagen/i, "Fantasy"],
+    [/historisch|geschichte der|antike|mittelalter/i, "Historical"], [/sport|fussball|fußball/i, "Sport"], [/liebe|romantik/i, "Romance"]];
+  const out = [];
+  (c.stories || []).forEach(s => String(s.genre || "").split(/\s*,\s*/).forEach(g => { if (!g) return; const hit = MAP.find(([re]) => re.test(g)); if (hit && !out.includes(hit[1])) out.push(hit[1]); }));
+  // "Kurzgeschichte", "Rahmengeschichte" describe a story's length or role, not its genre: left out
+  const freq = {}; (c.stories || []).forEach(s => String(s.genre || "").split(/\s*,\s*/).forEach(g => { const hit = MAP.find(([re]) => re.test(g)); if (hit) freq[hit[1]] = (freq[hit[1]] || 0) + 1; }));
+  return out.sort((a, b) => freq[b] - freq[a]).slice(0, 3).join(", ");
+}
+// books saved in a book series that is really one of your comic series ("Disney Special Books" -> Disney Special Books Panini)
+function strayBooks(seriesId) {
+  const out = [];
+  S.comics.forEach(c => {
+    if (c.kind !== "book" || !c.seriesName) return;
+    const k = norm(c.seriesName);
+    const se = S.series.find(s => (!seriesId || s.id === seriesId) && (norm(s.name) === k || (s.short && norm(s.short) === k) || (k.length >= 12 && norm(s.name).startsWith(k + " ")) || (catEntry(s) && norm(catEntry(s).title || "") === k)));
+    if (se) out.push({ c, se });
+  });
+  return out;
+}
+async function moveStrays(list) {
+  const fix = list.map(({ c, se }) => { const p = parseIssue(se, c.issueLabel || c.issue || ""); return Object.assign({}, c, { kind: "issue", seriesId: se.id, seriesName: se.name, bookType: "", issue: p.label || c.issue, issueLabel: p.label || c.issue, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
+  await saveMany(fix, null, true); fix.forEach(remember); announce();
+  return fix.length;
 }
 // the usual format of a series' issues, from its group, name or size: LTB and pockets are Taschenbuch / Pocket, magazines are Heft
 function seriesFormat(se) {
@@ -617,6 +639,22 @@ async function boot() {
       });
       if (fix.length) await saveMany(fix, null, true);
       await setConfig("lotDates1", true);
+    }
+    // once: comic genres the app had filled in with its first rules (Kurzgeschichte -> Short Stories, Gagstory ignored) are redone; typed ones stay
+    if (!(await getConfig("bookSeriesTidy1"))) {
+      const used = new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName).concat((S.bookSeriesExtra || []).map(x => x.name)));
+      const lower = new Set([...used].map(n => n.toLowerCase()));
+      let ch = false; const sz = Object.assign({}, S.bookSizes), mt = Object.assign({}, S.bookMeta);
+      Object.keys(sz).concat(Object.keys(mt)).forEach(k => { if (!used.has(k) && lower.has(k.toLowerCase())) { delete sz[k]; delete mt[k]; ch = true; } });
+      if (ch) { S.bookSizes = sz; S.bookMeta = mt; await setConfig("bookSizes", sz); await setConfig("bookSeriesInfo", mt); }
+      await setConfig("bookSeriesTidy1", true);
+    }
+    if (!(await getConfig("comicGenre2")) && window.Books && Books.oneGenre) {
+      const oldRule = c => Books.oneGenre((c.stories || []).map(s => s.genre).filter(Boolean).join(", ").replace(/\b(komödie|komödien|komik|gags?|slapstick|parodie|satire|witz|humoreske|comedy)\b/gi, "Humour").replace(/\b(schatzsuche|expedition|reise)\b/gi, "Adventure"), true);
+      const appNames = new Set(["Adventure", "Crime", "Short Stories", "Science Fiction", "Horror", "Fantasy", "Humour", "Mythology", "Drama", "Thriller", "Historical Fiction", "Fairy Tales", "Novel", "Children's", "Young Adult", "Comics", "Romance"]);
+      const fix = S.comics.filter(c => c.kind !== "book" && c.genre && storyGenres(c) && storyGenres(c) !== c.genre && (c.genre === oldRule(c) || String(c.genre).split(/\s*,\s*/).every(g => appNames.has(g)))).map(c => Object.assign({}, c, { genre: storyGenres(c) }));
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("comicGenre2", true); await setConfig("comicGenre1", true);
     }
     if (!(await getConfig("comicGenre1"))) {
       const fix = S.comics.filter(c => c.kind !== "book" && !c.genre && storyGenres(c)).map(c => Object.assign({}, c, { genre: storyGenres(c) }));
@@ -2319,12 +2357,16 @@ VIEWS.gaps = {
       return `<button class="cell ${cls}${eds.length ? " hased" : ""}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info + (eds.length ? " · " + all.filter(c => c.edition).map(c => c.edition).join(", ") : ""))}">${esc(txt)}${vtxt}${etxt}</button>`;
     };
     const ent0 = catEntry(se), cat0 = ent0 && S.catCache[ent0.file], perY = {};
-    if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); });
+    const perYSet = {};
+    if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
+    // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
+    const sparse = y => perYSet[y] && perYSet[y].size * 2 < perY[y];
+    const yearNums = (y, py) => { if (!sparse(y)) return Array.from({ length: py }, (_, i) => i + 1); const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     if (se.numbering === "year") {
       const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
       const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
-      const y0 = Math.min(+se.firstYear || 1950, ...ownYears), y1 = Math.max(+se.lastYear || new Date().getFullYear(), ...ownYears), per = Math.max(+se.perYear || 52, ownMax);
+      const y0 = Math.min(+se.firstYear || 1950, ...ownYears, ...(catYears.length ? [Math.min(...catYears)] : [])), y1 = Math.max(+se.lastYear || new Date().getFullYear(), ...ownYears), per = Math.max(+se.perYear || 52, ownMax);
       const unknown = mine.filter(c => /\?/.test(c.issueLabel || "")).length;
       const years = [];
       for (let y = y1; y >= y0; y--) years.push(y);
@@ -2334,12 +2376,12 @@ VIEWS.gaps = {
         const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
       };
-      total = years.reduce((a, y) => a + perFor(y), 0);
+      total = years.reduce((a, y) => a + (perFor(y) ? yearNums(y, perFor(y)).length : 0), 0);
       grid = years.map(y => {
         const py = perFor(y); if (!py) return "";
-        let cells = ""; for (let n = 1; n <= py; n++) cells += cell(y + "/" + String(n).padStart(2, "0"), n);
+        const nums = yearNums(y, py); let cells = ""; nums.forEach(n => { cells += cell(y + "/" + String(n).padStart(2, "0"), n); });
         const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
-        return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${py}</div></div><div class="cells">${cells}</div></div>`;
+        return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
@@ -2389,6 +2431,7 @@ VIEWS.gaps = {
             (k => k ? k + (k === 1 ? " comic isn't" : " comics aren't") + " in the grid" : "")(notInGrid.filter(x => !x.conflict && !x.hint).length)
           ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item whyitem" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
+      ${(st => st.length ? `<div class="banner warn small"><div>${st.length} of your ${st.length === 1 ? "copies is" : "copies are"} saved as ${st.length === 1 ? "a book" : "books"} in the book series “${esc(st[0].c.seriesName)}” (${esc(st.map(x => x.c.issue || x.c.title).join(", "))}), so the grid can't count ${st.length === 1 ? "it" : "them"}.</div><div class="row" style="margin-top:6px"><button type="button" class="primary" id="movestray">Move ${st.length === 1 ? "it" : "them"} into ${esc(se.short || se.name)}</button></div></div>` : "")(strayBooks(se.id))}
       ${seriesAbout(se)}
       <div id="cellpick"></div>
       <div id="gridbox" class="${gridClass()}">${grid}</div>`;
@@ -2399,6 +2442,7 @@ VIEWS.gaps = {
     bindGapTabs(); bindGapHead(); bindGapPicker();
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
     document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+    $("#movestray") && ($("#movestray").onclick = async () => { try { const n = await moveStrays(strayBooks(S.gapSeries)); toast(n + (n === 1 ? " copy moved" : " copies moved")); renderKeep(); } catch (e) { toast(errText(e)); } });
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
@@ -2457,7 +2501,11 @@ VIEWS.gaps = {
 const genresOf = c => String(c.genre || "").split(/\s*[,;\/]\s*/).map(x => x.trim()).filter(Boolean);
 function langOfEntry(c) { return c.lang || (c.kind !== "book" ? seriesLang(seriesById(c.seriesId) || {}) : "") || "Not set"; }
 const yearOf = d => +(String(d || "").slice(0, 4)) || 0;
-const addedOn = c => { const p = isoDate(c.purchaseDate || ""); return /^\d{4}-\d{2}/.test(p) ? p : String(c.createdAt || "").slice(0, 10); };
+// when it was bought: the purchase date ("2025" alone counts for that year); entries without one aren't guessed
+const boughtOn = c => { const p = isoDate(c.purchaseDate || ""); return /^\d{4}(-\d{2})?/.test(p) ? p : ""; };
+// when it was entered in the app
+const enteredOn = c => String(c.createdAt || "").slice(0, 10);
+const addedOn = boughtOn;
 const MISSING = {
   grade: { label: "condition", test: c => c.kind !== "book" && !c.grade },
   price: { label: "price paid", test: c => typeof c.pricePaid !== "number" && !c.lotId },
@@ -2478,7 +2526,8 @@ function pickInfo(pick) {
     fmt: [c => (c.format || "Not set") === val, `format ${val}`],
     author: [c => splitPeople(c.author).includes(val), `by ${val}`],
     miss: [c => !!MISSING[val] && MISSING[val].test(c), `without ${(MISSING[val] || {}).label || val}`],
-    added: [c => addedOn(c).startsWith(val), `added or bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
+    added: [c => boughtOn(c).startsWith(val), `bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
+    entered: [c => enteredOn(c).startsWith(val), `entered in the app ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
     read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`]
   }[type] || [() => false, "?"];
   return { test: c => c.status !== "wanted" && inScope(c) && T[0](c), label: T[1], scope };
@@ -2541,10 +2590,11 @@ VIEWS.stats = {
 
     // 3. completion of series with a known size
     const perSeries = S.series.map(s => {
-      const tot = s.numbering === "year" ? Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0)) : (+s.latest || 0);
+      const ce = catEntry(s), catN = ce && +ce.issues || 0;
+      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : (+s.latest || 0);
       const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book");
       // count the squares the gap grid shows as owned, so both screens agree
-      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); return s.numbering === "year" ? !!m && +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] >= 1 && +m[2] <= Math.max(+s.perYear || 0, 1) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
+      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
       const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
     }).filter(x => x.tot && x.n).sort((a, b) => b.n - a.n);
@@ -2592,8 +2642,9 @@ VIEWS.stats = {
     const all = owned(), wantAll = S.comics.filter(c => c.status === "wanted");
     const now = new Date(), ymNow = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0"), yNow = String(now.getFullYear());
     const valAll = valueChf(all), readAll = all.filter(c => c.read).length;
-    const spentIn = (list, prefix) => list.filter(c => typeof c.pricePaid === "number" && addedOn(c).startsWith(prefix)).reduce((a, c) => a + toCHF(c.pricePaid * (c.copies || 1), c.currency), 0);
-    const addedM = all.filter(c => addedOn(c).startsWith(ymNow)).length, readM = all.filter(c => String(c.readDate || "").startsWith(ymNow)).length, spentM = spentIn(all, ymNow);
+    const spentIn = (list, prefix) => list.filter(c => typeof c.pricePaid === "number" && boughtOn(c).startsWith(prefix)).reduce((a, c) => a + toCHF(c.pricePaid * (c.copies || 1), c.currency), 0);
+    const enteredM = all.filter(c => enteredOn(c).startsWith(ymNow)).length;
+    const addedM = all.filter(c => boughtOn(c).startsWith(ymNow)).length, readM = all.filter(c => String(c.readDate || "").startsWith(ymNow)).length, spentM = spentIn(all, ymNow);
     const M = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const ovHero = `<div class="hero card">
         <div class="hero-main"><div class="v">${nf(all.length)}</div><div class="k">entries you own</div>
@@ -2607,20 +2658,22 @@ VIEWS.stats = {
         </div></div>`;
     const ovMonth = `<div class="card stack"><div class="cardhead"><h3>This month</h3><span class="muted small">${M[now.getMonth()]} ${yNow}</span></div>
       <div class="row monthrow">
-        <button type="button" class="stat3"${addedM ? ` data-pick="added|${ymNow}|a"` : ""}><span class="v2">${nf(addedM)}</span><span class="k small muted">added or bought</span></button>
+        <button type="button" class="stat3"${addedM ? ` data-pick="added|${ymNow}|a"` : ""}><span class="v2">${nf(addedM)}</span><span class="k small muted">bought</span></button>
+        <button type="button" class="stat3"${enteredM ? ` data-pick="entered|${ymNow}|a"` : ""}><span class="v2">${nf(enteredM)}</span><span class="k small muted">entered</span></button>
         <button type="button" class="stat3"${readM ? ` data-pick="read|${ymNow}|a"` : ""}><span class="v2">${nf(readM)}</span><span class="k small muted">read</span></button>
         <div class="stat3"><span class="v2">CHF ${fmt2(spentM)}</span><span class="k small muted">spent</span></div>
       </div></div>`;
-    // collection over time: what was added (by purchase date, else the day it was entered) and what was spent
-    const perAdded = {}, perSpent = {};
-    all.forEach(c => { const d = addedOn(c).slice(0, 7); if (!d) return; perAdded[d] = (perAdded[d] || 0) + 1; if (typeof c.pricePaid === "number") perSpent[d] = (perSpent[d] || 0) + toCHF(c.pricePaid * (c.copies || 1), c.currency); });
+    // collection over time: by purchase date only; entries without one are counted separately, not guessed
+    const perAdded = {}, perSpent = {}; let noDate = 0;
+    all.forEach(c => { const d = boughtOn(c).slice(0, 7); if (!d) { noDate++; return; } perAdded[d] = (perAdded[d] || 0) + 1; if (typeof c.pricePaid === "number") perSpent[d] = (perSpent[d] || 0) + toCHF(c.pricePaid * (c.copies || 1), c.currency); });
     const inRange = per => Object.keys(per).filter(k => (S.statRange || "year") === "all" || k.startsWith(yNow)).reduce((a, k) => a + per[k], 0);
+    const yearOnly = (S.statRange || "year") === "year" ? (perAdded[yNow] || 0) : 0;
     const ovTime = `<div class="card stack"><div class="cardhead"><h3>Collection over time</h3>${rangeSwitch()}</div>
-      <div class="small"><strong>${nf(inRange(perAdded))}</strong> <span class="muted">added or bought ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
-      ${timeBars(perAdded, "entries added", "added", "a")}
+      <div class="small"><strong>${nf(inRange(perAdded))}</strong> <span class="muted">bought ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}${yearOnly ? " (" + yearOnly + " with only the year, not in a month)" : ""}</span></div>
+      ${timeBars(perAdded, "entries bought", "added", "a")}
       <div class="small" style="margin-top:6px"><strong>CHF ${fmt2(inRange(perSpent))}</strong> <span class="muted">spent ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
       ${timeBars(perSpent, "CHF spent", "", "a", n => "CHF " + fmt2(n))}
-      <p class="small muted" style="margin:0">Both counted by purchase date; entries without one count on the day they were entered in the app. Tap a bar in the upper chart to see what was added then.</p></div>`;
+      <p class="small muted" style="margin:0">By purchase date. ${noDate ? `<button type="button" class="link" data-pick="miss|date|a">${nf(noDate)} ${noDate === 1 ? "entry has" : "entries have"} none</button> and ${noDate === 1 ? "isn't" : "aren't"} shown. ` : ""}Tap a bar in the upper chart to see what was bought then.</p></div>`;
     // what is still missing, so values and reading stats can be trusted
     const missRows = [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"], ["Cover picture", "cover", "a"], ["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]]
       .map(([l, k, sc]) => { const pk = `miss|${k}|${sc}`, n = all.filter(pickInfo(pk).test).length; return [l, n, pk]; }).filter(x => x[1]);
@@ -3494,7 +3547,7 @@ async function fillSeriesInfo(se) {
     if (file) {
       seriesFromCatalogue(se, file, entry);
       // keep the latest issue up to date, not only when it was empty
-      if (se.numbering === "year") { const ys = Object.keys(file.issues || {}).map(l => +(/^(\d{4})\//.exec(l) || [])[1]).filter(Boolean); if (ys.length && Math.max(...ys) > (se.lastYear || 0)) se.lastYear = Math.max(...ys); }
+      if (se.numbering === "year") { const ys = Object.keys(file.issues || {}).map(l => +(/^(\d{4})\//.exec(l) || [])[1]).filter(Boolean); if (ys.length && Math.max(...ys) > (se.lastYear || 0)) se.lastYear = Math.max(...ys); if (ys.length && (!se.firstYear || Math.min(...ys) < +se.firstYear)) se.firstYear = Math.min(...ys); }
       else { const ns = Object.keys(file.issues || {}).filter(l => /^\d+$/.test(l)).map(Number); if (ns.length && Math.max(...ns) > (se.latest || 0)) se.latest = Math.max(...ns); }
     }
     if (JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest]) !== before) got.push(se.numbering === "year" ? "years" : "latest issue");
@@ -3720,24 +3773,37 @@ async function fillBookSeries(name) {
       const labels = {};
       if (want.length) { const j = await wdGet({ action: "wbgetentities", ids: [...new Set(want)].slice(0, 40).join("|"), props: "labels", languages: "en|de|sv" }); Object.values(j.entities || {}).forEach(x => { const l = x.labels || {}; labels[x.id] = (l.en || l.de || l.sv || {}).value || ""; }); }
       const lab = p => ids(p).map(x => labels[x]).filter(Boolean);
+      // only the right series counts: its author must be the author of your books ("Legend" by Marie Lu, not something else called Legend)
+      const sur = norm(String(ownAuthor.split(",")[0] || "").split(" ").pop());
+      if (sur && !lab("P50").some(a => norm(a).includes(sur))) {
+        if (m.wikidata === id) { ["wikidata", "about", "aboutSrc", "years", "genres", "publisher"].forEach(k => delete m[k]); got.push("wrong Wikidata match removed"); }
+        throw { skip: true };
+      }
+      if (!sur) {   // books without an author: too unsure to match; an earlier match is removed
+        if (m.wikidata === id) { ["wikidata", "about", "aboutSrc", "years", "genres", "publisher"].forEach(k => delete m[k]); got.push("unsure Wikidata match removed"); }
+        throw { skip: true };
+      }
       set("author", lab("P50").slice(0, 2).join(", "), "author");
       set("publisher", lab("P123").slice(0, 2).join(", "), "publisher");
       set("genres", window.Books && Books.oneGenre ? Books.oneGenre(lab("P136").join(", ")) : lab("P136").slice(0, 3).join(", "), "genres");
       const yr = p => cl(p).map(v => +(String(v.time || "").match(/^\+?(\d{4})/) || [])[1]).filter(Boolean);
       const y0 = Math.min(...yr("P580"), ...yr("P577")), y1 = Math.max(...yr("P582"), ...yr("P577"));
       if (isFinite(y0)) set("years", y0 + (isFinite(y1) && y1 > y0 ? "–" + y1 : ""), "years");
-      const parts = (cl("P2635")[0] || cl("P1113")[0] || {}).amount;
+      const parts = (cl("P2635")[0] || {}).amount;   // number of parts (P1113 is episodes of a TV series)
       wdVols = parts ? Math.round(+parts) : ids("P527").length;
       if (!m.about) { const w = await wikiSummary(e.sitelinks); if (w) { m.about = w.text; m.aboutSrc = w.url; got.push("description"); } }
     }
-  } catch (e) { got.warn = "Wikidata couldn't be reached"; }
+  } catch (e) { if (!(e && e.skip)) got.warn = "Wikidata couldn't be reached"; }
   // number of volumes: the national library of your books' language knows the translated edition (Spejarens lärling: 18),
   // Wikidata only the original series; a count only ever goes up, so one you set higher yourself stays
   const langs = bs.map(c => c.lang).filter(Boolean), lang = langs.sort((a, b) => langs.filter(x => x === b).length - langs.filter(x => x === a).length)[0] || "";
   let libVols = 0; try { libVols = window.Books && Books.seriesVolumes ? await Books.seriesVolumes(name, lang) : 0; } catch (e) {}
   const vols = libVols || wdVols, have = +(S.bookSizes || {})[name] || 0, ownMax = Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0));
   const best = Math.max(vols, ownMax);
-  if (best > have) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: best }); await setConfig("bookSizes", S.bookSizes); got.push("volumes (" + best + (libVols ? ", from the " + (lang === "German" ? "German" : lang === "Swedish" ? "Swedish" : "national") + " library" : "") + ")"); }
+  // a count the app filled in itself may be corrected either way; one you set yourself only goes up
+  const auto = m.volAuto != null ? +m.volAuto === have : !!(bookInfo(name) || {}).wikidata;
+  if (best && (best > have || (auto && best !== have))) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: best }); await setConfig("bookSizes", S.bookSizes); m.volAuto = best; got.push("volumes (" + best + (libVols ? ", from the " + (lang === "German" ? "German" : lang === "Swedish" ? "Swedish" : "national") + " library" : "") + ")"); }
+  else if (auto && !best && have) { const sz = Object.assign({}, S.bookSizes); delete sz[name]; S.bookSizes = sz; await setConfig("bookSizes", sz); delete m.volAuto; got.push("unsure volume count removed"); }
   // what the databases don't know comes from your own books
   set("author", ownAuthor, "author");
   set("publisher", [...new Set(bs.map(c => c.publisher).filter(Boolean))].slice(0, 2).join(", "), "publisher");
@@ -3819,6 +3885,9 @@ VIEWS.series = {
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
+      ${(st => st.length ? `<div class="card stack"><h3>Books that belong to a comic series</h3><p class="small muted" style="margin:0">These are saved as books, but their book series has the name of one of your comic series, so gap grid and stats can't count them as issues.</p>
+        <div class="list">${st.map(({ c, se }) => `<div class="small">${esc(c.title || "Untitled")} · book series “${esc(c.seriesName)}” ${esc(c.issue || "")} → <strong>${esc(se.short || se.name)} ${esc(c.issue || "")}</strong></div>`).join("")}</div>
+        <div class="row"><button type="button" class="primary" id="moveallstray">Move ${st.length === 1 ? "it" : "all " + st.length}</button></div></div>` : "")(strayBooks())}
       <div id="misscat">${missingCatalogueCard()}</div>
       ${duckipediaBulkCard()}
       ${refreshCard()}
@@ -3883,6 +3952,7 @@ VIEWS.series = {
     });
     document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
     bindRefresh(); bindRefreshBooks();
+    $("#moveallstray") && ($("#moveallstray").onclick = async () => { try { const n = await moveStrays(strayBooks()); toast(n + (n === 1 ? " copy moved" : " copies moved")); renderKeep(); } catch (e) { toast(errText(e)); } });
     $("#fillall") && ($("#fillall").onclick = async () => {
       if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
       grab();
