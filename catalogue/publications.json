@@ -486,6 +486,12 @@
       "country": "de",
       "code": "de/CBC",
       "title": "Carl Barks Collection"
+    },
+    {
+      "series": "Stål-Kalle Pocket",
+      "country": "se",
+      "code": "se/SK",
+      "title": "Stål-Kalle Pocket"
     }
   ]
 }
