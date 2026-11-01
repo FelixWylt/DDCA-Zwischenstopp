@@ -2763,7 +2763,23 @@ async function comicFromCode(d, code, ext) {
   const map = S.barcodes || {}, sid = map[code];
   d.barcode = code; d.barcodeExt = ext || ""; d.isbn = "";
   const se = sid && seriesById(sid);
-  if (!se) { render(); bookMsg(`<div class="banner">Barcode ${esc(code)}${ext ? " with add-on " + esc(ext) : ""} isn't known yet. Pick the series and the number and save: from then on the app recognises this magazine's barcode.</div>`); return; }
+  if (!se) {
+    // 977 barcodes carry the magazine's ISSN (digits 4–10 plus a check digit)
+    const issn = /^977\d{10}$/.test(code) ? (x => { const t = [...x].reduce((a, ch, i) => a + +ch * (8 - i), 0), c = (11 - t % 11) % 11; return x.slice(0, 4) + "-" + x.slice(4) + (c === 10 ? "X" : c); })(code.slice(3, 10)) : "";
+    const n0 = ext ? +ext.slice(-2) : 0;
+    render();
+    bookMsg(`<div class="banner"><div>Barcode ${esc(code)}${ext ? " with add-on " + esc(ext) : ""} isn't known yet${issn ? ` (magazine ISSN <a href="https://portal.issn.org/resource/ISSN/${issn}" target="_blank" rel="noopener">${issn}</a>)` : ""}. Pick its series${n0 ? "" : " and type the number"}, then save: from then on the app recognises this barcode.</div>
+      <div class="row" style="gap:8px;margin-top:8px"><button type="button" class="primary" id="bcpick">Pick the series</button></div>
+      <div class="small muted" style="margin-top:6px">Not one of your series yet? Add it under More › Series first (Fill from INDUCKS finds its details), then scan again.</div></div>`);
+    $("#bcpick") && ($("#bcpick").onclick = async () => {
+      const k = await pickSeries({ current: d.seriesId, title: "Series of this magazine" }); if (!k) return;
+      const s2 = seriesById(k); if (!s2) return;
+      d.seriesId = s2.id; d.seriesName = s2.name; if (n0 && s2.numbering !== "year") d.issue = String(n0);
+      render(); bookMsg(`<div class="banner ok">${esc(s2.short || s2.name)}${d.issue ? " " + esc(d.issue) : ""}. ${d.issue ? "" : "Type the number, then "}Save, and next time the barcode is recognised.</div>`);
+      if (d.issue && catEntry(s2)) setTimeout(() => $("#lookup") && $("#lookup").click(), 50);
+    });
+    return;
+  }
   d.seriesId = se.id; d.seriesName = se.name;
   const n = ext ? +ext.slice(-2) : 0;   // the add-on's last two digits are the issue number
   if (!n) { render(); bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}. The add-on with the number wasn't readable; type the number.</div>`); return; }

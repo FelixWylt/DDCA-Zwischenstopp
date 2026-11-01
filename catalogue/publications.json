@@ -492,6 +492,17 @@
       "country": "se",
       "code": "se/SK",
       "title": "Stål-Kalle Pocket"
+    },
+    {
+      "series": "Disney De Luxe",
+      "country": "it",
+      "code": "it/TLDLE",
+      "title": "De Luxe Edition",
+      "aliases": [
+        "Disney De Luxe",
+        "Disney De Luxe Edition",
+        "Topolino De Luxe Edition"
+      ]
     }
   ]
 }
