@@ -71,6 +71,14 @@ function arrangeSeries(se) {
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
 }
+// a comic's genres from its stories (Duckipedia: Abenteuer, Komik, Krimi ...), in the app's genre names
+// in a comic, "Komödie" or "Gag" is humour, not a stage play
+function storyGenres(c) {
+  if (!(window.Books && Books.oneGenre)) return "";
+  const g = (c.stories || []).map(s => s.genre).filter(Boolean).join(", ")
+    .replace(/\b(komödie|komödien|komik|gags?|slapstick|parodie|satire|witz|humoreske|comedy)\b/gi, "Humour").replace(/\b(schatzsuche|expedition|reise)\b/gi, "Adventure");
+  return Books.oneGenre(g, true);
+}
 // the usual format of a series' issues, from its group, name or size: LTB and pockets are Taschenbuch / Pocket, magazines are Heft
 function seriesFormat(se) {
   if (!se) return "";
@@ -541,6 +549,11 @@ async function boot() {
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
+    if (!(await getConfig("comicGenre1"))) {
+      const fix = S.comics.filter(c => c.kind !== "book" && !c.genre && storyGenres(c)).map(c => Object.assign({}, c, { genre: storyGenres(c) }));
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("comicGenre1", true);
+    }
     if (!(await getConfig("formatFill1"))) {
       const fix = S.comics.filter(c => c.kind !== "book" && !c.format && seriesFormat(seriesById(c.seriesId))).map(c => Object.assign({}, c, { format: seriesFormat(seriesById(c.seriesId)) }));
       if (fix.length) await saveMany(fix, null, true);
@@ -579,7 +592,8 @@ function stamp(c, keepDates) {
   body.id = body.id || newId(); delete body.k;
   if (!(keepDates && body.updatedAt)) body.updatedAt = new Date().toISOString();
   if (!body.createdAt) body.createdAt = body.updatedAt;
-  if (body.kind !== "book" && !body.format) { const f = seriesFormat(seriesById(body.seriesId)); if (f) body.format = f; }   // the series' usual format when none is chosen
+  if (body.kind !== "book" && !body.format) { const f = seriesFormat(seriesById(body.seriesId)); if (f) body.format = f; }
+  if (body.kind !== "book" && !body.genre) { const g = storyGenres(body); if (g) body.genre = g; }   // genres from the stories when none is set   // the series' usual format when none is chosen
   return body;
 }
 function remember(saved) {
@@ -971,7 +985,7 @@ function searchText(c) {
   const st = (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist, s.hero, s.dTitle, s.original, s.translator, s.characters, s.genre].join(" ")).join(" ");
   const dk = c.duckipedia && c.duckipedia.issue ? [c.duckipedia.issue.translator, c.duckipedia.issue.editor, c.duckipedia.issue.title].join(" ") : "";
   const se = seriesById(c.seriesId);
-  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.special, c.location, c.source, c.author, c.publisher, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
+  return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.special, c.location, c.source, c.author, c.publisher, c.genre, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
 }
 function sortComics(list) {
   const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
@@ -1557,7 +1571,7 @@ function detailHtml(c) {
   const facts = isBook ? [
       row("Series", t([c.seriesName, c.issue && "vol. " + c.issue].filter(Boolean).join(" "))), row("Author", t(c.author)), row("Translator", t(c.translator)), row("Original title", t(c.originalTitle)),
       row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Language", t(c.lang)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
-    : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)),
+    : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Genres", t(c.genre || storyGenres(c))),
       row("INDUCKS", c.inducks ? `<a href="https://inducks.org/issue.php?c=${encodeURIComponent(c.inducks).replace(/%20/g, "+")}" target="_blank" rel="noopener">${t(c.inducks)}</a>` : ""), row("Facsimile", c.facsimile ? "yes, reprint" : "")];
   const copy = c.status === "wanted"
     ? [row("Wishlist", "yes"), row("Maximum price", t(money(c.pricePaid, c.currency))), row("Notes", t(c.notes))]
@@ -1644,7 +1658,8 @@ ${isBook ? `
           <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
           ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
-          <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Adventure (separate with commas)"></label>` : ""}
+          ` : ""}
+          <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Adventure (separate with commas)"></label>
           <label class="wide"><span class="l">Book series</span>${d.newBookSeries
             ? `<input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "Name of the new series, e.g. Harry Potter" : "Name of the new series, e.g. Carl Barks Collection"}">`
             : `<span class="bseries"><button type="button" class="pickbtn wrap" id="f-bseries-btn"><span>${esc(d.seriesName || "No series (single book)")}</span><span class="chev" aria-hidden="true">▾</span></button>${d.seriesName ? '<button type="button" id="f-bseries-x">Single book</button>' : ""}</span><input type="hidden" id="f-seriesName" value="${esc(d.seriesName)}">`}</label>
@@ -1676,6 +1691,7 @@ ${isBook ? `
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label><span class="l">Format</span><select id="f-format">${["", "Heft", "Taschenbuch / Pocket", "Softcover", "Hardcover", "Album", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="${esc(storyGenres(d) ? "From the stories: " + storyGenres(d) : "e.g. Humour, Adventure (separate with commas)")}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>

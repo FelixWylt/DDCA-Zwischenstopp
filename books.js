@@ -231,6 +231,8 @@
     if (!data.genre && data.title) data.genre = await genreFromOtherEditions(data, isbn);
     if (!data.cover) data.cover = "https://covers.openlibrary.org/b/isbn/" + isbn + "-M.jpg?default=false";
     data.isbn = isbn;
+    // no database names the language: the ISBN's country group usually does (978-0/1 English, 978-3 German, 978-91 Swedish ...)
+    if (!data.lang) data.lang = langFromIsbn(isbn);
     return { isbn, sources: hits.map(x => x.name), data };
   }
   // a school or study edition often has no genre of its own: take it from other editions of the same work
@@ -265,6 +267,12 @@
     const keep = specific.filter(k => count[k] >= 2 && count[k] * 2 >= top);
     if (keep.length) return oneGenre(keep.join(", "));
     return oneGenre(specific.length === 1 ? specific[0] : ranked[0] || "");
+  }
+  function langFromIsbn(isbn) {
+    const g = String(isbn).slice(3);
+    const groups = [["0", "English"], ["1", "English"], ["2", "French"], ["3", "German"], ["82", "Norwegian"], ["87", "Danish"], ["88", "Italian"], ["91", "Swedish"], ["90", "Dutch"], ["94", "Dutch"], ["84", "Spanish"]];
+    const hit = groups.find(([p]) => g.startsWith(p));
+    return hit ? hit[1] : "";
   }
   // title/author search: several catalogues, one list without duplicates
   async function search(q) {
