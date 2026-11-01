@@ -1,13 +1,5 @@
-DNB: 020 $a9783150189146 $cBroschur $9978-3-15-018914-6 | 130 $0(DE-588)4042046-2 $0https://d-nb.info/gnd/4042046-2 $0(DE-101)040420469 $aNibelungenlied $2gnd | 245 $aDas Nibelungenlied $bMittelhochdeutsch/Neuhochdeutsch $cnach der Handschrift B herausgegeben von Ursula Schulze ; ins Neuhochdeutsche übersetzt und kommentiert von Siegfried Grosse | 700 $81\p $0(DE-588)123892988 $0https://d-nb.info/gnd/123892988 $0(DE-101)123892988 $aSchulze, Ursula $d1936-2020 $eHerausgeber $4edt $2gnd | 700 $82\p 
-DNB: 020 $a9783150141908 $cBroschur : EUR 9.80 (DE), EUR 10.10 (AT) $9978-3-15-014190-8 | 020 $a3150141907 $93-15-014190-7 | 130 $0(DE-588)4042046-2 $0https://d-nb.info/gnd/4042046-2 $0(DE-101)040420469 $aNibelungenlied $2gnd | 245 $aDas Nibelungenlied $cübersetzt von Felix Genzmer ; Anmerkungen und Nachwort von Bernhard Sowinski | 700 $81\p $0(DE-588)118716875 $0https://d-nb.info/gnd/118716875 $0(DE-101)118716875 $aGenzmer, Felix $d1878-1959 $eÜbersetzer $4trl $2gnd
-DNB: 020 $a9783159619088 $9978-3-15-961908-8 | 130 $87\p $0(DE-588)4042046-2 $0https://d-nb.info/gnd/4042046-2 $0(DE-101)040420469 $aNibelungenlied $2gnd | 245 $aDas Nibelungenlied $bReclams Universal-Bibliothek | 700 $83\p $aGrenzmer, Felix $eÜbersetzer $4trl | 700 $84\p $0(DE-588)115490256 $0https://d-nb.info/gnd/115490256 $0(DE-101)115490256 $aSowinski, Bernhard $d1931-2005 $eKommentarverfasser $4wac $2gnd | 700 $85\p $0(DE-588)115490256 $0https://d-nb.info/gnd/115490256 $0(DE-101)115490256 $aS
-DNB: 020 $a9783150180815 $cBroschur $9978-3-15-018081-5 | 130 $0(DE-588)4042046-2 $0https://d-nb.info/gnd/4042046-2 $0(DE-101)040420469 $aNibelungenlied $2gnd | 245 $aDas Nibelungenlied $beine Auswahl $cübersetzt und herausgegeben von Bernhard Sowinski | 700 $0(DE-588)115490256 $0https://d-nb.info/gnd/115490256 $0(DE-101)115490256 $aSowinski, Bernhard $d1931-2005 $eÜbersetzer $4trl $eHerausgeber $4edt $2gnd
-DNB: 020 $a9783150176047 $ckart. : EUR 8.80 $9978-3-15-017604-7 | 100 $0(DE-588)123892988 $0https://d-nb.info/gnd/123892988 $0(DE-101)123892988 $aSchulze, Ursula $d1936-2020 $eVerfasser $4aut $2gnd | 245 $aDas Nibelungenlied $cUrsula Schulze
-  → 9783150189146 Das Nibelungenlied – Mittelhochdeutsch/Neuhochdeutsch | authors=["Ursula Schulze","Siegfried Grosse"] | Deutsche Nationalbibliothek+LIBRIS+Open Library
-  → 9783150141908 Das Nibelungenlied | authors=undefined | Deutsche Nationalbibliothek
-  → 9783159619088 Das Nibelungenlied – Reclams Universal-Bibliothek | authors=["Bernhard Sowinski"] | Deutsche Nationalbibliothek
-LIBRIS: 020 $a9783476041401 | 020 $z9783476150073(PRINT) | 100 $aHoffmann, Werner | 245 $aNibelungenlied
-LIBRIS: 100 $aWeber, Gottfried $4aut | 245 $aNibelungenlied / $cGottfried Weber ; in Verbindung mit Werner Hoffmann. | 700 $aHoffmann, Werner $4oth
-LIBRIS: 020 $a9783476997838 | 020 $z9783476997845(PRINT) | 100 $aGottfried Weber | 245 $aNibelungenlied
-  → 9783476041401 Nibelungenlied | authors=["Werner Hoffmann"] | LIBRIS
-  → 9783476997838 Nibelungenlied | authors=["Gottfried Weber"] | LIBRIS
+9783150189146 Das Nibelungenlied – Mittelhochdeutsch/Neuhochdeutsch | authors=["Anonymous"] translator=Siegfried Grosse
+9783150141908 Das Nibelungenlied | authors=["Anonymous"] translator=Felix Genzmer
+9783159619088 Das Nibelungenlied – Reclams Universal-Bibliothek | authors=["Anonymous"] translator=Felix Grenzmer
+9783150176047 Das Nibelungenlied | authors=["Ursula Schulze"] translator=-
+9783150002308 Der Sandmann | authors=["E. T. A. Hoffmann"] translator=-
