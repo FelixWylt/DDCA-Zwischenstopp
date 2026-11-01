@@ -133,7 +133,8 @@ function collectorLinks(key) {
   const se = seriesById(key), nm = collectorName(key); if (!nm) return "";
   const lang = se ? seriesLang(se) : "", look = site => `https://duckduckgo.com/?q=${encodeURIComponent("site:" + site + " " + nm)}`;
   const src = [lang !== "Swedish" ? `<a href="${look("comicguide.de")}" target="_blank" rel="noopener">Comicguide.de</a>` : "", lang === "Swedish" || !lang ? `<a href="https://www.seriesam.com/cgi-bin/guide?s=${encodeURIComponent(nm.split(/\s+/).slice(0, 2).join(" ").toUpperCase())}&covers=ON" target="_blank" rel="noopener">Seriesam guide</a> <span class="muted">(shop price; between collectors about half)</span>` : ""].filter(Boolean).join(" · ");
-  return src;
+  // Seriekatalogen.se, the Swedish price guide: its title pages have their own names, so a site search finds the series
+  return src + (lang === "Swedish" || !lang ? ` · <a href="${look("seriekatalogen.se")}" target="_blank" rel="noopener">Seriekatalogen</a>` : "");
 }
 // the price ranges of one series, edited in the Series tab (saved as you type)
 function valueRulesHtml(key) {
