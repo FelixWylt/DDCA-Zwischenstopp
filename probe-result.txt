@@ -1,18 +1,76 @@
-percy jackson grekiska gudarna | 020 9789178033713 q=danskt band c=
-percy jackson grekiska gudarna | 020 9789178036004 q= c=
-spejarens lärling | 020 9789132198700 q=MP3 format c=
-spejarens lärling | 020 9789132163838 q=inb. c=
-spejarens lärling | 020 9789132163845 q= c=
-harry potter och de vises sten | 020 9177118111 q= c=59:90
-harry potter och de vises sten | 020 9789979865551 q=inbunden c=
-harry potter och de vises sten | 020 9789179532109 q=CD-skiva c=
-ISBN 9789178033713: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Percy Jackson och de grekiska gudarna format=- pages=446 genre=Fantasy, Young Adult
-ISBN 9789178036004: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Percy Jackson och de grekiska gudarna format=- pages=451 genre=Fantasy, Young Adult
-ISBN 9789132198700: LIBRIS isbn-query records=1 fmt=Audiobook | lookup sources=LIBRIS title=Den nya lärlingen format=Audiobook pages=- genre=-
-ISBN 9789132163838: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS title=Den nya lärlingen format=Hardcover pages=463 genre=Fantasy, Young Adult
-ISBN 9789132163845: LIBRIS isbn-query records=1 fmt=- | lookup sources=LIBRIS title=Den nya lärlingen format=- pages=- genre=Fantasy, Young Adult
-ISBN 9789979865551: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS+Open Library title=Harry Potter och de Vises Sten format=Hardcover pages=274 genre=Fantasy, Children's
-ISBN 9789179532109: LIBRIS isbn-query records=1 fmt=Audiobook | lookup sources=LIBRIS title=Harry Potter och de vises sten format=Audiobook pages=- genre=-
-ISBN 9783551354013: LIBRIS isbn-query records=1 fmt=- | lookup sources=Deutsche Nationalbibliothek+LIBRIS+Open Library title=Harry Potter und der Stein der Weisen format=Softcover pages=334 genre=Fantasy, Children's & Young Adult, Children's
-ISBN 9780439023481: LIBRIS isbn-query records=1 fmt=Hardcover | lookup sources=LIBRIS+Open Library title=The Hunger Games format=Hardcover pages=374 genre=Science Fiction, Children's & Young Adult, Children's
-ISBN 9783423214124: LIBRIS isbn-query records=1 fmt=- | lookup sources=Deutsche Nationalbibliothek+LIBRIS+Open Library title=Der kleine Hobbit format=Softcover pages=333 genre=Fantasy, Young Adult, Children's
+020 $a9783129303023 $c: EUR 9.90 (DE), EUR 10.20 (AT) $9978-3-12-930302-3 | 020 $a3129303022 $93-12-930302-2 | 245 $aDer Besuch der alten Dame von Friedrich Dürrenmatt - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Szenenanalyse, Prüfungsaufgaben uvm. $cFriedrich Dürrenmatt | 264 $aStuttgart $bKlett Lerntraining bei PONS Langenscheidt GmbH $c2024 | 490 $aKönigs Erläuterungen $v366 | 830 $aKönigs Erläuterungen $v366
+020 $a9783804470767 $9978-3-8044-7076-7 | 020 $a3804470769 $93-8044-7076-9 | 245 $aDer Besuch der alten Dame von Friedrich Dürrenmatt $bTextanalyse und Interpretation mit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse und Prüfungsaufgaben mit Lösungen uvm. (Königs Erläuterungen - Lektürehilfe) $cFriedrich Dürrenmatt | 264 $aHollfeld $bBange, C $c2022 | 490 $aKönigs Erläuterungen $v366 | 830 $aKönigs Erläuterungen $v366
+020 $a9783804460768 $9978-3-8044-6076-8 | 020 $a3804460763 $93-8044-6076-3 | 245 $aDer Besuch der alten Dame von Friedrich Dürrenmatt $bTextanalyse und Interpretation mit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse und Prüfungsaufgaben mit Lösungen uvm. (Königs Erläuterungen - Lektürehilfe) $cFriedrich Dürrenmatt | 264 $aHollfeld $bBange, C $c2022 | 490 $aKönigs Erläuterungen $v366 | 830 $aKönigs Erläuterungen $v366
+245 $aDer Besuch der alten Dame $btragische Komödie ; Hörspiel $cFriedrich Dürrenmatt. BR, Bayern 2. Hörspiel mit Lina Carstens ; Kurt Horwitz ; Peter Lühr und vielen anderen. Regie: Walter Ohm | 264 $aLeipzig $aFrankfurt am Main $bDeutsche Nationalbibliothek $c2021
+020 $a9789733413431 $cBroschur $9978-973-34-1343-1 | 245 $aRomulus cel Mare | 264 $a[Bucuresti] $bUnivers $c[2021]
+020 $a9783257230451 $cBroschur in Behältnis $9978-3-257-23045-1 | 020 $a9783257293050 $9978-3-257-29305-0 | 245 $aDer Besuch der alten Dame $beine tragische Komödie $cFriedrich Dürrenmatt | 264 $aZürich $bDiogenes $c[2020] | 490 $aDas dramatische Werk | 490 $aWerkausgabe $vBand 5 | 490 $aDiogenes-Taschenbuch $v23045 | 800 $aDürrenmatt, Friedrich $d1921-1990 $4aut $tDas dramatische Werk $w(DE-101)956217052 $9ab $7am | 800 $aDürrenmatt, Friedrich $d1921-1990 $4aut $tWerkausgabe $vBand 5 $w(DE-101)95621701X $915 $7am | 830 $aDiogenes-Taschenbuch $v23045 $w(DE-101)011593172 $w(DE-600)260755-4 $9523045 $7as
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783129303023
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783129303023
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783804470767
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783804470767
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783804460768
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "366" isbn=9783804460768
+  → series="" volume="" raw="" / "" isbn=
+  → series="" volume="" raw="" / "" isbn=
+  → series="" volume="" raw="" / "" isbn=9789733413431
+  → series="" volume="" raw="" / "" isbn=9789733413431
+  → series="Das dramatische Werk" volume="Band 5" raw="Das dramatische Werk" / "Band 5" isbn=9783257230451
+  → series="Das dramatische Werk" volume="Band 5" raw="Das dramatische Werk" / "Band 5" isbn=9783257230451
+----
+020 $a9782351788721 $cBroschur $9978-2-35178-872-1 | 245 $aLe juge et son bourreau | 264 $aParis $bÉditions Gallmeister $cMars 2025 | 490 $aTotem $vn° 303 | 830 $aTotem $vn° 303 $w(DE-101)1327242028 $w(DE-600)3185716-4 $9n3303 $7as
+020 $a9789602835401 $cBroschur $9978-960-283-540-1 | 245 $aO dikastēs kai o dēmios tu $cFriedrich Dürrenmatt ; metaphrasē: Pelagia Tsinarē | 264 $aAthēna $bRoes $cMaios 2024 | 490 $aGermanophōnoi syngrapheis | 490 $aLogotechnia
+020 $a9789750868221 $cBroschur $9978-975-08-6822-1 | 245 $aYargıç ve Celladı $bRoman $cFriedrich Dürrenmatt | 264 $aİstanbul $bYapı Kredı Yayınları $c2024
+020 $a9789778031669 $9978-977-803-166-9 | 245 $aālqāḍī ūǧlādh $brūāīa $ctrǧma smīr ǧrīs | 264 $aālqāhra $bālktb ḫān llnšr ūāltūzīʿ $c2023
+020 $z9789779081669 $c: ca. EUR 10.00 $9978-977-90-8166-9 | 245 $aDer Richter und sein Henker | 264 $a[Cairo] $balkotobkhan $c2023
+020 $a9783956195068 $cFesteinband $9978-3-95619-506-8 | 245 $aDer Richter und sein Henker | 264 $a Stuttgart $aAppenzell $aWien $bVerlag Das Beste GmbH $c[2022] | 490 $aMeisterwerke der Kriminalliteratur
+  → series=undefined volume=undefined raw="Totem" / "n° 303" isbn=9782351788721
+  → series=undefined volume=undefined raw="Totem" / "n° 303" isbn=9782351788721
+  → series="Germanophōnoi syngrapheis" volume="" raw="Germanophōnoi syngrapheis" / "" isbn=9789602835401
+  → series="Germanophōnoi syngrapheis" volume="" raw="Germanophōnoi syngrapheis" / "" isbn=9789602835401
+  → series="" volume="" raw="" / "" isbn=9789750868221
+  → series="" volume="" raw="" / "" isbn=9789750868221
+  → series="" volume="" raw="" / "" isbn=9789778031669
+  → series="" volume="" raw="" / "" isbn=9789778031669
+  → series="" volume="" raw="" / "" isbn=
+  → series="" volume="" raw="" / "" isbn=
+  → series="Meisterwerke der Kriminalliteratur" volume="" raw="Meisterwerke der Kriminalliteratur" / "" isbn=9783956195068
+  → series="Meisterwerke der Kriminalliteratur" volume="" raw="Meisterwerke der Kriminalliteratur" / "" isbn=9783956195068
+----
+020 $a9783804420823 $c: EUR 9.90 (DE), EUR 10.20 (AT) $9978-3-8044-2082-3 | 020 $a3804420826 $93-8044-2082-6 | 245 $aDer Vorleser von Bernhard Schlink - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cBernhard Schlink | 264 $aHollfeld $bBange, C $c2026 | 490 $aKönigs Erläuterungen $v403 | 830 $aKönigs Erläuterungen $v403
+020 $a9783257073690 $cFesteinband : circa EUR 19.00 (DE), circa EUR 19.60 (AT), circa CHF 26.00 (freier Preis) $9978-3-257-07369-0 | 020 $a3257073690 $93-257-07369-0 | 245 $aDer Vorleser $bRoman $cBernhard Schlink | 264 $aZürich $bDiogenes $c[2025] | 490 $aModern classics
+020 $a9783804460829 $9978-3-8044-6082-9 | 020 $a3804460828 $93-8044-6082-8 | 245 $aDer Vorleser von Bernhard Schlink - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cBernhard Schlink, Magret Möckel | 264 $aHollfeld $bBange, C $c2025 | 490 $aKönigs Erläuterungen $v403 | 830 $aKönigs Erläuterungen $v403
+020 $a9783804470828 $9978-3-8044-7082-8 | 020 $a3804470823 $93-8044-7082-3 | 245 $aDer Vorleser von Bernhard Schlink - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cBernhard Schlink, Magret Möckel | 264 $aHollfeld $bBange, C $c2025 | 490 $aKönigs Erläuterungen $v403 | 830 $aKönigs Erläuterungen $v403
+020 $a9786192650483 $cBroschur $9978-619-265-048-3 | 245 $aČetecăt $cBernchard Šlink ; prevod ot nemski Ljubomir Iliev | 264 $aSofija $bKrăg $c[2024]
+020 $a9786168123966 $cBroschur $9978-616-8123-96-6 | 020 $a6168123962 $9616-8123-96-2 | 245 $aʻĀn rak wan lōk rāo $cBernhard Schlink khīan ; Čhēnčhirā Sērīyōthin plǣ čhāk phāsā Yœ̄raman | 264 $aKrung Thēp ... $bLaibrārī Hao $c2566 [2023]
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804420823
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804420823
+  → series="Modern classics" volume="" raw="Modern classics" / "" isbn=9783257073690
+  → series="Modern classics" volume="" raw="Modern classics" / "" isbn=9783257073690
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804460829
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804460829
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804470828
+  → series=undefined volume=undefined raw="Königs Erläuterungen" / "403" isbn=9783804470828
+  → series="" volume="" raw="" / "" isbn=9786192650483
+  → series="" volume="" raw="" / "" isbn=9786192650483
+  → series="" volume="" raw="" / "" isbn=9786168123966
+  → series="" volume="" raw="" / "" isbn=9786168123966
+----
+020 $a9783804420847 $c: EUR 9.90 (DE), EUR 10.20 (AT) $9978-3-8044-2084-7 | 020 $a3804420842 $93-8044-2084-2 | 245 $aHomo faber von Max Frisch - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cMax Frisch | 264 $aHollfeld $bBange, C $c2030 | 490 $aKönigs Erläuterungen $v148 | 830 $aKönigs Erläuterungen $v148
+020 $a9784560072646 $cBroschur $9978-4-560-07264-6 | 020 $a4560072647 $94-560-07264-7 | 245 $aAtene ni shisu $b= Homo Faber $cMakkusu Furisshu ; Nakano Kōji yaku | 264 $aTōkyōto $bHakusuisha $c2025nen 7gatsu 15nichi | 490 $aHakusui U bukkusu $v264 | 490 $aKaigai shōsetsu - eien no hondana | 830 $aHakusui U bukkusu $v264 $w(DE-101)971833494 $w(DE-600)2282759-6 $93264 $7as
+020 $a9783804460843 $9978-3-8044-6084-3 | 020 $a3804460844 $93-8044-6084-4 | 245 $aHomo faber von Max Frisch - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cMax Frisch | 264 $aHollfeld $bBange, C $c2025 | 490 $aKönigs Erläuterungen $v148 | 830 $aKönigs Erläuterungen $v148
+020 $a9783804470842 $9978-3-8044-7084-2 | 020 $a380447084X $93-8044-7084-X | 245 $aHomo faber von Max Frisch - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse, Prüfungsaufgaben uvm. $cMax Frisch | 264 $aHollfeld $bBange, C $c2025 | 490 $aKönigs Erläuterungen $v148 | 830 $aKönigs Erläuterungen $v148
+245 $aTragödie als Ich-Erzählung $binszenierte Notwendigkeit in Max Frischs "Homo faber" $cMax Roehl ; Klassik Stiftung Weimar | 773 $7|||s $g66.2020, 2, S. 258-275 | 773 $iEnthalten in $tWeimarer Beiträge $dWien : Passagen-Verl., 2004- $g66.2020, 2, S. 258-275 $w(DE-600)2965353-8 $w(DE-101)1179957946
+020 $a9786064411648 $cFesteinband $9978-606-44-1164-8 | 245 $aHomo faber $cMax Frisch ; traducere din germană şi note de Mara Giurgiuca | 264 $aBucureşti $bCurtea Veche $c2022
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804420847
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804420847
+  → series=undefined volume=undefined raw="Hakusui U bukkusu" / "264" isbn=9784560072646
+  → series=undefined volume=undefined raw="Hakusui U bukkusu" / "264" isbn=9784560072646
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804460843
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804460843
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804470842
+  → series="Königs Erläuterungen" volume="148" raw="Königs Erläuterungen" / "148" isbn=9783804470842
+  → series="" volume="" raw="" / "" isbn=
+  → series="" volume="" raw="" / "" isbn=
+  → series="" volume="" raw="" / "" isbn=9786064411648
+  → series="" volume="" raw="" / "" isbn=9786064411648
+----
