@@ -2799,7 +2799,7 @@ async function fillSeriesInfo(se) {
     const exact = exactInducks(se);
     if (exact.length === 1) p = exact[0];
   }
-  const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi|us|gb)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
+  const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi|us|uk)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
   if (badCode && p) { got.push("INDUCKS code corrected from " + se.code + " to " + p[0]); se.code = p[0]; }
   else if (badCode) got.warn = "INDUCKS has no publication with the code " + se.code + ": check it on inducks.org";
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
@@ -2838,7 +2838,7 @@ async function fillSeriesInfo(se) {
 function inducksCandidates(se) {
   const dir = S.inducksDir; if (!dir) return [];
   const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
-  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "gb"] }[lang] || null;
+  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "uk"] }[lang] || null;
   return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && (norm(p[1]) === n || norm(p[1]).replace(/\s+\d+$/, "") === n || (n.length > 8 && norm(p[1]).includes(n))))
     .sort((a, b) => b[2] - a[2]).slice(0, 3);
 }
@@ -2851,7 +2851,7 @@ function catalogueRequestUrl(code, name) {
 // INDUCKS publications with exactly this series' name, in its country (searched in the whole directory, not just the top hits)
 function exactInducks(se) {
   const dir = S.inducksDir || [], n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
-  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "gb"] }[lang] || null;
+  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "uk"] }[lang] || null;
   return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && norm(p[1]) === n);
 }
 // Disney series that are on INDUCKS but not in the offline catalogue: by their code, or else by an exact name match only
