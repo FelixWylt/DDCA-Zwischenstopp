@@ -47,7 +47,7 @@
     const authorWorks = new Set(fields("800").map(f => tidy(sub(f, "t")[0]).toLowerCase()).filter(Boolean));
     for (const f of fields("490")) {
       const name = tidy(sub(f, "a")[0]), vol = tidy(sub(f, "v")[0]), n = +String(vol).replace(/[^\d.]/g, "");
-      if (!name || authorWorks.has(name.toLowerCase()) || NOT_SERIES.test(name) || n > 200) continue;
+      if (!name || authorWorks.has(name.toLowerCase()) || NOT_SERIES.test(name.normalize("NFC")) || n > 200) continue;
       return { series: name, volume: vol };
     }
     return null;
