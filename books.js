@@ -183,10 +183,23 @@
     return (pick.length ? pick : knownOnly ? [] : other).slice(0, 3).join(", ");
   }
 
+  // "adapted by Alan Grant", "Cam Kennedy (Illustrator)", "Hrsg. von ..." -> the name; each person once
+  const ROLE = /^(adapted|adaptation|retold|illustrated|illustrations?|edited|translated|introduced|introduction|foreword|afterword|written|text|drawn|art|bearbeitet|übersetzt|illustriert|herausgegeben|hrsg\.?|nacherzählt|aus dem \w+ von|bearbetad|översatt|illustrerad)(\s+(and|und|och|&)\s+\w+)?\s*(by|von|av|:)?\s+/i;
+  function cleanPeople(list) {
+    const seen = new Set(), out = [];
+    [].concat(list || []).flatMap(a => String(a || "").split(/\s*;\s*|,\s*(?=(?:adapted|adaptation|retold|illustrated|edited|translated|with|and)\b)|\s+(?:and|und|och|&)\s+(?=\w+ by\b)/i)).forEach(a => {
+      let n = tidy(String(a).replace(ROLE, "").replace(/\s*[\(\[][^)\]]*[\)\]]\s*$/, "").replace(/,?\s*\b(ed|eds|hrsg|ill|illus|trans|transl|adapter|illustrator|editor)\.?$/i, ""));
+      n = personName(n);
+      const k = n.toLowerCase().normalize("NFC").replace(/[^a-z0-9äöüåéèàç]+/g, "");
+      if (n && k && !seen.has(k)) { seen.add(k); out.push(n); }
+    });
+    return out;
+  }
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "format", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
+    list = list.map(r => r && Object.assign({}, r, { authors: cleanPeople(r.authors) }));
     KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
     // genres from all databases together; the shared names make the same genre count once
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
