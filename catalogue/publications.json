@@ -509,6 +509,12 @@
       "country": "it",
       "code": "it/DDCO",
       "title": "Disney Definitive Collection"
+    },
+    {
+      "series": "Capolavori della letteratura",
+      "country": "it",
+      "code": "it/CALE",
+      "title": "Capolavori della letteratura"
     }
   ]
 }
