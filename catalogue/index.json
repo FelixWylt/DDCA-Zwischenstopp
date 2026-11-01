@@ -1,5 +1,5 @@
 {
- "built": "2026-11-01T21:20",
+ "built": "2026-11-01T21:57",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -519,6 +519,14 @@
    "title": "Disney Definitive Collection",
    "file": "inducks-it-DDCO.json",
    "issues": 49
+  },
+  "capolavori della letteratura": {
+   "series": "Capolavori della letteratura",
+   "aliases": [],
+   "code": "it/CALE",
+   "title": "Capolavori della Letteratura (libreria)",
+   "file": "inducks-it-CALE.json",
+   "issues": 26
   }
  }
 }

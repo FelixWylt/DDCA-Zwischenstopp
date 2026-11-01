@@ -66,10 +66,11 @@ PUBLICATIONS
   ✓ Stål-Kalle Pocket  →  se/SK  'Stål-Kalle'  (by code)
   ✓ Disney De Luxe  →  it/TLDLE  'De Luxe Edition'  (by code)
   ✓ Disney Definitive Collection  →  it/DDCO  'Disney Definitive Collection'  (by code)
+  ✓ Capolavori della letteratura  →  it/CALE  'Capolavori della Letteratura (libreria)'  (by code)
 
-issues in chosen publications: 21,589
-entries: 233,294, story versions: 118,799
-cover scans: 20,948 of 21,589 issues
+issues in chosen publications: 21,615
+entries: 233,751, story versions: 119,183
+cover scans: 20,974 of 21,615 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -135,6 +136,7 @@ FILES
   inducks-se-SK.json: 113 issues, 41 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
   inducks-it-TLDLE.json: 86 issues, 47 KB  e.g. 32 = it/TLDLE32 2021-11 (3 stories)
   inducks-it-DDCO.json: 49 issues, 33 KB  e.g. 24 = it/DDCO 24 2018-01-15 (3 stories)
+  inducks-it-CALE.json: 26 issues, 15 KB  e.g. 14 = it/CALE 14 2019-09 (1 stories)
 directory.json: 2,766 publications (at, ch, de, it, se, uk, us), 198 KB
 
 files in the ISV export: createtables.sql
