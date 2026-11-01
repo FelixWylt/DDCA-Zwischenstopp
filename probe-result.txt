@@ -1,44 +1,50 @@
-Diese Liste bietet eine Übersicht über '''alle Ausgaben''' von den '''''[[Donald Duck (Taschenbuch)|Donald Duck-Taschenbüchern]]''''' (kurz: ''DD'').
-
-Wie ein DD-Artikel erstellt bzw. vervollständigt wird, kannst Du unter [[Duckipedia:Formatvorlage/LTB|der zugehörigen Hilfeseite]] nachlesen. Wenn du eine Ausgabe anlegen möchtest, orientiere dich bitte an bestehenden Artikeln. Bei Fragen sind unsere [[Duckipedia:Administratoren|Administratoren]] immer erreichbar.
-
-Weitere Ausgabenlisten gibt es [[:Kategorie:Ausgabenliste|hier]].
-
-
-
-__TOC__
-<div style="text-align: left">
-== Ausgaben 1 – 49 ==
-</div>
-{| width="70%" style="background-color:#ededed; border-top:5px solid #bf0000; border-bottom:5px solid #bf0000; border-left:5px solid #bf0000; border-right:5px solid #bf0000; text-align: center;" valign="top"
-|colspan="6" | 
-|- style="background:#ff0000"
-!width="15%" | Ausgabe
-!width="20%" | Erscheinungsdatum
-!width="20%" | Preis Erstauflage
-!width="20%" | Anzahl Geschichten
-!width="15%" | Rezension
-|-
-|[[DD 1/1974]] || 26.08.1974 || 1,80 DM || 8 Geschichten ||
-|-
-|[[DD 2/1974]] || 30.09.1974 || 1,80 DM || 6 Geschichten ||
-|-
-|[[DD 3/1974]] || 28.10.1974 || 1,80 DM || 10 Geschichten ||
-|-
-|[[DD 4/1974]] || 25.11.1974 || 1,80 DM || 6 Geschichten ||
-|-
-|[[DD 1]] || 30.12.1974 || 1,80 DM || 7 Geschichten ||
-|-
-|[[DD 2]] || 27.01.1975 || 1,80 DM || 6 Geschichten ||
-|-
-|[[DD 3]] || 24.02.1975 || 1,80 DM || 6 Geschichten ||
-|-
-|[[DD 4]] || 24.03.1975 || 1,80 DM || 7 Geschichten ||
-|-
-|[[DD
----- lines with Test/Probe/0x
-Wie ein DD-Artikel erstellt bzw. vervollständigt wird, kannst Du unter [[Duckipedia:Formatvorlage/LTB|der zugehörigen Hilfeseite]] nachlesen. Wenn du eine Ausgabe anlegen möchtest, orientiere dich bitte an bestehenden Artikeln. Bei Fragen sind unsere [[Duckipedia:Administratoren|Administratoren]] im
----- links
-[':Kategorie:Ausgabenliste', 'DD 1', 'DD 1/1974', 'DD 10', 'DD 100', 'DD 101', 'DD 102', 'DD 103', 'DD 104', 'DD 105', 'DD 106', 'DD 107', 'DD 108', 'DD 109', 'DD 11', 'DD 110', 'DD 111', 'DD 112', 'DD 113', 'DD 114', 'DD 115', 'DD 116', 'DD 117', 'DD 118', 'DD 119', 'DD 12', 'DD 120', 'DD 121', 'DD 122', 'DD 123', 'DD 124', 'DD 125', 'DD 126', 'DD 127', 'DD 128', 'DD 129', 'DD 13', 'DD 130', 'DD 131', 'DD 132', 'DD 133', 'DD 134', 'DD 135', 'DD 136', 'DD 137', 'DD 138', 'DD 139', 'DD 14', 'DD 140', 'DD 141', 'DD 142', 'DD 143', 'DD 144', 'DD 145', 'DD 146', 'DD 147', 'DD 148', 'DD 149', 'DD 15', 'DD 150', 'DD 151', 'DD 152', 'DD 153', 'DD 154', 'DD 155', 'DD 156', 'DD 157', 'DD 158', 'DD 159', 'DD 16', 'DD 160', 'DD 161', 'DD 162', 'DD 163', 'DD 164', 'DD 165', 'DD 166', 'DD 167', 'DD 168', 'DD 169']
-{"batchcomplete":true,"query":{"allpages":[]}}
-{"batchcomplete":true,"query":{"searchinfo":{"totalhits":0},"search":[]}}
+=== seriekatalogen forms/scripts
+<input aria-invalid="false" id=":R6qlaamkq:" placeholder="Sök..." type="text" class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall MuiInputBase-inputAdornedEnd mui-15rjxja" value=""/>
+<form class="MuiBox-root mui-70qvj9">
+<input aria-invalid="false" id=":R2klb9ut6fmmkq:" placeholder="Sida" type="number" min="1" max="200" style="width:50px" class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall mui-1tfa63t" value=""/>
+<form class="MuiBox-root mui-70qvj9">
+<input aria-invalid="false" id=":R2ldb9ut6fmmkq:" placeholder="Sida" type="number" min="1" max="200" style="width:50px" class="MuiInputBase-input MuiOutlinedInput-input MuiInputBase-inputSizeSmall mui-1tfa63t" value=""/>
+href="/magazine/fantomen-2"
+href="/magazine/kalle-anka-och-co"
+href="/magazine/laderlappen"
+href="/magazine/kalle-ankas-pocket"
+href="/magazine/tintins-aventyr-2"
+href="/magazine/spindelmannen-2"
+href="/magazine/stalmannen"
+href="/magazine/spirous-aventyr"
+href="/magazine/marvelserien"
+href="/magazine/fantomen"
+href="/magazine/kalle-ankas-pocket"
+href="/magazine/herman-hedning-och-co-2"
+href="/magazine/nar-stjarnorna-sprider-sig-pa-himlen"
+href="/magazine/tintins-aventyr-det-hemliga-vapnet"
+href="/magazine/death-of-a-pop-star"
+magazine/kalle-anka-och-co -> 200 https://www.seriekatalogen.se/magazine/kalle-anka-och-co
+<title>Kalle Anka &amp; C:o (1948) - Serietidningar, Värde &amp; Pris | Seriekatalogen
+magazine/kalle-ankas-pocket -> 200 https://www.seriekatalogen.se/magazine/kalle-ankas-pocket
+<title>Kalle Ankas pocket (1968) - Serietidningar, Värde &amp; Pris | Seriekatalogen
+magazine/bjornligan -> 200 https://www.seriekatalogen.se/magazine/bjornligan
+<title>Björnligan (1986) - Serietidningar, Värde &amp; Pris | Seriekatalogen
+magazine/farbror-joakim -> 200 https://www.seriekatalogen.se/magazine/farbror-joakim
+<title>Not found | Seriekatalogen
+magazine/kalle-ankas-pocket-special -> 200 https://www.seriekatalogen.se/magazine/kalle-ankas-pocket-special
+<title>Kalle Ankas pocket special (1997) - Serietidningar, Värde &amp; Pris | Seriekatalogen
+search?q=kalle -> 404 https://www.seriekatalogen.se/search?q=kalle
+<title>Seriekatalogen
+sok?q=kalle -> 404 https://www.seriekatalogen.se/sok?q=kalle
+<title>Seriekatalogen
+?s=kalle -> 200 https://www.seriekatalogen.se/?s=kalle
+<title>Seriekatalogen.se - Värdera dina serietidningar och seriealbum | Seriekatalogen
+=== comicguide forms
+<form action="/index.php?view=comicguide" method="post">
+<form action="/search" method="get">
+<input name="search" id="search" maxlength="200"  type="text" size="20" value="Suche nach Serie oder Verlag..."  onblur="if (this.value=='') this.value='Suche nach Serie oder Verlag...';" onfocus="if (this.value=='Suche nach Serie oder Verlag...') this.value='';" />
+<form id="formAcymailing97091" action="/index.php?view=comicguide" onsubmit="return submitacymailingform('optin','formAcymailing97091')" method="post" name="formAcymailing97091"  >
+<input id="user_email_formAcymailing97091"  onfocus="if(this.value == 'Ihre E-Mailadresse') this.value = '';" onblur="if(this.value=='') this.value='Ihre E-Mailadresse';" class="inputbox" type="text" name="user[email]" style="width:100%" value="Ihre E-Mailadresse" title="Ihre E-Mailadresse" />
+<input class="button subbutton btn btn-primary" type="submit" value="Anmelden" name="Submit" onclick="try{ return submitacymailingform('optin','formAcymailing97091'); }catch(err){alert('The form could not be submitted '+err);return false;}"/>
+<input type="hidden" name="ajax" value="0"/>
+<input type="hidden" name="acy_source" value="module_114" />
+<input type="hidden" name="ctrl" value="sub"/>
+<input type="hidden" name="task" value="notask"/>
+<input type="hidden" name="redirect" value="https%3A%2F%2Fwww.comicguide.de%2F"/>
+<input type="hidden" name="redirectunsub" value="https%3A%2F%2Fwww.comicguide.de%2F"/>
