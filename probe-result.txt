@@ -1,6 +1,4 @@
-9783150197363 Io non ho paura | genre=Thriller | Deutsche Nationalbibliothek
-9783150161005 Der Sandmann | genre=Short Stories | Deutsche Nationalbibliothek
-9783150161029 Nathan der Weise – ein dramatisches Gedicht in fünf Aufzügen | genre=Drama | Deutsche Nationalbibliothek
-9783257230451 Der Besuch der alten Dame – eine tragische Komödie | genre=Drama | Deutsche Nationalbibliothek+LIBRIS+Open Library
-9789178033713 Percy Jackson och de grekiska gudarna | genre=Fantasy, Young Adult | LIBRIS
-9783551354013 Harry Potter und der Stein der Weisen | genre=Fantasy, Children's & Young Adult, Children's | Deutsche Nationalbibliothek+LIBRIS+Open Library
+9783150084984 Bunbury oder ernst sein ist wichtig – eine triviale Komödie für ernsthafte Leute | DNB raw: Erzählende Literatur: Hauptwerk vor 1945, Fiction | genre=Drama, Humour, Children's | Deutsche Nationalbibliothek+Open Library
+9783150092675 The importance of being earnest – a trivial comedy for serious people | DNB raw: - | genre=Drama | Deutsche Nationalbibliothek+LIBRIS
+9783150084984 Bunbury oder ernst sein ist wichtig – eine triviale Komödie für ernsthafte Leute | DNB raw: Erzählende Literatur: Hauptwerk vor 1945, Fiction | genre=Drama, Humour, Children's | Deutsche Nationalbibliothek+Open Library
+9783150092675 The importance of being earnest – a trivial comedy for serious people | DNB raw: Fiction | genre=Drama | Deutsche Nationalbibliothek+LIBRIS
