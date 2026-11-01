@@ -241,8 +241,11 @@
       libris('tit:"' + title + '"', 12).catch(() => []),
       olSubjects().catch(() => [])
     ];
-    const recs = [].concat(...await Promise.all(asks));
-    return oneGenre(recs.filter(same).map(r => r.genre).filter(Boolean).join(", "));
+    const recs = [].concat(...await Promise.all(asks)).filter(same).map(r => oneGenre(r.genre)).filter(Boolean);
+    // genres most editions agree on; one comic adaptation shouldn't make the novel a comic
+    const count = {}; recs.forEach(g => g.split(", ").forEach(x => { count[x] = (count[x] || 0) + 1; }));
+    const need = Math.max(1, Math.ceil(recs.length * 0.3));
+    return oneGenre(Object.keys(count).filter(k => count[k] >= need).sort((a, b) => count[b] - count[a]).join(", "));
   }
   // title/author search: several catalogues, one list without duplicates
   async function search(q) {
