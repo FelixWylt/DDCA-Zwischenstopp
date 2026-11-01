@@ -163,11 +163,11 @@
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => { GENRE_OF[k.toLowerCase()] = k; GENRES[k].forEach(v => { GENRE_OF[v] = k; }); });
-  const DROP = /^(lehr- und lernressource|lehrmittel|schulbuch|unterrichtsmaterial|lernhilfe|lektürehilfe|aufgabensammlung|quelle|hochschulschrift|online-publikation|bildband|ratgeber|verzeichnis|katalog|einführung|textsammlung|läromedel|study guides?|textbooks?|serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
+  const DROP = /^(pressendruck|geschenkbuch|geschenkbücher|fiktionale darstellung|lehr- und lernressource|lehrmittel|schulbuch|unterrichtsmaterial|lernhilfe|lektürehilfe|aufgabensammlung|quelle|hochschulschrift|online-publikation|bildband|ratgeber|verzeichnis|katalog|einführung|textsammlung|läromedel|study guides?|textbooks?|serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
   const GENERIC = new Set(["Novel", "Children's", "Young Adult", "Children's & Young Adult"]);
   function oneGenre(g, knownOnly) {
     const seen = new Set(), known = [], other = [];
-    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim())
+    String(g || "").normalize("NFC").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim())
       .map(x => x.split(":")[0].trim()).filter(x => x && !DROP.test(x) && x.length <= 40)
       .forEach(x => {
         const k = GENRE_OF[x.toLowerCase()] || GENRE_OF[x.toLowerCase().replace(/ fiction$| stories$| novels?$/, "")];
