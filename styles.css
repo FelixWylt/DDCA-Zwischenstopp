@@ -522,3 +522,5 @@ label.inline .l { margin: 0; }
 .toplist li::before { content: counter(top) "."; color: var(--muted); }
 .toplist button.link { min-height: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%; }
 .toplist .muted { white-space: nowrap; text-align: right; }
+/* book gap grid: in-between volumes such as 0.5 */
+.cell.half { font-style: italic; }

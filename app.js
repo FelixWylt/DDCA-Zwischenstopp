@@ -111,7 +111,7 @@ const FACSIMILE_FACTOR = 0.3;
 const gradeFactor = g => { const f = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {}); return f[g || ""] != null ? +f[g || ""] : 0.6; };
 const valueKeyOf = c => c.kind === "book" ? (c.seriesName ? "book:" + c.seriesName : "") : c.seriesId || "";
 function valueNumber(c) {   // the number a price range is compared with: issue number; year × 1000 + issue for yearly series; volume for books
-  if (c.kind === "book") return parseInt(c.issue, 10) || null;
+  if (c.kind === "book") return parseFloat(String(c.issue || "").replace(",", ".")) || null;
   const se = seriesById(c.seriesId), lab = String(c.issueLabel || c.issue || "");
   if (se && se.numbering === "year") {
     const y = c.issueYear || +((/^(\d{4})/.exec(lab) || [])[1]) || null; if (!y) return null;
@@ -1442,19 +1442,22 @@ function bookSeriesOptions(selected) {
 // gap grid for a book series: volumes 1..n
 function bookGapsHtml() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
-  const vol = c => { const m = /^\s*(\d{1,4})\s*$/.exec(String(c.issue || "")); return m ? +m[1] : 0; };
+  // whole volumes and in-between ones like 0.5 (a novella before volume 1)
+  const vol = c => { const m = /^\s*(\d{1,4}(?:[.,]\d{1,2})?)\s*$/.exec(String(c.issue || "")); return m ? +m[1].replace(",", ".") : null; };
   const own = new Map(), want = new Map();
-  mine.forEach(c => { const v = vol(c); if (v) (c.status === "wanted" ? want : own).set(v, c); });
-  const sizes = S.bookSizes || {}, maxHave = Math.max(0, ...mine.map(vol)), size = Math.max(+sizes[name] || 0, maxHave);
+  mine.forEach(c => { const v = vol(c); if (v != null) (c.status === "wanted" ? want : own).set(v, c); });
+  const sizes = S.bookSizes || {}, maxHave = Math.floor(Math.max(0, ...mine.map(c => vol(c) || 0))), size = Math.max(+sizes[name] || 0, maxHave);
+  const extraVols = [...new Set([...own.keys(), ...want.keys()].filter(v => !Number.isInteger(v) || v === 0))];
+  const squares = [...new Set([...Array(size).keys()].map(i => i + 1).concat(extraVols))].sort((x, y) => x - y);
   let cells = "";
-  for (let n = 1; n <= size; n++) {
+  for (const n of squares) {
     const o = own.get(n), w = want.get(n);
-    cells += `<button class="cell ${o && w ? "owned conflict" : o ? "owned" : w ? "wanted" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
+    cells += `<button class="cell${Number.isInteger(n) ? "" : " half"} ${o && w ? "owned conflict" : o ? "owned" : w ? "wanted" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
   }
-  const noVol = mine.filter(c => !vol(c));
+  const noVol = mine.filter(c => vol(c) == null);
   const ownCount = [...own.keys()].length, wantCount = [...want.keys()].filter(k => !own.has(k)).length;
   const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-  return gapTabs() + gapHead(ownCount, wantCount, size, { read: false, legend: '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
+  return gapTabs() + gapHead(ownCount, wantCount, squares.length, { read: false, legend: '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
     <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
     ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
     <div id="cellpick"></div>
@@ -1598,7 +1601,7 @@ ${isBook ? `
           <label><span class="l">Book series</span>${d.newBookSeries
             ? `<input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "Name of the new series, e.g. Harry Potter" : "Name of the new series, e.g. Carl Barks Collection"}">`
             : `<span class="row" style="gap:6px;flex-wrap:nowrap"><button type="button" class="pickbtn" id="f-bseries-btn"><span>${esc(d.seriesName || "No series (single book)")}</span><span class="chev" aria-hidden="true">▾</span></button>${d.seriesName ? '<button type="button" class="ghost tiny" id="f-bseries-x" aria-label="No series">✕</button>' : ""}</span><input type="hidden" id="f-seriesName" value="${esc(d.seriesName)}">`}</label>
-          <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12"></label>
+          <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12 or 0.5"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
           <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
           <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
@@ -1897,7 +1900,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     const saveBook = async (next) => {
       ["title", "issue", "seriesName", "isbn"].forEach(k => d[k] = String(d[k] || ""));
       if (!d.title.trim()) { toast("Enter the book title first"); $("#f-title").focus(); return; }
-      const vol = d.issue.trim(), vm = vol.match(/\d+(\.\d+)?/);
+      const vol = d.issue.trim().replace(/^(\d+),(\d+)$/, "$1.$2"), vm = vol.match(/\d+(\.\d+)?/);
       const c = Object.assign({}, d, {
         kind: "book", seriesId: "_book", seriesName: d.seriesName.trim(), title: d.title.trim(), issue: vol, issueLabel: vol,
         issueSort: vm ? +vm[0] : 1e9, issueYear: null, issueNum: vm ? +vm[0] : null, copies: Math.max(1, parseInt(d.copies, 10) || 1),
@@ -1913,7 +1916,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast((c.status === "wanted" ? "Book added to wishlist" : "Book saved") + lotNote);
         if (next) {
           S.editing = null;
-          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(+vm[0] + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
+          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
           render(); $("#f-title") && $("#f-title").focus();
         } else goBack(() => { S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : "owned"; nav("collection"); });
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
