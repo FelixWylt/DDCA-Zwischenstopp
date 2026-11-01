@@ -160,7 +160,8 @@
     "Mythology": ["mythological fiction", "mythologie", "mythologie", "mythology", "mytologi", "götter und helden"],
     "Fairy Tales": ["fairy tale", "märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
     "History": ["geschichte", "geschichte", "history", "historia"],
-    "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
+    "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
+    "Novella": ["novella", "novellas", "novellen", "novelle", "novelette", "kortroman", "kortromaner", "romanzo breve", "racconto lungo"],
     "Drama": ["drama", "dramen", "schauspiel", "theaterstück", "bühnenwerk", "dramatisches gedicht", "tragödie", "trauerspiel", "komödie", "lustspiel", "tragische komödie", "plays", "play", "english drama", "german drama", "comedies", "tragedies", "drama (genre)", "dramatic works", "theater", "tragedy", "comedy (drama)", "pjäs", "pjäser", "skådespel", "dramatik"],
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
@@ -182,17 +183,30 @@
     return (pick.length ? pick : knownOnly ? [] : other).slice(0, 3).join(", ");
   }
 
+  // "adapted by Alan Grant", "Cam Kennedy (Illustrator)", "Hrsg. von ..." -> the name; each person once
+  const ROLE = /^(adapted|adaptation|retold|illustrated|illustrations?|edited|translated|introduced|introduction|foreword|afterword|written|text|drawn|art|bearbeitet|übersetzt|illustriert|herausgegeben|hrsg\.?|nacherzählt|aus dem \w+ von|bearbetad|översatt|illustrerad)(\s+(and|und|och|&)\s+\w+)?\s*(by|von|av|:)?\s+/i;
+  function cleanPeople(list) {
+    const seen = new Set(), out = [];
+    [].concat(list || []).flatMap(a => String(a || "").split(/\s*;\s*|,\s*(?=(?:adapted|adaptation|retold|illustrated|edited|translated|with|and)\b)|\s+(?:and|und|och|&)\s+(?=\w+ by\b)/i)).forEach(a => {
+      let n = tidy(String(a).replace(ROLE, "").replace(/\s*[\(\[][^)\]]*[\)\]]\s*$/, "").replace(/,?\s*\b(ed|eds|hrsg|ill|illus|trans|transl|adapter|illustrator|editor)\.?$/i, ""));
+      n = personName(n);
+      const k = n.toLowerCase().normalize("NFC").replace(/[^a-z0-9äöüåéèàç]+/g, "");
+      if (n && k && !seen.has(k)) { seen.add(k); out.push(n); }
+    });
+    return out;
+  }
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "format", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
+    list = list.map(r => r && Object.assign({}, r, { authors: cleanPeople(r.authors) }));
     KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
     // genres from all databases together; the shared names make the same genre count once
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
     if (!out.genre || out.genre === "Novel") {
       const sub = String(out.title || "").toLowerCase().normalize("NFC");
       const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs|comedy|tragedy|a play|play in \w+ acts?)\b/.exec(sub) ? "Drama"
-        : /\b(novellen?|erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
+        : /\b(novellen?|novella)\b/.exec(sub) ? "Novella" : /\b(erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
         : /\b(roman|novel)\b/.exec(sub) ? "Novel" : "";
       if (m) out.genre = m;
     }
