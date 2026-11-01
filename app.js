@@ -100,17 +100,33 @@ const GRADE_FACTOR_DEFAULT = { "0": 1.5, "0-1": 1.25, "1": 1, "1-2": 0.8, "2": 0
 const FACSIMILE_FACTOR = 0.3;
 const gradeFactor = g => { const f = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {}); return f[g || ""] != null ? +f[g || ""] : 0.6; };
 const valueKeyOf = c => c.kind === "book" ? (c.seriesName ? "book:" + c.seriesName : "") : c.seriesId || "";
-function valueNumber(c) {   // the number a price range is compared with: issue number, year for yearly series, volume for books
+function valueNumber(c) {   // the number a price range is compared with: issue number; year × 1000 + issue for yearly series; volume for books
   if (c.kind === "book") return parseInt(c.issue, 10) || null;
   const se = seriesById(c.seriesId), lab = String(c.issueLabel || c.issue || "");
-  if (se && se.numbering === "year") return c.issueYear || +((/^(\d{4})/.exec(lab) || [])[1]) || null;
+  if (se && se.numbering === "year") {
+    const y = c.issueYear || +((/^(\d{4})/.exec(lab) || [])[1]) || null; if (!y) return null;
+    const n = c.issueNum || +((/^\d{4}\D+(\d{1,3})/.exec(lab) || [])[1]) || 0;
+    return y * 1000 + n;
+  }
   return c.issueNum || parseInt(lab, 10) || null;
+}
+// a range's "from" or "to" as a number: "1952/4" or "4/1952" is year 1952 issue 4; a year alone is all of that year
+function rangeBound(key, v, isTo) {
+  const t = String(v == null ? "" : v).trim(); if (!t) return NaN;
+  const se = seriesById(key);
+  if (se && se.numbering === "year") {
+    let m = /^(\d{4})\s*[\/.:-]\s*(?:nr\.?\s*)?(\d{1,3})$/i.exec(t); if (m) return +m[1] * 1000 + +m[2];
+    m = /^(\d{1,3})\s*[\/.]\s*(\d{4})$/.exec(t); if (m) return +m[2] * 1000 + +m[1];
+    m = /^(\d{4})$/.exec(t); if (m) return +m[1] * 1000 + (isTo ? 999 : 0);
+    return NaN;
+  }
+  return parseInt(t, 10);
 }
 function valueRuleFor(c) {
   const k = valueKeyOf(c); if (!k) return null;
   const n = valueNumber(c), rules = (S.valueRules || []).filter(r => r.s === k && typeof r.price === "number");
-  const fits = rules.filter(r => { const a = parseInt(r.from, 10), b = parseInt(r.to, 10); if (isNaN(a) && isNaN(b)) return true; if (n == null) return false; return (isNaN(a) || n >= a) && (isNaN(b) || n <= b); });
-  const width = r => { const a = parseInt(r.from, 10), b = parseInt(r.to, 10); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
+  const fits = rules.filter(r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); if (isNaN(a) && isNaN(b)) return true; if (n == null) return false; return (isNaN(a) || n >= a) && (isNaN(b) || n <= b); });
+  const width = r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
   return fits.sort((x, y) => width(x) - width(y))[0] || null;   // the narrowest range wins
 }
 function valueOf(c) {
@@ -151,11 +167,107 @@ function valueRulesHtml(key) {
   if (!key) return "";
   const rows = (S.valueRules || []).filter(r => r.s === key);
   const cur = r => CURRENCIES.map(x => `<option${(r.cur || "CHF") === x ? " selected" : ""}>${x}</option>`).join("");
-  const nm = collectorName(key), src = collectorLinks(key);
+  const nm = collectorName(key), src = collectorLinks(key), se = seriesById(key), yearly = se && se.numbering === "year";
+  const im = yearly ? 'inputmode="text"' : 'inputmode="numeric"';
+  const defCur = (rows[0] && rows[0].cur) || (se && seriesLang(se) === "Swedish" ? "SEK" : se && seriesLang(se) === "German" ? "EUR" : "CHF");
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
-    ${nm ? `<span class="small muted">Collector prices: ${src}. Note a few prices for old and new issues, then make ranges.</span>` : ""}
-    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" inputmode="numeric" placeholder="from" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" inputmode="numeric" placeholder="to" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
-    <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : seriesById(key) && seriesById(key).numbering === "year" ? "From/to are years." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div></div>`;
+    ${nm ? `<span class="small muted">Collector prices: ${src}. Copy the price list there and paste it below, or note a few prices and make ranges.</span>` : ""}
+    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div>
+    <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
+      <div class="stack" style="margin-top:8px">
+        <p class="small muted" style="margin:0">Paste a list copied from Comicguide.de (Zustand 1) or Seriekatalogen.se (the VF column is taken as Z1). Or type ranges, separated by commas: <span class="mono">${yearly ? "1951 800, 1952/1 450, 1952/4-1953/1 150" : "1-25 8, 26-80 5, 81- 3"}</span></p>
+        <textarea data-ptext rows="5" placeholder="Paste or type here"></textarea>
+        <div class="row" style="gap:8px;align-items:center"><button type="button" data-pread>Read prices</button><label class="small">Currency if none is given <select data-pcur>${CURRENCIES.map(x => `<option${x === defCur ? " selected" : ""}>${x}</option>`).join("")}</select></label></div>
+        <div data-pout></div>
+      </div></details></div>`;
+}
+// ---- reading pasted price lists into price ranges ----
+// Comicguide: "1952: Nr. 4 150.00 €" (Zustand 1; reprints "(1. Nachdruck)" are skipped)
+// Seriekatalogen: "1949 2 650 1300 2000 5000 10000" = year, issue, G VG FN VF NM; VF counts as Z1
+// typed: "1-25 8, 26-80 5" or "1952/4-1953/1 150"
+function priceAmount(t) { const n = parseAmt(t); return n === "" ? null : n; }
+function priceCur(t, fallback) { return /€|eur/i.test(t) ? "EUR" : /\bkr\b|sek/i.test(t) ? "SEK" : /chf|fr\./i.test(t) ? "CHF" : fallback; }
+function parsePrices(key, text, fallbackCur) {
+  const se = seriesById(key), yearly = !!(se && se.numbering === "year");
+  const at = (y, n) => yearly ? (y || 0) * 1000 + (n || 0) : n;
+  const items = [], skipped = [], unread = [];
+  let reprints = 0, kind = "";
+  const lines = String(text || "").split(/\r?\n/).map(l => l.replace(/ /g, " ").trim()).filter(Boolean);
+  lines.forEach(line => {
+    // Comicguide
+    let m = /^(?:(\d{4})\s*:\s*)?Nr\.?\s*(\d{1,4})\s*(?:-\s*(\d{1,4}))?\s*(\(.*?\))?\s*([\d.,]+)\s*(€|EUR)?\s*$/i.exec(line);
+    if (m) {
+      kind = kind || "Comicguide";
+      if (m[4]) { reprints++; return; }
+      const y = m[1] ? +m[1] : null, a = +m[2], b = m[3] ? +m[3] : a, p = priceAmount(m[5]);
+      if (yearly && !y) { unread.push(line); return; }
+      if (p == null) { unread.push(line); return; }
+      items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€/.test(line) ? "EUR" : fallbackCur }); return;
+    }
+    // Seriekatalogen: year (or nothing), issue or issue range, then five prices
+    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(?:\s*-\s*(\d{1,4}))?((?:\s+\d+){5})\s*$/.exec(line);
+    if (sk) {
+      kind = kind || "Seriekatalogen";
+      const nums = sk[4].trim().split(/\s+/).map(Number), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[3] ? +sk[3] : a;
+      if (yearly && !y) { unread.push(line); return; }
+      items.push({ lo: at(y, a), hi: at(y, b), price: nums[3], cur: "SEK" }); return;
+    }
+    // typed ranges, several per line
+    let any = false;
+    line.split(/[,;]/).map(x => x.trim()).filter(Boolean).forEach(part => {
+      const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3})?)" : "(\\d{1,5})";
+      const r = new RegExp("^" + B + "?\\s*([-–])?\\s*" + B + "?\\s*[:=→>]?\\s+([\\d.,]+)\\s*(€|eur|kr|sek|chf|fr\\.?)?$", "i").exec(part);
+      if (!r || (!r[1] && !r[3])) { skipped.push(part); return; }
+      const p = priceAmount(r[4]); if (p == null) { skipped.push(part); return; }
+      const lo = r[1] ? rangeBound(key, r[1].replace(/\s+/g, "")) : NaN, hi0 = r[3] ? rangeBound(key, r[3].replace(/\s+/g, ""), true) : NaN;
+      const hi = r[2] ? hi0 : r[1] ? rangeBound(key, r[1].replace(/\s+/g, ""), true) : hi0;
+      items.push({ lo: isNaN(lo) ? null : lo, hi: isNaN(hi) ? null : hi, price: p, cur: r[5] ? priceCur(r[5], fallbackCur) : fallbackCur, typed: true }); any = true;
+    });
+    if (any) kind = kind || "typed";
+  });
+  // a pasted list: neighbouring issues with the same price become one range; typed ranges stay as typed
+  const listed = items.filter(x => !x.typed).sort((a, b) => a.lo - b.lo), ranges = [];
+  listed.forEach(x => {
+    const last = ranges[ranges.length - 1];
+    if (last && last.price === x.price && last.cur === x.cur) last.hi = Math.max(last.hi, x.hi); else ranges.push(Object.assign({}, x));
+  });
+  items.filter(x => x.typed).forEach(x => ranges.push(x));
+  // from a pasted list, lines with a price that couldn't be placed (e.g. "(Nullnummer) 9000.00 €") are listed for you
+  if (kind && kind !== "typed") skipped.filter(x => /€|\d[.,]\d\d\b/.test(x)).forEach(x => unread.push(x));
+  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length };
+}
+function boundText(key, v, isTo) {
+  if (v == null) return "";
+  const se = seriesById(key);
+  if (se && se.numbering === "year") { const y = Math.floor(v / 1000), n = v % 1000; return n === 0 && !isTo ? String(y) : n === 999 ? String(y) : y + "/" + n; }
+  return String(v);
+}
+function bindPasteBox(root) {
+  (root || document).querySelectorAll("details.pastebox").forEach(d => {
+    const key = d.dataset.pk, out = d.querySelector("[data-pout]");
+    d.querySelector("[data-pread]").onclick = () => {
+      const res = parsePrices(key, d.querySelector("[data-ptext]").value, d.querySelector("[data-pcur]").value);
+      if (!res.ranges.length) { out.innerHTML = '<div class="banner warn small">No prices found. Paste the lines with issue numbers and prices, or type ranges like 1-25 8.</div>'; return; }
+      const have = (S.valueRules || []).filter(r => r.s === key).length;
+      const span = r => { const a = r.lo == null ? "" : boundText(key, r.lo), z = r.hi == null ? "" : boundText(key, r.hi, true); return !a ? "all up to " + z : !z ? a + " and later" : a === z ? a : a + " – " + z; };
+      const line = r => `<li>${esc(span(r))} → ${esc(money(r.price, r.cur))}</li>`;
+      const notes = [res.kind && res.kind !== "typed" ? `Read as a ${res.kind} list: ${res.issues} issues${res.kind === "Seriekatalogen" ? ", VF prices" : ""}` : "", res.reprints ? res.reprints + " reprints skipped" : ""].filter(Boolean).join(" · ");
+      const left = res.unread.concat(res.skipped);
+      out.innerHTML = `<div class="stack small" style="gap:6px">
+        <strong>${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"} found</strong>${notes ? `<span class="muted">${esc(notes)}</span>` : ""}
+        <ul class="pranges">${res.ranges.slice(0, 60).map(line).join("")}${res.ranges.length > 60 ? `<li class="muted">… and ${res.ranges.length - 60} more</li>` : ""}</ul>
+        ${left.length ? `<details><summary>${left.length} ${left.length === 1 ? "line" : "lines"} not added (enter these yourself if needed)</summary><ul>${left.slice(0, 30).map(x => `<li class="mono">${esc(x)}</li>`).join("")}</ul></details>` : ""}
+        ${have ? `<label class="check" style="min-height:0"><input type="checkbox" data-preplace> Remove the ${have} current ${have === 1 ? "range" : "ranges"} of this series first</label>` : ""}
+        <div class="row"><button type="button" class="primary" data-padd>Add ${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"}</button></div></div>`;
+      out.querySelector("[data-padd]").onclick = () => {
+        const rep = out.querySelector("[data-preplace]"), keep = rep && rep.checked ? (S.valueRules || []).filter(r => r.s !== key) : (S.valueRules || []);
+        S.valueRules = keep.concat(res.ranges.map(r => ({ id: newId(), s: key, from: r.lo == null ? "" : boundText(key, r.lo), to: r.hi == null ? "" : boundText(key, r.hi, true), price: r.price, cur: r.cur, note: res.kind && res.kind !== "typed" ? res.kind : "" })));
+        setConfig("valueRules", S.valueRules).catch(() => {});
+        toast(res.ranges.length + (res.ranges.length === 1 ? " price range added" : " price ranges added")); renderKeep();
+      };
+    };
+  });
 }
 function bindValueRules(root) {
   const save = () => setConfig("valueRules", S.valueRules || []).catch(() => {});
@@ -165,7 +277,15 @@ function bindValueRules(root) {
   }));
   (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
   (root || document).querySelectorAll("[data-vdel]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).filter(r => r.id !== b.dataset.vdel); save(); renderKeep(); });
+  bindPasteBox(root);
 }
+// value of the owned entries of a list, in CHF (for folders in Collection)
+function valueChf(list) {
+  let t = 0, n = 0;
+  list.forEach(c => { if (c.status === "wanted") return; const v = valueOf(c); if (v) { t += toCHF(v.amount * (c.copies || 1), v.cur); n++; } });
+  return n ? t : null;
+}
+function valueTag(list) { const t = valueChf(list); return t == null ? "" : "≈ CHF " + Math.round(t).toLocaleString("de-CH"); }
 // ---- exchange rates to CHF: the ECB's daily rates through frankfurter.dev (free, no account), refreshed weekly; editable in Stats ----
 const RATE_DEFAULT = { EUR: 0.94, SEK: 0.084 };   // CHF per unit, only until the first refresh
 const rateOf = cur => cur === "CHF" || !cur ? 1 : +((S.rates || {})[cur]) || RATE_DEFAULT[cur] || 0;
@@ -481,6 +601,25 @@ async function storeCover(c) {
   if (S.coverObj[c.id]) URL.revokeObjectURL(S.coverObj[c.id]);
   S.coverObj[c.id] = URL.createObjectURL(blob); S.coverHas[c.id + "|" + c.coverUrl] = true;
   return true;
+}
+// a reminder in Collection when the last backup is old or many entries changed since; "Copy backup" works in DuckDuckGo
+function backupNag() {
+  if (!S.comics.length || S.nagLater) return "";
+  const days = daysSince(S.lastBackup), ch = changedSinceBackup();
+  if (days <= 14 && ch < 25) return "";
+  const why = days === Infinity ? "You haven't made a backup yet." : `Last backup ${days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"}` + (ch ? `, ${ch} ${ch === 1 ? "entry" : "entries"} changed since.` : ".");
+  return `<div class="banner warn nag"><span>${why}</span><div class="row" style="gap:6px"><button class="primary" id="nagcopy" type="button">Copy backup</button><button id="naggo" type="button">Backup page</button><button class="ghost" id="naglater" type="button">Later</button></div></div>`;
+}
+function bindBackupNag() {
+  $("#naglater") && ($("#naglater").onclick = () => { S.nagLater = true; renderKeep(); });
+  $("#naggo") && ($("#naggo").onclick = () => nav("backup"));
+  $("#nagcopy") && ($("#nagcopy").onclick = async () => {
+    try {
+      const txt = await backupText();
+      await navigator.clipboard.writeText(txt); await markBackedUp();
+      toast("Backup copied. Paste it into Gmail, Keep or Docs."); renderKeep();
+    } catch (e) { toast("Copying didn't work here. Use the Backup page instead."); nav("backup"); }
+  });
 }
 function coverBar() {
   if (S.colTab === "books" || !S.comics.length) return "";
@@ -857,7 +996,7 @@ function render() {
   if (S.dbState === "none") head = '<div class="banner warn">This browser can\'t store data. Open the archive in Chrome on your phone.</div>';
   const unmatched = S.catalogue && S.view === "collection" && !(S.col && S.col.p) ? S.comics.filter(c => !c.inducks && !c.inducksChecked && c.kind !== "book" && catEntry(seriesById(c.seriesId))).length : 0;
   if (unmatched) head += '<div class="banner row between"><span>INDUCKS can add story lists and issue numbers to ' + unmatched + ' of your comics.</span><a href="#match">Review matches</a></div>';
-  if (S.dbState === "ready" && S.comics.length && S.view === "collection" && daysSince(S.lastBackup) > 14) head += '<div class="banner warn row between"><span>' + (S.lastBackup ? "Your last backup is " + daysSince(S.lastBackup) + " days old." : "You haven\'t backed up your archive yet.") + '</span><a href="#backup">Make a backup</a></div>';
+  if (S.dbState === "ready" && S.view === "collection") head += backupNag();
   if (S.dbState === "error") head = '<div class="banner warn">The archive could not open its data on this phone (' + esc(S.dbError && (S.dbError.name || S.dbError.message) || "error") + '). Close the app fully and open it again.</div>';
   if (S.dbState === "loading") { app.innerHTML = '<div class="empty"><h3>Opening your archive…</h3><p>Loading your comics from this phone.</p></div>'; return; }
   app.innerHTML = '<div class="stack">' + head + VIEWS[S.view].html() + '</div>';
@@ -1006,6 +1145,10 @@ VIEWS.collection = {
           <option value="rated"${f.status === "rated" ? " selected" : ""}>Rated</option>
           <option value="special"${f.status === "special" ? " selected" : ""}>Special copies</option>
           <option value="all"${f.status === "all" ? " selected" : ""}>Everything</option></select></label>
+      </div>
+      <div class="row sortrow">
+        <label class="inline"><span class="l">Sort</span><select id="fsort">${[["series", "Series order"], ["value", "Value (highest first)"], ["rating", "My rating"], ["bought", "Purchase date (newest)"], ["added", "Date added (newest)"]].map(([k, l]) => `<option value="${k}"${(S.colSort || "series") === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>
+        <div class="seg small" role="group" aria-label="View"><button type="button" data-cview="list" aria-pressed="${colView() === "list"}">List</button><button type="button" data-cview="grid" aria-pressed="${colView() === "grid"}">Covers</button></div>
       </div>` + coverBar();
     if (!S.comics.length) {
       return head + `<div class="empty"><h3>Your archive is empty</h3><p>Add your first comic or book, or load a backup under Backup.</p>
@@ -1030,9 +1173,15 @@ VIEWS.collection = {
     };
     $("#new") && ($("#new").onclick = go); $("#new2") && ($("#new2").onclick = go);
     $("#gobk") && ($("#gobk").onclick = () => { nav("backup"); });
+    bindBackupNag();
     $("#fq").oninput = e => { S.filters.q = e.target.value; S.shown = 200; drawResults(); };
     $("#getcv") && ($("#getcv").onclick = () => { fetchAllCovers(); const b = $("#getcv"); if (b) { b.textContent = "Stop"; b.onclick = () => { if (S.cv) S.cv.stop = true; }; } });
     $("#fst").onchange = e => { S.filters.status = e.target.value; S.shown = 200; drawResults(); };
+    $("#fsort").onchange = e => { S.colSort = e.target.value; S.shown = 200; drawResults(); };
+    document.querySelectorAll("[data-cview]").forEach(b => b.onclick = () => {
+      S.colView = b.dataset.cview; try { localStorage.setItem("da-colview", S.colView); } catch (e) {}
+      document.querySelectorAll("[data-cview]").forEach(x => x.setAttribute("aria-pressed", x === b)); drawResults();
+    });
     drawResults();
   }
 };
@@ -1051,6 +1200,30 @@ function seriesAbout(se) {
     ${se.about ? `<p style="margin:8px 0 6px">${esc(se.about)}</p>` : ""}
     <p class="small muted" style="margin:0">${facts.filter(Boolean).join(" · ")}${se.aboutSrc ? ` · Text: <a href="${esc(se.aboutSrc)}" target="_blank" rel="noopener">${se.srcName || "Duckipedia"}</a> (${se.srcLic || "GFDL 1.2"})` : ""}</p></details>`;
 }
+// List or Covers, remembered on this phone
+function colView() { if (S.colView == null) { try { S.colView = localStorage.getItem("da-colview") || "list"; } catch (e) { S.colView = "list"; } } return S.colView; }
+// a cover tile for the Covers view: the picture with series and number; a plain tile when there is no picture
+function tileHtml(c) {
+  const se = seriesById(c.seriesId), cv = coverOf(c), bk = c.kind === "book";
+  const tag = bk ? (c.issue ? c.issue : "") : showLabel(c.issueLabel || c.issue || "");
+  const ser = bk ? (c.seriesName || "") : se ? shortTag(se) : c.seriesName || "";
+  return `<button class="tile${c.status === "wanted" ? " wanted" : ""}" data-id="${esc(c.id)}" aria-label="${esc([ser, tag, c.title].filter(Boolean).join(" "))}">
+    ${cv ? `<img src="${esc(cv)}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="tph"><b>${esc(ser || (bk ? "Book" : ""))}</b>${esc(bk && !tag ? (c.title || "") : "")}</span>`}
+    <span class="tnum">${esc([ser, tag].filter(Boolean).join(" ") || c.title || "")}</span>${(c.fav || +c.rating) && c.status !== "wanted" ? `<span class="tfav">${c.fav ? "♥" : ""}${+c.rating ? " " + ratingTxt(c.rating) : ""}</span>` : ""}</button>`;
+}
+// a list of comics as rows or as covers; heads (years) go between them in both views
+function entriesHtml(list, inSeries, note) {
+  const grid = colView() === "grid";
+  const one = c => grid ? tileHtml(c) : note ? itemHtml(c, inSeries).replace('<div class="chips">', '<div class="chips">' + (note(c) ? `<span class="chip sortv">${esc(note(c))}</span>` : "")) : itemHtml(c, inSeries);
+  return `<div class="${grid ? "cgrid" : "list"}">` + list.map(x => typeof x === "string" ? x : one(x)).join("") + "</div>";
+}
+// Sort other than series order: everything in the place you are, as one list
+const COL_SORTS = {
+  value: { key: c => { const v = valueOf(c); return v ? toCHF(v.amount, v.cur) : null; }, note: c => { const v = valueOf(c); return v ? money(v.amount, v.cur) : ""; }, label: "value" },
+  rating: { key: c => +c.rating ? +c.rating + (c.fav ? 0.01 : 0) : c.fav ? 0.001 : null, note: c => [c.fav ? "♥" : "", +c.rating ? ratingTxt(c.rating) : ""].filter(Boolean).join(" "), label: "your rating" },
+  bought: { key: c => c.purchaseDate || null, note: c => c.purchaseDate ? niceDate(c.purchaseDate) : "", label: "purchase date" },
+  added: { key: c => c.createdAt || null, note: c => c.createdAt ? stampDate(c.createdAt) : "", label: "date added" }
+};
 function drawResults() {
   const box = $("#results"); if (!box) return;
   const q = norm(S.filters.q), col = S.col || {};
@@ -1064,10 +1237,20 @@ function drawResults() {
     ? `<span aria-current="page">${esc(p.label)}</span>` : `<button class="crumb" data-col='${esc(JSON.stringify(p.col))}'>${esc(p.label)}</button><span class="sep" aria-hidden="true">›</span>`).join("") + '</nav>';
   const more = total => total > S.shown ? '<div class="row" style="justify-content:center;margin-top:12px"><button id="more">Show more (' + (total - S.shown) + ' left)</button></div>' : "";
   let html = "";
-  if (q) {
+  const srt = COL_SORTS[S.colSort];
+  if (srt) {
+    let list = pool.filter(c => (!col.p || publisherOf(c) === col.p) && (!col.g || groupOf(c) === col.g) && (!col.s || seriesKeyOf(c) === col.s));
+    if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
+    const withKey = list.filter(c => srt.key(c) != null), without = list.length - withKey.length;
+    const ordered = sortComics(withKey).sort((a, b) => { const x = srt.key(a), y = srt.key(b); return x < y ? 1 : x > y ? -1 : 0; });
+    const where = col.s ? seriesTitle(col.s) : col.g ? col.g : col.p ? col.p : books ? "all books" : "all comics";
+    html = (col.p ? crumbs([{ label: "All", col: {} }, { label: where }]) : "") +
+      `<p class="muted small" style="margin:0 0 8px">${ordered.length} ${ordered.length === 1 ? "entry" : "entries"} in ${esc(where)}, by ${srt.label}${without ? ` · ${without} without ${srt.label} not shown` : ""} · <button class="link" id="sortoff" type="button">Series order</button></p>` +
+      (ordered.length ? entriesHtml(ordered.slice(0, S.shown), false, srt.note) : '<div class="empty"><h3>Nothing to sort here</h3><p>None of these entries has a ' + esc(srt.label) + ' yet.</p></div>') + more(ordered.length);
+  } else if (q) {
     const list = sortComics(pool.filter(c => q.split(" ").every(w => searchText(c).includes(w))));
     html = `<p class="muted small" style="margin:0 0 8px">${list.length} ${list.length === 1 ? "match" : "matches"} in ${books ? "your books" : "all series"}</p>` +
-      (list.length ? '<div class="list">' + list.slice(0, S.shown).map(itemHtml).join("") + '</div>' : '<div class="empty"><h3>Nothing matches</h3><p>Try another search word or change Show.</p></div>') + more(list.length);
+      (list.length ? entriesHtml(list.slice(0, S.shown)) : '<div class="empty"><h3>Nothing matches</h3><p>Try another search word or change Show.</p></div>') + more(list.length);
   } else if (books && !col.s) {
     // Books: book series as folders, then every single book, by author
     const bySeries = {}, singles = [];
@@ -1077,9 +1260,9 @@ function drawResults() {
     const sorted = singles.slice().sort((a, b) => lastName(a).localeCompare(lastName(b), "de", { numeric: true }) || String(a.title).localeCompare(String(b.title), "de", { numeric: true }));
     html = `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>` + (pool.length ? (names.length ? '<div class="list">' + names.map(n => {
         const list = bySeries[n];
-        return `<button class="folder" data-col='${esc(JSON.stringify({ p: NOVEL_PUB, g: BOOK_GROUP, s: "book:" + n }))}'><div style="min-width:0"><div class="t">${esc(n)}</div><div class="s">${esc([splitPeople(list[0].author)[0], countText(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+        return `<button class="folder" data-col='${esc(JSON.stringify({ p: NOVEL_PUB, g: BOOK_GROUP, s: "book:" + n }))}'><div style="min-width:0"><div class="t">${esc(n)}</div><div class="s">${esc([splitPeople(list[0].author)[0], countText(list), valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : "") +
-      (sorted.length ? `${names.length ? '<h3 class="listhead">Single books</h3>' : ""}<div class="list">` + sorted.slice(0, S.shown).map(c => itemHtml(c)).join("") + '</div>' + more(sorted.length) : "")
+      (sorted.length ? `${names.length ? '<h3 class="listhead">Single books</h3>' : ""}` + entriesHtml(sorted.slice(0, S.shown)) + more(sorted.length) : "")
       : `<div class="empty"><h3>${S.filters.status === "wanted" ? "No books on your wishlist" : "No books yet"}</h3><p>Add a book with its ISBN or by scanning the barcode.</p><div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="newbook">Add a book</button></div></div>`);
   } else if (!col.p) {
     const pubs = {};
@@ -1091,7 +1274,7 @@ function drawResults() {
         const target = isBookUni(p) ? { p, g: BOOK_GROUP } : { p };
         const sub = isBookUni(p) ? `${nSeries} ${nSeries === 1 ? "series" : "series"}` : `${nGroups} ${nGroups === 1 ? "group" : "groups"} · ${nSeries} series`;
         return `<button class="folder pub" data-col='${esc(JSON.stringify(target))}'><div style="min-width:0"><div class="t">${esc(p)}</div>
-          <div class="s">${sub} · ${esc(countText(list))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+          <div class="s">${sub} · ${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show</h3><p>Nothing in your archive fits “Show”. Change it above.</p></div>');
   } else if (!col.g) {
     const inPub = pool.filter(c => publisherOf(c) === col.p);
@@ -1102,7 +1285,7 @@ function drawResults() {
       (names.length ? '<div class="list">' + names.map(g => {
         const list = groups[g], nSeries = new Set(list.map(seriesKeyOf)).size;
         return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g }))}'><div style="min-width:0"><div class="t">${esc(g)}</div>
-          <div class="s">${nSeries} series · ${esc(countText(list))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+          <div class="s">${nSeries} series · ${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing here fits “Show”. Change it above.</p></div>');
   } else if (!col.s) {
     const inGroup = pool.filter(c => publisherOf(c) === col.p && groupOf(c) === col.g);
@@ -1115,31 +1298,32 @@ function drawResults() {
       (keys.length ? '<div class="list">' + keys.map(k => {
         const list = bySeries[k], se = seriesById(k), yrs = yearsText(list);
         return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g: col.g, s: k }))}'><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div>
-          <div class="s">${esc([countText(list), yrs].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
+          <div class="s">${esc([countText(list), yrs, valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this group fits “Show”. Change it above.</p></div>');
   } else {
     const list = sortComics(pool.filter(c => publisherOf(c) === col.p && groupOf(c) === col.g && seriesKeyOf(c) === col.s));
-    let lastYear = null, rows = "";
+    let lastYear = null; const rows = [];
     const byYear = list.some(c => /^\d{4}\//.test(c.issueLabel || ""));
     list.slice(0, S.shown).forEach(c => {
       if (byYear) {
         const y = (/^(\d{4})[\/-]/.exec(c.issueLabel || "") || [])[1] || "Other";
-        if (y !== lastYear) { const n = list.filter(x => ((/^(\d{4})[\/-]/.exec(x.issueLabel || "") || [])[1] || "Other") === y).length; rows += `<h4 class="yearhead">${esc(y)}<span>${n}</span></h4>`; lastYear = y; }
+        if (y !== lastYear) { const n = list.filter(x => ((/^(\d{4})[\/-]/.exec(x.issueLabel || "") || [])[1] || "Other") === y).length; rows.push(`<h4 class="yearhead">${esc(y)}<span>${n}</span></h4>`); lastYear = y; }
       }
-      rows += itemHtml(c, true);
+      rows.push(c);
     });
     const trail = col.p === NOVEL_PUB ? [{ label: "All books", col: {} }, { label: seriesTitle(col.s) }]
       : isBookUni(col.p)
       ? [{ label: "All", col: {} }, { label: col.p, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }]
       : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g, col: { p: col.p, g: col.g } }, { label: seriesTitle(col.s) }];
     html = crumbs(trail) + seriesAbout(seriesById(col.s) || bookAboutObj(col.s)) +
-      `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` +
-      (list.length ? '<div class="list">' + rows + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
+      `<p class="muted small" style="margin:0 0 8px">${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</p>` +
+      (list.length ? entriesHtml(rows, true) : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
   }
   box.innerHTML = html;
   box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
   const ab = box.querySelector(".serabout"); if (ab) ab.ontoggle = () => { S.aboutOpen = ab.open; };
-  box.querySelectorAll(".item").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
+  box.querySelectorAll(".item, .tile").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
+  $("#sortoff") && ($("#sortoff").onclick = () => { S.colSort = "series"; const sel = $("#fsort"); if (sel) sel.value = "series"; drawResults(); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
   $("#newbook") && ($("#newbook").onclick = () => { S.editing = null; S.draft = blankDraft({ kind: "book", bookType: "book", seriesId: "_book" }); nav("add"); });
   bindArrangeCard();
@@ -1842,13 +2026,56 @@ const gridClass = noRead => [S.readMode && !noRead ? "readmode" : "", "gf-" + (n
 function sheetClose() { const b = $("#cellpick"); if (b) b.innerHTML = ""; }
 function sheetOpen(html) { const b = $("#cellpick"); b.innerHTML = `<div class="sheetbg" id="sheetbg"></div><div class="sheet" role="dialog">${html}</div>`; $("#sheetbg").onclick = sheetClose; }
 // ---- Wishlist sub tab ----
+// a wish whose estimated value (price table × condition) is at or below your maximum price
+function wishBudget(c) {
+  if (typeof c.pricePaid !== "number") return null;
+  const v = valueOf(c); if (!v) return null;
+  const est = toCHF(v.amount, v.cur), max = toCHF(c.pricePaid, c.currency);
+  return { est, max, ok: est <= max + 0.005, v };
+}
 function wishlistView() {
-  const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-  return gapTabs() + (wl.length ? `<p class="small muted" style="margin:0">${wl.length} ${wl.length === 1 ? "issue" : "issues"} wanted. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
+  const all = sortComics(S.comics.filter(c => c.status === "wanted"));
+  const fits = all.filter(c => (wishBudget(c) || {}).ok);
+  if (S.wishFilter === "budget" && !fits.length) S.wishFilter = "all";
+  const wl = S.wishFilter === "budget" ? fits : all;
+  const chip = (k, label) => `<button type="button" class="fchip${(S.wishFilter || "all") === k ? " on" : ""}" data-wf="${k}" aria-pressed="${(S.wishFilter || "all") === k}">${label}</button>`;
+  return gapTabs() + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><button type="button" id="wcopy">Copy list for comic fair</button></div>
+      <textarea id="wcopybox" class="mono" rows="6" readonly hidden></textarea>
+      <p class="small muted" style="margin:0">${wl.length} ${wl.length === 1 ? "issue" : "issues"} ${S.wishFilter === "budget" ? "worth no more than your maximum price (by your price table)" : "wanted"}. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
     : '<div class="empty"><h3>Your wishlist is empty</h3><p>In Gaps, tap a grey number to put it on your wishlist.</p></div>') + '<div id="cellpick"></div>';
+}
+// the wishlist as short text for a comic fair: "LTB: 12, 45, 101–103 (max CHF 8)"
+function wishlistText() {
+  const wl = sortComics(S.comics.filter(c => c.status === "wanted")), groups = new Map();
+  wl.forEach(c => { const k = seriesKeyOf(c); (groups.get(k) || groups.set(k, []).get(k)).push(c); });
+  const lines = [];
+  groups.forEach((list, k) => {
+    const se = seriesById(k), yearly = se && se.numbering === "year";
+    const maxOf = c => typeof c.pricePaid === "number" ? "max " + money(c.pricePaid, c.currency || "CHF") : "";
+    const parts = []; let run = null;
+    const flush = () => { if (run) { parts.push(run.a === run.b ? run.la : run.la + "–" + run.lb.replace(/^\d{4}\//, "")); if (run.max) parts[parts.length - 1] += " (" + run.max + ")"; run = null; } };
+    list.forEach(c => {
+      const lab = showLabel(c.issueLabel || c.issue || "") || c.title || "?", n = c.issueSort, max = maxOf(c);
+      const y = yearly ? Math.floor((n || 0) / 1000) : 0;
+      if (run && Number.isInteger(n) && n === run.b + 1 && max === run.max && (!yearly || y === run.y)) { run.b = n; run.lb = lab; return; }
+      flush();
+      if (Number.isInteger(n)) run = { a: n, b: n, la: lab, lb: lab, max, y }; else { parts.push(lab + (max ? " (" + max + ")" : "")); }
+    });
+    flush();
+    const name = c0 => c0.kind === "book" ? (c0.seriesName || "Books") : se ? (se.short ? se.short + " – " + se.name : se.name) : c0.seriesName || "";
+    if (list[0].kind === "book" && !list[0].seriesName) list.forEach(c => lines.push("Book: " + [c.title, c.author].filter(Boolean).join(" – ") + (maxOf(c) ? " (" + maxOf(c) + ")" : "")));
+    else lines.push(name(list[0]) + ": " + parts.join(", "));
+  });
+  return "My wishlist (" + wl.length + ")\n" + lines.join("\n");
 }
 function bindWishlist() {
   bindGapTabs();
+  document.querySelectorAll("[data-wf]").forEach(b => b.onclick = () => { S.wishFilter = b.dataset.wf; renderKeep(); });
+  $("#wcopy") && ($("#wcopy").onclick = async () => {
+    const txt = wishlistText(), box = $("#wcopybox");
+    try { await navigator.clipboard.writeText(txt); toast("Wishlist copied. Paste it into Keep or a message."); }
+    catch (e) { box.value = txt; box.hidden = false; box.focus(); box.select(); toast("Press and hold the selected text, then Copy."); }
+  });
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
   document.querySelectorAll("[data-got]").forEach(b => b.onclick = async e => {
@@ -1863,10 +2090,11 @@ function bindWishlist() {
 }
 function wishItem(c) {
   const s = seriesById(c.seriesId), bk = c.kind === "book", cv = coverOf(c);
-  const sub = [c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || "";
+  const bud = wishBudget(c), v = bud ? bud.v : valueOf(c);
+  const sub = [c.pricePaid !== "" && c.pricePaid != null ? "Max " + money(c.pricePaid, c.currency) : "", v ? "worth ≈ " + money(v.amount, v.cur) : "", c.notes].filter(Boolean).join(" · ") || niceDate(c.date) || "";
   return `<div class="item wishrow">${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></div>` : ""}
     <button class="wishmain" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div>
-      <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}</div><div class="s">${esc(sub)}</div></div></button>
+      <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}${bud && bud.ok ? ' <span class="chip budget">Within budget</span>' : ""}</div><div class="s">${esc(sub)}</div></div></button>
     <button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div>`;
 }
 function wishlistBySeries(wl) {
@@ -2133,7 +2361,7 @@ VIEWS.stats = {
   },
   bind() {
     document.querySelectorAll("[data-sttab]").forEach(b => b.onclick = () => { S.statTab = b.dataset.sttab; render(); window.scrollTo(0, 0); });
-    document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
+    document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { tab: "all", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     refreshRates();
@@ -2453,73 +2681,104 @@ function shortTag(se) {
   return w.length > 1 ? w.map(x => /^\d+$/.test(x) ? x : x[0].toUpperCase()).join("").slice(0, 5) : se.name;
 }
 function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short || se.name : c.seriesName || "") + " " + showLabel(c.issueLabel || c.issue || ""); }
+// Stories: three sub tabs like Collection and Gaps – All stories, People (writers, artists, characters), My favourites
 VIEWS.stories = {
   html() {
-    const st = S.st = S.st || { q: "", mode: "stories", who: null, status: "owned", sort: "title", shown: 100 };
+    const st = S.st = S.st || {};
+    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, shown: 100 }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
+    if (["writers", "artists", "chars"].includes(st.mode)) { st.role = st.mode; st.tab = "people"; } delete st.mode;
+    if (st.sort === "fav") { st.sort = "rating"; st.tab = "fav"; }
     const all = storyIndex(st.status);
-    const seg = (k, label) => `<button type="button" data-mode="${k}" aria-pressed="${st.mode === k}">${label}</button>`;
-    const head = `<div><h2>Stories</h2><p class="lede">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
-      <div class="card stack">
-        <div class="seg" role="group" aria-label="Show">${seg("stories", "Stories")}${seg("writers", "Writers")}${seg("artists", "Artists")}${seg("chars", "Characters")}</div>
-        <div class="filters two-col">
-          <label class="q"><span class="l">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.mode === "stories" ? "Title, code, writer, artist, character" : "Name"}"></label>
-          <label><span class="l">In</span><select id="stst"><option value="owned"${st.status === "owned" ? " selected" : ""}>Comics I own</option><option value="wanted"${st.status === "wanted" ? " selected" : ""}>My wishlist</option><option value="all"${st.status === "all" ? " selected" : ""}>Both</option></select></label>
-          ${st.mode === "stories" ? `<label><span class="l">Sort</span><select id="stsort"><option value="title"${st.sort === "title" ? " selected" : ""}>Title</option><option value="comics"${st.sort === "comics" ? " selected" : ""}>Most reprinted</option><option value="code"${st.sort === "code" ? " selected" : ""}>Story code</option><option value="rating"${st.sort === "rating" ? " selected" : ""}>My rating</option><option value="fav"${st.sort === "fav" ? " selected" : ""}>Favourites only</option></select></label>` : ""}
-        </div>
-        ${st.who ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role])}: ${esc(st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
+    const nFav = all.filter(e => { const r = storyRate(e); return r.fav || +r.rating; }).length;
+    const tab = (k, label, n) => `<button role="tab" type="button" data-stab="${k}" aria-selected="${st.tab === k}">${label}${n != null ? ` <span class="muted">${n}</span>` : ""}</button>`;
+    const chip = (attr, on, label) => `<button type="button" class="fchip${on ? " on" : ""}" ${attr} aria-pressed="${on}">${label}</button>`;
+    const inChips = [["owned", "Owned"], ["wanted", "Wishlist"], ["all", "Both"]].map(([k, l]) => chip(`data-stin="${k}"`, st.status === k, l)).join("");
+    const filters = st.tab === "people"
+      ? `<div class="fchips">${[["writers", "Writers"], ["artists", "Artists"], ["chars", "Characters"]].map(([k, l]) => chip(`data-role="${k}"`, st.role === k, l)).join("")}</div>`
+      : `<div class="fchips">${inChips}${st.tab === "all" ? chip('data-strep="1"', st.reprinted, "Reprinted") : ""}</div>`;
+    const sortSel = st.tab === "all" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>` : "";
+    const head = `<div><h2>Stories</h2><p class="lede hide-phone">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
+      <div class="subtabs three" role="tablist" aria-label="Show">${tab("all", "All stories", all.length)}${tab("people", "People")}${tab("fav", "Favourites", nFav)}</div>
+      <div class="stack" style="gap:8px">
+        <label class="q"><span class="l visually-hidden">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.tab === "people" ? "Name" : "Title, code, writer, artist, character"}"></label>
+        <div class="row between" style="gap:8px">${filters}${sortSel}</div>
+        ${st.who && st.tab === "all" ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role])}: ${esc(st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
       </div><div id="stres"></div>`;
-    return all.length ? head : head.replace('<div id="stres"></div>', '<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" or Duckipedia details, or you add them on a comic.</p></div>');
+    return all.length || st.status !== "owned" ? head : head.replace('<div id="stres"></div>', '<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" or Duckipedia details, or you add them on a comic.</p></div>');
   },
   bind() {
     const st = S.st;
-    document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => { st.mode = b.dataset.mode; st.q = ""; st.shown = 100; if (st.mode !== "stories") st.who = null; render(); });
+    document.querySelectorAll("[data-stab]").forEach(b => b.onclick = () => { if (st.tab === b.dataset.stab) return; st.tab = b.dataset.stab; st.q = ""; st.shown = 100; if (st.tab !== "all") st.who = null; render(); });
+    document.querySelectorAll("[data-role]").forEach(b => b.onclick = () => { st.role = b.dataset.role; st.shown = 100; render(); });
+    document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
+    $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
     $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; drawStories(); };
-    $("#stst").onchange = e => { st.status = e.target.value; st.shown = 100; render(); };
     $("#stsort") && ($("#stsort").onchange = e => { st.sort = e.target.value; drawStories(); });
     $("#stwhox") && ($("#stwhox").onclick = () => { st.who = null; render(); });
     drawStories();
   }
 };
+const storyTitle = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
+// one story: cover of the first comic it's in, title, creators; opens to details, rating and the comics
+function storyRow(e) {
+  const people = [[...e.writers].join(", "), [...e.artists].join(", ")];
+  const by = people[0] && people[0] === people[1] ? people[0] : [people[0] && "W: " + people[0], people[1] && "A: " + people[1]].filter(Boolean).join(" · ");
+  const plotSrc = e.plot && e.plotFrom ? ` <span class="muted">(<a href="${esc(e.plotFrom.url)}" target="_blank" rel="noopener">Duckipedia</a>, GFDL 1.2, <a href="${esc(e.plotFrom.authors)}" target="_blank" rel="noopener">authors</a>)</span>` : "";
+  const sr = storyRate(e), sk = storyKey(e), first = e.items.find(c => coverOf(c)), cv = first && coverOf(first);
+  return `<details class="storyit"><summary>${cv ? `<span class="sthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.remove()"></span>` : `<span class="sthumb none"></span>`}<div style="min-width:0;flex:1"><div class="t">${sr.fav ? '<span style="color:#c8102e">♥</span> ' : ""}${esc(storyTitle(e) || "Untitled")}${+sr.rating ? ` <span class="chip rate">${ratingTxt(sr.rating)}</span>` : ""}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
+    <div class="stbody small">
+      <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
+      ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
+      ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
+      ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(niceDate(e.first))}` : ""}</div>` : ""}
+      ${e.writers.size ? `<div><span class="muted">Writer:</span> ${[...e.writers].map(n => `<button class="link" data-person="writers" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+      ${e.artists.size ? `<div><span class="muted">Artist:</span> ${[...e.artists].map(n => `<button class="link" data-person="artists" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+      ${e.chars.size ? `<div><span class="muted">Characters:</span> ${[...e.chars].map(n => `<button class="link" data-person="chars" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
+      ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(e.genre)}</div>` : ""}
+      ${e.plot ? `<p class="stplot">${esc(e.plot)}${plotSrc}</p>` : ""}
+      <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : ""}</button>`).join("")}</div>
+    </div></details>`;
+}
 function drawStories() {
   const box = $("#stres"); if (!box) return;
   const st = S.st, q = norm(st.q), words = q ? q.split(" ") : [];
   const all = storyIndex(st.status);
   const more = n => n > st.shown ? `<div class="row" style="justify-content:center;margin-top:12px"><button id="stmore">Show more (${n - st.shown} left)</button></div>` : "";
-  if (st.mode !== "stories") {
-    const role = st.mode, counts = new Map();
-    all.forEach(e => e[role === "chars" ? "chars" : role].forEach(n => { const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); counts.set(n, x); }));
+  const cmpT = (a, b) => storyTitle(a).localeCompare(storyTitle(b), "de", { numeric: true });
+  if (st.tab === "people") {
+    const role = st.role, counts = new Map();
+    all.forEach(e => e[role].forEach(n => { const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); counts.set(n, x); }));
     const list = [...counts.values()].filter(x => words.every(w => norm(x.n).includes(w))).sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
-    box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${role === "writers" ? (list.length === 1 ? "writer" : "writers") : role === "artists" ? (list.length === 1 ? "artist" : "artists") : list.length === 1 ? "character" : "characters"}</p>` +
+    const word = { writers: ["writer", "writers"], artists: ["artist", "artists"], chars: ["character", "characters"] }[role];
+    box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? word[0] : word[1]}</p>` +
       (list.length ? '<div class="list">' + list.slice(0, st.shown).map(x => `<button class="folder" data-who="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`).join("") + '</div>' : '<div class="empty"><h3>Nobody found</h3><p>Try another name.</p></div>') + more(list.length);
-    box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.mode = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+    box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   } else {
     let list = all;
-    if (st.who) list = list.filter(e => e[st.who.role === "chars" ? "chars" : st.who.role].has(st.who.name));
+    if (st.who) list = list.filter(e => e[st.who.role].has(st.who.name));
     if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
-    const title = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
-    if (st.sort === "fav") list = list.filter(e => storyRate(e).fav);
-    list = list.slice().sort(st.sort === "rating" || st.sort === "fav" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || title(a).localeCompare(title(b), "de", { numeric: true }) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de", { numeric: true }) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de", { numeric: true }));
-    const reprints = list.filter(e => e.items.length > 1).length;
-    box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
-      (list.length ? '<div class="list">' + list.slice(0, st.shown).map(e => {
-        const people = [[...e.writers].join(", "), [...e.artists].join(", ")];
-        const by = people[0] && people[0] === people[1] ? people[0] : [people[0] && "W: " + people[0], people[1] && "A: " + people[1]].filter(Boolean).join(" · ");
-        const plotSrc = e.plot && e.plotFrom ? ` <span class="muted">(<a href="${esc(e.plotFrom.url)}" target="_blank" rel="noopener">Duckipedia</a>, GFDL 1.2, <a href="${esc(e.plotFrom.authors)}" target="_blank" rel="noopener">authors</a>)</span>` : "";
-        const sr = storyRate(e), sk = storyKey(e);
-        return `<details class="storyit"><summary><div style="min-width:0"><div class="t">${sr.fav ? '<span style="color:#c8102e">♥</span> ' : ""}${esc(title(e) || "Untitled")}${+sr.rating ? ` <span class="chip rate">${ratingTxt(sr.rating)}</span>` : ""}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
-          <div class="stbody small">
-            <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
-            ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
-            ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
-            ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(niceDate(e.first))}` : ""}</div>` : ""}
-            ${e.writers.size ? `<div><span class="muted">Writer:</span> ${[...e.writers].map(n => `<button class="link" data-person="writers" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
-            ${e.artists.size ? `<div><span class="muted">Artist:</span> ${[...e.artists].map(n => `<button class="link" data-person="artists" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
-            ${e.chars.size ? `<div><span class="muted">Characters:</span> ${[...e.chars].map(n => `<button class="link" data-person="chars" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
-            ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(e.genre)}</div>` : ""}
-            ${e.plot ? `<p class="stplot">${esc(e.plot)}${plotSrc}</p>` : ""}
-            <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : ""}</button>`).join("")}</div>
-          </div></details>`;
-      }).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or change "In".</p></div>') + more(list.length);
+    let html = "";
+    if (st.tab === "fav") {
+      // hearted stories first, then the rest by stars
+      list = list.filter(e => { const r = storyRate(e); return r.fav || +r.rating; });
+      const hearts = list.filter(e => storyRate(e).fav).sort((a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b));
+      const rated = list.filter(e => !storyRate(e).fav), groups = new Map();
+      rated.forEach(e => { const r = +storyRate(e).rating; (groups.get(r) || groups.set(r, []).get(r)).push(e); });
+      const parts = [];
+      if (hearts.length) parts.push([`♥ Favourites`, hearts]);
+      [...groups.keys()].sort((a, b) => b - a).forEach(r => parts.push([ratingTxt(r), groups.get(r).sort(cmpT)]));
+      let left = st.shown, total = list.length;
+      html = `<p class="muted small" style="margin:8px 0">${hearts.length} ${hearts.length === 1 ? "favourite" : "favourites"} · ${rated.length + hearts.filter(e => +storyRate(e).rating).length} rated</p>` +
+        (total ? parts.map(([h, xs]) => { if (left <= 0) return ""; const shown = xs.slice(0, left); left -= shown.length; return `<h3 class="listhead">${esc(h)} <span class="muted">${xs.length}</span></h3><div class="list">${shown.map(storyRow).join("")}</div>`; }).join("")
+          : '<div class="empty"><h3>No favourites yet</h3><p>Open a story under All stories and tap the heart or the stars.</p></div>') + more(total);
+    } else {
+      if (st.reprinted) list = list.filter(e => e.items.length > 1);
+      list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : cmpT);
+      const reprints = list.filter(e => e.items.length > 1).length;
+      html = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints && !st.reprinted ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
+        (list.length ? '<div class="list">' + list.slice(0, st.shown).map(storyRow).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or tap Owned, Wishlist or Both.</p></div>') + more(list.length);
+    }
+    box.innerHTML = html;
     box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     box.querySelectorAll("[data-sfav]").forEach(b => b.onclick = async () => {
       const k = b.dataset.sfav, on = !(S.storyRatings[k] || {}).fav;
@@ -2527,7 +2786,7 @@ function drawStories() {
       try { await setStoryRate(k, { fav: on }); } catch (e) { toast(errText(e)); }
     });
     bindStars(box, async (v, el) => { try { await setStoryRate(el.dataset.sk, { rating: v }); } catch (e) { toast(errText(e)); } });
-    box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+    box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   }
   $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
 }
@@ -2535,8 +2794,30 @@ function drawStories() {
 function stampDate(d) { return d ? new Date(d).toLocaleDateString("de-CH", { day: "numeric", month: "long", year: "numeric" }) : ""; }
 function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5) : Infinity; }
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
+// everything a backup holds: comics, series and every setting (cover pictures and exchange-rate downloads come back by themselves)
+function backupData() {
+  return { app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra,
+    groupKeep: S.groupKeep, barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, rates: S.rates };
+}
+// entries changed or added since the last backup
+function changedSinceBackup() { const t = S.lastBackup || ""; return S.comics.filter(c => !t || String(c.updatedAt || c.createdAt || "") > t).length; }
+// what a backup holds next to what is on this phone, so you can see a restore brings everything back
+function backupCompare(b) {
+  const n = x => Array.isArray(x) ? x.length : x && typeof x === "object" ? Object.keys(x).length : 0;
+  const rows = [
+    ["Entries", b.comics, S.comics], ["… of them owned", (b.comics || []).filter(c => c && c.status !== "wanted"), S.comics.filter(c => c.status !== "wanted")],
+    ["… on the wishlist", (b.comics || []).filter(c => c && c.status === "wanted"), S.comics.filter(c => c.status === "wanted")],
+    ["Series", b.series, S.series], ["Price ranges", b.valueRules, S.valueRules], ["Own condition factors", b.gradeFactors, S.gradeFactors],
+    ["Story ratings", b.storyRatings, S.storyRatings], ["Book series info", b.bookSeriesInfo, S.bookMeta], ["Empty book series", b.bookSeriesExtra, S.bookSeriesExtra],
+    ["Volumes per book series", b.bookSizes, S.bookSizes], ["Group choices", b.groupKeep, S.groupKeep], ["Learned barcodes", b.barcodes, S.barcodes]
+  ];
+  const ratesTxt = b.rates ? "yes" : "no";
+  return `<table class="cmp small"><thead><tr><th></th><th>In backup</th><th>On this phone</th></tr></thead><tbody>${rows.map(([k, x, y]) => { const a = n(x), p = n(y); return `<tr${a < p ? ' class="less"' : ""}><td>${k}</td><td>${a.toLocaleString("de-CH")}</td><td>${p.toLocaleString("de-CH")}</td></tr>`; }).join("")}
+    <tr><td>Exchange rates</td><td>${ratesTxt}</td><td>${S.rates ? "yes" : "no"}</td></tr></tbody></table>
+    <p class="small muted" style="margin:0">Nothing changes until you tap Restore. Restoring adds what's missing and keeps what's on this phone${rows.some(([, x, y]) => n(x) < n(y)) ? "; rows in red have more on the phone than in the backup" : ""}.</p>`;
+}
 function backupFile(asText) {
-  const data = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra });
+  const data = JSON.stringify(backupData());
   const name = "dagobert-backup-" + new Date().toISOString().slice(0, 10) + (asText ? ".txt" : ".json");
   return new File([data], name, { type: asText ? "text/plain" : "application/json" });
 }
@@ -2556,7 +2837,7 @@ function saveToDevice(file) {
 // backup as text: compressed and copied to the clipboard, for browsers that can neither share nor download
 const TEXT_PREFIX = "DAGOBERT-BACKUP-1:";
 async function backupText() {
-  const json = JSON.stringify({ app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra });
+  const json = JSON.stringify(backupData());
   let bytes = new TextEncoder().encode(json), gz = false;
   if (typeof CompressionStream !== "undefined") {
     bytes = new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"))).arrayBuffer()); gz = true;
@@ -2586,7 +2867,7 @@ VIEWS.backup = {
     const mb = S.usage ? (S.usage / 1048576).toFixed(1) + " MB" : "";
     const canShare = !!(navigator.share && navigator.canShare);
     const status = !n ? "" : days === Infinity ? '<div class="banner warn">You haven\'t made a backup yet. If this phone is lost or reset, the archive goes with it.</div>'
-      : days > 14 ? `<div class="banner warn">Your last backup is ${days} days old.</div>` : "";
+      : days > 14 || changedSinceBackup() >= 25 ? `<div class="banner warn">Your last backup is ${days === 0 ? "from today" : days + (days === 1 ? " day" : " days") + " old"}${changedSinceBackup() ? ", and " + changedSinceBackup() + " entries changed since" : ""}.</div>` : "";
     return `
       <div><h2>Backup</h2><p class="lede">Your archive is stored only on this phone and works without internet. Keep a copy on your PC in case the phone is lost, reset or replaced.</p></div>
       ${status}
@@ -2667,7 +2948,7 @@ VIEWS.backup = {
         const known = b.comics.length - fresh.length;
         // only entries from the old in-app CLZ importer qualify; comics from converted files carry clzBatch/seriesGroup
         const oldClz = b.source === "clz-import" ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id) && !c.clzBatch && !c.seriesGroup) : [];
-        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>${isClz ? "" : backupCompare(b)}
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
           <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; clear(); };
@@ -2684,6 +2965,11 @@ VIEWS.backup = {
             if (b.gradeFactors && typeof b.gradeFactors === "object") { S.gradeFactors = Object.assign({}, b.gradeFactors, S.gradeFactors); await setConfig("gradeFactors", S.gradeFactors); }
             if (b.bookSizes && typeof b.bookSizes === "object") { S.bookSizes = Object.assign({}, S.bookSizes, b.bookSizes); await setConfig("bookSizes", S.bookSizes); }
             if (b.bookSeriesInfo && typeof b.bookSeriesInfo === "object") { S.bookMeta = Object.assign({}, S.bookMeta, b.bookSeriesInfo); await setConfig("bookSeriesInfo", S.bookMeta); }
+            if (Array.isArray(b.groupKeep)) { S.groupKeep = [...new Set((S.groupKeep || []).concat(b.groupKeep))]; await setConfig("groupKeep", S.groupKeep); }
+            if (b.barcodes && typeof b.barcodes === "object") { S.barcodes = Object.assign({}, b.barcodes, S.barcodes); await setConfig("barcodes", S.barcodes); }
+            if (b.barcodeYears && typeof b.barcodeYears === "object") { S.barcodeYears = Object.assign({}, b.barcodeYears, S.barcodeYears); await setConfig("barcodeYears", S.barcodeYears); }
+            if (Array.isArray(b.recentSeries) && !(S.recentSeries || []).length) { S.recentSeries = b.recentSeries; await setConfig("recentSeries", S.recentSeries); }
+            if (b.rates && !S.rates) { S.rates = b.rates; await setConfig("rates", S.rates); }
             if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();

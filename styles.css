@@ -486,3 +486,33 @@ nav.tabs .short, nav.tabs .morebtn, nav.tabs .moremenu { display: none; }
 .valrow .amt { flex: 1 1 auto; min-width: 0; } .valrow select { flex: 0 0 auto; width: auto; }
 @media (max-width: 760px) { #new { display: none; } }   /* the bottom bar has its own + */
 @media (max-width: 760px) { .savebar { bottom: calc(66px + env(safe-area-inset-bottom, 0px)); } }   /* above the bottom bar */
+
+/* ---- version 85: backup check, price paste, wishlist budget, collection sort and covers, stories sub tabs ---- */
+.banner.nag { display: grid; gap: 8px; margin: 8px 0; }
+table.cmp { margin: 4px 0; }
+table.cmp th, table.cmp td { text-align: left; padding: 4px 8px 4px 0; border-bottom: 1px solid var(--line); }
+table.cmp td + td, table.cmp th + th { text-align: right; font-variant-numeric: tabular-nums; }
+table.cmp tr.less td { color: var(--wanted); font-weight: 700; }
+.pastebox textarea { width: 100%; font-family: var(--f-mono); font-size: 0.85rem; }
+.pranges { margin: 0; padding-left: 18px; max-height: 260px; overflow: auto; font-variant-numeric: tabular-nums; }
+.chip.budget { background: var(--owned-soft); color: var(--ink); border-color: var(--owned); }
+.wishhead { gap: 8px; align-items: center; flex-wrap: wrap; }
+#wcopybox { width: 100%; }
+.sortrow { gap: 10px; align-items: center; justify-content: space-between; margin-top: 8px; flex-wrap: wrap; }
+label.inline { display: flex; gap: 6px; align-items: center; }
+label.inline .l { margin: 0; }
+.chip.sortv { background: var(--accent-soft); font-weight: 700; }
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+.cgrid .yearhead { grid-column: 1 / -1; }
+.tile { position: relative; padding: 0; aspect-ratio: 2 / 3; border-radius: 6px; overflow: hidden; background: var(--surface); border: 1px solid var(--line); display: block; min-height: 0; }
+.tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.tile .tph { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; padding: 6px; gap: 4px; color: var(--muted); font-size: 0.78rem; background: color-mix(in oklab, var(--accent) 8%, var(--surface)); }
+.tile .tph b { font-family: var(--f-display); font-size: 1.05rem; color: var(--ink); }
+.tile .tnum { position: absolute; left: 0; right: 0; bottom: 0; background: color-mix(in oklab, var(--ink) 78%, transparent); color: var(--surface); font-size: 0.74rem; font-weight: 700; padding: 3px 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.tile .tfav { position: absolute; top: 4px; right: 4px; background: var(--surface); color: #c8102e; border-radius: 999px; font-size: 0.72rem; padding: 1px 6px; font-weight: 700; }
+.tile.wanted { border: 2px dashed var(--wanted); }
+.subtabs.three { grid-template-columns: repeat(3, 1fr); }
+.subtabs.three button { padding: 10px 6px; font-size: 0.95rem; }
+.sthumb { flex: none; width: 34px; height: 48px; border-radius: 3px; overflow: hidden; background: var(--line); }
+.sthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sthumb.none { background: color-mix(in oklab, var(--accent) 10%, var(--surface)); }
