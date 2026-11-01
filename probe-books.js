@@ -72,7 +72,8 @@
       const extent = first("300", "a");
       const pages = (/(\d+)\s*(?:s\.|s\b|seiten|sidor|p\.|pages?\b)/i.exec(extent) || (/tim|min|vol|band|cd|mp3|punktskrift/i.test(extent) ? null : /^\s*\[?(\d+)\]?\s*$/.exec(extent)) || [])[1] || "";
       const isbn = fields("020").map(f => clean(sub(f, "a")[0])).find(x => x.length === 13) || fields("020").map(f => clean(sub(f, "a")[0]))[0] || "";
-      const lang = langName(first("041", "a"));
+      const langs = fields("041").flatMap(f => sub(f, "a")).map(langName).filter(Boolean);
+      const lang = langs.length > 1 ? (langs.find(l => l !== "German" && l !== "Swedish") || langs[0]) : langs[0] || "";
       const binding = bindingOf(fields("020").map(f => sub(f, "q").concat(sub(f, "c")).join(" ")).join(" ") + " " + fields("655").map(f => sub(f, "a")[0]).join(" "), lang === "Swedish");
       return {
         title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
@@ -244,8 +245,12 @@
     const recs = [].concat(...await Promise.all(asks)).filter(same).map(r => oneGenre(r.genre)).filter(Boolean);
     // genres most editions agree on; one comic adaptation shouldn't make the novel a comic
     const count = {}; recs.forEach(g => g.split(", ").forEach(x => { count[x] = (count[x] || 0) + 1; }));
-    const need = Math.max(1, Math.ceil(recs.length * 0.3));
-    return oneGenre(Object.keys(count).filter(k => count[k] >= need).sort((a, b) => count[b] - count[a]).join(", "));
+    const ranked = Object.keys(count).sort((a, b) => count[b] - count[a]), specific = ranked.filter(k => !GENERIC.has(k));
+    // specific genres named by at least two editions and at least half as often as the most named one
+    const top = specific.length ? count[specific[0]] : 0;
+    const keep = specific.filter(k => count[k] >= 2 && count[k] * 2 >= top);
+    if (keep.length) return oneGenre(keep.join(", "));
+    return oneGenre(specific.length === 1 ? specific[0] : ranked[0] || "");
   }
   // title/author search: several catalogues, one list without duplicates
   async function search(q) {
