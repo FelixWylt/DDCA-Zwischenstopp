@@ -2790,6 +2790,44 @@ async function refreshAll() {
   r.running = false; r.finished = true; drawRefresh();
   toast("Refresh: " + r.changed + " comics updated");
 }
+// ---- Refresh all books: every book with an ISBN looked up again; the databases' data wins, series and volume stay ----
+function refreshBooksCard() {
+  const n = S.comics.filter(c => c.kind === "book" && window.Books && Books.normalize(c.isbn)).length, r = S.rb;
+  if (!n && !r) return "";
+  return `<div class="card stack" id="rbbox"><h3>Refresh all books</h3>
+    <p class="small muted" style="margin:0">Looks up your ${n} books with an ISBN in the Deutsche Nationalbibliothek, LIBRIS, Open Library and Google Books again. Title, author, publisher, year, pages, language, translator, genres and cover are replaced with their data; series, volume and everything about your copy stay. Needs internet; takes about ${Math.max(1, Math.round(n * 1.5 / 60))} min.</p>
+    ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rbstop">Stop</button></div>`
+      : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} ${r.changed === 1 ? "book" : "books"} updated${r.none ? ", " + r.none + " not found in any database" : ""}.</p>` : ""}<div class="row"><button id="rball"${S.db ? "" : " disabled"}>Refresh all books</button></div>`}
+  </div>`;
+}
+function drawRefreshBooks() { const b = $("#rbbox"); if (b) { b.outerHTML = refreshBooksCard(); bindRefreshBooks(); } }
+function bindRefreshBooks() {
+  $("#rball") && ($("#rball").onclick = () => refreshBooks());
+  $("#rbstop") && ($("#rbstop").onclick = () => { if (S.rb) S.rb.stop = true; });
+}
+async function refreshBooks() {
+  const list = S.comics.filter(c => c.kind === "book" && Books.normalize(c.isbn));
+  const r = S.rb = { running: true, total: list.length, done: 0, changed: 0, none: 0 };
+  drawRefreshBooks();
+  for (const c0 of list) {
+    if (r.stop) { r.stopped = true; break; }
+    if (!navigator.onLine) { toast("No internet: book refresh stopped"); r.stopped = true; break; }
+    try {
+      const res = await Books.lookupIsbn(Books.normalize(c0.isbn));
+      if (res.data) {
+        const c = Object.assign({}, c0);
+        applyBookData(c, res.data);
+        c.seriesName = c0.seriesName || c.seriesName; c.issue = c0.issue || c.issue;   // your series and volume stay
+        const strip = x => JSON.stringify(Object.assign({}, x, { updatedAt: 0 }));
+        if (strip(c) !== strip(c0)) { await saveComic(c); r.changed++; }
+      } else r.none++;
+    } catch (e) {}
+    r.done++; drawRefreshBooks();
+    await sleep(600);
+  }
+  r.running = false; r.finished = true; drawRefreshBooks();
+  toast("Books: " + r.changed + " updated");
+}
 // ---- fill a series' details from INDUCKS (offline catalogue) and Duckipedia (German series, needs internet) ----
 async function fillSeriesInfo(se) {
   const got = [], set = (k, v, label) => { if (v && !se[k]) { se[k] = v; if (!got.includes(label)) got.push(label); } };
@@ -3132,6 +3170,7 @@ VIEWS.series = {
       <div id="misscat">${missingCatalogueCard()}</div>
       ${duckipediaBulkCard()}
       ${refreshCard()}
+      ${refreshBooksCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(niceDate(String(S.catalogue.built || "").slice(0, 10)))} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
           <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
@@ -3177,7 +3216,7 @@ VIEWS.series = {
       S.serOpen["book:" + b.dataset.bkfill] = true; renderKeep();
     });
     document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
-    bindRefresh();
+    bindRefresh(); bindRefreshBooks();
     $("#fillall") && ($("#fillall").onclick = async () => {
       if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
       grab();
