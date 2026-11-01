@@ -166,6 +166,22 @@ function bindValueRules(root) {
   (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
   (root || document).querySelectorAll("[data-vdel]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).filter(r => r.id !== b.dataset.vdel); save(); renderKeep(); });
 }
+// ---- exchange rates to CHF: the ECB's daily rates through frankfurter.dev (free, no account), refreshed weekly; editable in Stats ----
+const RATE_DEFAULT = { EUR: 0.94, SEK: 0.084 };   // CHF per unit, only until the first refresh
+const rateOf = cur => cur === "CHF" || !cur ? 1 : +((S.rates || {})[cur]) || RATE_DEFAULT[cur] || 0;
+const toCHF = (amount, cur) => (+amount || 0) * rateOf(cur || "CHF");
+async function refreshRates(force) {
+  const r = S.rates || {};
+  if (!force && (S.ratesTried || r.manual || (r.date && Date.now() - new Date(r.date) < 7 * 864e5) || !navigator.onLine)) return;
+  S.ratesTried = true;
+  try {
+    const j = await (await fetch("https://api.frankfurter.dev/v1/latest?base=CHF&symbols=EUR,SEK")).json();
+    if (j && j.rates && j.rates.EUR) {
+      S.rates = { EUR: Math.round(1 / j.rates.EUR * 10000) / 10000, SEK: Math.round(1 / j.rates.SEK * 100000) / 100000, date: j.date, source: "ECB via frankfurter.dev" };
+      await setConfig("rates", S.rates); if (S.view === "stats") renderKeep();
+    }
+  } catch (e) {}
+}
 // Stats card: value per currency, how sure it is, the comics most worth checking
 function valueCard(own) {
   const per = {}, list = []; let none = 0;
@@ -173,11 +189,23 @@ function valueCard(own) {
   const curs = Object.keys(per).sort();
   const fx = Object.assign({}, GRADE_FACTOR_DEFAULT, S.gradeFactors || {});
   const factors = `<details class="small"><summary>Condition factors</summary><div class="gfactors">${GRADES.map(([g, l]) => `<label><span class="l">${esc(l.split(" ")[0])}</span><input data-gf2="${g}" inputmode="decimal" value="${fx[g]}"></label>`).join("")}<label><span class="l">Not graded</span><input data-gf2="" inputmode="decimal" value="${fx[""]}"></label></div>
-    <p class="muted" style="margin:4px 0 0">The price ranges are for Z1; other conditions are multiplied by these. Facsimiles count ${FACSIMILE_FACTOR * 100}%.</p></details>`;
+    <p class="muted" style="margin:4px 0 0">The price ranges are for Z1; other conditions are multiplied by these. Facsimiles count ${FACSIMILE_FACTOR * 100}%.</p></details>
+    <details class="small"><summary>Exchange rates</summary><div class="gfactors"><label><span class="l">CHF per EUR</span><input data-rate="EUR" inputmode="decimal" value="${rateOf("EUR")}"></label><label><span class="l">CHF per SEK</span><input data-rate="SEK" inputmode="decimal" value="${rateOf("SEK")}"></label></div>
+      <div class="row" style="margin-top:6px"><button type="button" class="ghost" id="rateauto">Use today's ECB rates</button></div><p class="muted" style="margin:4px 0 0">Changing a rate keeps your own rates until you tap the button.</p></details>`;
   if (!curs.length) return `<div class="card stack"><h3>Collection value</h3><p class="small muted" style="margin:0">No values yet. Add price ranges to your series in the Series tab (open a series › Value per issue), using sold prices from eBay, Tradera or Ricardo. Books also have links to their sold listings.</p>${factors}</div>`;
   const top = list.sort((a, b) => b.total - a.total).slice(0, 20);
+  // everything in CHF: value, range, and what you paid
+  let lik = 0, lo = 0, hi = 0, paid = 0, paidN = 0, paidOfValued = 0;
+  curs.forEach(k => { const x = per[k], f = rateOf(k); lik += (x.checked + x.table + x.estimate) * f; lo += (x.checked * 0.9 + (x.table + x.estimate) * 0.6) * f; hi += (x.checked * 1.1 + (x.table + x.estimate) * 1.4) * f; });
+  own.forEach(c => { if (typeof c.pricePaid === "number") { const p = toCHF(c.pricePaid * (c.copies || 1), c.currency); paid += p; paidN++; if (valueOf(c)) paidOfValued += p; } });
+  const r = S.rates || {}, diff = lik - paidOfValued;
+  const chf = `<div class="row" style="gap:24px;flex-wrap:wrap"><div><div class="v2">CHF ${fmt2(lik)}</div><div class="k small muted">likely value · range ${fmt2(lo)}–${fmt2(hi)}</div></div>
+    <div><div class="v2">CHF ${fmt2(paid)}</div><div class="k small muted">paid for ${paidN} of ${own.length.toLocaleString("de-CH")}</div></div>
+    ${paidOfValued ? `<div><div class="v2">${diff >= 0 ? "+" : "−"} CHF ${fmt2(Math.abs(diff))}</div><div class="k small muted">value minus price paid, for comics with both</div></div>` : ""}</div>
+    <p class="small muted" style="margin:0">Converted to CHF: 1 EUR = ${fmt2(rateOf("EUR")).replace(/0$/, "")} · 1 SEK = ${rateOf("SEK").toFixed(4)} ${r.date ? "(" + (r.manual ? "your rates" : "ECB rate of " + niceDate(r.date)) + ")" : "(approximate; updated when online)"}.</p>`;
   const how = { checked: "checked", table: "table", estimate: "own estimate" };
-  return `<div class="card stack"><div class="cardhead"><h3>Collection value</h3><span class="muted small">per currency, not converted</span></div>
+  return `<div class="card stack"><div class="cardhead"><h3>Collection value</h3><span class="muted small">in CHF, details per currency below</span></div>
+    ${chf}
     <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Likely</th><th>Range</th><th>Checked</th><th>Table</th><th>Own est.</th></tr></thead><tbody>${curs.map(k => { const x = per[k], t = x.checked + x.table + x.estimate, lo = x.checked * 0.9 + (x.table + x.estimate) * 0.6, hi = x.checked * 1.1 + (x.table + x.estimate) * 1.4;
       return `<tr><td>${k}</td><td><strong>${fmt2(t)}</strong></td><td>${fmt2(lo)}–${fmt2(hi)}</td><td>${fmt2(x.checked)}</td><td>${fmt2(x.table)}</td><td>${fmt2(x.estimate)}</td></tr>`; }).join("")}</tbody></table></div>
     <p class="small muted" style="margin:0">${list.length} of ${own.length.toLocaleString("de-CH")} have a value${none ? ", " + none + " none yet" : ""}. The range allows ±10% for checked prices and −40%/+40% for table values and own estimates. Dealers usually pay well below these values.</p>
@@ -373,6 +401,7 @@ async function boot() {
     S.valueRules = await getConfig("valueRules") || [];
     S.groupKeep = await getConfig("groupKeep") || [];
     S.bookSeriesExtra = await getConfig("bookSeriesExtra") || [];
+    S.rates = await getConfig("rates") || null;
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
@@ -1412,7 +1441,7 @@ ${isBook ? `
           <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
           ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
-          <label><span class="l">Checked value <span class="muted">(sold price)</span></span><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"></label>
+          <label><span class="l">Checked value <span class="muted">(sold price)</span></span><span class="row" style="gap:6px;flex-wrap:nowrap"><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"><select id="f-valueCur" aria-label="Currency of the checked value" style="width:auto">${CURRENCIES.map(x => `<option${(d.valueCur || d.currency || "CHF") === x ? " selected" : ""}>${x}</option>`).join("")}</select></span></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
 ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId, d) ? `<br>Collector prices: ${collectorLinks(d.seriesId, d)}` : ""}</div>
@@ -1473,7 +1502,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
@@ -2066,8 +2095,8 @@ VIEWS.stats = {
     const sums = {}, vals = {}; let priced = 0, valued = 0;
     own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") { priced++; sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); } const v = valueOf(c); if (v) { valued++; vals[v.cur] = (vals[v.cur] || 0) + v.amount * (c.copies || 1); } });
     const moneyRows = Object.keys(Object.assign({}, sums, vals)).sort();
-    const money = moneyRows.length ? `<div class="card stack"><div class="cardhead"><h3>Money</h3><span class="muted small">per currency, not converted</span></div>
-      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}</tbody></table></div>
+    const money = moneyRows.length ? `<div class="card stack"><div class="cardhead"><h3>Money</h3><span class="muted small">per currency, and all in CHF</span></div>
+      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}${moneyRows.length > 1 || moneyRows[0] !== "CHF" ? `<tr><td><strong>All in CHF</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(sums[k] || 0, k), 0))}</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(vals[k] || 0, k), 0))}</strong></td></tr>` : ""}</tbody></table></div>
       <p class="small muted" style="margin:0">Price paid is filled in for ${priced} of ${nf(own.length)} comics, value for ${valued}.</p></div>` : "";
 
     return `
@@ -2096,6 +2125,9 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
+    refreshRates();
+    document.querySelectorAll("[data-rate]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); if (!(v > 0)) return; S.rates = Object.assign({}, S.rates, { [inp.dataset.rate]: v, manual: true, date: S.rates && S.rates.date || todayIso() }); await setConfig("rates", S.rates); renderKeep(); });
+    $("#rateauto") && ($("#rateauto").onclick = async () => { S.rates = Object.assign({}, S.rates, { manual: false }); S.ratesTried = false; await refreshRates(true); toast(S.rates && !S.rates.manual && S.rates.date ? "ECB rates of " + niceDate(S.rates.date) : "Rates couldn't be fetched"); renderKeep(); });
     document.querySelectorAll("[data-gf2]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); S.gradeFactors = Object.assign({}, S.gradeFactors); if (isNaN(v)) delete S.gradeFactors[inp.dataset.gf2]; else S.gradeFactors[inp.dataset.gf2] = v; await setConfig("gradeFactors", S.gradeFactors); renderKeep(); });
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
