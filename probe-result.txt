@@ -1,4 +1,5 @@
-9780393679212 Strange Case of Dr. Jekyll and Mr. Hyde, Norton Critical Editions, 2nd Edition | genre=Comics, Horror lang=English format=- pages=200 | Open Library
-9783150197363 Io non ho paura | genre=Thriller lang=Italian format=Softcover pages=303 | Deutsche Nationalbibliothek
-9783150161005 Der Sandmann | genre=Short Stories, Fantasy lang=German format=Softcover pages=100 | Deutsche Nationalbibliothek
+9780393679212 Strange Case of Dr. Jekyll and Mr. Hyde, Norton Critical Editions, 2nd Edition | genre=Novel lang=English format=- pages=200 | Open Library
+9783150197363 Io non ho paura | genre=Novel lang=Italian format=Softcover pages=303 | Deutsche Nationalbibliothek
+9783150161005 Der Sandmann | genre=Novel lang=German format=Softcover pages=100 | Deutsche Nationalbibliothek
 9783150092675 The importance of being earnest – a trivial comedy for serious people | genre=Drama lang=German format=Softcover pages=140 | Deutsche Nationalbibliothek+LIBRIS
+Earnest 041: tag="041" ind1=" " ind2=" "> <subfield code="a">ger</subfield> <subfield code="a">eng</subfield> </datafield>
