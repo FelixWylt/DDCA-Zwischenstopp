@@ -71,6 +71,16 @@ function arrangeSeries(se) {
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
 }
+// the usual format of a series' issues, from its group, name or size: LTB and pockets are Taschenbuch / Pocket, magazines are Heft
+function seriesFormat(se) {
+  if (!se) return "";
+  const n = norm(se.name), f = norm(se.format), g = se.group || "";
+  if (/hardcover|gebunden|inbunden|\bhc\b/.test(n + " " + f)) return "Hardcover";
+  if (g === DE_LTB || g === DE_TB || g === SE_POC || /taschenbuch|\bpocket\b|\bltb\b|^topolino\b/.test(n)) return "Taschenbuch / Pocket";
+  if (g === DE_MAG || g === SE_MAG || /\b(magazin|zeitung|heft|hefte|tidning|tidningen)\b/.test(n) || ["kalle anka c o", "kalle anka co", "micky maus", "micky maus magazin"].includes(n)) return "Heft";
+  if (/\balbum|alben\b/.test(n)) return "Album";
+  return "";
+}
 const NEW_GROUPS = [DE_LTB, DE_TB, DE_MAG, DE_ALB, SE_MAG, SE_POC, SE_ALB, IT_ALL, NO_ALL, CH_ALL, AT_ALL];
 // the new arrangement is in use once any Disney series sits in one of its groups
 function arrangedInUse() { return S.series.some(se => se.publisher === DISNEY && NEW_GROUPS.includes(se.group)); }
@@ -526,6 +536,12 @@ async function boot() {
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
+    // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
+    if (!(await getConfig("formatFill1"))) {
+      const fix = S.comics.filter(c => c.kind !== "book" && !c.format && seriesFormat(seriesById(c.seriesId))).map(c => Object.assign({}, c, { format: seriesFormat(seriesById(c.seriesId)) }));
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("formatFill1", true);
+    }
     if (!(await getConfig("genresEnglish3")) && window.Books && Books.oneGenre) {
       const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
       if (fix.length) await saveMany(fix, null, true);
@@ -553,6 +569,7 @@ function stamp(c, keepDates) {
   body.id = body.id || newId(); delete body.k;
   if (!(keepDates && body.updatedAt)) body.updatedAt = new Date().toISOString();
   if (!body.createdAt) body.createdAt = body.updatedAt;
+  if (body.kind !== "book" && !body.format) { const f = seriesFormat(seriesById(body.seriesId)); if (f) body.format = f; }   // the series' usual format when none is chosen
   return body;
 }
 function remember(saved) {
@@ -2443,7 +2460,7 @@ function applyBookData(d, r) {
   const set = (k, v) => { if (v) d[k] = v; };
   set("title", r.title); set("author", (r.authors || []).join(", ")); set("publisher", r.publisher); set("date", r.year);
   set("pages", r.pages); set("lang", r.lang); set("genre", r.genre); set("translator", r.translator); set("originalTitle", r.originalTitle);
-  set("coverUrl", r.cover); set("isbn", r.isbn);
+  set("coverUrl", r.cover); set("isbn", r.isbn); set("format", r.format);
   if (r.series && !d.seriesName) { d.seriesName = r.series; if (r.volume && !d.issue) d.issue = String(r.volume).replace(/^\D+/, ""); }
 }
 function bookMsg(html) { const b = $("#bookmsg"); if (b) { b.innerHTML = html; b.scrollIntoView({ block: "nearest" }); } }

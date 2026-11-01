@@ -30,6 +30,18 @@
   }
   const year = s => ((/(1[5-9]|20)\d{2}/.exec(String(s || "")) || [])[0]) || "";
 
+  // binding, from the words libraries add to the ISBN ("inb.", "hft.", "Gb.", "kart.", "Festeinband") or Open Library's physical_format
+  function bindingOf(text, swedish) {
+    const t = " " + String(text || "").toLowerCase() + " ";
+    if (/ljudbok|ljudböcker|audio|hörbuch|\bmp3\b|\bcd\b|daisy/.test(t)) return "Audiobook";
+    if (/e-bok|e-böcker|ebook|e-book|epub|\bpdf\b|kindle|online/.test(t)) return "E-book";
+    if (/box|schuber|kassett|\bset\b/.test(t)) return "Box set";
+    if (/\b(inb|inbunden|gb|geb|gebunden|festeinband|hardcover|hardback|hard cover|library binding|pp)\b/.test(t)) return "Hardcover";
+    if (/\bkart/.test(t)) return swedish ? "Hardcover" : "Softcover";   // Swedish kartonnage has board covers; German "kartoniert" is a soft cover
+    if (/\b(pocket|taschenbuch|tb|paperback|mass market|pb)\b/.test(t)) return "Paperback";
+    if (/\b(hft|häftad|broschur|broschiert|klappenbroschur|softcover|soft cover|trade paperback)\b/.test(t)) return "Softcover";
+    return "";
+  }
   // DNB subject groups (Sachgruppen) that say something about the genre
   const SDNB = { B: "Fiction", K: "Kinder- und Jugendliteratur", "741.5": "Comics", "830": "Fiction", "833": "Fiction", "823": "Fiction", "839": "Fiction", "S": "" };
   // ---- Deutsche Nationalbibliothek (MARC 21 over SRU) ----
@@ -50,10 +62,12 @@
       const extent = first("300", "a");
       const pages = (/(\d+)\s*(?:s\.|s\b|seiten|sidor|p\.|pages?\b)/i.exec(extent) || (/tim|min|vol|band|cd|mp3|punktskrift/i.test(extent) ? null : /^\s*\[?(\d+)\]?\s*$/.exec(extent)) || [])[1] || "";
       const isbn = fields("020").map(f => clean(sub(f, "a")[0])).find(x => x.length === 13) || fields("020").map(f => clean(sub(f, "a")[0]))[0] || "";
+      const lang = langName(first("041", "a"));
+      const binding = bindingOf(fields("020").map(f => sub(f, "q").concat(sub(f, "c")).join(" ")).join(" ") + " " + fields("655").map(f => sub(f, "a")[0]).join(" "), lang === "Swedish");
       return {
-        title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig),
+        title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
         publisher: tidy(first("264", "b") || first("260", "b")), year: year(first("264", "c") || first("260", "c")),
-        pages, lang: langName(first("041", "a")),
+        pages, lang,
         // a publisher's paperback number (dtv 21412, rororo 23315) isn't a book series
         ...(+tidy(first("490", "v")).replace(/\D/g, "") > 200 ? {} : { series: tidy(first("490", "a")), volume: tidy(first("490", "v")) }),
         rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
@@ -88,7 +102,8 @@
   async function openLibraryIsbn(isbn) {
     const j = await getJson("https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:" + isbn);
     const x = j["ISBN:" + isbn]; if (!x) return [];
-    return [{ title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
+    let fmt = ""; try { const ed = await getJson("https://openlibrary.org/isbn/" + isbn + ".json"); fmt = bindingOf(ed.physical_format); if (!x.number_of_pages && ed.number_of_pages) x.number_of_pages = ed.number_of_pages; } catch (e) {}
+    return [{ format: fmt, title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
       year: year(x.publish_date), pages: x.number_of_pages ? String(x.number_of_pages) : "", cover: (x.cover || {}).medium || "", genre: oneGenre((x.subjects || []).slice(0, 25).map(s => s.name).join(", "), true), isbn }];
   }
   async function openLibrarySearch(q) {
@@ -154,7 +169,7 @@
   }
 
   // ---- merge: national libraries first, then Open Library, then Google ----
-  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
+  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "format", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
     KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
@@ -193,5 +208,5 @@
     return out.slice(0, 30);
   }
 
-  root.Books = { normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre };
+  root.Books = { normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
 })(typeof window !== "undefined" ? window : globalThis);
