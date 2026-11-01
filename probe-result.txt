@@ -1,20 +1,5 @@
-SEARCH 'Augen des ewigen Bruders Zweig':
-  Die Augen des ewigen Bruders | Stefan Zweig | 1922 | Insel-Verlag. | series=- vol=- | pages=- | genre=-
-  Die Augen des ewigen Bruders | Stefan Zweig | 1930 | Insel | series=Insel-Bücherei vol=349 | pages=63 | genre=Ej skönlitteratur
-  Die Augen des ewigen Bruders / Angst | Stefan Zweig | 1957 | Juventud | series=- vol=- | pages=- | genre=-
-  Die Augen des ewigen Bruders – eine Legende | Stefan Zweig | 1933 |  | series=Insel Bücherei vol=349 | pages=- | genre=Ej skönlitteratur
-  עיני האח הנצחי | Stefan Zweig, Harʼel Ḳain | 2015 | תשע נשמות | series=- vol=- | pages=- | genre=-
-  Den evige broderns ögon | Stefan Zweig | 2022 | Modernista | series=- vol=- | pages=- | genre=Romaner
-  Ils ögls dal frer etern | Stefan Zweig, Clementina Gilli | 1948 | Uniun dals Grischs | series=- vol=- | pages=- | genre=-
-  Legenden | Stefan Zweig | 1945 | S. Fischer | series=- vol=- | pages=- | genre=-
-SEARCH 'Weltanfänge japanischen Mythologie Numazawa':
-  Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- vol=- | pages=- | genre=-
-  Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- vol=- | pages=481 | genre=Ej skönlitteratur
-SEARCH 'Uhlands Werke Fränkel':
-  Uhlands Werke | Ludwig Uhland | 1893 | Bong | series=- vol=- | pages=- | genre=-
-  Uhlands Werke Hrsg Von Ludwig Fränkel | Anonymous | 2018 | Creative Media Partners, LLC | series=- vol=- | pages=- | genre=-
-  Werke | Ludwig Uhland |  | Bibliographische Institut | series=Werke vol=1 | pages=558 | genre=Skönlitteratur
-SEARCH 'Uhlands Werke 1893':
-  Uhlands Werke | Ludwig Uhland | 1893 | Bibliographisches Institut | series=Uhlands Werke vol=2 | pages=558 | genre=Ej skönlitteratur
-  The romantic movement in Germany | Robert Ignatius Letellier | 2023 | Nova Science Publishers, Inc. | series=Lives and times of distinguished artists vol=- | pages=442 | genre=Skönlitteratur
-Numazawa 490/260: 
+LIBRIS Spejarens lärling → records 113: Spejarens lärling ; | 1 ; Spejarens lärling ; | 1. ; Spejarens lärling ; | 10 ; Spejarens lärling ; | 11 ; Spejarens lärling ; | 12 ; Spejarens lärling ; | 13 ; Spejarens lärling ; | 14 ; Spejarens lärling ; | 15 ; Spejarens lärling ; | 16 ; Spejarens lärling ; | 16:e boken ; Spejarens lärling ; | 17 ; Spejarens lärling ; | 17:e boken ; Spejarens lärling ; | 18 ; Spejarens lärling ; | 2 ; Spejarens lärling ; | 3 ; Spejarens lärling ; | 4 ; Spejarens lärling ; | 5 ; Spejarens lärling ; | 6 ; Spejarens lärling ; | 7 ; Spejarens lärling ; | 8 ; Spejarens lärling ; | 9 ; Spejarens lärling ; | [18] ; Spejarens lärling. De första åren ; | 1 ; Spejarens lärling. De första åren ; | 2
+LIBRIS Spejarens lärling → records 97: Spejarens lärling ; | 1 ; Spejarens lärling ; | 1. ; Spejarens lärling ; | 10 ; Spejarens lärling ; | 11 ; Spejarens lärling ; | 12 ; Spejarens lärling ; | 13 ; Spejarens lärling ; | 14 ; Spejarens lärling ; | 15 ; Spejarens lärling ; | 16 ; Spejarens lärling ; | 17 ; Spejarens lärling ; | 17:e boken ; Spejarens lärling ; | 2 ; Spejarens lärling ; | 3 ; Spejarens lärling ; | 4 ; Spejarens lärling ; | 5 ; Spejarens lärling ; | 6 ; Spejarens lärling ; | 7 ; Spejarens lärling ; | 8 ; Spejarens lärling ; | 9 ; Spejarens lärling. De första åren ; | 1 ; Spejarens lärling. De första åren ; | 2
+DNB Harry Potter → records 100: Harry Potter | 1 ; Harry Potter | 2 ; Harry Potter | 3 ; Harry Potter | 4 ; Harry Potter | 5 ; Harry Potter | 6 ; Harry Potter | 7
+DNB Die Chroniken von Narnia → records 100: Die Chroniken von Narnia | 1 ; Die Chroniken von Narnia | 2 ; Die Chroniken von Narnia | 3 ; Die Chroniken von Narnia | 4 ; Die Chroniken von Narnia | 5 ; Die Chroniken von Narnia | 6 ; Die Chroniken von Narnia | 7 ; Die Chroniken von Narnia | Bd. 2 ; Die Chroniken von Narnia | [Bd 6]
+WD: Q2195491 Ranger's Apprentice – series of fantasy novels by John Flanagan || Q85328305 Ranger's Apprentice The Royal Ranger – book series of John Flanagan, sequel of Ranger's Apprentice series || Q22682101 Ranger's Apprentice: The Early Years – book series by John Flanagan || Q108900719 Escape from Falaise – 2021 novel by John Flanagan
