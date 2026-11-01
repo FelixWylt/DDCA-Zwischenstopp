@@ -206,10 +206,12 @@ function valueRulesHtml(key) {
 // typed: "1-25 8, 26-80 5" or "1952/4-1953/1 150"
 function priceAmount(t) { const n = parseAmt(t); return n === "" ? null : n; }
 function priceCur(t, fallback) { return /€|eur/i.test(t) ? "EUR" : /\bkr\b|sek/i.test(t) ? "SEK" : /chf|fr\./i.test(t) ? "CHF" : fallback; }
-function parsePrices(key, text, fallbackCur) {
+// an edition name without its year: "Neuauflage 1997" and "Neuauflage 1998" are the same kind of edition
+const editionKey = e => String(e || "").toLowerCase().replace(/\b(1[89]|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim();
+function parsePrices(key, text, fallbackCur, edition) {
   const se = seriesById(key), yearly = !!(se && se.numbering === "year");
   const at = (y, n) => yearly ? (y || 0) * 1000 + (n || 0) : n;
-  const items = [], skipped = [], unread = [];
+  const items = [], skipped = [], unread = [], edRows = [];
   let reprints = 0, kind = "";
   const lines = String(text || "").split(/\r?\n/).map(l => l.replace(/ /g, " ").trim()).filter(Boolean);
   lines.forEach(line => {
@@ -222,6 +224,15 @@ function parsePrices(key, text, fallbackCur) {
       if (yearly && !y) { unread.push(line); return; }
       if (p == null) { unread.push(line); return; }
       items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€/.test(line) ? "EUR" : fallbackCur }); return;
+    }
+    // Comicguide with titles and editions: "1 Der Kolumbusfalter (1. Auflage) Softcover 1000.00 €"
+    const cg = /^(\d{1,4})\s+(.*\S)\s+(\d[\d.,]*)\s*(€|EUR)\s*$/i.exec(line);
+    if (cg) {
+      kind = kind || "Comicguide";
+      if (yearly) { unread.push(line); return; }
+      const ed = (/\(([^()]*)\)\s*[A-Za-zÄÖÜäöü\/ .-]{0,24}$/.exec(cg[2]) || [])[1] || "", p = priceAmount(cg[3]);
+      if (p == null) { unread.push(line); return; }
+      edRows.push({ n: +cg[1], ed: editionKey(ed), label: ed.replace(/\s*\b(1[89]|20)\d{2}\b/g, "").trim(), price: p }); return;
     }
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
     const sk = /^(?:(\d{4})\s+)?(\d{1,4})(?:\s*-\s*(\d{1,4}))?((?:\s+\d+){5})\s*$/.exec(line);
@@ -244,6 +255,16 @@ function parsePrices(key, text, fallbackCur) {
     });
     if (any) kind = kind || "typed";
   });
+  // several editions per issue (1. Auflage, höhere Auflagen, Neuauflage ...): one edition counts, chosen by you;
+  // the default is the later printings, the copies most collectors have
+  const editions = []; let chosen = "", edMissing = 0;
+  if (edRows.length) {
+    const cnt = {}; edRows.forEach(r => { if (!cnt[r.ed]) { cnt[r.ed] = { key: r.ed, label: r.label || "No edition named", n: 0 }; editions.push(cnt[r.ed]); } cnt[r.ed].n++; });
+    const want = edition != null && cnt[edition] ? edition : (editions.find(e => /höher|spätere|nachdruck|later/.test(e.key)) || editions.slice().sort((a, b) => b.n - a.n)[0]).key;
+    chosen = want;
+    const byN = {}; edRows.forEach(r => (byN[r.n] = byN[r.n] || []).push(r));
+    Object.keys(byN).forEach(n => { const rs = byN[n], r = rs.find(x => x.ed === want) || rs.find(x => x.ed === ""); if (r) items.push({ lo: +n, hi: +n, price: r.price, cur: "EUR" }); else edMissing++; });
+  }
   // a pasted list: neighbouring issues with the same price become one range; typed ranges stay as typed
   const listed = items.filter(x => !x.typed).sort((a, b) => a.lo - b.lo), ranges = [];
   listed.forEach(x => {
@@ -253,7 +274,7 @@ function parsePrices(key, text, fallbackCur) {
   items.filter(x => x.typed).forEach(x => ranges.push(x));
   // from a pasted list, lines with a price that couldn't be placed (e.g. "(Nullnummer) 9000.00 €") are listed for you
   if (kind && kind !== "typed") skipped.filter(x => /€|\d[.,]\d\d\b/.test(x)).forEach(x => unread.push(x));
-  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length };
+  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing };
 }
 function boundText(key, v, isTo) {
   if (v == null) return "";
@@ -264,8 +285,8 @@ function boundText(key, v, isTo) {
 function bindPasteBox(root) {
   (root || document).querySelectorAll("details.pastebox").forEach(d => {
     const key = d.dataset.pk, out = d.querySelector("[data-pout]");
-    d.querySelector("[data-pread]").onclick = () => {
-      const res = parsePrices(key, d.querySelector("[data-ptext]").value, d.querySelector("[data-pcur]").value);
+    const read = () => {
+      const res = parsePrices(key, d.querySelector("[data-ptext]").value, d.querySelector("[data-pcur]").value, d.dataset.ped);
       if (!res.ranges.length) { out.innerHTML = '<div class="banner warn small">No prices found. Paste the lines with issue numbers and prices, or type ranges like 1-25 8.</div>'; return; }
       const have = (S.valueRules || []).filter(r => r.s === key).length;
       const span = r => { const a = r.lo == null ? "" : boundText(key, r.lo), z = r.hi == null ? "" : boundText(key, r.hi, true); return !a ? "all up to " + z : !z ? a + " and later" : a === z ? a : a + " – " + z; };
@@ -274,6 +295,8 @@ function bindPasteBox(root) {
       const left = res.unread.concat(res.skipped);
       out.innerHTML = `<div class="stack small" style="gap:6px">
         <strong>${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"} found</strong>${notes ? `<span class="muted">${esc(notes)}</span>` : ""}
+        ${res.editions.length > 1 ? `<label class="small"><span class="l">Edition that counts</span><select data-ped>${res.editions.map(e => `<option value="${esc(e.key)}"${e.key === res.edition ? " selected" : ""}>${esc(e.label)} (${e.n})</option>`).join("")}</select></label>
+          <span class="muted">The price table has one price per issue. Pick the edition most of your copies are; give a first edition its own price with “Checked value” on the comic.${res.edMissing ? ` ${res.edMissing} ${res.edMissing === 1 ? "issue isn't" : "issues aren't"} listed in this edition.` : ""}</span>` : ""}
         <ul class="pranges">${res.ranges.slice(0, 60).map(line).join("")}${res.ranges.length > 60 ? `<li class="muted">… and ${res.ranges.length - 60} more</li>` : ""}</ul>
         ${left.length ? `<details><summary>${left.length} ${left.length === 1 ? "line" : "lines"} not added (enter these yourself if needed)</summary><ul>${left.slice(0, 30).map(x => `<li class="mono">${esc(x)}</li>`).join("")}</ul></details>` : ""}
         ${have ? `<label class="check" style="min-height:0"><input type="checkbox" data-preplace> Remove the ${have} current ${have === 1 ? "range" : "ranges"} of this series first</label>` : ""}
@@ -284,7 +307,9 @@ function bindPasteBox(root) {
         setConfig("valueRules", S.valueRules).catch(() => {});
         toast(res.ranges.length + (res.ranges.length === 1 ? " price range added" : " price ranges added")); renderKeep();
       };
+      const sel = out.querySelector("[data-ped]"); if (sel) sel.onchange = () => { d.dataset.ped = sel.value; read(); };
     };
+    d.querySelector("[data-pread]").onclick = () => { delete d.dataset.ped; read(); };
   });
 }
 function bindValueRules(root) {
