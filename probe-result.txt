@@ -1,18 +1,20 @@
-### tit="Die Augen des ewigen Bruders" and per=Zweig → 52
-1386471879 041 $aspa $hger | 084 $a821.112.2(436)-32"19" $2udc | 100 $aZweig, Stefan, 1881-1942 $eVerfasser $4aut | 245 $aLos ojos del hermano eterno $cStefan Zweig ; traducción de Carlos Fortea ; ilustrado por Julio Antonio Blasco | 264 $a[Barcelona] $bEditorial Alma $c2025 | 300 $a75 páginas $bilustraciones (color) $c23 cm | 490 $aClásicos ilustrados
-1252993072 041 $ager | 082 $a830 $aB $qDE-101 $223sdnb | 100 $aMelker Märchen Mönch, Melker Märchen $eKünstler $4art | 245 $aVirata $bDie Augen des ewigen Bruders $cStefan Zweig | 250 $aungekürzte Ausgabe | 264 $aBerlin $bGD Publishing $c2022 | 300 $aOnline-Ressource | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg
-1264365640 041 $ager | 082 $a830 $aB $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aVirata $bdie Augen des ewigen Bruders $cStefan Zweig ; gelesen von Jan Koester | 264 $aLeipzig $aFrankfurt am Main $bDeutsche Nationalbibliothek $c2022 | 300 $a1 Online-Ressource (1 CD, 104 min) | 655 $aHörbuch $2gnd-content | 655 $aFiktionale Darstellung $2gnd-content | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg
-123441855X 041 $aspa $hger | 082 $a830 $aB $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aLos ojos del hermano eterno $cStefan Zweig ; traducción Nicole Narbebury | 264 $aCiudad Autónoma de Buenos Aires $bEdiciones Godot $cabril de 2021 | 300 $a85 Seiten $c23 cm | 490 $aColección Stefan Zweig $v3. Ficción | 655 $aFiktionale Darstellung $2gnd-content | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg | 800 $aZweig, Stefan $d1881-1942 $4aut $tColección Stefan Zweig $v3. Ficción $w(DE-101)1250200814 $7am
-1202372155 041 $ager | 082 $a830 $aB $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aVirata $bdie Augen des ewigen Bruders $cStefan Zweig ; gelesen von Jan Koester | 264 $aEdewecht $bHierax Medien $c[2020] | 300 $a1 CD $c105 g | 655 $aCD $2gnd-carrier | 655 $aHörbuch $2gnd-content | 655 $aFiktionale Darstellung $2gnd-content | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg
-1189411814 041 $ager | 082 $a390 $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aDie Augen des ewigen Bruders (Großdruck) $bund andere Legenden $cStefan Zweig | 250 $a1. Auflage | 264 $aBerlin $bHenricus $c2019 | 300 $aOnline-Ressource
-1189411865 041 $ager | 082 $a390 $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aDie Augen des ewigen Bruders (Großdruck) $bund andere Legenden $cStefan Zweig | 250 $a1. Auflage | 264 $aBerlin $bHenricus $c2019 | 300 $aOnline-Ressource
-1200351967 041 $ager | 082 $a830 $aB $qDE-101 $223sdnb | 100 $aZweig, Stefan $d1881-1942 $eVerfasser $4aut $2gnd | 245 $aVirata $bDie Augen des ewigen Bruders $cStefan Zweig | 250 $agekürzte Ausgabe | 264 $aEdewecht $bHierax Medien $c2019 | 300 $aOnline-Ressource | 655 $aErzählende Literatur $2gatbeg
-APP SEARCH 'Augen des ewigen Bruders Zweig': [Die Augen des ewigen Bruders | Stefan Zweig | 1922 | Insel-Verlag. | series=- ] [Die Augen des ewigen Bruders | Stefan Zweig | 1930 | Insel | series=- ] [Die Augen des ewigen Bruders / Angst | Stefan Zweig | 1957 | Juventud | series=- ] [Die Augen des ewigen Bruders – eine Legende | Stefan Zweig | 1933 |  | series=- ] [עיני האח הנצחי | Stefan Zweig, Harʼel Ḳain | 2015 | תשע נשמות | series=- ] [Den evige broderns ögon | Stefan Zweig | 2022 | Modernista | series=- ]
-### tit="Weltanfänge in der japanischen Mythologie" → 0
-APP SEARCH 'Weltanfänge japanischen Mythologie Numazawa': [Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- ] [Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- ]
-### tit=Uhlands and tit=Werke and jhr=1893 → 4
-1002573718 041 $ager | 245 $a[Ludwig] Uhlands gesammelte Werke $n1 $cLudwig Uhland. Hrsg. v. Friedrich Brandes | 264 $aLeipzig $bPhilipp Reclam jun. $c[1893] | 300 $aPortr., 636 S. | 773 $q11 $w(DE-101)1002573602
-1002573750 041 $ager | 245 $a[Ludwig] Uhlands gesammelte Werke $n2 $cLudwig Uhland. Hrsg. v. Friedrich Brandes | 264 $aLeipzig $bPhilipp Reclam jun. $c[1893] | 300 $a632 S. | 773 $q12 $w(DE-101)1002573602
-36178760X 041 $ager | 100 $aUhland, Ludwig $d1787-1862 $eVerfasser $4aut $2gnd | 245 $aUhlands Werke $nBd. 1. $chrsg. von Ludwig Fränkel | 250 $aKrit. durchges. und erl. Ausg. | 264 $aLeipzig $aWien $bBibliographisches Institut $c1893 | 300 $a52, 558 S. $bIll. | 773 $q11 $w(DE-101)997098341
-997098414 041 $ager | 100 $aUhland, Ludwig $d1787-1862 $eVerfasser $4aut $2gnd | 245 $aUhlands Werke $nBd. 2. $chrsg. von Ludwig Fränkel | 250 $aKrit. durchges. und erl. Ausg. | 264 $aLeipzig $aWien $bBibliographisches Institut $c[1893] | 300 $a423 S. | 773 $q12 $w(DE-101)997098341
-APP SEARCH 'Uhlands Werke Fränkel': [Uhlands Werke | Ludwig Uhland | 1893 | Bong | series=- ] [Uhlands Werke Hrsg Von Ludwig Fränkel | Anonymous | 2018 | Creative Media Partners, LLC | series=- ] [Werke | Ludwig Uhland |  | Bibliographische Institut | series=- ]
+SEARCH 'Augen des ewigen Bruders Zweig':
+  Die Augen des ewigen Bruders | Stefan Zweig | 1922 | Insel-Verlag. | series=- vol=- | pages=- | genre=-
+  Die Augen des ewigen Bruders | Stefan Zweig | 1930 | Insel | series=Insel-Bücherei vol=349 | pages=63 | genre=Ej skönlitteratur
+  Die Augen des ewigen Bruders / Angst | Stefan Zweig | 1957 | Juventud | series=- vol=- | pages=- | genre=-
+  Die Augen des ewigen Bruders – eine Legende | Stefan Zweig | 1933 |  | series=Insel Bücherei vol=349 | pages=- | genre=Ej skönlitteratur
+  עיני האח הנצחי | Stefan Zweig, Harʼel Ḳain | 2015 | תשע נשמות | series=- vol=- | pages=- | genre=-
+  Den evige broderns ögon | Stefan Zweig | 2022 | Modernista | series=- vol=- | pages=- | genre=Romaner
+  Ils ögls dal frer etern | Stefan Zweig, Clementina Gilli | 1948 | Uniun dals Grischs | series=- vol=- | pages=- | genre=-
+  Legenden | Stefan Zweig | 1945 | S. Fischer | series=- vol=- | pages=- | genre=-
+SEARCH 'Weltanfänge japanischen Mythologie Numazawa':
+  Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- vol=- | pages=- | genre=-
+  Die Weltanfänge in der japanischen Mythologie | Franz Kiichi Numazawa | 1946 | Recueil Sirey | series=- vol=- | pages=481 | genre=Ej skönlitteratur
+SEARCH 'Uhlands Werke Fränkel':
+  Uhlands Werke | Ludwig Uhland | 1893 | Bong | series=- vol=- | pages=- | genre=-
+  Uhlands Werke Hrsg Von Ludwig Fränkel | Anonymous | 2018 | Creative Media Partners, LLC | series=- vol=- | pages=- | genre=-
+  Werke | Ludwig Uhland |  | Bibliographische Institut | series=Werke vol=1 | pages=558 | genre=Skönlitteratur
+SEARCH 'Uhlands Werke 1893':
+  Uhlands Werke | Ludwig Uhland | 1893 | Bibliographisches Institut | series=Uhlands Werke vol=2 | pages=558 | genre=Ej skönlitteratur
+  The romantic movement in Germany | Robert Ignatius Letellier | 2023 | Nova Science Publishers, Inc. | series=Lives and times of distinguished artists vol=- | pages=442 | genre=Skönlitteratur
+Numazawa 490/260: 
