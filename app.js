@@ -2414,17 +2414,26 @@ VIEWS.stats = {
       <div class="seg-bar" role="img" aria-label="Condition of graded comics">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span class="g${g}" style="flex:${gradeMap[g]}" title="${gradeNames[g]}: ${gradeMap[g]}"></span>`).join("")}</div>
       <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></span>`).join("")}</div>
       <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade.</p></div>` : "";
-    const sums = {}, vals = {}; let priced = 0, valued = 0;
-    own.forEach(c => { const cur = c.currency || "CHF"; if (typeof c.pricePaid === "number") { priced++; sums[cur] = (sums[cur] || 0) + c.pricePaid * (c.copies || 1); } const v = valueOf(c); if (v) { valued++; vals[v.cur] = (vals[v.cur] || 0) + v.amount * (c.copies || 1); } });
-    const moneyRows = Object.keys(Object.assign({}, sums, vals)).sort();
-    const money = moneyRows.length ? `<div class="card stack"><div class="cardhead"><h3>Money</h3><span class="muted small">per currency, and all in CHF</span></div>
-      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}${moneyRows.length > 1 || moneyRows[0] !== "CHF" ? `<tr><td><strong>All in CHF</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(sums[k] || 0, k), 0))}</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(vals[k] || 0, k), 0))}</strong></td></tr>` : ""}</tbody></table></div>
-      <p class="small muted" style="margin:0">Price paid is filled in for ${priced} of ${nf(own.length)} comics, value for ${valued}.</p></div>` : "";
+    // Money: comics and books, each and together, in CHF; amounts per currency below
+    const moneyOf = list => { const r = { paid: 0, value: 0, paidValued: 0, priced: 0, valued: 0, n: list.length, sums: {}, vals: {} };
+      list.forEach(c => { const n = c.copies || 1, cur = c.currency || "CHF", v = valueOf(c);
+        if (typeof c.pricePaid === "number") { r.priced++; r.paid += toCHF(c.pricePaid * n, cur); r.sums[cur] = (r.sums[cur] || 0) + c.pricePaid * n; if (v) r.paidValued += toCHF(c.pricePaid * n, cur); }
+        if (v) { r.valued++; r.value += toCHF(v.amount * n, v.cur); r.vals[v.cur] = (r.vals[v.cur] || 0) + v.amount * n; } });
+      return r; };
+    const mC = moneyOf(own), mB = moneyOf(novels), mAll = moneyOf(own.concat(novels));
+    const mRow = (label, m, strong) => { const d = m.value - m.paidValued, w = x => strong ? `<strong>${x}</strong>` : x;
+      return `<tr><td>${w(label)}</td><td>${w(fmt2(m.value))}</td><td>${w(fmt2(m.paid))}</td><td>${m.paidValued ? w((d >= 0 ? "+" : "−") + fmt2(Math.abs(d))) : "–"}</td></tr>`; };
+    const curRows = Object.keys(Object.assign({}, mAll.sums, mAll.vals)).sort();
+    const money = mAll.priced || mAll.valued ? `<div class="card stack"><div class="cardhead"><h3>Whole collection</h3><span class="muted small">comics and books, in CHF</span></div>
+      <div class="row" style="gap:24px;flex-wrap:wrap"><div><div class="v2">CHF ${fmt2(mAll.value)}</div><div class="k small muted">value of ${nf(mAll.valued)} of ${nf(mAll.n)}</div></div><div><div class="v2">CHF ${fmt2(mAll.paid)}</div><div class="k small muted">paid for ${nf(mAll.priced)} of ${nf(mAll.n)}</div></div></div>
+      <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Value</th><th>Paid</th><th>Gain</th></tr></thead><tbody>${mRow("Comics", mC)}${mRow("Books", mB)}${mRow("Together", mAll, true)}</tbody></table></div>
+      <p class="small muted" style="margin:0">Comics include comic books. Gain is value minus price paid, for entries that have both.</p>
+      ${curRows.length > 1 || (curRows[0] && curRows[0] !== "CHF") ? `<details class="small"><summary>Per currency</summary><div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Value</th><th>Paid</th></tr></thead><tbody>${curRows.map(k => `<tr><td>${k}</td><td>${mAll.vals[k] != null ? fmt2(mAll.vals[k]) : "–"}</td><td>${mAll.sums[k] != null ? fmt2(mAll.sums[k]) : "–"}</td></tr>`).join("")}</tbody></table></div></details>` : ""}</div>` : "";
 
     const tab = S.statTab || "comics";
     const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs three" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
     if (tab === "books") return tabs + (novels.length || novelsWanted.length ? bookStats(novels, novelsWanted).replace('<h2 class="sectionhead">Books</h2>', "") : '<div class="empty"><h3>No books yet</h3><p>Books you add show up here.</p></div>');
-    if (tab === "value") return tabs + `${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>${money}`;
+    if (tab === "value") return tabs + `${money}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
     return tabs + `
       <div class="hero card">
         <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics you own</div>
