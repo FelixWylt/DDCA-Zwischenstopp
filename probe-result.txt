@@ -1,6 +1,22 @@
-9783150161005 Der Sandmann | genre=Novel | Deutsche Nationalbibliothek
-9783150161029 Nathan der Weise – ein dramatisches Gedicht in fünf Aufzügen | genre=Drama | Deutsche Nationalbibliothek
-9783150154632 Gotthold Ephraim Lessing, Nathan der Weise | genre=- | Deutsche Nationalbibliothek
-9783257230451 Der Besuch der alten Dame – eine tragische Komödie | genre=Drama | Deutsche Nationalbibliothek+LIBRIS+Open Library
-9789178033713 Percy Jackson och de grekiska gudarna | genre=Fantasy, Young Adult | LIBRIS
-9783150002308 Der Sandmann | genre=Fantasy | Deutsche Nationalbibliothek+LIBRIS+Open Library
+020 $a9783961611713 $cBroschur : EUR 14.00 (DE), EUR 14.40 (AT), CHF 15.90 (freier Preis) $9978-3-96161-171-3 | 020 $a3961611718 $93-96161-171-8 | 041 $ager $hita | 082 $83\p $a850 $aB $qDE-101 $223sdnb | 245 $aIch habe keine Angst $bRoman $cNiccolò Ammaniti ; aus dem Italienischen von Ulrich Hartmann | 264 $aMünchen $bEisele $cJuli 2023 | 650 $0(DE-588)4029002-5 $0https://d-nb.info/gnd/4029002-5 $0(DE-101)040290026 $aJunge $9rswk-swf $2gnd | 650 $0(DE-588)4121200-9 $0https://d-nb.info/gnd/4121200-9 $0(DE-101)041212002 $aEntführung $9rswk-swf $2gnd | 650 $0(DE-588)4014516-5 $0https://d-nb.i
+020 $a9783961611805 $9978-3-96161-180-5 | 041 $81\p $ager $hita | 082 $816\p $a850 $aB $qDE-101 $223sdnb | 245 $aIch habe keine Angst $bRoman $cNiccolò Ammaniti | 264 $aBerlin $bEisele Verlag $c2023 | 650 $88\p $0(DE-588)4029002-5 $0https://d-nb.info/gnd/4029002-5 $0(DE-101)040290026 $aJunge $9rswk-swf $2gnd | 650 $810\p $0(DE-588)4121200-9 $0https://d-nb.info/gnd/4121200-9 $0(DE-101)041212002 $aEntführung $9rswk-swf $2gnd | 650 $812\p $0(DE-588)4014516-5 $0https://d-nb.info/gnd/4014516-5 $0(DE-101)040145166 $aEltern $9rswk-swf $2gnd | 650 $814\p $0(DE-588)4187605-2 $0https://d-nb.info/gnd/4
+020 $a9783150197363 $cBroschur : EUR 6.80 (DE) $9978-3-15-019736-3 | 041 $aita | 082 $81\p $a450 $qDE-101 $223sdnb | 245 $aIo non ho paura $cNiccolò Ammaniti ; herausgegeben von Judith Krieg | 264 $aDitzingen $aStuttgart $bReclam $c2018 | 264 $aDitzingen $bCanon Deutschland Business Services GmbH $c2018 | 490 $aReclams Universal-Bibliothek $vNr. 19736 | 490 $aFremdsprachentexte. Italienisch | 655 $0(DE-588)1071854844 $0https://d-nb.info/gnd/1071854844 $0(DE-101)1071854844 $aFiktionale Darstellung $2gnd-content
+020 $a9783125658684 $cKart. : EUR 8.99 (DE), EUR 9.30 (AT), sfr 14.30 (freier Pr.) $9978-3-12-565868-4 | 041 $aita | 082 $81\p $aS $qDE-101 $223sdnb | 245 $aIo non ho paura $bItalienische Lektüre für das 3. und 4. Lernjahr $cNiccolò Ammaniti | 264 $aStuttgart $bKlett $c2014 | 490 $aEasy Readers - Facili da leggere
+020 $a9783150197363 $ckart. : EUR 6.80, sfr 12.20 (freier Pr.) $9978-3-15-019736-3 | 041 $aita | 082 $81\p $a850 $aB $a450 $qDE-101 $222sdnb | 245 $aIo non ho paura $cNiccolò Ammaniti. Hrsg. von Judith Krieg | 264 $aStuttgart $bReclam $c2011 | 490 $aReclams Universal-Bibliothek $vNr. 19736 : Fremdsprachentexte : Italienisch
+020 $a9783150197363 $ckart. : EUR 6.80, sfr 12.20 (freier Pr.) $9978-3-15-019736-3 | 020 $a3150197368 $ckart. : EUR 6.80, sfr 12.20 (freier Pr.) $93-15-019736-8 | 041 $aita | 082 $81\p $a850 $aB $a450 $qDE-101 $222sdnb | 245 $aIo non ho paura $cNiccolò Ammaniti. Hrsg. von Judith Krieg | 264 $aStuttgart $bReclam $c2008 | 490 $aReclams Universal-Bibliothek $vNr. 19736 : Fremdsprachentexte | 650 $0(DE-588)4029002-5 $0https://d-nb.info/gnd/4029002-5 $0(DE-101)040290026 $aJunge $9rswk-swf $2gnd | 650 $0(DE-588)4121200-9 $0https://d-nb.info/gnd/4121200-9 $0(DE-101)041212002 $aEntführung $9rswk-swf
+020 $a9783125658615 $c: EUR 8.75, sfr 16.00 $9978-3-12-565861-5 | 020 $a3125658616 $c: EUR 8.75, sfr 16.00 $93-12-565861-6 | 041 $ager | 082 $81\p $aS $qDE-101 $222sdnb | 245 $aIo non ho paura $cNiccolò Ammaniti | 264 $aStuttgart $bKlett $c2007 | 490 $aEasy Readers - Facili Letture
+020 $a9783910171015 $cGewebe : EUR 24.90 (freier Pr.) $9978-3-910171-01-5 | 020 $a391017101X $cGewebe : EUR 24.90 (freier Pr.) $93-910171-01-X | 041 $aita | 082 $81\p $a850 $aB $qDE-101 $222sdnb | 245 $aIo non ho paura $b[das Buch erscheint anlässlich der Ausstellung "Remo Fasani: Novenari" von Kay Bachmann in der Galerie für Zeitgenössische Kunst, Leipzig vom 20-Okt-07 bis 13-Jan-08] $cNiccolò Ammaniti. [Hrsg.: Julia Schäfer und Kay Bachmann im Auftr. der Galerie für Zeitgenössische Kunst Leipzig] | 264 $aLeipzig $bGfZK $c2007
+→ 9783961611713 Ich habe keine Angst – Roman | genre=Novel | Deutsche Nationalbibliothek
+→ 9783961611805 Ich habe keine Angst – Roman | genre=Novel | Deutsche Nationalbibliothek
+→ 9783150197363 Io non ho paura | genre=- | Deutsche Nationalbibliothek
+→ 9783125658684 Io non ho paura – Italienische Lektüre für das 3. und 4. Lernjahr | genre=- | Deutsche Nationalbibliothek+LIBRIS+Open Library
+OL search Io non ho paura | subjects: Literature, Kidnapping victims, Fiction, Large type books, Fiction, general
+OL search Io Non Ho Paura | subjects: 
+OL search Io non ho paura | subjects: Fiction, Kidnapping victims, Coming of age story, Boys, Conduct of life, 18.29 Italian literature, Fiction, historical, general, Italy, fiction, Kidnapping victims--fiction, Pq4861.m54 i5513 2003, 853/.914, Children's secrets
+OL search Io Non Ho Paura | subjects: 
+OL search Io Non Ho Paura | subjects: 
+LIBRIS Io non ho paura | Romaner
+LIBRIS Io non ho paura | Romaner, Thrillers
+LIBRIS Io non ho paura! | Skönlitteratur, Bilderböcker, Versaler
+LIBRIS Io non ho paura | Barndomsskildringar, Thrillers
+LIBRIS Io non ho paura | Talböcker
