@@ -832,8 +832,13 @@ function nav(v) {
   if (location.hash !== "#" + v) { try { history.pushState({ col: S.col }, "", "#" + v); } catch (e) { S.navLock = true; location.hash = v; } }
   setView(v);
 }
+// "More" on the phone's bottom bar: Series and Backup
+const moreMenu = (open) => { const m = $("#moremenu"), b = $("#morebtn"); if (!m) return; m.hidden = !open; b.setAttribute("aria-expanded", open ? "true" : "false"); };
+document.getElementById("morebtn").addEventListener("click", e => { e.stopPropagation(); moreMenu($("#moremenu").hidden); });
+document.addEventListener("click", e => { if (!e.target.closest("#moremenu, #morebtn")) moreMenu(false); });
 document.getElementById("tabs").addEventListener("click", e => {
   const a = e.target.closest("a[data-v]"); if (!a) return;
+  moreMenu(false);
   if (a.dataset.v === "collection") { S.col = {}; S.shown = 200; }
   if (location.hash === "#" + a.dataset.v) { e.preventDefault(); if (a.dataset.v === "add") { S.editing = null; S.draft = null; } setView(a.dataset.v); }
 });
@@ -846,6 +851,7 @@ window.addEventListener("hashchange", () => {
 // ---------- render ----------
 function render() {
   document.querySelectorAll("#tabs a").forEach(a => a.setAttribute("aria-current", a.dataset.v === S.view ? "page" : "false"));
+  { const mb = $("#morebtn"); if (mb) mb.setAttribute("aria-current", ["series", "backup", "match"].includes(S.view) ? "page" : "false"); }
   const app = $("#app");
   let head = "";
   if (S.dbState === "none") head = '<div class="banner warn">This browser can\'t store data. Open the archive in Chrome on your phone.</div>';
@@ -878,7 +884,7 @@ function publisherOf(c) {
   return se ? (se.publisher || OTHER_PUB) : OTHER_PUB;
 }
 function pubRank(name) { return name === DISNEY ? 0 : name === NOVEL_PUB ? 4 : name === BOOK_PUB ? 3 : name === OTHER_PUB ? 2 : 1; }
-function pubCompare(a, b) { return pubRank(a) - pubRank(b) || String(a).localeCompare(String(b), "de"); }
+function pubCompare(a, b) { return pubRank(a) - pubRank(b) || String(a).localeCompare(String(b), "de", { numeric: true }); }
 function groupOf(c) {
   if (c.kind === "book") return BOOK_GROUP;
   const se = seriesById(c.seriesId);
@@ -897,7 +903,7 @@ function seriesLabel(se) {
   const l = seriesLang(se); return l ? se.name + " (" + l + ")" : se.name;
 }
 function groupRank(name) { return name === BOOK_GROUP ? 2 : (name === OTHER_GROUP || name === "Other comics") ? 1 : 0; }
-function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de"); }
+function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de", { numeric: true }); }
 function yearsText(list) {
   const ys = list.map(c => +(String(c.date || "").slice(0, 4)) || c.issueYear).filter(y => y > 1900);
   if (!ys.length) return "";
@@ -1066,9 +1072,9 @@ function drawResults() {
     // Books: book series as folders, then every single book, by author
     const bySeries = {}, singles = [];
     pool.forEach(c => { if (c.seriesName) (bySeries[c.seriesName] = bySeries[c.seriesName] || []).push(c); else singles.push(c); });
-    const names = Object.keys(bySeries).sort((a, b) => a.localeCompare(b, "de"));
+    const names = Object.keys(bySeries).sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
     const lastName = c => { const a = splitPeople(c.author)[0] || ""; return (a.split(" ").pop() || "") + " " + a; };
-    const sorted = singles.slice().sort((a, b) => lastName(a).localeCompare(lastName(b), "de") || String(a.title).localeCompare(String(b.title), "de"));
+    const sorted = singles.slice().sort((a, b) => lastName(a).localeCompare(lastName(b), "de", { numeric: true }) || String(a.title).localeCompare(String(b.title), "de", { numeric: true }));
     html = `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>` + (pool.length ? (names.length ? '<div class="list">' + names.map(n => {
         const list = bySeries[n];
         return `<button class="folder" data-col='${esc(JSON.stringify({ p: NOVEL_PUB, g: BOOK_GROUP, s: "book:" + n }))}'><div style="min-width:0"><div class="t">${esc(n)}</div><div class="s">${esc([splitPeople(list[0].author)[0], countText(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
@@ -1103,7 +1109,7 @@ function drawResults() {
     const bySeries = {};
     inGroup.forEach(c => { const k = seriesKeyOf(c); (bySeries[k] = bySeries[k] || []).push(c); });
     const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
-    const keys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b)));
+    const keys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b), "de", { numeric: true }));
     const trail = isBookUni(col.p) ? [{ label: "All", col: {} }, { label: col.p }] : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g }];
     html = crumbs(trail) +
       (keys.length ? '<div class="list">' + keys.map(k => {
@@ -1184,7 +1190,7 @@ function pickSeries(opts) {
       let html = "";
       if (words.length) {
         const hits = pool.filter(x => { const t = norm([x.label, x.short, x.group, x.code].join(" ")); return words.every(w => t.includes(w)); })
-          .sort((a, b) => (norm(a.short) === words.join(" ") ? -1 : 0) - (norm(b.short) === words.join(" ") ? -1 : 0) || b.n - a.n || a.label.localeCompare(b.label, "de"));
+          .sort((a, b) => (norm(a.short) === words.join(" ") ? -1 : 0) - (norm(b.short) === words.join(" ") ? -1 : 0) || b.n - a.n || a.label.localeCompare(b.label, "de", { numeric: true }));
         html = hits.length ? hits.map(row).join("") : '<p class="muted small" style="padding:12px">No series matches. Try fewer letters.</p>';
       } else {
         const recent = (S.recentSeries || []).map(k => byKey[k]).filter(x => x && pool.includes(x));
@@ -1194,7 +1200,7 @@ function pickSeries(opts) {
         Object.keys(unis).sort((a, b) => a === "Book series" ? 1 : b === "Book series" ? -1 : pubCompare(a, b)).forEach(u => {
           const groups = unis[u], n = Object.values(groups).reduce((a, l) => a + l.length, 0), open = Object.values(groups).some(l => l.some(x => x.key === opts.current));
           html += `<details class="pk-uni"${open ? " open" : ""}><summary><span>${esc(u)}</span><span class="muted small">${n}</span></summary>` +
-            Object.keys(groups).sort(groupCompare).map(g => `${Object.keys(groups).length > 1 || g.split(" · ")[1] !== u ? `<h4 class="pk-h">${esc(g.split(" · ").slice(1).join(" · ") || g)}</h4>` : ""}` + groups[g].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "de")).map(row).join("")).join("") + "</details>";
+            Object.keys(groups).sort(groupCompare).map(g => `${Object.keys(groups).length > 1 || g.split(" · ")[1] !== u ? `<h4 class="pk-h">${esc(g.split(" · ").slice(1).join(" · ") || g)}</h4>` : ""}` + groups[g].sort((a, b) => b.n - a.n || a.label.localeCompare(b.label, "de", { numeric: true })).map(row).join("")).join("") + "</details>";
         });
       }
       list.innerHTML = html;
@@ -1228,7 +1234,7 @@ function bindGapPicker() {
 }
 function bookSeriesOptions(selected) {
   const names = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); });
-  const keys = Object.keys(names).sort((a, b) => a.localeCompare(b, "de"));
+  const keys = Object.keys(names).sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
   return keys.length ? '<optgroup label="Book series">' + keys.map(n => `<option value="${esc("book:" + n)}"${selected === "book:" + n ? " selected" : ""}>${esc(n)}${names[n] ? "" : " (comic books)"}</option>`).join("") + "</optgroup>" : "";
 }
 // gap grid for a book series: volumes 1..n
@@ -1444,7 +1450,7 @@ ${isBook ? `
           <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
           ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
-          <label><span class="l">Checked value <span class="muted">(sold price)</span></span><span class="row" style="gap:6px;flex-wrap:nowrap"><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"><select id="f-valueCur" aria-label="Currency of the checked value" style="width:auto">${CURRENCIES.map(x => `<option${(d.valueCur || d.currency || "CHF") === x ? " selected" : ""}>${x}</option>`).join("")}</select></span></label>
+          <label class="wide"><span class="l">Checked value <span class="muted">(sold or collector price)</span></span><span class="row valrow" style="gap:6px;flex-wrap:nowrap"><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"><select id="f-valueCur" aria-label="Currency of the checked value" style="width:auto">${CURRENCIES.map(x => `<option${(d.valueCur || d.currency || "CHF") === x ? " selected" : ""}>${x}</option>`).join("")}</select></span></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
 ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId, d) ? `<br>Collector prices: ${collectorLinks(d.seriesId, d)}` : ""}</div>
@@ -1453,7 +1459,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
           ${d.read ? `<label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="${d.readDate ? "TT.MM.JJJJ" : "not recorded"}"></label>` : ""}
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
-          ${isBook ? "" : `<label class="check"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
+          ${isBook ? "" : `<label class="check wide"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
           <label class="wide"><span class="l">Special about my copy</span><textarea id="f-special" rows="2" placeholder="Misprint, missing page, signed, first print…">${esc(d.special || "")}</textarea></label>
         </div></div>`}
@@ -1867,7 +1873,7 @@ function wishlistBySeries(wl) {
   const groups = {};
   wl.forEach(c => { const k = seriesKeyOf(c); (groups[k] = groups[k] || []).push(c); });
   const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
-  const keys = Object.keys(groups).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b)));
+  const keys = Object.keys(groups).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b), "de", { numeric: true }));
   S.wishOpen = S.wishOpen || {};
   return '<div class="list">' + keys.map(k => {
     const list = groups[k], se = seriesById(k), max = list.filter(c => typeof c.pricePaid === "number");
@@ -2079,7 +2085,7 @@ VIEWS.stats = {
       <p class="small muted" style="margin:0">Biggest first. Tap a series for its gap grid.${unsized ? " " + unsized + " more series have no size yet; set the latest issue under Series to include them." : ""}</p></div>` : "";
 
     // 4. writers and artists, each story counted once
-    const tally = role => { const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, 10); };
+    const tally = role => { const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, 10); };
     const creatorCard = (role, title) => {
       const top = tally(role), max = top.length ? top[0][1] : 1;
       return `<div class="card stack"><div class="cardhead"><h3>${title}</h3><span class="muted small">stories</span></div>
@@ -2102,8 +2108,11 @@ VIEWS.stats = {
       <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Paid</th><th>Value</th></tr></thead><tbody>${moneyRows.map(k => `<tr><td>${k}</td><td>${sums[k] != null ? fmt2(sums[k]) : "–"}</td><td>${vals[k] != null ? fmt2(vals[k]) : "–"}</td></tr>`).join("")}${moneyRows.length > 1 || moneyRows[0] !== "CHF" ? `<tr><td><strong>All in CHF</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(sums[k] || 0, k), 0))}</strong></td><td><strong>${fmt2(moneyRows.reduce((a, k) => a + toCHF(vals[k] || 0, k), 0))}</strong></td></tr>` : ""}</tbody></table></div>
       <p class="small muted" style="margin:0">Price paid is filled in for ${priced} of ${nf(own.length)} comics, value for ${valued}.</p></div>` : "";
 
-    return `
-      <div><h2>Stats</h2><p class="lede">Your collection by the numbers.</p></div>
+    const tab = S.statTab || "comics";
+    const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs three" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
+    if (tab === "books") return tabs + (novels.length || novelsWanted.length ? bookStats(novels, novelsWanted).replace('<h2 class="sectionhead">Books</h2>', "") : '<div class="empty"><h3>No books yet</h3><p>Books you add show up here.</p></div>');
+    if (tab === "value") return tabs + `${valueCard(own.concat(novels))}${money}`;
+    return tabs + `
       <div class="hero card">
         <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics you own</div>
           <div class="small muted">${nf(issues)} issues · ${books} comic ${books === 1 ? "book" : "books"}${copies > own.length ? " · " + nf(copies) + " copies with duplicates" : ""}</div></div>
@@ -2119,12 +2128,11 @@ VIEWS.stats = {
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${readingCard(own, "comics")}
       ${ratedCard(own, "comics")}
-      ${valueCard(own.concat(novels))}
-      ${condition || money ? `<div class="two">${condition}${money}</div>` : ""}
-      <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>
-      ${novels.length || novelsWanted.length ? bookStats(novels, novelsWanted) : ""}`;
+      ${condition ? `<div class="two">${condition}</div>` : ""}
+      <p class="small muted">Writers and artists: each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.</p>`;
   },
   bind() {
+    document.querySelectorAll("[data-sttab]").forEach(b => b.onclick = () => { S.statTab = b.dataset.sttab; render(); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { mode: "stories", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
@@ -2180,7 +2188,7 @@ function readingCard(list, word) {
 function bookStats(own, wanted) {
   const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const read = own.filter(c => c.read), pagesRead = read.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
-  const tallyBy = (f, n) => { const m = {}; own.forEach(c => f(c).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de")).slice(0, n); };
+  const tallyBy = (f, n) => { const m = {}; own.forEach(c => f(c).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, n); };
   const bars = (list, unit) => { const max = list.length ? list[0][1] : 1; return '<div class="hbars">' + list.map(([n, c]) => `<div class="hbar static" title="${esc(n)}: ${c}"><span class="lab">${esc(n)}</span><span class="track"><span class="fill book" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${c}</span></div>`).join("") + "</div>"; };
   const authors = tallyBy(c => splitPeople(c.author), 10), langs = tallyBy(c => [c.lang || "Not set"], 8), genres = tallyBy(c => String(c.genre || "").split(/\s*[,;\/]\s*/), 8);
   return `<h2 class="sectionhead">Books</h2>
@@ -2480,7 +2488,7 @@ function drawStories() {
   if (st.mode !== "stories") {
     const role = st.mode, counts = new Map();
     all.forEach(e => e[role === "chars" ? "chars" : role].forEach(n => { const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); counts.set(n, x); }));
-    const list = [...counts.values()].filter(x => words.every(w => norm(x.n).includes(w))).sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de"));
+    const list = [...counts.values()].filter(x => words.every(w => norm(x.n).includes(w))).sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
     box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${role === "writers" ? (list.length === 1 ? "writer" : "writers") : role === "artists" ? (list.length === 1 ? "artist" : "artists") : list.length === 1 ? "character" : "characters"}</p>` +
       (list.length ? '<div class="list">' + list.slice(0, st.shown).map(x => `<button class="folder" data-who="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`).join("") + '</div>' : '<div class="empty"><h3>Nobody found</h3><p>Try another name.</p></div>') + more(list.length);
     box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.mode = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
@@ -2490,7 +2498,7 @@ function drawStories() {
     if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
     const title = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
     if (st.sort === "fav") list = list.filter(e => storyRate(e).fav);
-    list = list.slice().sort(st.sort === "rating" || st.sort === "fav" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || title(a).localeCompare(title(b), "de") : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de") : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de"));
+    list = list.slice().sort(st.sort === "rating" || st.sort === "fav" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || title(a).localeCompare(title(b), "de", { numeric: true }) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || title(a).localeCompare(title(b), "de", { numeric: true }) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : (a, b) => title(a).localeCompare(title(b), "de", { numeric: true }));
     const reprints = list.filter(e => e.items.length > 1).length;
     box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
       (list.length ? '<div class="list">' + list.slice(0, st.shown).map(e => {
@@ -2981,7 +2989,7 @@ function bindArrangeCard() {
       if ($("#arrTypo") && $("#arrTypo").checked) S.series.forEach(se => { if (/^Lusties Taschenbuch/i.test(se.name)) { se.name = se.name.replace(/^Lusties/i, "Lustiges"); renamed.push(se); } });
       if ($("#arrEmpty") && $("#arrEmpty").checked) S.series = S.series.filter(se => S.comics.some(c => c.seriesId === se.id) || DEFAULT_SERIES.some(d => d.id === se.id));
       const n = id => S.comics.filter(c => c.seriesId === id).length;
-      S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group) || n(b.id) - n(a.id) || a.name.localeCompare(b.name, "de"));
+      S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group) || n(b.id) - n(a.id) || a.name.localeCompare(b.name, "de", { numeric: true }));
       await saveSeries();
       const fix = S.comics.filter(c => renamed.some(se => se.id === c.seriesId)).map(c => Object.assign({}, c, { seriesName: seriesById(c.seriesId).name }));
       if (fix.length) await saveMany(fix, null, true);
@@ -2995,7 +3003,7 @@ function bookSeriesGroup() {
   const bySer = {};
   (S.bookSeriesExtra || []).forEach(x => { bySer[x.name] = bySer[x.name] || []; });   // set up in the Series tab, no book yet
   S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (bySer[c.seriesName] = bySer[c.seriesName] || []).push(c); });
-  const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de"));
+  const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
   if (!names.length) return "";
   const item = n => {
     const bs = bySer[n], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, k = "book:" + n, m = bookInfo(n);
@@ -3152,18 +3160,10 @@ VIEWS.series = {
           return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([s.name, s.short, s.group, u, s.code].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(seriesLabel(s) || "New series")}</span><span class="muted small">${esc(meta)}</span></summary>${fields(s, i)}</details>`;
         }).join("")).join("") + '</details>';
     }).join("") + bookSeriesGroup();
-    return `
-      ${arrangeCard()}
-      ${groupCheckCard()}
-      <div><h2>Series</h2><p class="lede">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
-      ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
-      <div class="card stack">
-        <label><span class="l">Find a series</span><input id="serfind" type="search" placeholder="Name, short name, group or INDUCKS code" value="${esc(S.serFind || "")}"></label>
-        <div class="serieslist">${rows}</div>
-        <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
-        <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
-        <div id="newbook"></div>
-        <div class="row savebar"><button id="addser">Add series</button><button id="addbookser" type="button">Add book series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+    const tab = S.serTab || "list";
+    const tabs = `<h2 style="margin:0">Series</h2><div class="subtabs" role="tablist" aria-label="Show"><button role="tab" type="button" data-stab="list" aria-selected="${tab === "list"}">My series</button><button role="tab" type="button" data-stab="tools" aria-selected="${tab === "tools"}">Tools</button></div>`;
+    if (tab === "tools") return tabs + `
+      <p class="small muted" style="margin:0">Bulk jobs for all your series and comics. The ones that need internet say so.</p>
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
@@ -3173,12 +3173,26 @@ VIEWS.series = {
       ${refreshBooksCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
         ${S.catalogue ? `<p class="small muted" style="margin:0">Catalogue from ${esc(niceDate(String(S.catalogue.built || "").slice(0, 10)))} for ${Object.keys(S.catalogue.series || {}).length} series, stored on this phone.</p>
-          <div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div>
+          <details class="small"><summary>Series in the catalogue</summary><div class="tablewrap"><table><thead><tr><th>Series</th><th>INDUCKS</th><th>Issues</th></tr></thead><tbody>${Object.values(S.catalogue.series || {}).map(x => `<tr><td>${esc(x.series)}</td><td class="mono">${esc(x.code)}</td><td>${(x.issues || 0).toLocaleString("de-CH")}</td></tr>`).join("")}</tbody></table></div></details>
           <div class="row"><button class="primary" id="gomatch">Match my comics with INDUCKS</button></div>
           <p class="small muted" style="margin:0">Story data from <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>, used under the Inducks licence. Thanks to its indexers.</p>`
           : `<p class="small muted" style="margin:0">Not loaded yet. Once it is, Add fills in titles, dates and full story lists from INDUCKS.</p>`}</div>`;
+    return tabs + `
+      ${arrangeCard()}
+      ${groupCheckCard()}
+      <div><p class="lede" style="margin:0">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
+      ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
+      <div class="card stack">
+        <label><span class="l">Find a series</span><input id="serfind" type="search" placeholder="Name, short name, group or INDUCKS code" value="${esc(S.serFind || "")}"></label>
+        <div class="serieslist">${rows}</div>
+        <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
+        <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
+        <div id="newbook"></div>
+        <div class="row savebar"><button id="addser">Add series</button><button id="addbookser" type="button">Add book series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+`;
   },
   bind() {
+    document.querySelectorAll("[data-stab]").forEach(b => b.onclick = () => { if (S.serTab !== b.dataset.stab) { try { grab(); } catch (e) {} } S.serTab = b.dataset.stab; render(); window.scrollTo(0, 0); });
     const grab = () => document.querySelectorAll(".seriesrow:not(.bookrow)").forEach(row => {
       const s = S.series[+row.dataset.i];
       row.querySelectorAll("[data-k]").forEach(inp => {
@@ -3204,7 +3218,7 @@ VIEWS.series = {
         if (q) g.open = any; else g.open = !!S.serOpen["u:" + g.dataset.u];
       });
     };
-    $("#serfind").oninput = e => { S.serFind = e.target.value; find(); };
+    $("#serfind") && ($("#serfind").oninput = e => { S.serFind = e.target.value; find(); });
     if (S.serFind) find();
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
     bindValueRules();
@@ -3253,7 +3267,7 @@ VIEWS.series = {
       render();
     });
     $("#dkstop") && ($("#dkstop").onclick = () => { if (S.dk) S.dk.stop = true; });
-    $("#addbookser").onclick = () => {
+    if ($("#addbookser")) $("#addbookser").onclick = () => {
       const box = $("#newbook");
       box.innerHTML = `<div class="confirm" style="display:grid;gap:8px"><label><span class="l">Name of the book series</span><input id="nbname" placeholder="e.g. Harry Potter, Carl Barks Collection"></label>
         <div class="seg" role="group" aria-label="Kind"><button type="button" data-nbk="1" aria-pressed="true">Books</button><button type="button" data-nbk="0" aria-pressed="false">Comic books</button></div>
@@ -3276,7 +3290,7 @@ VIEWS.series = {
       S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== b.dataset.bkrm); await setConfig("bookSeriesExtra", S.bookSeriesExtra);
       toast(b.dataset.bkrm + " removed"); renderKeep();
     });
-    $("#addser").onclick = () => {
+    if ($("#addser")) $("#addser").onclick = () => {
       grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" });
       S.serFind = ""; S.serOpen["u:No universe yet"] = true; S.serOpen["new:" + (S.series.length - 1)] = true; render();
       const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); const last = ins[ins.length - 1]; last.scrollIntoView({ block: "center" }); last.focus();
@@ -3287,7 +3301,7 @@ VIEWS.series = {
       if (used) { toast(used + " comics are in this series. Move or delete them first."); return; }
       S.series.splice(+b.dataset.rm, 1); render();
     });
-    $("#saveser").onclick = async () => {
+    if ($("#saveser")) $("#saveser").onclick = async () => {
       grab();
       if (S.series.some(s => !s.name)) { toast("Every series needs a name"); return; }
       S.series.forEach(s => { if (!s.group) s.group = OTHER_GROUP; if (!s.publisher) s.publisher = OTHER_PUB; });

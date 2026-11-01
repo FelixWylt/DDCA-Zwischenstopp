@@ -19,13 +19,18 @@
       <div class="towns">ENTENHAUSEN · PAPEROPOLI · ANKEBORG</div>
     </div>
     <nav class="tabs" id="tabs" aria-label="Sections">
-      <a href="#collection" data-v="collection">Collection</a>
-      <a href="#stories" data-v="stories">Stories</a>
-      <a href="#add" data-v="add">Add</a>
-      <a href="#gaps" data-v="gaps">Gaps &amp; wishlist</a>
-      <a href="#stats" data-v="stats">Stats</a>
-      <a href="#series" data-v="series">Series</a>
-      <a href="#backup" data-v="backup">Backup</a>
+      <a href="#collection" data-v="collection"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h4v14H4zM10 5h4v14h-4zM16 6l3.5-.9 3 13.5-3.5.9z"/></svg><span>Collection</span></a>
+      <a href="#stories" data-v="stories"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h8M8 17h5"/></svg><span>Stories</span></a>
+      <a href="#add" data-v="add" class="addtab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Add</span></a>
+      <a href="#gaps" data-v="gaps"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg><span class="long">Gaps &amp; wishlist</span><span class="short">Gaps</span></a>
+      <a href="#stats" data-v="stats"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M10 20V5M15 20v-7M20 20V9"/></svg><span>Stats</span></a>
+      <a href="#series" data-v="series" class="moretab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Series</span></a>
+      <a href="#backup" data-v="backup" class="moretab"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Backup</span></a>
+      <button type="button" id="morebtn" class="morebtn" aria-haspopup="true" aria-expanded="false"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg><span>More</span></button>
+      <div class="moremenu" id="moremenu" hidden>
+        <a href="#series" data-v="series"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span>Series</span></a>
+        <a href="#backup" data-v="backup"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg><span>Backup</span></a>
+      </div>
     </nav>
   </div>
 </header>
