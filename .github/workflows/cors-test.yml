@@ -9,11 +9,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
       - name: Probe
         run: |
           set +e
-          exec > probe-result.txt 2>&1
-          python3 probe.py
+          npm i --no-save playwright@1 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
+          (python3 -m http.server 8080 >/dev/null 2>&1 &) ; sleep 1
+          node probe-books.mjs > probe-result.txt 2>&1
       - name: Save
         if: always()
         run: |
