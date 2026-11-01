@@ -543,10 +543,10 @@ async function boot() {
       await setConfig("formatFill1", true);
     }
     // once: library form terms such as "Lehr- und Lernressource" aren't genres
-    if (!(await getConfig("genresClean5")) && window.Books && Books.oneGenre) {
+    if (!(await getConfig("genresClean6")) && window.Books && Books.oneGenre) {
       const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
       if (fix.length) await saveMany(fix, null, true);
-      await setConfig("genresClean5", true);
+      await setConfig("genresClean6", true);
     }
     if (!(await getConfig("genresEnglish3")) && window.Books && Books.oneGenre) {
       const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));

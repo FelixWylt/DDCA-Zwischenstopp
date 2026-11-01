@@ -160,11 +160,11 @@
     "Fairy Tales": ["fairy tale", "märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
     "History": ["geschichte", "geschichte", "history", "historia"],
     "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
-    "Drama": ["drama", "dramen", "schauspiel", "theaterstück", "bühnenwerk", "dramatisches gedicht", "tragödie", "trauerspiel", "komödie", "lustspiel", "tragische komödie", "plays", "play", "tragedy", "comedy (drama)", "pjäs", "pjäser", "skådespel", "dramatik"],
+    "Drama": ["drama", "dramen", "schauspiel", "theaterstück", "bühnenwerk", "dramatisches gedicht", "tragödie", "trauerspiel", "komödie", "lustspiel", "tragische komödie", "plays", "play", "english drama", "german drama", "comedies", "tragedies", "drama (genre)", "dramatic works", "theater", "tragedy", "comedy (drama)", "pjäs", "pjäser", "skådespel", "dramatik"],
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => { GENRE_OF[k.toLowerCase()] = k; GENRES[k].forEach(v => { GENRE_OF[v] = k; }); });
-  const DROP = /^(pressendruck|geschenkbuch|geschenkbücher|fiktionale darstellung|lehr- und lernressource|lehrmittel|schulbuch|unterrichtsmaterial|lernhilfe|lektürehilfe|aufgabensammlung|quelle|hochschulschrift|online-publikation|bildband|ratgeber|verzeichnis|katalog|einführung|textsammlung|läromedel|study guides?|textbooks?|serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
+  const DROP = /^(ej skönlitteratur|pressendruck|geschenkbuch|geschenkbücher|fiktionale darstellung|lehr- und lernressource|lehrmittel|schulbuch|unterrichtsmaterial|lernhilfe|lektürehilfe|aufgabensammlung|quelle|hochschulschrift|online-publikation|bildband|ratgeber|verzeichnis|katalog|einführung|textsammlung|läromedel|study guides?|textbooks?|serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
   const GENERIC = new Set(["Novel", "Children's", "Young Adult", "Children's & Young Adult"]);
   function oneGenre(g, knownOnly) {
     const seen = new Set(), known = [], other = [];
@@ -190,7 +190,7 @@
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
     if (!out.genre || out.genre === "Novel") {
       const sub = String(out.title || "").toLowerCase().normalize("NFC");
-      const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs)\b/.exec(sub) ? "Drama"
+      const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs|comedy|tragedy|a play|play in \w+ acts?)\b/.exec(sub) ? "Drama"
         : /\b(novellen?|erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
         : /\b(roman|novel)\b/.exec(sub) ? "Novel" : "";
       if (m) out.genre = m;
