@@ -43,10 +43,17 @@
     return "";
   }
   const NOT_SERIES = /\b(werk|werke|werkausgabe|ausgabe|gesammelte|sämtliche|classics|klassiker|bibliothek|bibliothèque|library|taschenbuch|taschenbücher|erläuterungen|lektüre|lektürehilfe|edition|reihe|collection|meisterwerke|bücherei|samlade|verk)\b|^(dtv|rororo|detebe|fischer|btb|suhrkamp|insel|reclam|goldmann|heyne|diogenes)\b/i;
+  // numbered publisher series that collectors gather by number
+  const COLLECTED = /^insel[- ]bücherei\b|^insel[- ]taschenbuch\b/i;
   function storySeries(fields, sub) {
     const authorWorks = new Set(fields("800").map(f => tidy(sub(f, "t")[0]).toLowerCase()).filter(Boolean));
-    for (const f of fields("490")) {
+    // one volume of a work in several volumes: "Uhlands Werke, Bd. 1" -> series Uhlands Werke, volume 1
+    const t245 = fields("245")[0], part = t245 ? tidy(sub(t245, "n")[0]) : "", partNo = (/(\d+)/.exec(part) || [])[1];
+    const books = fields("490").concat(fields("830"));
+    if (partNo && !books.some(f => COLLECTED.test(tidy(sub(f, "a")[0]).normalize("NFC")))) return { series: tidy(sub(t245, "a")[0]).replace(/^\[([^\]]+)\]\s*/, "$1 "), volume: partNo };
+    for (const f of books) {
       const name = tidy(sub(f, "a")[0]), vol = tidy(sub(f, "v")[0]), n = +String(vol).replace(/[^\d.]/g, "");
+      if (name && COLLECTED.test(name.normalize("NFC"))) return { series: name.replace(/\s*;.*$/, ""), volume: vol.replace(/^\D+/, "") };
       if (!name || authorWorks.has(name.toLowerCase()) || NOT_SERIES.test(name.normalize("NFC")) || n > 200) continue;
       return { series: name, volume: vol };
     }
