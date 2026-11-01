@@ -30,6 +30,8 @@
   }
   const year = s => ((/(1[5-9]|20)\d{2}/.exec(String(s || "")) || [])[0]) || "";
 
+  // DNB subject groups (Sachgruppen) that say something about the genre
+  const SDNB = { B: "Fiction", K: "Kinder- und Jugendliteratur", "741.5": "Comics", "830": "Fiction", "833": "Fiction", "823": "Fiction", "839": "Fiction", "S": "" };
   // ---- Deutsche Nationalbibliothek (MARC 21 over SRU) ----
   function parseMarc(xml) {
     const doc = new DOMParser().parseFromString(xml, "text/xml");
@@ -54,7 +56,8 @@
         // a publisher's paperback number (dtv 21412, rororo 23315) isn't a book series
         ...(+tidy(first("490", "v")).replace(/\D/g, "") > 200 ? {} : { series: tidy(first("490", "a")), volume: tidy(first("490", "v")) }),
         rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
-        genre: fields("655").map(f => sub(f, "a")[0]).filter(Boolean).join(", "), isbn
+        genre: fields("655").concat(fields("650")).map(f => sub(f, "a")[0]).filter(Boolean)
+          .concat(fields("084").filter(f => sub(f, "2")[0] === "sdnb").map(f => SDNB[sub(f, "a")[0]] || "")).filter(Boolean).join(", "), isbn
       };
     });
   }
@@ -67,7 +70,7 @@
   function fromLibris(x) {
     const pub = [].concat(x.publisher || []);
     const p = pub.map(s => (/:\s*(.+)$/.exec(s) || [])[1]).filter(Boolean)[0] || (pub.length > 1 ? pub[1] : "");
-    return { title: tidy(x.title), authors: [].concat(x.creator || []).map(personName), publisher: tidy(p), year: year(x.date), lang: langName(x.language), isbn: clean([].concat(x.isbn || [])[0]) };
+    return { title: tidy(x.title), authors: [].concat(x.creator || []).map(personName), publisher: tidy(p), year: year(x.date), lang: langName(x.language), genre: [].concat(x.subject || [], x.genre || []).filter(v => typeof v === "string").join(", "), isbn: clean([].concat(x.isbn || [])[0]) };
   }
   async function libris(query, n) {
     const j = await getJson("https://libris.kb.se/xsearch?format=json&n=" + (n || 1) + "&query=" + encodeURIComponent(query));
@@ -79,7 +82,7 @@
     const j = await getJson("https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:" + isbn);
     const x = j["ISBN:" + isbn]; if (!x) return [];
     return [{ title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
-      year: year(x.publish_date), pages: x.number_of_pages ? String(x.number_of_pages) : "", cover: (x.cover || {}).medium || "", genre: (x.subjects || []).slice(0, 3).map(s => s.name).join(", "), isbn }];
+      year: year(x.publish_date), pages: x.number_of_pages ? String(x.number_of_pages) : "", cover: (x.cover || {}).medium || "", genre: oneGenre((x.subjects || []).slice(0, 25).map(s => s.name).join(", "), true), isbn }];
   }
   async function openLibrarySearch(q) {
     const j = await getJson("https://openlibrary.org/search.json?limit=12&fields=title,author_name,first_publish_year,isbn,cover_i,publisher,language&q=" + encodeURIComponent(q));
@@ -108,10 +111,10 @@
     "Crime": ["crime novel", "detective fiction", "detective novel", "mystery fiction", "krimi", "krimi", "kriminalroman", "kriminalromane", "kriminalgeschichte", "crime", "crime fiction", "mystery", "mysteries", "mystery & detective", "detective and mystery stories", "detective and mystery fiction", "deckare", "kriminalromaner", "detektivgeschichte"],
     "Thriller": ["thriller", "thrillers", "suspense", "spänning", "spänningsromaner", "psychothriller"],
     "Adventure": ["adventure fiction", "adventure novel", "abenteuer", "abenteuer", "adventure", "adventure stories", "adventure and adventurers", "action & adventure", "äventyr", "äventyrsberättelser", "äventyrsromaner", "abenteuerroman", "abenteuergeschichte"],
-    "Children's": ["children's literature", "children's books", "children's novel", "kinderbuch", "kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
-    "Young Adult": ["young adult literature", "young adult novel", "jugendbuch", "jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
+    "Children's": ["juvenile fiction", "juvenile literature", "children's literature", "children's books", "children's novel", "kinderbuch", "kinderbuch", "kinderliteratur", "children's fiction", "children's stories", "juvenile literature", "barnböcker", "barnlitteratur", "bilderbuch"],
+    "Young Adult": ["young adult fiction", "young adult literature", "young adult novel", "jugendbuch", "jugendbuch", "jugendliteratur", "jugendroman", "young adult", "young adult fiction", "ungdomsböcker", "ungdomslitteratur", "ungdomsromaner"],
     "Children's & Young Adult": ["kinder- und jugendbuch", "kinder- und jugendliteratur", "kinder- und jugendbuch", "barn- och ungdomslitteratur", "barn- och ungdomsböcker"],
-    "Novel": ["literary fiction", "roman", "roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
+    "Novel": ["fiction", "general fiction", "literary fiction", "roman", "roman", "romane", "novel", "novels", "romaner", "belletristik", "skönlitteratur", "erzählende literatur", "unterhaltungsliteratur"],
     "Historical Fiction": ["historical novel", "historischer roman", "historical fiction", "historischer roman", "historiska romaner", "historisk roman", "history fiction"],
     "Horror": ["horror fiction", "horror literature", "horror", "horror tales", "horror stories", "skräck", "skräckromaner", "gruselgeschichte", "gruselroman"],
     "Humour": ["comedy", "humorous fiction", "humor", "humor", "humour", "humorous stories", "humorous fiction", "humoristiska berättelser", "humoristisk"],
@@ -125,16 +128,24 @@
     "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
-  const GENRE_OF = {}; Object.keys(GENRES).forEach(k => GENRES[k].forEach(v => { GENRE_OF[v] = k; }));
-  const DROP = /^(serie|series|reihe|fiction|general|juvenile fiction|young adult fiction|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska)$/i;
-  function oneGenre(g) {
-    const seen = new Set(), out = [];
-    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").trim())
+  const GENRE_OF = {}; Object.keys(GENRES).forEach(k => { GENRE_OF[k.toLowerCase()] = k; GENRES[k].forEach(v => { GENRE_OF[v] = k; }); });
+  const DROP = /^(serie|series|reihe|general|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
+  const GENERIC = new Set(["Novel", "Children's", "Young Adult", "Children's & Young Adult"]);
+  function oneGenre(g, knownOnly) {
+    const seen = new Set(), known = [], other = [];
+    String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim())
       .filter(x => x && !/:/.test(x) && !DROP.test(x) && x.length <= 40)
-      .map(x => GENRE_OF[x.toLowerCase()] || x[0].toUpperCase() + x.slice(1))
-      .forEach(x => { const k = x.toLowerCase(); if (!seen.has(k) && out.length < 3) { seen.add(k); out.push(x); } });
-    return out.join(", ");
+      .forEach(x => {
+        const k = GENRE_OF[x.toLowerCase()] || GENRE_OF[x.toLowerCase().replace(/ fiction$| stories$| novels?$/, "")];
+        if (k) { if (!seen.has(k)) { seen.add(k); known.push(k); } }
+        else if (x.length <= 25 && !/\d/.test(x) && !seen.has(x.toLowerCase())) { seen.add(x.toLowerCase()); other.push(x[0].toUpperCase() + x.slice(1)); }
+      });
+    // specific genres before general ones ("Fantasy, Children's"); unknown words only when no known genre was found
+    const specific = known.filter(k => !GENERIC.has(k)), general = known.filter(k => GENERIC.has(k));
+    const pick = specific.concat(general).filter((k, i, all) => k !== "Novel" || all.length === 1);   // "Novel" only when nothing more precise is known
+    return (pick.length ? pick : knownOnly ? [] : other).slice(0, 3).join(", ");
   }
+
   // ---- merge: national libraries first, then Open Library, then Google ----
   const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {

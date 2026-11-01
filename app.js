@@ -405,10 +405,10 @@ async function boot() {
     S.gradeFactors = await getConfig("gradeFactors") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
-    if (!(await getConfig("genresEnglish2")) && window.Books && Books.oneGenre) {
+    if (!(await getConfig("genresEnglish3")) && window.Books && Books.oneGenre) {
       const fix = S.comics.filter(c => c.kind === "book" && c.genre && Books.oneGenre(c.genre) !== c.genre).map(c => Object.assign({}, c, { genre: Books.oneGenre(c.genre) }));
       if (fix.length) await saveMany(fix, null, true);
-      await setConfig("genresEnglish2", true);
+      await setConfig("genresEnglish3", true);
     }
     await adoptLooseSeries();
     S.dbState = "ready";
