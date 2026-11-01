@@ -168,7 +168,7 @@
   function oneGenre(g, knownOnly) {
     const seen = new Set(), known = [], other = [];
     String(g || "").split(/[,;|]/).map(x => x.split("/").pop().replace(/_/g, " ").replace(/\.$/, "").replace(/\s*\([^)]*\)\s*$/, "").trim())
-      .filter(x => x && !/:/.test(x) && !DROP.test(x) && x.length <= 40)
+      .map(x => x.split(":")[0].trim()).filter(x => x && !DROP.test(x) && x.length <= 40)
       .forEach(x => {
         const k = GENRE_OF[x.toLowerCase()] || GENRE_OF[x.toLowerCase().replace(/ fiction$| stories$| novels?$/, "")];
         if (k) { if (!seen.has(k)) { seen.add(k); known.push(k); } }
@@ -212,9 +212,23 @@
     const hits = res.filter(x => x.r && x.r.title);
     if (!hits.length) return { isbn, sources: [], offline: res.every(x => x.err), data: null };
     const data = merge(hits.map(x => x.r));
+    if (!data.genre && data.title) data.genre = await genreFromOtherEditions(data, isbn);
     if (!data.cover) data.cover = "https://covers.openlibrary.org/b/isbn/" + isbn + "-M.jpg?default=false";
     data.isbn = isbn;
     return { isbn, sources: hits.map(x => x.name), data };
+  }
+  // a school or study edition often has no genre of its own: take it from other editions of the same work
+  async function genreFromOtherEditions(data, isbn) {
+    const title = tidy(String(data.title).split(" – ")[0]), author = (data.authors || [])[0] || "";
+    if (!title) return "";
+    const surname = author.split(" ").pop();
+    const same = r => r && r.title && tidy(r.title.split(" – ")[0]).toLowerCase() === title.toLowerCase() && r.isbn !== isbn;
+    try {
+      const swedish = /^97[89]91/.test(isbn) || data.lang === "Swedish";
+      const recs = swedish ? await libris('tit:"' + title + '"' + (surname ? " forf:" + surname : ""), 10)
+        : await dnb('tit="' + title + '"' + (surname ? ' and per="' + surname + '"' : ""), 10);
+      return oneGenre(recs.filter(same).map(r => r.genre).filter(Boolean).join(", "));
+    } catch (e) { return ""; }
   }
   // title/author search: several catalogues, one list without duplicates
   async function search(q) {
