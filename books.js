@@ -159,10 +159,11 @@
     "Fairy Tales": ["fairy tale", "märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
     "History": ["geschichte", "geschichte", "history", "historia"],
     "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
+    "Drama": ["drama", "dramen", "schauspiel", "theaterstück", "bühnenwerk", "dramatisches gedicht", "tragödie", "trauerspiel", "komödie", "lustspiel", "tragische komödie", "plays", "play", "tragedy", "comedy (drama)", "pjäs", "pjäser", "skådespel", "dramatik"],
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
   const GENRE_OF = {}; Object.keys(GENRES).forEach(k => { GENRE_OF[k.toLowerCase()] = k; GENRES[k].forEach(v => { GENRE_OF[v] = k; }); });
-  const DROP = /^(serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
+  const DROP = /^(lehr- und lernressource|lehrmittel|schulbuch|unterrichtsmaterial|lernhilfe|lektürehilfe|aufgabensammlung|quelle|hochschulschrift|online-publikation|bildband|ratgeber|verzeichnis|katalog|einführung|textsammlung|läromedel|study guides?|textbooks?|serie|series|reihe|general|ljudböcker|e-böcker|e-bok|talböcker|punktskrift|lättläst|storstil|audiobooks?|accessible book|protected daisy|in library|large type books|fiktionale darstellung|lending library|open library staff picks|english language|deutsch|svenska|nyt[: ].*|reading level.*|lexile.*|literature|fiction in english|translations into .*|.*\d{4}.*)$/i;
   const GENERIC = new Set(["Novel", "Children's", "Young Adult", "Children's & Young Adult"]);
   function oneGenre(g, knownOnly) {
     const seen = new Set(), known = [], other = [];
@@ -186,6 +187,13 @@
     KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
     // genres from all databases together; the shared names make the same genre count once
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
+    if (!out.genre || out.genre === "Novel") {
+      const sub = String(out.title || "").toLowerCase().normalize("NFC");
+      const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs)\b/.exec(sub) ? "Drama"
+        : /\b(novellen?|erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
+        : /\b(roman|novel)\b/.exec(sub) ? "Novel" : "";
+      if (m) out.genre = m;
+    }
     // library catalogues abbreviate publishers ("Dt. Taschenbuch-Verl."): take a written-out name if another source has one
     const full = list.map(r => r && r.publisher).filter(p => p && !/\.\s*$|\b[A-ZÄÖÜ][a-zäöü]{0,4}\./.test(p));
     if (out.publisher && /\./.test(out.publisher) && full.length) out.publisher = full[0];
