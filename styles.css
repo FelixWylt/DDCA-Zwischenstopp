@@ -454,3 +454,5 @@ body.noscroll { overflow: hidden; }
 /* the small series label under an issue number never runs into the next column */
 .item .num { min-width: 0; overflow: hidden; }
 .item .num small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.btnlink { display: inline-block; margin-left: 4px; padding: 2px 10px; border: 1px solid var(--accent); border-radius: 999px; font-weight: 700; text-decoration: none; white-space: nowrap; }

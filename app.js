@@ -2839,6 +2839,12 @@ function inducksCandidates(se) {
   return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && (norm(p[1]) === n || norm(p[1]).replace(/\s+\d+$/, "") === n || (n.length > 8 && norm(p[1]).includes(n))))
     .sort((a, b) => b[2] - a[2]).slice(0, 3);
 }
+// "Add to catalogue": a ready-filled request on the app's GitHub repository; a GitHub job adds the series and rebuilds the catalogue
+const APP_REPO = "FelixWylt/DDCA-Zwischenstopp";
+function catalogueRequestUrl(code, name) {
+  const body = "Series: " + name + "\nINDUCKS: https://inducks.org/publication.php?c=" + encodeURIComponent(code) + "\n\nSent from Dagobert Ducks Archiv. Just tap Submit.";
+  return `https://github.com/${APP_REPO}/issues/new?title=${encodeURIComponent("Add to catalogue: " + code)}&body=${encodeURIComponent(body)}`;
+}
 function inducksNote(se) {
   if (se.publisher && se.publisher !== DISNEY) return "";
   const ce = catEntry(se);
@@ -2846,7 +2852,8 @@ function inducksNote(se) {
   if (!S.inducksDir) { loadInducksDir(); return "Checking INDUCKS…"; }
   const c = inducksCandidates(se);
   if (!c.length) return "Not found on INDUCKS under this name. If you know its INDUCKS code, enter it above.";
-  return "On INDUCKS, but not in your offline catalogue yet: " + c.map(p => `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(p[0])}" target="_blank" rel="noopener">${esc(p[0])}</a> “${esc(p[1])}” (${p[2]} issues${p[3] ? ", " + p[3] + (p[4] && p[4] !== p[3] ? "–" + p[4] : "") : ""})`).join("; ") + ". The catalogue on GitHub has to include it before Fill from INDUCKS works offline.";
+  return "On INDUCKS, but not in your offline catalogue yet: " + c.map(p => `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(p[0])}" target="_blank" rel="noopener">${esc(p[0])}</a> “${esc(p[1])}” (${p[2]} issues${p[3] ? ", " + p[3] + (p[4] && p[4] !== p[3] ? "–" + p[4] : "") : ""}) <a class="btnlink" href="${catalogueRequestUrl(p[0], se.name || p[1])}" target="_blank" rel="noopener">Add to catalogue</a>`).join("; ") +
+    ". Tap “Add to catalogue”, then Submit on GitHub (you need to be signed in). The catalogue is rebuilt in about 5 minutes; then the app offers an update.";
 }
 async function loadInducksDir() {
   if (S.inducksDirLoading) return; S.inducksDirLoading = true;
