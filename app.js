@@ -1604,6 +1604,7 @@ function bookGapsHtml() {
   return gapTabs() + gapHead(ownCount, wantCount, squares.length, { read: false, legend: '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
     <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
     ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
+    ${seriesAbout(bookAboutObj("book:" + name))}
     <div id="cellpick"></div>
     ${size ? `<div class="${gridClass(true)}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
 }
@@ -2388,6 +2389,7 @@ VIEWS.gaps = {
             (k => k ? k + (k === 1 ? " comic isn't" : " comics aren't") + " in the grid" : "")(notInGrid.filter(x => !x.conflict && !x.hint).length)
           ].filter(Boolean).join(" · ")}</strong> · tap to see why</summary>
           <div class="list" style="margin-top:8px">${notInGrid.map(({ c, why }) => `<button class="item whyitem" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${esc(c.issueLabel || c.issue || "–")}<small>${esc(tag)}</small></div><div style="min-width:0"><div class="t">${esc(c.title || niceDate(c.date) || tag)}</div><div class="s">${esc(why)}</div></div><div class="chips">${c.status === "wanted" ? '<span class="chip wanted">Wishlist</span>' : ""}</div></button>`).join("")}</div></details>` : ""}
+      ${seriesAbout(se)}
       <div id="cellpick"></div>
       <div id="gridbox" class="${gridClass()}">${grid}</div>`;
   },
@@ -2601,6 +2603,7 @@ VIEWS.stats = {
           <div><div class="v2">${nf(wantAll.length)}</div><div class="k">on wishlist</div></div>
           <div><div class="v2">${nf(idx.length)}</div><div class="k">stories</div></div>
           <div><div class="v2">${pct(readAll, all.length)} %</div><div class="k">read · ${nf(all.length - readAll)} to go</div><div class="meter"><span style="width:${pct(readAll, all.length)}%"></span></div></div>
+          <div><div class="v2">${nf(all.filter(c => c.read).reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0))}</div><div class="k">pages read</div></div>
         </div></div>`;
     const ovMonth = `<div class="card stack"><div class="cardhead"><h3>This month</h3><span class="muted small">${M[now.getMonth()]} ${yNow}</span></div>
       <div class="row monthrow">
@@ -2658,6 +2661,7 @@ VIEWS.stats = {
           <div><div class="v2">${nf(seriesOwned)}</div><div class="k">series</div></div>
           <div><div class="v2">${nf(idx.length)}</div><div class="k">stories</div></div>
           <div><div class="v2">${pct(read, own.length)} %</div><div class="k">read · ${nf(own.length - read)} to go</div><div class="meter"><span style="width:${pct(read, own.length)}%"></span></div></div>
+          <div><div class="v2">${nf(own.filter(c => c.read).reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0))}</div><div class="k">pages read</div></div>
         </div>
       </div>
       <div class="two">${comp}${years}</div>
@@ -2721,7 +2725,7 @@ function readingCard(list, word) {
   return `<div class="card stack"><div class="cardhead"><h3>Reading</h3>${rangeSwitch()}</div>
     <div class="row" style="gap:24px"><div><div class="v2">${inRange.length}</div><div class="k small muted">${w(inRange.length)} read ${all ? "in all" : "in " + year}</div></div>${pages ? `<div><div class="v2">${pages.toLocaleString("de-CH")}</div><div class="k small muted">pages ${all ? "in all" : "in " + year}</div></div>` : ""}</div>
     ${timeBars(per, word + " read", "read", scope)}
-    ${word === "books" && pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
+    ${pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
     <p class="small muted" style="margin:0">Last read: ${last.map(c => `<button class="link" data-open="${esc(c.id)}">${esc(c.kind === "book" ? c.title : comicTag(c))}</button> (${esc(niceDate(c.readDate))})`).join(", ")}. Counts only what was marked as read since 31.10.2026. Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----
@@ -3508,6 +3512,17 @@ async function fillSeriesInfo(se) {
       }
     } catch (e) { got.warn = "Duckipedia couldn't be reached"; }
   }
+  // other languages: a short description from Wikipedia in the series' language (Kalle Anka & C:o, Topolino …)
+  if (!se.about && seriesLang(se) !== "German" && (se.publisher || DISNEY) === DISNEY) {
+    const wl = { Swedish: "sv", Italian: "it", Norwegian: "no", English: "en", Danish: "da", French: "fr" }[seriesLang(se)] || "en";
+    for (const t of [se.name, p && p[1]].filter(Boolean)) {
+      try {
+        const r = await fetch(`https://${wl}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(String(t).replace(/ /g, "_"))}`);
+        if (!r.ok) continue; const j = await r.json();
+        if (j.type === "standard" && j.extract && /disney|kalle|anka|topolino|paperino|serie|tidning|fumetto|comic/i.test(j.extract)) { se.about = j.extract.slice(0, 700); se.aboutSrc = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ""; se.srcName = "Wikipedia"; se.srcLic = "CC BY-SA"; got.push("description"); break; }
+      } catch (e) {}
+    }
+  }
   return got;
 }
 // ---- INDUCKS status of a series: in the offline catalogue, only on INDUCKS, or not found ----
@@ -3693,6 +3708,7 @@ async function fillBookSeries(name) {
   const m = Object.assign({}, bookInfo(name)), got = [];
   const set = (k, v, label) => { if (v && !m[k]) { m[k] = v; got.push(label); } };
   const ownAuthor = [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
+  let wdVols = 0;
   try {
     const id = m.wikidata || await findSeriesEntity(name, ownAuthor);
     if (id) {
@@ -3711,11 +3727,17 @@ async function fillBookSeries(name) {
       const y0 = Math.min(...yr("P580"), ...yr("P577")), y1 = Math.max(...yr("P582"), ...yr("P577"));
       if (isFinite(y0)) set("years", y0 + (isFinite(y1) && y1 > y0 ? "–" + y1 : ""), "years");
       const parts = (cl("P2635")[0] || cl("P1113")[0] || {}).amount;
-      const vols = parts ? Math.round(+parts) : ids("P527").length;
-      if (vols && !(S.bookSizes || {})[name]) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: vols }); await setConfig("bookSizes", S.bookSizes); got.push("volumes"); }
+      wdVols = parts ? Math.round(+parts) : ids("P527").length;
       if (!m.about) { const w = await wikiSummary(e.sitelinks); if (w) { m.about = w.text; m.aboutSrc = w.url; got.push("description"); } }
     }
   } catch (e) { got.warn = "Wikidata couldn't be reached"; }
+  // number of volumes: the national library of your books' language knows the translated edition (Spejarens lärling: 18),
+  // Wikidata only the original series; a count only ever goes up, so one you set higher yourself stays
+  const langs = bs.map(c => c.lang).filter(Boolean), lang = langs.sort((a, b) => langs.filter(x => x === b).length - langs.filter(x => x === a).length)[0] || "";
+  let libVols = 0; try { libVols = window.Books && Books.seriesVolumes ? await Books.seriesVolumes(name, lang) : 0; } catch (e) {}
+  const vols = libVols || wdVols, have = +(S.bookSizes || {})[name] || 0, ownMax = Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0));
+  const best = Math.max(vols, ownMax);
+  if (best > have) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: best }); await setConfig("bookSizes", S.bookSizes); got.push("volumes (" + best + (libVols ? ", from the " + (lang === "German" ? "German" : lang === "Swedish" ? "Swedish" : "national") + " library" : "") + ")"); }
   // what the databases don't know comes from your own books
   set("author", ownAuthor, "author");
   set("publisher", [...new Set(bs.map(c => c.publisher).filter(Boolean))].slice(0, 2).join(", "), "publisher");
@@ -3867,7 +3889,7 @@ VIEWS.series = {
       const run = S.fillAll = { running: true, stop: false, msg: "" }, btn = $("#fillall"), prog = $("#fillprog");
       btn.textContent = "Stop";
       const list = S.series.filter(se => (se.publisher || DISNEY) === DISNEY && (se.name || se.code));
-      const books = [...new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName))];
+      const books = [...new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName).concat((S.bookSeriesExtra || []).map(x => x.name).filter(Boolean)))];
       let changed = 0, warn = "";
       for (let k = 0; k < list.length && !run.stop; k++) {
         if (prog && prog.isConnected) prog.textContent = `${k + 1} of ${list.length}: ${list[k].name}`;
