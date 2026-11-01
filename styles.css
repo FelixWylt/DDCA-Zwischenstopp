@@ -535,3 +535,16 @@ label.inline .l { margin: 0; }
 .item.book .bookthumb { width: 34px; height: 48px; }
 .item.book .bookthumb .ini { font-size: 1.05rem; }
 @media (max-width: 520px) { .item.book { grid-template-columns: 34px minmax(0, 1fr); } .item.book .chips { grid-column: 2; justify-content: flex-start; } .item.book .chips:empty { display: none; } }
+/* Stats: four tabs, This month, tappable legends and bars */
+.subtabs.four { grid-template-columns: repeat(4, 1fr); }
+.subtabs.four button { padding: 10px 4px; font-size: 0.9rem; }
+.monthrow { gap: 8px; flex-wrap: nowrap; }
+.stat3 { flex: 1 1 0; min-width: 0; display: grid; gap: 2px; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+button.stat3[data-pick] { cursor: pointer; border-color: var(--accent); }
+.stat3 .v2 { font-size: 1.15rem; }
+.legbtn { background: none; border: 0; padding: 2px 0; min-height: 0; font: inherit; color: inherit; text-align: left; }
+.legbtn b { color: var(--accent); }
+.hbar .fill.warn { background: var(--wanted); }
+.col.zero .bar { opacity: 0.2; }
+.col .bar.book { background: var(--trade); }
+.col[data-pick] { cursor: pointer; }

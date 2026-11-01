@@ -1317,6 +1317,7 @@ function drawResults() {
   const q = norm(S.filters.q), col = S.col || {};
   // the place you are decides the sub tab (e.g. after saving a book)
   if (col.p) S.colTab = col.p === NOVEL_PUB ? "books" : "comics";
+  if (col.pick) S.colTab = String(col.pick).endsWith("|b") ? "books" : "comics";
   const books = S.colTab === "books";
   const pool = S.comics.filter(c => statusMatch(c) && isNovel(c) === books);
   $("#ctc") && ($("#ctc").textContent = S.comics.filter(c => !isNovel(c) && statusMatch(c)).length);
@@ -1326,7 +1327,14 @@ function drawResults() {
   const more = total => total > S.shown ? '<div class="row" style="justify-content:center;margin-top:12px"><button id="more">Show more (' + (total - S.shown) + ' left)</button></div>' : "";
   let html = "";
   const srt = COL_SORTS[S.colSort];
-  if (srt) {
+  if (col.pick) {
+    const pk = pickInfo(col.pick);
+    let list = S.comics.filter(c => pk.test(c));
+    if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
+    list = sortComics(list);
+    html = crumbs([{ label: "All", col: {} }, { label: "From Stats" }]) + `<p class="muted small" style="margin:0 0 8px">${list.length} ${esc(pk.label)} · ${esc(valueTag(list) || "")} <button class="link" id="pickback" type="button">Back to Stats</button></p>` +
+      (list.length ? entriesHtml(list.slice(0, S.shown)) : '<div class="empty"><h3>Nothing left here</h3><p>Everything in this list has been filled in.</p></div>') + more(list.length);
+  } else if (srt) {
     let list = pool.filter(c => (!col.p || publisherOf(c) === col.p) && (!col.g || groupOf(c) === col.g) && (!col.s || seriesKeyOf(c) === col.s)
       && (col.a == null || (splitPeople(c.author)[0] || "") === col.a) && (col.gen == null || (col.gen ? String(c.genre || "").split(",").map(x => x.trim()).includes(col.gen) : !c.genre)));
     if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
@@ -1402,6 +1410,7 @@ function drawResults() {
   const ab = box.querySelector(".serabout"); if (ab) ab.ontoggle = () => { S.aboutOpen = ab.open; };
   box.querySelectorAll(".item, .tile").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
   box.querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { S.bookView = b.dataset.bview; try { localStorage.setItem("da-bookview", S.bookView); } catch (e) {} S.shown = 200; drawResults(); });
+  $("#pickback") && ($("#pickback").onclick = () => nav("stats"));
   $("#sortoff") && ($("#sortoff").onclick = () => { S.colSort = "series"; const sel = $("#fsort"); if (sel) sel.value = "series"; drawResults(); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
   $("#newbook") && ($("#newbook").onclick = () => { S.editing = null; S.draft = blankDraft({ kind: "book", bookType: "book", seriesId: "_book" }); nav("add"); });
@@ -2346,6 +2355,57 @@ VIEWS.gaps = {
 };
 
 // ---- Stats ----
+// ---- lists opened from Stats: "lang:German:c" = comics in German; scope c comics, b books, a everything ----
+const genresOf = c => String(c.genre || "").split(/\s*[,;\/]\s*/).map(x => x.trim()).filter(Boolean);
+function langOfEntry(c) { return c.lang || (c.kind !== "book" ? seriesLang(seriesById(c.seriesId) || {}) : "") || "Not set"; }
+const yearOf = d => +(String(d || "").slice(0, 4)) || 0;
+const addedOn = c => /^\d{4}-\d{2}/.test(c.purchaseDate || "") ? c.purchaseDate : String(c.createdAt || "").slice(0, 10);
+const MISSING = {
+  grade: { label: "condition", test: c => c.kind !== "book" && !c.grade },
+  price: { label: "price paid", test: c => typeof c.pricePaid !== "number" && !c.lotId },
+  cover: { label: "cover picture", test: c => !c.coverUrl },
+  genre: { label: "genre", test: c => !c.genre && !(c.kind !== "book" && storyGenres(c)) },
+  pages: { label: "pages", test: c => !parseInt(c.pages, 10) },
+  date: { label: "purchase date", test: c => !c.purchaseDate }
+};
+function pickInfo(pick) {
+  const [type, val, scope] = String(pick || "").split("|");
+  const inScope = c => scope === "b" ? isNovel(c) : scope === "c" ? !isNovel(c) : true;
+  const scopeWord = scope === "b" ? "books" : scope === "c" ? "comics" : "entries";
+  const T = {
+    lang: [c => langOfEntry(c) === val, `${scopeWord} in ${val}`],
+    genre: [c => val ? genresOf(c).concat(c.genre ? [] : storyGenres(c) ? storyGenres(c).split(", ") : []).includes(val) : !genresOf(c).length, val ? `${val}` : "no genre"],
+    grade: [c => String(c.grade || "").split("-")[0] === val, `condition Z${val}`],
+    dec: [c => { const y = yearOf(c.date) || c.issueYear; return y && Math.floor(y / 10) * 10 === +val; }, `published in the ${val}s`],
+    fmt: [c => (c.format || "Not set") === val, `format ${val}`],
+    author: [c => splitPeople(c.author).includes(val), `by ${val}`],
+    miss: [c => !!MISSING[val] && MISSING[val].test(c), `without ${(MISSING[val] || {}).label || val}`],
+    added: [c => addedOn(c).startsWith(val), `added or bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
+    read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`]
+  }[type] || [() => false, "?"];
+  return { test: c => c.status !== "wanted" && inScope(c) && T[0](c), label: T[1], scope };
+}
+function openPick(pick) { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.colTab = String(pick).endsWith("|b") ? "books" : "comics"; S.col = { pick }; S.shown = 200; nav("collection"); try { history.replaceState({ col: S.col }, "", "#collection"); } catch (e) {} }
+function bindPicks(root) { (root || document).querySelectorAll("[data-pick]").forEach(b => b.onclick = e => { e.stopPropagation(); openPick(b.dataset.pick); }); }
+// horizontal bars that open their list: [label, count, pick]
+function pickBars(list, cls) {
+  const max = Math.max(1, ...list.map(x => x[1]));
+  return '<div class="hbars">' + list.map(([n, c, pick]) => `<button class="hbar" ${pick ? `data-pick="${esc(pick)}"` : ""} title="${esc(n)}: ${c}"><span class="lab">${esc(n)}</span><span class="track"><span class="fill ${cls || ""}" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${Number(c).toLocaleString("de-CH")}</span></button>`).join("") + "</div>";
+}
+const tallyOf = (list, f, n) => { const m = {}; list.forEach(c => f(c).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, n || 99); };
+// This year / All time, for the over-time cards
+function rangeSwitch() { const r = S.statRange || "year"; return `<div class="seg small" role="group" aria-label="Period"><button type="button" data-range="year" aria-pressed="${r === "year"}">This year</button><button type="button" data-range="all" aria-pressed="${r === "all"}">All time</button></div>`; }
+// bars over time: months of this year, or years
+function timeBars(per, word, pickType, scope, unitFmt) {
+  const now = new Date(), M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  let keys;
+  if ((S.statRange || "year") === "year") keys = Array.from({ length: 12 }, (_, i) => now.getFullYear() + "-" + String(i + 1).padStart(2, "0"));
+  else { const ys = Object.keys(per).map(k => +k.slice(0, 4)).filter(Boolean); const lo = Math.min(now.getFullYear(), ...ys); keys = []; for (let y = Math.max(lo, now.getFullYear() - 29); y <= now.getFullYear(); y++) keys.push(String(y)); }
+  const val = k => Object.keys(per).filter(x => x.startsWith(k)).reduce((a, x) => a + per[x], 0);
+  const max = Math.max(1, ...keys.map(val)), f = unitFmt || (n => Number(n).toLocaleString("de-CH"));
+  const lab = k => k.length === 7 ? M[+k.slice(5) - 1] : "'" + k.slice(2);
+  return `<div class="cols short" role="img" aria-label="${esc(word)}">${keys.map(k => `<button class="col${val(k) ? "" : " zero"}" ${pickType && val(k) ? `data-pick="${esc(pickType + "|" + k + "|" + scope)}"` : ""} title="${esc((k.length === 7 ? M[+k.slice(5) - 1] + " " + k.slice(0, 4) : k) + ": " + f(val(k)))}"><span class="bar" style="height:${(val(k) / max * 100).toFixed(1)}%"></span><span class="x">${lab(k)}</span></button>`).join("")}</div>`;
+}
 VIEWS.stats = {
   html() {
     // comics and normal books are counted separately
@@ -2378,8 +2438,8 @@ VIEWS.stats = {
     const decs = dks.length ? Array.from({ length: (dks[dks.length - 1] - dks[0]) / 10 + 1 }, (_, i) => dks[0] + i * 10) : [];
     const dmax = Math.max(1, ...Object.values(dec)), peak = decs.reduce((a, d) => (dec[d] || 0) > (dec[a] || 0) ? d : a, decs[0]);
     const years = decs.length ? `<div class="card stack"><div class="cardhead"><h3>When they came out</h3><span class="muted small" id="decread">${peak}s: ${nf(dec[peak] || 0)} comics</span></div>
-      <div class="cols" role="img" aria-label="Comics per decade">${decs.map(d => `<button class="col${d === peak ? " on" : ""}" data-dec="${d}" data-n="${dec[d] || 0}" title="${d}s: ${dec[d] || 0} comics"><span class="bar" style="height:${((dec[d] || 0) / dmax * 100).toFixed(1)}%"></span><span class="x">${String(d).slice(2)}</span></button>`).join("")}</div>
-      <p class="small muted" style="margin:0">Per decade of publication${undated ? " · " + undated + " without a date" : ""}. Tap a bar for its number.</p></div>` : "";
+      <div class="cols" role="img" aria-label="Comics per decade">${decs.map(d => `<button class="col${d === peak ? " on" : ""}" data-dec="${d}" data-n="${dec[d] || 0}"${dec[d] ? ` data-pick="dec|${d}|c"` : ""} title="${d}s: ${dec[d] || 0} comics"><span class="bar" style="height:${((dec[d] || 0) / dmax * 100).toFixed(1)}%"></span><span class="x">${String(d).slice(2)}</span></button>`).join("")}</div>
+      <p class="small muted" style="margin:0">Per decade of publication${undated ? " · " + undated + " without a date" : ""}. Tap a bar to see those comics.</p></div>` : "";
 
     // 3. completion of series with a known size
     const perSeries = S.series.map(s => {
@@ -2412,8 +2472,8 @@ VIEWS.stats = {
     const gradeNames = { 0: "Z0 as new", 1: "Z1 very good", 2: "Z2 good", 3: "Z3 worn", 4: "Z4 poor", 5: "Z5 very poor" };
     const condition = graded.length ? `<div class="card stack"><div class="cardhead"><h3>Condition</h3><span class="muted small">${graded.length} of ${nf(own.length)} graded</span></div>
       <div class="seg-bar" role="img" aria-label="Condition of graded comics">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span class="g${g}" style="flex:${gradeMap[g]}" title="${gradeNames[g]}: ${gradeMap[g]}"></span>`).join("")}</div>
-      <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></span>`).join("")}</div>
-      <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade.</p></div>` : "";
+      <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<button type="button" class="legbtn" data-pick="grade|${g}|c"><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></button>`).join("")}</div>
+      <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade. Tap a grade to see those comics.</p></div>` : "";
     // Money: comics and books, each and together, in CHF; amounts per currency below
     const moneyOf = list => { const r = { paid: 0, value: 0, paidValued: 0, priced: 0, valued: 0, n: list.length, sums: {}, vals: {} };
       list.forEach(c => { const n = c.copies || 1, cur = c.currency || "CHF", v = valueOf(c);
@@ -2430,10 +2490,69 @@ VIEWS.stats = {
       <p class="small muted" style="margin:0">Comics include comic books. Gain is value minus price paid, for entries that have both.</p>
       ${curRows.length > 1 || (curRows[0] && curRows[0] !== "CHF") ? `<details class="small"><summary>Per currency</summary><div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Value</th><th>Paid</th></tr></thead><tbody>${curRows.map(k => `<tr><td>${k}</td><td>${mAll.vals[k] != null ? fmt2(mAll.vals[k]) : "–"}</td><td>${mAll.sums[k] != null ? fmt2(mAll.sums[k]) : "–"}</td></tr>`).join("")}</tbody></table></div></details>` : ""}</div>` : "";
 
-    const tab = S.statTab || "comics";
-    const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs three" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
+    // ---- Overview: everything together ----
+    const all = owned(), wantAll = S.comics.filter(c => c.status === "wanted");
+    const now = new Date(), ymNow = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0"), yNow = String(now.getFullYear());
+    const valAll = valueChf(all), readAll = all.filter(c => c.read).length;
+    const spentIn = (list, prefix) => list.filter(c => typeof c.pricePaid === "number" && String(c.purchaseDate || "").startsWith(prefix)).reduce((a, c) => a + toCHF(c.pricePaid * (c.copies || 1), c.currency), 0);
+    const addedM = all.filter(c => addedOn(c).startsWith(ymNow)).length, readM = all.filter(c => String(c.readDate || "").startsWith(ymNow)).length, spentM = spentIn(all, ymNow);
+    const M = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const ovHero = `<div class="hero card">
+        <div class="hero-main"><div class="v">${nf(all.length)}</div><div class="k">entries you own</div>
+          <div class="small muted">${nf(own.length)} comics · ${nf(novels.length)} ${novels.length === 1 ? "book" : "books"}</div></div>
+        <div class="hero-side">
+          <div><div class="v2">${valAll != null ? "≈ " + Math.round(valAll).toLocaleString("de-CH") : "–"}</div><div class="k">CHF value</div></div>
+          <div><div class="v2">${nf(wantAll.length)}</div><div class="k">on wishlist</div></div>
+          <div><div class="v2">${nf(idx.length)}</div><div class="k">stories</div></div>
+          <div><div class="v2">${pct(readAll, all.length)} %</div><div class="k">read · ${nf(all.length - readAll)} to go</div><div class="meter"><span style="width:${pct(readAll, all.length)}%"></span></div></div>
+        </div></div>`;
+    const ovMonth = `<div class="card stack"><div class="cardhead"><h3>This month</h3><span class="muted small">${M[now.getMonth()]} ${yNow}</span></div>
+      <div class="row monthrow">
+        <button type="button" class="stat3"${addedM ? ` data-pick="added|${ymNow}|a"` : ""}><span class="v2">${nf(addedM)}</span><span class="k small muted">added or bought</span></button>
+        <button type="button" class="stat3"${readM ? ` data-pick="read|${ymNow}|a"` : ""}><span class="v2">${nf(readM)}</span><span class="k small muted">read</span></button>
+        <div class="stat3"><span class="v2">CHF ${fmt2(spentM)}</span><span class="k small muted">spent</span></div>
+      </div></div>`;
+    // collection over time: what was added (by purchase date, else the day it was entered) and what was spent
+    const perAdded = {}, perSpent = {};
+    all.forEach(c => { const d = addedOn(c).slice(0, 7); if (d) perAdded[d] = (perAdded[d] || 0) + 1; if (typeof c.pricePaid === "number" && /^\d{4}-\d{2}/.test(c.purchaseDate || "")) { const k = c.purchaseDate.slice(0, 7); perSpent[k] = (perSpent[k] || 0) + toCHF(c.pricePaid * (c.copies || 1), c.currency); } });
+    const inRange = per => Object.keys(per).filter(k => (S.statRange || "year") === "all" || k.startsWith(yNow)).reduce((a, k) => a + per[k], 0);
+    const ovTime = `<div class="card stack"><div class="cardhead"><h3>Collection over time</h3>${rangeSwitch()}</div>
+      <div class="small"><strong>${nf(inRange(perAdded))}</strong> <span class="muted">added or bought ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
+      ${timeBars(perAdded, "entries added", "added", "a")}
+      <div class="small" style="margin-top:6px"><strong>CHF ${fmt2(inRange(perSpent))}</strong> <span class="muted">spent ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
+      ${timeBars(perSpent, "CHF spent", "", "a", n => "CHF " + fmt2(n))}
+      <p class="small muted" style="margin:0">Counted by purchase date; entries without one count on the day they were entered in the app. Tap a bar to see what was added then.</p></div>`;
+    // what is still missing, so values and reading stats can be trusted
+    const missRows = [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"], ["Cover picture", "cover", "a"], ["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]]
+      .map(([l, k, sc]) => { const pk = `miss|${k}|${sc}`, n = all.filter(pickInfo(pk).test).length; return [l, n, pk]; }).filter(x => x[1]);
+    const ovMissing = missRows.length ? `<div class="card stack"><div class="cardhead"><h3>Please complete</h3><span class="muted small">entries without …</span></div>
+      ${pickBars(missRows, "warn")}<p class="small muted" style="margin:0">Tap a line to see those entries, then open each one and fill in what's missing. Comics bought in a lot don't need their own price.</p></div>` : "";
+
+    // ---- Comics: closest to complete, genres and languages ----
+    const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
+    const close = perSeries.map(x => Object.assign({ miss: x.tot - x.n }, x)).filter(x => x.miss > 0 && x.n / x.tot >= 0.25).sort((a, b) => a.miss - b.miss || b.n - a.n).slice(0, 8);
+    const closeCard = close.length ? `<div class="card stack"><div class="cardhead"><h3>Closest to complete</h3><span class="muted small">fewest missing</span></div>
+      <div class="list">${close.map(({ s, n, tot, miss }) => { const w = wishIn(s.id), fit = w.filter(c => (wishBudget(c) || {}).ok).length;
+        return `<button class="folder" data-gap="${esc(s.id)}"><div style="min-width:0"><div class="t">${esc(seriesLabel(s))}</div><div class="s">${nf(n)} of ${nf(tot)} · ${w.length ? nf(w.length) + " on wishlist" + (fit ? ", " + fit + " within budget" : "") : "none on wishlist yet"}</div></div><span class="count wanted-count">${nf(miss)}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("")}</div>
+      <p class="small muted" style="margin:0">The number is how many issues are missing. Tap a series for its gap grid.</p></div>` : "";
+    const cGenres = tallyOf(own, c => genresOf(c).length ? genresOf(c) : storyGenres(c) ? storyGenres(c).split(", ") : [], 8).map(([n, k]) => [n, k, `genre|${n}|c`]);
+    const cLangs = tallyOf(own, c => [langOfEntry(c)], 8).map(([n, k]) => [n, k, `lang|${n}|c`]);
+    const glCard = `<div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">comics</span></div>${pickBars(cLangs)}
+      <div class="cardhead" style="margin-top:8px"><h3>Genres</h3><span class="muted small">comics</span></div>${cGenres.length ? pickBars(cGenres) : '<p class="muted small" style="margin:0">Comics get genres from their stories (Duckipedia), or type them in a comic\'s Genres field.</p>'}</div>`;
+
+    // ---- Value: value per series ----
+    const bySer = {}; all.forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (k) (bySer[k] = bySer[k] || []).push(c); });
+    const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null).length;
+    const topSer = serVals.filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10), tmax = topSer.length ? topSer[0].v : 1;
+    const serCard = topSer.length || noVal ? `<div class="card stack"><div class="cardhead"><h3>Value per series</h3><span class="muted small">CHF</span></div>
+      ${topSer.length ? `<div class="hbars">${topSer.map(x => { const c0 = x.list[0], col = isNovel(c0) ? { p: NOVEL_PUB, g: BOOK_GROUP, s: x.k } : { p: publisherOf(c0), g: groupOf(c0), s: x.k }; return `<button class="hbar" data-scol='${esc(JSON.stringify(col))}' title="${esc(seriesTitle(x.k))}: CHF ${fmt2(x.v)}"><span class="lab">${esc(seriesTitle(x.k))}</span><span class="track"><span class="fill" style="width:${(x.v / tmax * 100).toFixed(1)}%"></span></span><span class="n">${Math.round(x.v).toLocaleString("de-CH")}</span></button>`; }).join("")}</div>` : ""}
+      ${noVal ? `<div class="row small" style="gap:8px;align-items:center"><span class="muted">${noVal} ${noVal === 1 ? "series has" : "series have"} no value yet.</span><button type="button" class="link" id="goPrices">Add price tables in Series</button></div>` : ""}</div>` : "";
+
+    const tab = S.statTab || "overview";
+    const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs four" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="overview" aria-selected="${tab === "overview"}">Overview</button><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
     if (tab === "books") return tabs + (novels.length || novelsWanted.length ? bookStats(novels, novelsWanted).replace('<h2 class="sectionhead">Books</h2>', "") : '<div class="empty"><h3>No books yet</h3><p>Books you add show up here.</p></div>');
-    if (tab === "value") return tabs + `${money}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
+    if (tab === "overview") return tabs + ovHero + ovMonth + ovTime + ovMissing;
+    if (tab === "value") return tabs + `${money}${serCard}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
     return tabs + `
       <div class="hero card">
         <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics you own</div>
@@ -2446,7 +2565,8 @@ VIEWS.stats = {
         </div>
       </div>
       <div class="two">${comp}${years}</div>
-      ${completion}
+      <div class="two">${completion}${closeCard}</div>
+      ${glCard}
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${readingCard(own, "comics")}
       ${ratedCard(own, "comics")}
@@ -2464,10 +2584,15 @@ VIEWS.stats = {
     document.querySelectorAll("[data-gf2]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); S.gradeFactors = Object.assign({}, S.gradeFactors); if (isNaN(v)) delete S.gradeFactors[inp.dataset.gf2]; else S.gradeFactors[inp.dataset.gf2] = v; await setConfig("gradeFactors", S.gradeFactors); renderKeep(); });
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
+    document.querySelectorAll("[data-range]").forEach(b => b.onclick = () => { S.statRange = b.dataset.range; renderKeep(); });
+    document.querySelectorAll(".folder[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
+    document.querySelectorAll("[data-scol]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.col = JSON.parse(b.dataset.scol); S.shown = 200; nav("collection"); });
+    $("#goPrices") && ($("#goPrices").onclick = () => nav("series"));
+    document.querySelectorAll("[data-bgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bgap; S.gapTab = "gaps"; nav("gaps"); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
     const show = b => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
-    document.querySelectorAll(".col:not([data-rd])").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
-    document.querySelectorAll(".col[data-rd]").forEach(b => { const f = () => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#" + b.dataset.rd).textContent = b.dataset.lab; }; b.onclick = f; b.onmouseenter = f; });
+    document.querySelectorAll(".col[data-dec]").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
+    bindPicks(document.getElementById("app"));
   }
 };
 // ---- Reading: what was marked as read, by month (dates are kept since 31.10.2026) ----
@@ -2493,26 +2618,36 @@ function ratedCard(list, word) {
 function readingCard(list, word) {
   const dated = list.filter(c => c.read && /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""));
   if (!dated.length) return "";
-  const now = new Date(), ym = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
-  const months = []; for (let i = 11; i >= 0; i--) months.push(ym(new Date(now.getFullYear(), now.getMonth() - i, 1)));
-  const per = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; });
-  const year = String(now.getFullYear()), thisYear = dated.filter(c => c.readDate.startsWith(year));
-  const pages = thisYear.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
-  const max = Math.max(1, ...months.map(m => per[m] || 0)), M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-  const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 3);
-  const id = "rd" + word.replace(/\W/g, ""), w = n => n === 1 ? word.replace(/s$/, "") : word;
-  return `<div class="card stack"><div class="cardhead"><h3>Reading</h3><span class="muted small" id="${id}">${M[now.getMonth()]}: ${per[months[11]] || 0} ${w(per[months[11]] || 0)}</span></div>
-    <div class="row" style="gap:24px"><div><div class="v2">${thisYear.length}</div><div class="k small muted">${w(thisYear.length)} read in ${year}</div></div>${pages ? `<div><div class="v2">${pages.toLocaleString("de-CH")}</div><div class="k small muted">pages in ${year}</div></div>` : ""}<div><div class="v2">${per[months[11]] || 0}</div><div class="k small muted">this month</div></div></div>
-    <div class="cols short" role="img" aria-label="${word} read per month">${months.map(m => `<button class="col${m === months[11] ? " on" : ""}" data-rd="${id}" data-lab="${M[+m.slice(5) - 1]} ${m.slice(0, 4)}: ${per[m] || 0} ${w(per[m] || 0)}"><span class="bar" style="height:${((per[m] || 0) / max * 100).toFixed(1)}%"></span><span class="x">${M[+m.slice(5) - 1].slice(0, 1)}</span></button>`).join("")}</div>
-    <p class="small muted" style="margin:0">Last read: ${last.map(c => esc((c.kind === "book" ? c.title : comicTag(c)) + " (" + niceDate(c.readDate) + ")")).join(", ")}. Counts only what was marked as read since 31.10.2026.</p></div>`;
+  const scope = word === "books" ? "b" : "c", all = (S.statRange || "year") === "all", year = String(new Date().getFullYear());
+  const per = {}, perPages = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; perPages[k] = (perPages[k] || 0) + (parseInt(c.pages, 10) || 0); });
+  const inRange = dated.filter(c => all || c.readDate.startsWith(year)), pages = inRange.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
+  const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 3), w = n => n === 1 ? word.replace(/s$/, "") : word;
+  return `<div class="card stack"><div class="cardhead"><h3>Reading</h3>${rangeSwitch()}</div>
+    <div class="row" style="gap:24px"><div><div class="v2">${inRange.length}</div><div class="k small muted">${w(inRange.length)} read ${all ? "in all" : "in " + year}</div></div>${pages ? `<div><div class="v2">${pages.toLocaleString("de-CH")}</div><div class="k small muted">pages ${all ? "in all" : "in " + year}</div></div>` : ""}</div>
+    ${timeBars(per, word + " read", "read", scope)}
+    ${word === "books" && pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
+    <p class="small muted" style="margin:0">Last read: ${last.map(c => `<button class="link" data-open="${esc(c.id)}">${esc(c.kind === "book" ? c.title : comicTag(c))}</button> (${esc(niceDate(c.readDate))})`).join(", ")}. Counts only what was marked as read since 31.10.2026. Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----
 function bookStats(own, wanted) {
   const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const read = own.filter(c => c.read), pagesRead = read.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
-  const tallyBy = (f, n) => { const m = {}; own.forEach(c => f(c).forEach(x => { if (x) m[x] = (m[x] || 0) + 1; })); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, n); };
-  const bars = (list, unit) => { const max = list.length ? list[0][1] : 1; return '<div class="hbars">' + list.map(([n, c]) => `<div class="hbar static" title="${esc(n)}: ${c}"><span class="lab">${esc(n)}</span><span class="track"><span class="fill book" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${c}</span></div>`).join("") + "</div>"; };
-  const authors = tallyBy(c => splitPeople(c.author), 10), langs = tallyBy(c => [c.lang || "Not set"], 8), genres = tallyBy(c => String(c.genre || "").split(/\s*[,;\/]\s*/), 8);
+  const pk = (list, type) => list.map(([n, k]) => [n, k, `${type}|${n}|b`]);
+  const authors = pk(tallyOf(own, c => splitPeople(c.author), 10), "author"), langs = pk(tallyOf(own, c => [c.lang || "Not set"], 8), "lang");
+  const genres = pk(tallyOf(own, c => genresOf(c), 8), "genre"), formats = pk(tallyOf(own, c => [c.format || "Not set"], 8), "fmt");
+  // decades of publication
+  const dec = {}; own.forEach(c => { const y = yearOf(c.date); if (y > 1400) { const d = Math.floor(y / 10) * 10; dec[d] = (dec[d] || 0) + 1; } });
+  const decs = Object.keys(dec).map(Number).sort((a, b) => a - b), dmax = Math.max(1, ...Object.values(dec));
+  const decCard = decs.length ? `<div class="card stack"><div class="cardhead"><h3>When they came out</h3><span class="muted small">books per decade</span></div>
+    <div class="cols" role="img" aria-label="Books per decade">${decs.map(d => `<button class="col" data-pick="dec|${d}|b" title="${d}s: ${dec[d]} books"><span class="bar book" style="height:${(dec[d] / dmax * 100).toFixed(1)}%"></span><span class="x">${decs[decs.length - 1] - decs[0] >= 100 ? d : String(d).slice(2)}</span></button>`).join("")}</div>
+    <p class="small muted" style="margin:0">${decs[0]}s to ${decs[decs.length - 1]}s. Tap a bar to see those books.</p></div>` : "";
+  // book series: how many volumes you have of the volumes there are
+  const sers = {}; own.forEach(c => { if (c.seriesName) (sers[c.seriesName] = sers[c.seriesName] || new Set()).add(String(c.issue || "")); });
+  const serRows = Object.keys(sers).map(n => { const tot = +(S.bookSizes || {})[n] || 0, have = [...sers[n]].filter(v => /^\d+$/.test(v) && (!tot || +v <= tot)).length; return { n, have, tot }; }).filter(x => x.tot).sort((a, b) => (b.have / b.tot) - (a.have / a.tot) || a.n.localeCompare(b.n, "de"));
+  const unsized = Object.keys(sers).length - serRows.length;
+  const serCard = Object.keys(sers).length ? `<div class="card stack"><div class="cardhead"><h3>Book series</h3><span class="muted small">${Object.keys(sers).length} series</span></div>
+    ${serRows.length ? `<div class="hbars">${serRows.map(x => `<button class="hbar" data-bgap="${esc(x.n)}" title="${esc(x.n)}: ${x.have} of ${x.tot}"><span class="lab">${esc(x.n)}</span><span class="track"><span class="fill book" style="width:${Math.max(1, Math.min(100, x.have / x.tot * 100)).toFixed(1)}%"></span></span><span class="n">${x.have}/${x.tot}</span></button>`).join("")}</div>` : ""}
+    <p class="small muted" style="margin:0">Tap a series for its gap grid.${unsized ? ` ${unsized} ${unsized === 1 ? "series has" : "series have"} no number of volumes yet: set it in Gaps under “Volumes in this series”.` : ""}</p></div>` : "";
   return `<h2 class="sectionhead">Books</h2>
     <div class="hero card">
       <div class="hero-main"><div class="v book">${nf(own.length)}</div><div class="k">${own.length === 1 ? "book" : "books"} you own</div><div class="small muted">novels, non-fiction and other books that aren't comics</div></div>
@@ -2526,10 +2661,13 @@ function bookStats(own, wanted) {
     ${readingCard(own, "books")}
     ${ratedCard(own, "books")}
     ${own.length ? `<div class="two">
-      <div class="card stack"><div class="cardhead"><h3>Top authors</h3><span class="muted small">books</span></div>${authors.length ? bars(authors) : '<p class="muted small" style="margin:0">Add authors to your books to see them here.</p>'}</div>
-      <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${bars(langs)}
-        ${genres.length ? `<div class="cardhead" style="margin-top:8px"><h3>Genres</h3><span class="muted small">books</span></div>${bars(genres)}` : ""}</div>
-    </div>` : ""}`;
+      <div class="card stack"><div class="cardhead"><h3>Top authors</h3><span class="muted small">books</span></div>${authors.length ? pickBars(authors, "book") : '<p class="muted small" style="margin:0">Add authors to your books to see them here.</p>'}</div>
+      <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${pickBars(langs, "book")}
+        ${genres.length ? `<div class="cardhead" style="margin-top:8px"><h3>Genres</h3><span class="muted small">books</span></div>${pickBars(genres, "book")}` : ""}</div>
+    </div>
+    <div class="two">${serCard}<div class="card stack"><div class="cardhead"><h3>Formats</h3><span class="muted small">books</span></div>${pickBars(formats, "book")}</div></div>
+    ${decCard}
+    <p class="small muted">Tap any bar to see those books.</p>` : ""}`;
 }
 // ---- book lookup and barcode scanning ----
 function applyBookData(d, r) {
