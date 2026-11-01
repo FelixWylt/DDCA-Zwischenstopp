@@ -140,10 +140,24 @@ function rangeBound(key, v, isTo) {
   }
   return parseInt(t, 10);
 }
-function valueRuleFor(c) {
+// an edition name without its year: "Neuauflage 1997" and "Neuauflage 1998" are the same kind of edition
+function editionKey(e) { return String(e || "").toLowerCase().replace(/\b(1[89]|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim(); }
+// editions (1. Auflage, höhere Auflagen, Neuauflage …): price ranges can be for one edition; each comic can name its edition,
+// and a series names the edition that counts for copies without one
+function seriesEditions(key) { const m = new Map(); (S.valueRules || []).forEach(r => { if (r.s === key && r.ed && !m.has(editionKey(r.ed))) m.set(editionKey(r.ed), r.ed); }); return [...m.values()]; }
+function defaultEditionOf(key) { const se = seriesById(key), eds = seriesEditions(key); if (se && se.defaultEdition && eds.some(e => editionKey(e) === editionKey(se.defaultEdition))) return se.defaultEdition; return eds.find(e => /höher|spätere|nachdruck|later/i.test(e)) || ""; }
+const editionOf = c => c.edition || defaultEditionOf(valueKeyOf(c));
+// a short mark for the gap grid: "1. Auflage" -> 1A, "Neuauflage" -> N, "Sonderausgabe" -> S
+const editionMark = e => String(e || "").replace(/\b(1[89]|20)\d{2}\b/g, "").split(/[\s.-]+/).filter(Boolean).map(w => /^\d/.test(w) ? w : w[0].toUpperCase()).join("").slice(0, 3);
+function valueRuleFor(c, asEdition) {
   const k = valueKeyOf(c); if (!k) return null;
-  const n = valueNumber(c), rules = (S.valueRules || []).filter(r => r.s === k && typeof r.price === "number");
-  const fits = rules.filter(r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); if (isNaN(a) && isNaN(b)) return true; if (n == null) return false; return (isNaN(a) || n >= a) && (isNaN(b) || n <= b); });
+  const n = valueNumber(c), all = (S.valueRules || []).filter(r => r.s === k && typeof r.price === "number");
+  // ranges for this copy's edition first, then ranges for every edition, then the series' default edition
+  const ed = editionKey(asEdition != null ? asEdition : editionOf(c)), def = editionKey(defaultEditionOf(k));
+  const tiers = [ed, "", def].filter((x, i, a) => a.indexOf(x) === i);
+  let rules = [];
+  for (const t of tiers) { rules = all.filter(r => editionKey(r.ed) === t && (() => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return (isNaN(a) && isNaN(b)) || (n != null && (isNaN(a) || n >= a) && (isNaN(b) || n <= b)); })()); if (rules.length) break; }
+  const fits = rules;
   const width = r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
   return fits.sort((x, y) => width(x) - width(y))[0] || null;   // the narrowest range wins
 }
@@ -190,7 +204,8 @@ function valueRulesHtml(key) {
   const defCur = (rows[0] && rows[0].cur) || (se && seriesLang(se) === "Swedish" ? "SEK" : se && seriesLang(se) === "German" ? "EUR" : "CHF");
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
     ${nm ? `<span class="small muted">Collector prices: ${src}. Copy the price list there and paste it below, or note a few prices and make ranges.</span>` : ""}
-    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="ed" class="vnote" list="edlist" placeholder="edition (empty = every edition)" value="${esc(r.ed || "")}"><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    ${(eds => eds.length ? `<label class="small"><span class="l">Copies without an edition count as</span><select data-vdef="${esc(key)}"><option value="">Automatic</option>${eds.map(e => `<option${editionKey(e) === editionKey(defaultEditionOf(key)) ? " selected" : ""}>${esc(e)}</option>`).join("")}</select></label><datalist id="edlist">${eds.map(e => `<option>${esc(e)}</option>`).join("")}</datalist>` : "")(seriesEditions(key))}
     <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div>
     <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
       <div class="stack" style="margin-top:8px">
@@ -206,8 +221,7 @@ function valueRulesHtml(key) {
 // typed: "1-25 8, 26-80 5" or "1952/4-1953/1 150"
 function priceAmount(t) { const n = parseAmt(t); return n === "" ? null : n; }
 function priceCur(t, fallback) { return /€|eur/i.test(t) ? "EUR" : /\bkr\b|sek/i.test(t) ? "SEK" : /chf|fr\./i.test(t) ? "CHF" : fallback; }
-// an edition name without its year: "Neuauflage 1997" and "Neuauflage 1998" are the same kind of edition
-const editionKey = e => String(e || "").toLowerCase().replace(/\b(1[89]|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim();
+
 function parsePrices(key, text, fallbackCur, edition) {
   const se = seriesById(key), yearly = !!(se && se.numbering === "year");
   const at = (y, n) => yearly ? (y || 0) * 1000 + (n || 0) : n;
@@ -265,6 +279,9 @@ function parsePrices(key, text, fallbackCur, edition) {
     const byN = {}; edRows.forEach(r => (byN[r.n] = byN[r.n] || []).push(r));
     Object.keys(byN).forEach(n => { const rs = byN[n], r = rs.find(x => x.ed === want) || rs.find(x => x.ed === ""); if (r) items.push({ lo: +n, hi: +n, price: r.price, cur: "EUR" }); else edMissing++; });
   }
+  // every edition with its own ranges, to add them all
+  const merge = list => { const out = []; list.sort((a, b) => a.lo - b.lo).forEach(x => { const l = out[out.length - 1]; if (l && l.price === x.price && l.cur === x.cur) l.hi = Math.max(l.hi, x.hi); else out.push(Object.assign({}, x)); }); return out; };
+  const byEdition = editions.map(e => ({ key: e.key, label: e.label, n: e.n, ranges: merge(edRows.filter(r => r.ed === e.key).map(r => ({ lo: r.n, hi: r.n, price: r.price, cur: "EUR" }))) }));
   // a pasted list: neighbouring issues with the same price become one range; typed ranges stay as typed
   const listed = items.filter(x => !x.typed).sort((a, b) => a.lo - b.lo), ranges = [];
   listed.forEach(x => {
@@ -274,7 +291,7 @@ function parsePrices(key, text, fallbackCur, edition) {
   items.filter(x => x.typed).forEach(x => ranges.push(x));
   // from a pasted list, lines with a price that couldn't be placed (e.g. "(Nullnummer) 9000.00 €") are listed for you
   if (kind && kind !== "typed") skipped.filter(x => /€|\d[.,]\d\d\b/.test(x)).forEach(x => unread.push(x));
-  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing };
+  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing, byEdition };
 }
 function boundText(key, v, isTo) {
   if (v == null) return "";
@@ -295,17 +312,22 @@ function bindPasteBox(root) {
       const left = res.unread.concat(res.skipped);
       out.innerHTML = `<div class="stack small" style="gap:6px">
         <strong>${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"} found</strong>${notes ? `<span class="muted">${esc(notes)}</span>` : ""}
-        ${res.editions.length > 1 ? `<label class="small"><span class="l">Edition that counts</span><select data-ped>${res.editions.map(e => `<option value="${esc(e.key)}"${e.key === res.edition ? " selected" : ""}>${esc(e.label)} (${e.n})</option>`).join("")}</select></label>
-          <span class="muted">The price table has one price per issue. Pick the edition most of your copies are; give a first edition its own price with “Checked value” on the comic.${res.edMissing ? ` ${res.edMissing} ${res.edMissing === 1 ? "issue isn't" : "issues aren't"} listed in this edition.` : ""}</span>` : ""}
+        ${res.editions.length > 1 ? `<span class="muted">${res.editions.length} editions: ${esc(res.byEdition.map(e => e.label + " (" + e.ranges.length + " ranges)").join(", "))}. All are added; each comic counts with its own edition.</span>
+          <label class="small"><span class="l">Copies without an edition count as</span><select data-ped>${res.editions.map(e => `<option value="${esc(e.key)}"${e.key === res.edition ? " selected" : ""}>${esc(e.label)}</option>`).join("")}</select></label>
+          <span class="muted">Set the edition of single comics in the comic's form, or in Gaps with “Edition”. Below: the ranges for the edition chosen here.</span>` : ""}
         <ul class="pranges">${res.ranges.slice(0, 60).map(line).join("")}${res.ranges.length > 60 ? `<li class="muted">… and ${res.ranges.length - 60} more</li>` : ""}</ul>
         ${left.length ? `<details><summary>${left.length} ${left.length === 1 ? "line" : "lines"} not added (enter these yourself if needed)</summary><ul>${left.slice(0, 30).map(x => `<li class="mono">${esc(x)}</li>`).join("")}</ul></details>` : ""}
         ${have ? `<label class="check" style="min-height:0"><input type="checkbox" data-preplace> Remove the ${have} current ${have === 1 ? "range" : "ranges"} of this series first</label>` : ""}
-        <div class="row"><button type="button" class="primary" data-padd>Add ${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"}</button></div></div>`;
+        <div class="row"><button type="button" class="primary" data-padd>${res.editions.length > 1 ? "Add all " + res.byEdition.reduce((a, e) => a + e.ranges.length, 0) + " ranges" : "Add " + res.ranges.length + " " + (res.ranges.length === 1 ? "range" : "ranges")}</button></div></div>`;
       out.querySelector("[data-padd]").onclick = () => {
         const rep = out.querySelector("[data-preplace]"), keep = rep && rep.checked ? (S.valueRules || []).filter(r => r.s !== key) : (S.valueRules || []);
-        S.valueRules = keep.concat(res.ranges.map(r => ({ id: newId(), s: key, from: r.lo == null ? "" : boundText(key, r.lo), to: r.hi == null ? "" : boundText(key, r.hi, true), price: r.price, cur: r.cur, note: res.kind && res.kind !== "typed" ? res.kind : "" })));
+        const mk = (r, ed) => ({ id: newId(), s: key, from: r.lo == null ? "" : boundText(key, r.lo), to: r.hi == null ? "" : boundText(key, r.hi, true), price: r.price, cur: r.cur, note: res.kind && res.kind !== "typed" ? res.kind : "", ed: ed || "" });
+        const multi = res.editions.length > 1;
+        S.valueRules = keep.concat(multi ? res.byEdition.flatMap(e => e.ranges.map(r => mk(r, e.label))) : res.ranges.map(r => mk(r)));
+        if (multi) { const se = seriesById(key), def = res.byEdition.find(e => e.key === res.edition); if (se && def) { se.defaultEdition = def.label; saveSeries().catch(() => {}); } }
         setConfig("valueRules", S.valueRules).catch(() => {});
-        toast(res.ranges.length + (res.ranges.length === 1 ? " price range added" : " price ranges added")); renderKeep();
+        const added = res.editions.length > 1 ? res.byEdition.reduce((a, e) => a + e.ranges.length, 0) : res.ranges.length;
+        toast(added + (added === 1 ? " price range added" : " price ranges added")); renderKeep();
       };
       const sel = out.querySelector("[data-ped]"); if (sel) sel.onchange = () => { d.dataset.ped = sel.value; read(); };
     };
@@ -320,6 +342,7 @@ function bindValueRules(root) {
   }));
   (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
   (root || document).querySelectorAll("[data-vdel]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).filter(r => r.id !== b.dataset.vdel); save(); renderKeep(); });
+  (root || document).querySelectorAll("[data-vdef]").forEach(sel => sel.onchange = async () => { const se = seriesById(sel.dataset.vdef); if (!se) return; se.defaultEdition = sel.value; try { await saveSeries(); toast("Saved"); } catch (e) { toast(errText(e)); } });
   bindPasteBox(root);
 }
 // value of the owned entries of a list, in CHF (for folders in Collection)
@@ -1631,7 +1654,7 @@ function detailHtml(c) {
   const facts = isBook ? [
       row("Series", t([c.seriesName, c.issue && "vol. " + c.issue].filter(Boolean).join(" "))), row("Author", t(c.author)), row("Translator", t(c.translator)), row("Original title", t(c.originalTitle)),
       row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Language", t(c.lang)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
-    : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Genres", t(c.genre || storyGenres(c))),
+    : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Edition", t(c.edition)), row("Genres", t(c.genre || storyGenres(c))),
       row("INDUCKS", c.inducks ? `<a href="https://inducks.org/issue.php?c=${encodeURIComponent(c.inducks).replace(/%20/g, "+")}" target="_blank" rel="noopener">${t(c.inducks)}</a>` : ""), row("Facsimile", c.facsimile ? "yes, reprint" : "")];
   const copy = c.status === "wanted"
     ? [row("Wishlist", "yes"), row("Maximum price", t(money(c.pricePaid, c.currency))), row("Notes", t(c.notes))]
@@ -1751,6 +1774,7 @@ ${isBook ? `
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label><span class="l">Format</span><select id="f-format">${["", "Heft", "Taschenbuch / Pocket", "Softcover", "Hardcover", "Album", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Edition</span><input id="f-edition" list="f-edlist" value="${esc(d.edition || "")}" placeholder="${esc(defaultEditionOf(d.seriesId) ? "counts as " + defaultEditionOf(d.seriesId) : "e.g. 1. Auflage")}"><datalist id="f-edlist">${[...new Set(seriesEditions(d.seriesId).concat(["1. Auflage", "höhere Auflagen", "Neuauflage", "Sonderausgabe"]))].map(x => `<option>${esc(x)}</option>`).join("")}</datalist></label>
           <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="${esc(storyGenres(d) ? "From the stories: " + storyGenres(d) : "e.g. Humour, Adventure (separate with commas)")}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
@@ -1839,7 +1863,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
@@ -2158,13 +2182,16 @@ function gapHead(owned, wanted, total, info) {
         <div class="meter" style="margin-top:4px"><span style="width:${pct}%"></span></div></div>
       <div class="fchips">${chip("all", "All")}${chip("missing", "Missing")}${chip("wanted", "Wishlist")}${info.read === false ? "" : chip("unread", "Unread")}
         ${info.read === false ? "" : `<button type="button" class="fchip readchip${S.readMode ? " on" : ""}" id="readmode" aria-pressed="${!!S.readMode}">✓ Mark read</button>`}
+        ${info.editions ? `<button type="button" class="fchip readchip${S.edMode ? " on" : ""}" id="edmode" aria-pressed="${!!S.edMode}">Edition</button>` : ""}
         <details class="ginfo"><summary aria-label="What the colours mean">ⓘ</summary><div class="legend small">${info.legend}</div></details></div>
       ${S.readMode ? '<p class="small muted" style="margin:0">Reading mode: tap an owned issue to mark it read today; tap again to undo.</p>' : ""}
+      ${S.edMode && info.editions ? `<p class="small muted" style="margin:0">Edition mode: tap an owned issue to choose its edition. Unmarked squares count as ${esc(info.defEd || "the price table's general prices")}; small letters show other editions (${esc(info.editions.map(e => editionMark(e) + " = " + e).join(", "))}).</p>` : ""}
     </div>`;
 }
 function bindGapHead() {
   document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(!$("#readmode")); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
-  $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; renderKeep(); });
+  $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; if (S.readMode) S.edMode = false; renderKeep(); });
+  $("#edmode") && ($("#edmode").onclick = () => { S.edMode = !S.edMode; if (S.edMode) S.readMode = false; renderKeep(); });
 }
 const gridClass = noRead => [S.readMode && !noRead ? "readmode" : "", "gf-" + (noRead && S.gapFilter === "unread" ? "all" : S.gapFilter || "all")].join(" ");
 // the choice for a tapped number slides up from the bottom of the screen
@@ -2276,6 +2303,7 @@ VIEWS.gaps = {
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
     const tag = shortTag(se);
     const gridLabels = new Set();
+    const defEd = defaultEditionOf(se.id);
     const cell = (label, txt) => {
       gridLabels.add(label);
       const o = own.get(label), w = want.get(label);
@@ -2285,7 +2313,9 @@ VIEWS.gaps = {
       const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => c.status !== "wanted") && all.filter(c => c.status !== "wanted").every(c => c.read) ? " read" : "");
       const vtxt = vars.length ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
       const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
-      return `<button class="cell ${cls}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info)}">${esc(txt)}${vtxt}</button>`;
+      const eds = [...new Set(all.filter(c => c.status !== "wanted" && c.edition && editionKey(c.edition) !== editionKey(defEd)).map(c => editionMark(c.edition)))];
+      const etxt = eds.length ? `<span class="edb">${esc(eds.join(" "))}</span>` : "";
+      return `<button class="cell ${cls}${eds.length ? " hased" : ""}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info + (eds.length ? " · " + all.filter(c => c.edition).map(c => c.edition).join(", ") : ""))}">${esc(txt)}${vtxt}${etxt}</button>`;
     };
     const ent0 = catEntry(se), cat0 = ent0 && S.catCache[ent0.file], perY = {};
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); });
@@ -2349,7 +2379,8 @@ VIEWS.gaps = {
     const ownCount = ownIn, wantCount = wantIn;
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
-    return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
+    const edList = seriesEditions(se.id);
+    return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
         <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
@@ -2369,6 +2400,20 @@ VIEWS.gaps = {
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
+      if (S.edMode && seriesEditions(S.gapSeries).length) {   // choose the edition of the owned comic(s) in this square
+        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
+        if (!mine.length) { toast("Only owned issues have an edition"); return; }
+        const se = seriesById(S.gapSeries) || {}, eds = seriesEditions(se.id), def = defaultEditionOf(se.id), c0 = mine[0];
+        const price = e => { const r = valueRuleFor(c0, e); return !r ? "no price" : editionKey(r.ed) === editionKey(e) ? money(r.price, r.cur) : "not listed for this issue"; };
+        sheetOpen(`<div class="confirm"><strong>${esc((se.short || se.name) + " " + b.dataset.issue)}: edition</strong>
+          ${eds.map(e => `<button data-ed="${esc(e)}"${editionKey(c0.edition) === editionKey(e) ? ' class="primary"' : ""}>${esc(e)} · ${esc(price(e))}</button>`).join("")}
+          <button data-ed=""${!c0.edition ? ' class="primary"' : ""}>Not set${def ? " (counts as " + esc(def) + ")" : ""}</button><button class="ghost" id="cpX">Cancel</button></div>`);
+        $("#cpX").onclick = sheetClose;
+        document.querySelectorAll("#cellpick [data-ed]").forEach(x => x.onclick = async () => {
+          try { for (const c of mine) await saveComic(Object.assign({}, c, { edition: x.dataset.ed })); sheetClose(); toast((se.short || se.name) + " " + b.dataset.issue + ": " + (x.dataset.ed || "edition not set")); renderKeep(); } catch (e) { toast(errText(e)); }
+        });
+        return;
+      }
       if (S.readMode) {   // quick reading log: toggles "read" on the owned comic(s) in this square
         const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
         if (!mine.length) { toast("Only owned issues can be marked as read"); return; }
