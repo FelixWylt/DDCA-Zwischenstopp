@@ -30,20 +30,27 @@ jobs:
           python3 - <<'PY'
           import json, os, re
           title, body = os.environ["TITLE"], os.environ.get("BODY") or ""
-          m = re.search(r"Add to catalogue:\s*([a-z]{2}/[A-Za-z0-9]{1,12})\s*$", title)
           out = open(os.environ["GITHUB_OUTPUT"], "a")
-          if not m:
+          CODE = r"[a-z]{2}/[A-Za-z0-9]{1,12}"
+          clean = lambda n: re.sub(r"[^\w\s&:'.,!()\-+/äöüåÄÖÜÅéèàìòù]", "", n).strip()[:80]
+          # several series: one line per series in the body, "<code> = <name>"; one series: the code in the title, "Series: <name>" in the body
+          want = [(m.group(1), clean(m.group(2))) for m in re.finditer(rf"^\s*({CODE})\s*=\s*(.+?)\s*$", body, re.M)]
+          if not want:
+              m = re.search(rf"Add to catalogue:\s*({CODE})\s*$", title)
+              if m: want = [(m.group(1), clean((re.search(r"^Series:\s*(.+)$", body, re.M) or [None, m.group(1)])[1]))]
+          if not want:
               out.write("result=bad\n"); raise SystemExit(0)
-          code = m.group(1)
-          name = (re.search(r"^Series:\s*(.+)$", body, re.M) or [None, code])[1].strip()[:80]
-          name = re.sub(r"[^\w\s&:'.,!()\-+/äöüåÄÖÜÅéèàìòù]", "", name) or code
           p = "catalogue/publications.json"
           cfg = json.load(open(p, encoding="utf-8"))
-          if any(t.get("code") == code for t in cfg["targets"]):
-              out.write(f"result=exists\ncode={code}\n"); raise SystemExit(0)
-          cfg["targets"].append({"series": name, "country": code.split("/")[0], "code": code, "title": name})
+          have = {t.get("code") for t in cfg["targets"]}
+          added = []
+          for code, name in want[:60]:
+              if code in have: continue
+              cfg["targets"].append({"series": name or code, "country": code.split("/")[0], "code": code, "title": name or code}); have.add(code); added.append(code)
+          if not added:
+              out.write("result=exists\ncode=" + ", ".join(c for c, _ in want) + "\n"); raise SystemExit(0)
           json.dump(cfg, open(p, "w", encoding="utf-8"), ensure_ascii=False, indent=2); open(p, "a").write("\n")
-          out.write(f"result=added\ncode={code}\nname={name}\n")
+          out.write("result=added\ncode=" + ", ".join(added) + "\n")
           PY
 
       - name: Commit and rebuild the catalogue
@@ -68,7 +75,7 @@ jobs:
         run: |
           case "$RESULT" in
             added)  MSG="Added $CODE. The catalogue is being rebuilt (about 5 minutes); then the app offers an update." ;;
-            exists) MSG="$CODE is already in the catalogue list. Nothing to do." ;;
+            exists) MSG="Already in the catalogue list: $CODE. Nothing to do." ;;
             *)      MSG="The title should be 'Add to catalogue: <INDUCKS code>', e.g. 'Add to catalogue: it/ABB'. Nothing was changed." ;;
           esac
           gh issue comment "$NUM" --body "$MSG"

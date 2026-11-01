@@ -679,7 +679,10 @@ async function loadCatalogueIndex() {
 function catEntry(se) {
   const all = S.catalogue && S.catalogue.series; if (!se || !all) return null;
   const n = norm(se.name), list = Object.values(all);
-  return (se.code && list.find(x => x.code === se.code)) || all[n] || list.find(x => (x.aliases || []).some(a => norm(a) === n)) || null;
+  if (se.code) return list.find(x => x.code === se.code) || null;   // a series with an INDUCKS code only matches that code
+  // by name, only within the same country: the Norwegian "Donald Duck & Co" is not the German one
+  const cc = String(se.country || "").toLowerCase(), sameLand = x => !cc || String(x.code || "").split("/")[0] === cc;
+  return [all[n]].concat(list.filter(x => (x.aliases || []).some(a => norm(a) === n))).find(x => x && sameLand(x)) || null;
 }
 async function catalogueFile(entry) {
   if (!S.catCache[entry.file]) {
@@ -2793,7 +2796,7 @@ async function fillSeriesInfo(se) {
   if (!S.inducksDir) { try { const r = await fetch("catalogue/directory.json"); if (r.ok) S.inducksDir = (await r.json()).publications || []; } catch (e) {} }
   let p = se.code && (S.inducksDir || []).find(x => x[0] === se.code);
   if (!p) {   // without a code, only an exact name match counts (no guessing: "Kalle Anka" is not "Kalle Anka & C:o")
-    const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), exact = inducksCandidates(se).filter(x => norm(x[1]) === n);
+    const exact = exactInducks(se);
     if (exact.length === 1) p = exact[0];
   }
   const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|no|dk|fi)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
@@ -2845,6 +2848,39 @@ function catalogueRequestUrl(code, name) {
   const body = "Series: " + name + "\nINDUCKS: https://inducks.org/publication.php?c=" + encodeURIComponent(code) + "\n\nSent from Dagobert Ducks Archiv. Just tap Submit.";
   return `https://github.com/${APP_REPO}/issues/new?title=${encodeURIComponent("Add to catalogue: " + code)}&body=${encodeURIComponent(body)}`;
 }
+// INDUCKS publications with exactly this series' name, in its country (searched in the whole directory, not just the top hits)
+function exactInducks(se) {
+  const dir = S.inducksDir || [], n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
+  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"] }[lang] || null;
+  return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && norm(p[1]) === n);
+}
+// Disney series that are on INDUCKS but not in the offline catalogue: by their code, or else by an exact name match only
+function missingFromCatalogue() {
+  if (!S.inducksDir || !S.catalogue) return { add: [], unsure: [] };
+  const add = [], unsure = [];
+  S.series.forEach(se => {
+    if ((se.publisher || DISNEY) !== DISNEY || catEntry(se)) return;
+    let p = se.code && S.inducksDir.find(x => x[0] === se.code);
+    if (!p) { const ex = exactInducks(se); if (ex.length === 1) p = ex[0]; }
+    if (p) { if (!add.some(x => x.code === p[0])) add.push({ code: p[0], name: se.name }); }
+    else if (inducksCandidates(se).length) unsure.push(se.name);
+  });
+  return { add, unsure };
+}
+function catalogueRequestAllUrl(list) {
+  const body = list.map(x => x.code + " = " + x.name).join("\n") + "\n\nSent from Dagobert Ducks Archiv. Just tap Submit.";
+  return `https://github.com/${APP_REPO}/issues/new?title=${encodeURIComponent("Add to catalogue: " + list.length + " series")}&body=${encodeURIComponent(body)}`;
+}
+function missingCatalogueCard() {
+  if (!S.inducksDir) { loadInducksDir(); return ""; }
+  const m = missingFromCatalogue();
+  if (!m.add.length && !m.unsure.length) return "";
+  return `<div class="card stack"><h3>Series missing from the INDUCKS catalogue</h3>
+    ${m.add.length ? `<p class="small" style="margin:0">${m.add.length} of your Disney series ${m.add.length === 1 ? "is" : "are"} on INDUCKS but not in the offline catalogue: ${m.add.map(x => esc(x.name) + ` <span class="mono muted">${esc(x.code)}</span>`).join(", ")}.</p>
+      <div class="row"><a class="btnlink" style="margin:0;padding:8px 14px" href="${catalogueRequestAllUrl(m.add)}" target="_blank" rel="noopener">Add all ${m.add.length} to the catalogue</a></div>
+      <p class="small muted" style="margin:0">Opens one ready-filled request on GitHub; tap Submit (you need to be signed in). The catalogue is rebuilt once, in about 5–10 minutes, then the app offers an update.</p>` : ""}
+    ${m.unsure.length ? `<p class="small muted" style="margin:0">Not sure which INDUCKS publication these are, so they aren't included: ${m.unsure.map(esc).join(", ")}. Enter their INDUCKS code in the series, or use Fill from INDUCKS.</p>` : ""}</div>`;
+}
 function inducksNote(se) {
   if (se.publisher && se.publisher !== DISNEY) return "";
   const ce = catEntry(se);
@@ -2857,7 +2893,7 @@ function inducksNote(se) {
 }
 async function loadInducksDir() {
   if (S.inducksDirLoading) return; S.inducksDirLoading = true;
-  try { const r = await fetch("catalogue/directory.json"); if (r.ok) { S.inducksDir = (await r.json()).publications || []; document.querySelectorAll(".inducksnote[data-ni]").forEach(el => { const se = S.series[+el.dataset.ni]; if (se) el.innerHTML = inducksNote(se); }); } } catch (e) {}
+  try { const r = await fetch("catalogue/directory.json"); if (r.ok) { S.inducksDir = (await r.json()).publications || []; { const mc = $("#misscat"); if (mc) mc.innerHTML = missingCatalogueCard(); } document.querySelectorAll(".inducksnote[data-ni]").forEach(el => { const se = S.series[+el.dataset.ni]; if (se) el.innerHTML = inducksNote(se); }); } } catch (e) {}
 }
 // ---- one-time rearrangement: universe › country/format ----
 // ---- group check: Disney series whose group differs from the arrangement rules; you pick which ones to move ----
@@ -3093,6 +3129,7 @@ VIEWS.series = {
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
+      <div id="misscat">${missingCatalogueCard()}</div>
       ${duckipediaBulkCard()}
       ${refreshCard()}
       <div class="card stack"><h3>INDUCKS catalogue</h3>
