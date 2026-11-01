@@ -1,5 +1,5 @@
 {
- "built": "2026-11-01T12:08",
+ "built": "2026-11-01T18:29",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -499,6 +499,18 @@
    "title": "Stål-Kalle",
    "file": "inducks-se-SK.json",
    "issues": 113
+  },
+  "disney de luxe": {
+   "series": "Disney De Luxe",
+   "aliases": [
+    "Disney De Luxe",
+    "Disney De Luxe Edition",
+    "Topolino De Luxe Edition"
+   ],
+   "code": "it/TLDLE",
+   "title": "De Luxe Edition",
+   "file": "inducks-it-TLDLE.json",
+   "issues": 86
   }
  }
 }
