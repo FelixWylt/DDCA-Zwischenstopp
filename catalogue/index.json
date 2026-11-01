@@ -1,5 +1,5 @@
 {
- "built": "2026-11-01T11:53",
+ "built": "2026-11-01T11:57",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -188,16 +188,6 @@
    "title": "Musse Pigg & C:o",
    "file": "inducks-se-MP.json",
    "issues": 319
-  },
-  "donald duck co": {
-   "series": "Donald Duck & Co",
-   "aliases": [
-    "Donald Duck & Co (Norway)"
-   ],
-   "code": "no/DD",
-   "title": "Donald Duck & Co",
-   "file": "inducks-no-DD.json",
-   "issues": 4066
   },
   "micky maus zeitung": {
    "series": "Micky Maus Zeitung",
