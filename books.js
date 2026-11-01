@@ -160,7 +160,8 @@
     "Mythology": ["mythological fiction", "mythologie", "mythologie", "mythology", "mytologi", "götter und helden"],
     "Fairy Tales": ["fairy tale", "märchen", "märchen", "fairy tales", "sagor", "sagor och sägner", "folklore"],
     "History": ["geschichte", "geschichte", "history", "historia"],
-    "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "novellen", "novelle", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
+    "Short Stories": ["short story collection", "short stories", "short story", "short fiction", "kurzgeschichten", "kurzgeschichte", "erzählungen", "erzählung", "noveller", "novellsamling", "berättelser", "short stories, english", "anthologies", "anthologie", "antologi"],
+    "Novella": ["novella", "novellas", "novellen", "novelle", "novelette", "kortroman", "kortromaner", "romanzo breve", "racconto lungo"],
     "Drama": ["drama", "dramen", "schauspiel", "theaterstück", "bühnenwerk", "dramatisches gedicht", "tragödie", "trauerspiel", "komödie", "lustspiel", "tragische komödie", "plays", "play", "english drama", "german drama", "comedies", "tragedies", "drama (genre)", "dramatic works", "theater", "tragedy", "comedy (drama)", "pjäs", "pjäser", "skådespel", "dramatik"],
     "Poetry": ["poems", "gedichte", "gedichte", "lyrik", "poetry", "dikter"]
   };
@@ -192,7 +193,7 @@
     if (!out.genre || out.genre === "Novel") {
       const sub = String(out.title || "").toLowerCase().normalize("NFC");
       const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs|comedy|tragedy|a play|play in \w+ acts?)\b/.exec(sub) ? "Drama"
-        : /\b(novellen?|erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
+        : /\b(novellen?|novella)\b/.exec(sub) ? "Novella" : /\b(erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
         : /\b(roman|novel)\b/.exec(sub) ? "Novel" : "";
       if (m) out.genre = m;
     }

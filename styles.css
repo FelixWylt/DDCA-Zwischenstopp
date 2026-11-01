@@ -529,3 +529,9 @@ label.inline .l { margin: 0; }
 .bseries .pickbtn { flex: 1 1 auto; min-width: 0; }
 .bseries #f-bseries-x { flex: none; white-space: nowrap; padding: 8px 10px; }
 .pickbtn.wrap span:first-child { white-space: normal; overflow-wrap: anywhere; }
+/* Books sub tab: view chips and more compact rows */
+.bookviews { margin: 2px 0 8px; }
+.item.book { grid-template-columns: 34px minmax(0, 1fr) auto; padding-top: 8px; padding-bottom: 8px; }
+.item.book .bookthumb { width: 34px; height: 48px; }
+.item.book .bookthumb .ini { font-size: 1.05rem; }
+@media (max-width: 520px) { .item.book { grid-template-columns: 34px minmax(0, 1fr); } .item.book .chips { grid-column: 2; justify-content: flex-start; } .item.book .chips:empty { display: none; } }
