@@ -549,6 +549,27 @@ async function boot() {
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
+    // once: prices kept as text ("12.50", from imports) become numbers, purchase dates "12.10.2026" become 2026-10-12, so every sum and chart counts them
+    if (!(await getConfig("moneyFix1"))) {
+      const num = v => typeof v === "string" && v.trim() !== "" && typeof parseAmt(v) === "number";
+      const fix = S.comics.filter(c => num(c.pricePaid) || num(c.value) || num(c.valueChecked) || num(c.lotTotal) || (c.purchaseDate && isoDate(c.purchaseDate) !== c.purchaseDate)).map(c => {
+        const o = Object.assign({}, c); ["pricePaid", "value", "valueChecked", "lotTotal"].forEach(k => { if (num(o[k])) o[k] = parseAmt(o[k]); });
+        if (o.purchaseDate) o.purchaseDate = isoDate(o.purchaseDate); return o; });
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("moneyFix1", true);
+    }
+    if (!(await getConfig("lotDates1"))) {
+      const lots = {}; S.comics.forEach(c => { if (c.lotId && c.status !== "wanted") (lots[c.lotId] = lots[c.lotId] || []).push(c); });
+      const fix = [];
+      Object.values(lots).forEach(m => {
+        const withDate = m.filter(c => c.purchaseDate).sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+        const withSrc = m.filter(c => c.source).sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
+        const date = withDate.length ? withDate[0].purchaseDate : "", src = withSrc.length ? withSrc[0].source : "";
+        m.forEach(c => { if ((date && c.purchaseDate !== date) || (src && !c.source)) fix.push(Object.assign({}, c, date ? { purchaseDate: date } : {}, src && !c.source ? { source: src } : {})); });
+      });
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("lotDates1", true);
+    }
     if (!(await getConfig("comicGenre1"))) {
       const fix = S.comics.filter(c => c.kind !== "book" && !c.genre && storyGenres(c)).map(c => Object.assign({}, c, { genre: storyGenres(c) }));
       if (fix.length) await saveMany(fix, null, true);
@@ -592,6 +613,8 @@ function stamp(c, keepDates) {
   body.id = body.id || newId(); delete body.k;
   if (!(keepDates && body.updatedAt)) body.updatedAt = new Date().toISOString();
   if (!body.createdAt) body.createdAt = body.updatedAt;
+  ["pricePaid", "value", "valueChecked", "lotTotal"].forEach(k => { if (typeof body[k] === "string" && body[k].trim() !== "" && typeof parseAmt(body[k]) === "number") body[k] = parseAmt(body[k]); });
+  if (body.purchaseDate) body.purchaseDate = isoDate(body.purchaseDate);
   if (body.kind !== "book" && !body.format) { const f = seriesFormat(seriesById(body.seriesId)); if (f) body.format = f; }
   if (body.kind !== "book" && !body.genre) { const g = storyGenres(body); if (g) body.genre = g; }   // genres from the stories when none is set   // the series' usual format when none is chosen
   return body;
@@ -769,6 +792,7 @@ function lotFields(d) {
   return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${lots.map(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`).join("")}</select></label>
     <label><span class="l">Price for the whole lot</span><input id="f-lotTotal" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.lotTotal))}"></label>
     <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${total === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."}</span>
+      <div class="muted" style="margin-top:4px">Purchase date and where bought apply to the whole lot: changing them here changes them for all its ${w2}.</div>
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
 function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && c.status !== "wanted") : []; }
@@ -787,13 +811,14 @@ function lotLabel(l) {
   return [money(l.total, l.currency), n + w, l.source, l.date ? niceDate(l.date) : ""].filter(Boolean).join(" · ");
 }
 // spreads the lot price over its comics to the cent: 20.00 for 3 -> 6.67, 6.67, 6.66
-async function rebalanceLot(id, total, currency) {
+// a lot was bought at one time and place: purchase date and source are shared by all its comics
+async function rebalanceLot(id, total, currency, shared) {
   const m = lotMembers(id).sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)));
   if (!m.length) return;
   const T = Math.round((typeof total === "number" ? total : +m[0].lotTotal || 0) * 100), cur = currency || m[0].lotCurrency || m[0].currency;
   const units = m.reduce((a, c) => a + (c.copies || 1), 0), base = Math.floor(T / units);
   let rest = T - base * units;
-  const out = m.map(c => { let cents = base; if (rest > 0 && (c.copies || 1) === 1) { cents++; rest--; } return Object.assign({}, c, { pricePaid: cents / 100, currency: cur, lotTotal: T / 100, lotCurrency: cur }); });
+  const out = m.map(c => { let cents = base; if (rest > 0 && (c.copies || 1) === 1) { cents++; rest--; } return Object.assign({}, c, { pricePaid: cents / 100, currency: cur, lotTotal: T / 100, lotCurrency: cur }, shared || {}); });
   if (rest > 0) out[0].pricePaid = Math.round((out[0].pricePaid * 100 + rest / (out[0].copies || 1))) / 100;   // only when every comic has several copies
   await saveMany(out, null, true); announce();
 }
@@ -807,7 +832,8 @@ function prepareLot(d, c, before) {
   return true;
 }
 async function afterLotSave(c, before) {
-  if (c.lotId) await rebalanceLot(c.lotId, c.lotTotal, c.currency);
+  const shared = {}; if (c.purchaseDate) shared.purchaseDate = c.purchaseDate; if (c.source) shared.source = c.source;   // an empty field never wipes the others
+  if (c.lotId) await rebalanceLot(c.lotId, c.lotTotal, c.currency, shared);
   if (before && before.lotId && before.lotId !== c.lotId) await rebalanceLot(before.lotId);   // left its old lot
   const l = c.lotId && lotInfo(c.lotId);
   return l ? " · lot of " + l.members.length + ", " + money(l.total / l.members.length, l.currency) + " each" : "";
@@ -2359,7 +2385,7 @@ VIEWS.gaps = {
 const genresOf = c => String(c.genre || "").split(/\s*[,;\/]\s*/).map(x => x.trim()).filter(Boolean);
 function langOfEntry(c) { return c.lang || (c.kind !== "book" ? seriesLang(seriesById(c.seriesId) || {}) : "") || "Not set"; }
 const yearOf = d => +(String(d || "").slice(0, 4)) || 0;
-const addedOn = c => /^\d{4}-\d{2}/.test(c.purchaseDate || "") ? c.purchaseDate : String(c.createdAt || "").slice(0, 10);
+const addedOn = c => { const p = isoDate(c.purchaseDate || ""); return /^\d{4}-\d{2}/.test(p) ? p : String(c.createdAt || "").slice(0, 10); };
 const MISSING = {
   grade: { label: "condition", test: c => c.kind !== "book" && !c.grade },
   price: { label: "price paid", test: c => typeof c.pricePaid !== "number" && !c.lotId },
@@ -2494,7 +2520,7 @@ VIEWS.stats = {
     const all = owned(), wantAll = S.comics.filter(c => c.status === "wanted");
     const now = new Date(), ymNow = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0"), yNow = String(now.getFullYear());
     const valAll = valueChf(all), readAll = all.filter(c => c.read).length;
-    const spentIn = (list, prefix) => list.filter(c => typeof c.pricePaid === "number" && String(c.purchaseDate || "").startsWith(prefix)).reduce((a, c) => a + toCHF(c.pricePaid * (c.copies || 1), c.currency), 0);
+    const spentIn = (list, prefix) => list.filter(c => typeof c.pricePaid === "number" && addedOn(c).startsWith(prefix)).reduce((a, c) => a + toCHF(c.pricePaid * (c.copies || 1), c.currency), 0);
     const addedM = all.filter(c => addedOn(c).startsWith(ymNow)).length, readM = all.filter(c => String(c.readDate || "").startsWith(ymNow)).length, spentM = spentIn(all, ymNow);
     const M = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     const ovHero = `<div class="hero card">
@@ -2514,14 +2540,14 @@ VIEWS.stats = {
       </div></div>`;
     // collection over time: what was added (by purchase date, else the day it was entered) and what was spent
     const perAdded = {}, perSpent = {};
-    all.forEach(c => { const d = addedOn(c).slice(0, 7); if (d) perAdded[d] = (perAdded[d] || 0) + 1; if (typeof c.pricePaid === "number" && /^\d{4}-\d{2}/.test(c.purchaseDate || "")) { const k = c.purchaseDate.slice(0, 7); perSpent[k] = (perSpent[k] || 0) + toCHF(c.pricePaid * (c.copies || 1), c.currency); } });
+    all.forEach(c => { const d = addedOn(c).slice(0, 7); if (!d) return; perAdded[d] = (perAdded[d] || 0) + 1; if (typeof c.pricePaid === "number") perSpent[d] = (perSpent[d] || 0) + toCHF(c.pricePaid * (c.copies || 1), c.currency); });
     const inRange = per => Object.keys(per).filter(k => (S.statRange || "year") === "all" || k.startsWith(yNow)).reduce((a, k) => a + per[k], 0);
     const ovTime = `<div class="card stack"><div class="cardhead"><h3>Collection over time</h3>${rangeSwitch()}</div>
       <div class="small"><strong>${nf(inRange(perAdded))}</strong> <span class="muted">added or bought ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
       ${timeBars(perAdded, "entries added", "added", "a")}
       <div class="small" style="margin-top:6px"><strong>CHF ${fmt2(inRange(perSpent))}</strong> <span class="muted">spent ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
       ${timeBars(perSpent, "CHF spent", "", "a", n => "CHF " + fmt2(n))}
-      <p class="small muted" style="margin:0">Counted by purchase date; entries without one count on the day they were entered in the app. Tap a bar to see what was added then.</p></div>`;
+      <p class="small muted" style="margin:0">Both counted by purchase date; entries without one count on the day they were entered in the app. Tap a bar in the upper chart to see what was added then.</p></div>`;
     // what is still missing, so values and reading stats can be trusted
     const missRows = [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"], ["Cover picture", "cover", "a"], ["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]]
       .map(([l, k, sc]) => { const pk = `miss|${k}|${sc}`, n = all.filter(pickInfo(pk).test).length; return [l, n, pk]; }).filter(x => x[1]);
