@@ -1,5 +1,5 @@
 {
- "built": "2026-10-31T21:07",
+ "built": "2026-11-01T11:42",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -483,6 +483,14 @@
    "title": "Disney lingua latina",
    "file": "inducks-it-DLL.json",
    "issues": 6
+  },
+  "carl barks collection": {
+   "series": "Carl Barks Collection",
+   "aliases": [],
+   "code": "de/CBC",
+   "title": "Carl Barks Collection",
+   "file": "inducks-de-CBC.json",
+   "issues": 30
   }
  }
 }
