@@ -25,6 +25,7 @@ PUBLICATIONS
   ✓ Björnligan  →  se/BL  'Björnligan'  (by title)
   ✓ Musse Pigg & C:o  →  se/MP  'Musse Pigg & C:o'  (by title)
   ? Musiksaga: no confident match. Candidates: 
+  ✓ Donald Duck & Co  →  no/DD  'Donald Duck & Co'  (by code)
   ✓ Micky Maus Zeitung  →  ch/MMZ  'Micky Maus Zeitung'  (by title)
   ✓ Donald Duck & Co (Germany)  →  de/DDCO  'Donald Duck & Co'  (by title)
   ✓ Paperino Mese  →  it/PM  'Paperino Mese'  (by title)
@@ -64,9 +65,9 @@ PUBLICATIONS
   ✓ Carl Barks Collection  →  de/CBC  'Carl Barks Collection'  (by code)
   ✓ Stål-Kalle Pocket  →  se/SK  'Stål-Kalle'  (by code)
 
-issues in chosen publications: 17,388
-entries: 187,974, story versions: 111,230
-cover scans: 16,853 of 17,388 issues
+issues in chosen publications: 21,454
+entries: 231,675, story versions: 117,815
+cover scans: 20,816 of 21,454 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -92,6 +93,7 @@ FILES
   inducks-se-J.json: 224 issues, 144 KB  e.g. 1986/01 = se/J 1986-01 1986-01 (4 stories)
   inducks-se-BL.json: 53 issues, 28 KB  e.g. 1990/06 = se/BL 1990-06 1990-11-23 (3 stories)
   inducks-se-MP.json: 319 issues, 203 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
+  inducks-no-DD.json: 4,066 issues, 3,645 KB  e.g. 1993B35 = no/DD1993B35 1993-08-31 (3 stories)
   inducks-ch-MMZ.json: 19 issues, 8 KB  e.g. 9 = ch/MMZ  9 1937-05 (1 stories)
   inducks-de-DDCO.json: 104 issues, 52 KB  e.g. 53 = de/DDCO 53 2018-04-13 (3 stories)
   inducks-it-PM.json: 495 issues, 593 KB  e.g. 314 = it/PM  314 2006-08 (8 stories)
@@ -129,6 +131,6 @@ FILES
   inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
   inducks-de-CBC.json: 30 issues, 75 KB  e.g. 6 = de/CBC  6 2007-04 (28 stories)
   inducks-se-SK.json: 113 issues, 41 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
-directory.json: 3,280 publications (at, ch, de, dk, fi, it, se, uk, us), 234 KB
+directory.json: 2,766 publications (at, ch, de, it, se, uk, us), 198 KB
 
 files in the ISV export: createtables.sql
