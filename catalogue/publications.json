@@ -480,6 +480,12 @@
       "country": "it",
       "code": "it/DLL",
       "title": "Disney lingua latina"
+    },
+    {
+      "series": "Carl Barks Collection",
+      "country": "de",
+      "code": "de/CBC",
+      "title": "Carl Barks Collection"
     }
   ]
 }
