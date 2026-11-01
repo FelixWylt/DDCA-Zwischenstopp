@@ -1747,7 +1747,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       d.kind = "issue"; d.seriesId = se.id; d.seriesName = se.name; d.newBookSeries = false;
       render(); toast(se.name + " is a comic series: this is now a comic issue in it. Enter the issue number, then Fill from INDUCKS.");
     });
-    $("#f-bseries-x") && ($("#f-bseries-x").onclick = () => { grab(); d.seriesName = ""; render(); });
+    // a single book has no series, so no volume number either
+    $("#f-bseries-x") && ($("#f-bseries-x").onclick = () => { grab(); d.seriesName = ""; d.issue = ""; render(); });
     $("#f-series-btn") && ($("#f-series-btn").onclick = async () => { const k = await pickSeries({ current: d.seriesId, allowNew: true, title: "Series" }); if (k) { grab(); d.seriesId = k; render(); } });
     $("#f-issue").oninput = e => {
       d.issue = e.target.value;
