@@ -1,5 +1,3 @@
-9780393679212 Strange Case of Dr. Jekyll and Mr. Hyde, Norton Critical Editions, 2nd Edition | genre=Horror lang=English format=- pages=200 | Open Library
-9783150197363 Io non ho paura | genre=Thriller lang=Italian format=Softcover pages=303 | Deutsche Nationalbibliothek
-9783150161005 Der Sandmann | genre=Novel lang=German format=Softcover pages=100 | Deutsche Nationalbibliothek
-9783150092675 The importance of being earnest – a trivial comedy for serious people | genre=Drama lang=English format=Softcover pages=140 | Deutsche Nationalbibliothek+LIBRIS
-Earnest 041: tag="041" ind1=" " ind2=" "> <subfield code="a">ger</subfield> <subfield code="a">eng</subfield> </datafield>
+OL: {"ISBN:9781902407449": {"url": "http://openlibrary.org/books/OL30695984M/Strange_Case_of_Dr_Jekyll_and_Mr_Hyde", "key": "/books/OL30695984M", "title": "Strange Case of Dr Jekyll and Mr Hyde", "authors": [{"url": "http://openlibrary.org/authors/OL25963A/Robert_Louis_Stevenson", "name": "Robert Louis Stevenson"}, {"url": "http://openlibrary.org/authors/OL8654102A/adapted_by_Alan_Grant", "name": "adapted by Alan Grant"}, {"url": "http://openlibrary.org/authors/OL2824231A/Cam_Kennedy", "name": "Cam Kennedy"}, {"url": "http://openlibrary.org/authors/OL8654101A/adapted_by_Alan_Grant", "name": "adapted by Alan Grant"}], "number_of_pages": 48, "identifiers": {"isbn_10": ["190240744X"], "isbn_13": ["
+LIBRIS 100/700/245: 
+LOOKUP {"title":"Strange Case of Dr Jekyll and Mr Hyde","authors":["Robert Louis Stevenson","Alan Grant","Cam Kennedy"],"publisher":"imusti","year":"2008","pages":"48","format":"Paperback","cover":"https://covers.openlibrary.org/b/id/10491195-M.jpg","isbn":"9781902407449","genre":"Comics, Horror"} | Open Library
