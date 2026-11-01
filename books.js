@@ -36,10 +36,10 @@
     if (/ljudbok|ljudböcker|audio|hörbuch|\bmp3\b|\bcd\b|daisy/.test(t)) return "Audiobook";
     if (/e-bok|e-böcker|ebook|e-book|epub|\bpdf\b|kindle|online/.test(t)) return "E-book";
     if (/box|schuber|kassett|\bset\b/.test(t)) return "Box set";
-    if (/\b(inb|inbunden|gb|geb|gebunden|festeinband|hardcover|hardback|hard cover|library binding|pp)\b/.test(t)) return "Hardcover";
+    if (/\b(inb|inbunden|danskt band|kartonnage|gb|geb|gebunden|festeinband|pappband|hardcover|hardback|hard cover|library binding|board book|pp)\b/.test(t)) return "Hardcover";
     if (/\bkart/.test(t)) return swedish ? "Hardcover" : "Softcover";   // Swedish kartonnage has board covers; German "kartoniert" is a soft cover
-    if (/\b(pocket|taschenbuch|tb|paperback|mass market|pb)\b/.test(t)) return "Paperback";
-    if (/\b(hft|häftad|broschur|broschiert|klappenbroschur|softcover|soft cover|trade paperback)\b/.test(t)) return "Softcover";
+    if (/\b(pocket|storpocket|taschenbuch|tb|paperback|mass market|pb)\b/.test(t)) return "Paperback";
+    if (/\b(hft|häftad|flexband|broschur|broschiert|klappenbroschur|softcover|soft cover|trade paperback)\b/.test(t)) return "Softcover";
     return "";
   }
   // DNB subject groups (Sachgruppen) that say something about the genre
