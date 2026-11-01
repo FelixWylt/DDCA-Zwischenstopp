@@ -131,6 +131,6 @@ FILES
   inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
   inducks-de-CBC.json: 30 issues, 75 KB  e.g. 6 = de/CBC  6 2007-04 (28 stories)
   inducks-se-SK.json: 113 issues, 41 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
-directory.json: 2,592 publications (at, ch, de, dk, fi, it, no, se), 181 KB
+directory.json: 3,417 publications (at, ch, de, dk, fi, gb, it, no, se, us), 241 KB
 
 files in the ISV export: createtables.sql
