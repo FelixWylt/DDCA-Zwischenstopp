@@ -226,7 +226,7 @@
     for (let i = 0; i < 3; i++) x = x.replace(/,\s*[^,]*\b(editions?|ausgabe|auflage|upplaga|edizione|classics|reader)\b[^,]*$/i, "");
     return x.trim();
   }
-  const workKey = t => workTitle(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+  const workKey = t => workTitle(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim().replace(/^(the|a|an|der|die|das|le|la|les|il|lo|el|den|det)\s+/, "");
   async function genreFromOtherEditions(data, isbn) {
     const title = workTitle(data.title), author = (data.authors || [])[0] || "";
     if (!title) return "";
