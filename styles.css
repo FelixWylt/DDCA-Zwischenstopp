@@ -524,3 +524,8 @@ label.inline .l { margin: 0; }
 .toplist .muted { white-space: nowrap; text-align: right; }
 /* book gap grid: in-between volumes such as 0.5 */
 .cell.half { font-style: italic; }
+/* book form: the series name wraps instead of hiding; "Single book" always visible next to it */
+.bseries { display: flex; gap: 6px; align-items: stretch; }
+.bseries .pickbtn { flex: 1 1 auto; min-width: 0; }
+.bseries #f-bseries-x { flex: none; }
+.pickbtn.wrap span:first-child { white-space: normal; overflow-wrap: anywhere; }
