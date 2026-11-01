@@ -1,44 +1,6 @@
-020 $a9783150161029 $cBroschur : EUR 5.80 (DE), EUR 6.00 (AT) | 020 $a3150161029 | 245 $aNathan der Weise $bein dramatisches Gedicht in fünf Aufzügen $cGotthold Ephraim Lessing ; herausgegeben von Thorsten Krause | 490 $aReclam XL $vNr. 16102 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783150161029
-020 $a9783150191422 $cBroschur | 245 $aNathan der Weise $bein dramatisches Gedicht, in fünf Aufzügen $cGotthold Ephraim Lessing ; herausgegeben von Kai Bremer und Valerie Hantzsche | 490 $aReclams Universal-Bibliothek $vNr. 19142 | 655 $aTheaterstück $2gnd-content | 655 $aDramatik $2gatbeg
-  isbn 9783150191422
-020 $a9783150955109 $cBroschiert : EUR 23.00 (DE), EUR 23.70 (AT) | 020 $a3150955106 | 245 $aLehrerpaket »Gotthold Ephraim Lessing: Nathan der Weise«: Textausgabe und Lehrerband $bReclam Literaturunterricht: Sachanalysen, Stundenverläufe, Arbeitsblätter $cSusanne Brüggemann, Gotthold Ephraim Lessing
-  isbn 9783150955109
-020 $a9783150194867 $cBroschur : EUR 3.00 (DE), EUR 3.10 (AT) | 020 $a3150194865 | 245 $aNathan der Weise $bein dramatisches Gedicht in fünf Aufzügen $cGotthold Ephraim Lessing ; Anmerkungen von Peter von Düffel | 490 $aReclams Universal-Bibliothek $vNr. 19486 | 655 $aTheaterstück $2gnd-content | 655 $aDramatik $2gatbeg
-  isbn 9783150194867
-020 $a9783150081181 $ckart. : EUR 5.80 (DE) | 245 $aGotthold Ephraim Lessing, Nathan der Weise $cvon Peter von Düffel | 490 $aReclams Universal-Bibliothek $vNr. 8118 : Erläuterungen und Dokumente | 689 $Dp $aLessing, Gotthold Ephraim $d1729-1781 $tNathan der Weise | 689 
-  isbn 9783150081181
-----
-020 $a9783150301036 $cBroschiert : EUR 23.00 (DE), EUR 23.70 (AT) | 020 $a3150301033 | 245 $aPaket für Lehrkräfte »Johann Wolfgang Goethe: Faust. Der Tragödie Erster Teil« (Textausgabe und Lehrerband). 2 Bände eingeschweißt $bDer Klassiker der deutschen Literatur im praktischen Bundle mit Primärtext und Unterrichtsmaterialien $cJohann Wolfgang Goethe, Holger Bäuerle | 490 $aReclam XL - Text und Kontext $v16103 | 490 $aReclam Literaturunterricht $v15817
-  isbn 9783150301036
-245 $aFaust $nT. 2 $cJoh. Wolfgang Goethe
-  isbn undefined
-020 $a9783150161036 $cBroschur : EUR 5.80 (DE), EUR 6.00 (AT) | 020 $a3150161037 | 245 $aFaust $bder Tragödie erster Teil $cJohann Wolfgang Goethe ; herausgegeben von Wolf Dieter Hellberg | 490 $aReclam XL $vNr. 16103 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783150161036
-020 $a9783150955178 $cBroschiert : EUR 23.00 (DE), EUR 23.70 (AT) | 020 $a3150955173 | 245 $aLehrerpaket »Johann Wolfgang Goethe: Faust I«: Textausgabe und Lehrerband $bReclam Literaturunterricht: Sachanalysen, Stundenverläufe, Arbeitsblätter $cHolger Bäuerle, Johann Wolfgang Goethe
-  isbn 9783150955178
-020 $a9783150140482 $cBroschur : EUR 6.20 (DE), EUR 6.40 (AT) | 020 $a315014048X | 245 $aFaust $bder Tragödie Erster und Zweiter Teil $cJohann Wolfgang Goethe | 490 $aReclams Universal-Bibliothek $vNr. 14048 | 655 $aTheaterstück $2gnd-content | 655 $aDramatik $2gatbeg
-  isbn 9783150140482
-----
-020 $a9783129303061 $c: EUR 9.90 (DE), EUR 10.20 (AT) | 020 $a3129303065 | 245 $aDie Physiker von Friedrich Dürrenmatt - Textanalyse und Interpretation $bmit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse und Prüfungsaufgaben uvm. $cFriedrich Dürrenmatt, Bernd Matzkowski | 490 $aKönigs Erläuterungen $v368
-  isbn 9783129303061
-020 $a9783804470750 | 020 $a3804470750 | 245 $aDie Physiker von Friedrich Dürrenmatt $bTextanalyse und Interpretation mit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse und Prüfungsaufgaben mit Lösungen uvm. (Königs Erläuterungen - Lektürehilfe) $cFriedrich Dürrenmatt | 490 $aKönigs Erläuterungen $v368 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783804470750
-020 $a9783804460751 | 020 $a3804460755 | 245 $aDie Physiker von Friedrich Dürrenmatt $bTextanalyse und Interpretation mit Zusammenfassung, Inhaltsangabe, Charakterisierung, Szenenanalyse und Prüfungsaufgaben mit Lösungen uvm. (Königs Erläuterungen - Lektürehilfe) $cFriedrich Dürrenmatt | 490 $aKönigs Erläuterungen $v368 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783804460751
-245 $aDie Physiker $bHörspiel $cFriedrich Dürrenmatt ; Sprecher Amido Hoffmann [und 18 weitere] | 655 $aTheaterstück $2gnd-content | 655 $aDramatik $2gatbeg
-  isbn undefined
-020 $a9789733413431 $cBroschur | 245 $aRomulus cel Mare | 655 $aTheaterstück $2gnd-content | 655 $aDramatik $2gatbeg
-  isbn 9789733413431
-----
-020 $a9783150161326 $cBroschur : EUR 5.80 (DE), EUR 6.00 (AT) | 020 $a3150161320 | 245 $aDer Schimmelreiter $bNovelle $cTheodor Storm ; herausgegeben von Sabine Wolf | 490 $aReclam XL $vNr. 16132 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783150161326
-020 $a9783150955116 $cBroschiert : EUR 23.00 (DE), EUR 23.70 (AT) | 020 $a3150955114 | 245 $aLehrerpaket »Theodor Storm: Der Schimmelreiter«: Textausgabe und Lehrerband $bReclam Literaturunterricht: Sachanalysen, Stundenverläufe, Arbeitsblätter $cNicola Mitterer, Theodor Storm
-  isbn 9783150955116
-020 $a9783150158098 $cBroschur : EUR 22.00 (DE), EUR 22.70 (AT) | 020 $a3150158095 | 245 $aTheodor Storm, Der Schimmelreiter $cvon Nicola Mitterer | 490 $aReclam Literaturunterricht $vNr. 15809 | 655 $aLehr- und Lernressource $2gnd-content
-  isbn 9783150158098
-020 $a9783150206102 $cBroschur : EUR 8.00 (DE), EUR 8.30 (AT) | 020 $a3150206103 | 245 $aDer Schimmelreiter $bNovelle $cTheodor Storm ; mit Anmerkungen von Sabine Wolf und Hans Wagner | 490 $aReclam Taschenbuch $vNr. 20610 | 655 $aFiktionale Darstellung $2gnd-content | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg
-  isbn 9783150206102
-020 $a9783159618043 | 245 $aDer Schimmelreiter. Novelle $bReclam Taschenbuch $cTheodor Storm | 490 $aReclam Taschenbuch | 655 $aFiktionale Darstellung $2gnd-content | 655 $aErzählende Literatur: Hauptwerk vor 1945 $2gatbeg
-  isbn 9783159618043
-----
+9783150161029 Nathan der Weise – ein dramatisches Gedicht in fünf Aufzügen | raw DNB genre: Lehr- und Lernressource | series: -  (raw Reclam XL) | → genre=Drama format=Softcover pages=236
+9783150191422 Nathan der Weise – ein dramatisches Gedicht, in fünf Aufzügen | raw DNB genre: Theaterstück, Dramatik | series: -  (raw Reclams Universal-Bibliothek) | → genre=Drama format=Softcover pages=228
+9783150158135 Gotthold Ephraim Lessing, Nathan der Weise | raw DNB genre: Lehr- und Lernressource | series: -  (raw Reclam Literaturunterricht) | → genre=- format=Softcover pages=128
+9783150955109 Lehrerpaket »Gotthold Ephraim Lessing: Nathan der Weise«: Textausgabe und Lehrerband – Reclam Literaturunterricht: Sachanalysen, Stundenverläufe, Arbeitsblätter | raw DNB genre:  | series: -  (raw ) | → genre=- format=Softcover pages=365
+9783150154632 Gotthold Ephraim Lessing, Nathan der Weise | raw DNB genre: Lehr- und Lernressource | series: -  (raw Reclam Lektüreschlüssel XL) | → genre=- format=Softcover pages=142
+9783257230451 → genre=Drama
