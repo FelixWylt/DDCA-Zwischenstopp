@@ -1255,7 +1255,7 @@ function booksBrowse(pool, col, crumbs, more) {
   const total = `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>`;
   if (!pool.length) return `<div class="empty"><h3>${S.filters.status === "wanted" ? "No books on your wishlist" : "No books yet"}</h3><p>Add a book with its ISBN or by scanning the barcode.</p><div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="newbook">Add a book</button></div></div>`;
   // one author's books, one genre's books, or the single books
-  if (col.a != null) { const list = pool.filter(c => firstAuthor(c) === col.a).sort(bySeriesVol); return back(col.a || "No author") + `<p class="muted small" style="margin:0 0 8px">${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</p>` + entriesHtml(list.slice(0, S.shown)) + more(list.length); }
+  if (col.a != null) { const list = pool.filter(c => firstAuthor(c) === col.a).sort(bySeriesVol); return back(col.a || "Unknown author") + `<p class="muted small" style="margin:0 0 8px">${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</p>` + entriesHtml(list.slice(0, S.shown)) + more(list.length); }
   if (col.gen != null) { const list = pool.filter(c => col.gen ? genresOf(c).includes(col.gen) : !genresOf(c).length).sort((a, b) => de(lastNameOf(firstAuthor(a)), lastNameOf(firstAuthor(b))) || bySeriesVol(a, b)); return back(col.gen || "No genre") + `<p class="muted small" style="margin:0 0 8px">${esc(countText(list))}</p>` + entriesHtml(list.slice(0, S.shown)) + more(list.length); }
   const v = bookView();
   const chip = (k, l) => `<button type="button" class="fchip${v === k ? " on" : ""}" data-bview="${k}" aria-pressed="${v === k}">${l}</button>`;
@@ -1264,7 +1264,7 @@ function booksBrowse(pool, col, crumbs, more) {
     const m = new Map(); pool.forEach(c => { const a = firstAuthor(c); (m.get(a) || m.set(a, []).get(a)).push(c); });
     const keys = [...m.keys()].sort((a, b) => de(lastNameOf(a), lastNameOf(b)));
     let letter = "", rows = "";
-    keys.forEach(a => { const L = (a ? a.split(" ").pop()[0] : "–").toUpperCase(); if (L !== letter) { rows += `<h4 class="yearhead">${esc(L)}</h4>`; letter = L; } const list = m.get(a), ser = [...new Set(list.map(c => c.seriesName).filter(Boolean))]; rows += folder({ a }, a || "No author", [ser.length ? ser.join(", ") : "", countText(list)].filter(Boolean).join(" · "), list.length); });
+    keys.forEach(a => { const L = (a ? a.split(" ").pop()[0] : "–").toUpperCase(); if (L !== letter) { rows += `<h4 class="yearhead">${esc(L)}</h4>`; letter = L; } const list = m.get(a), ser = [...new Set(list.map(c => c.seriesName).filter(Boolean))]; rows += folder({ a }, a || "Unknown author", [ser.length ? ser.join(", ") : "", countText(list)].filter(Boolean).join(" · "), list.length); });
     return chips + total + `<div class="list">${rows}</div>`;
   }
   if (v === "genres") {
@@ -1284,7 +1284,7 @@ function booksBrowse(pool, col, crumbs, more) {
   const names = Object.keys(bySeries).sort(de);
   const sorted = singles.slice().sort((a, b) => de(lastNameOf(firstAuthor(a)), lastNameOf(firstAuthor(b))) || de(a.date || "", b.date || "") || de(a.title || "", b.title || ""));
   let lastA = null; const rows = [];
-  sorted.slice(0, S.shown).forEach(c => { const a = firstAuthor(c); if (a !== lastA) { rows.push(`<h4 class="yearhead">${esc(a || "No author")}</h4>`); lastA = a; } rows.push(c); });
+  sorted.slice(0, S.shown).forEach(c => { const a = firstAuthor(c); if (a !== lastA) { rows.push(`<h4 class="yearhead">${esc(a || "Unknown author")}</h4>`); lastA = a; } rows.push(c); });
   return chips + total + (names.length ? '<h3 class="listhead">Book series</h3><div class="list">' + names.map(n => folder({ g: BOOK_GROUP, s: "book:" + n }, n, [firstAuthor(bySeries[n][0]), countText(bySeries[n]), valueTag(bySeries[n])].filter(Boolean).join(" · "), bySeries[n].length)).join("") + "</div>" : "") +
     (sorted.length ? `<h3 class="listhead">Single books <span class="muted">${sorted.length}</span></h3>` + entriesHtml(rows) + more(sorted.length) : "");
 }
@@ -1332,7 +1332,7 @@ function drawResults() {
     if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
     const withKey = list.filter(c => srt.key(c) != null), without = list.length - withKey.length;
     const ordered = sortComics(withKey).sort((a, b) => { const x = srt.key(a), y = srt.key(b); return x < y ? 1 : x > y ? -1 : 0; });
-    const where = col.a != null ? col.a || "No author" : col.gen != null ? col.gen || "No genre" : col.s ? seriesTitle(col.s) : col.g ? col.g : col.p ? col.p : books ? "all books" : "all comics";
+    const where = col.a != null ? col.a || "Unknown author" : col.gen != null ? col.gen || "No genre" : col.s ? seriesTitle(col.s) : col.g ? col.g : col.p ? col.p : books ? "all books" : "all comics";
     html = (col.p ? crumbs([{ label: "All", col: {} }, { label: where }]) : "") +
       `<p class="muted small" style="margin:0 0 8px">${ordered.length} ${ordered.length === 1 ? "entry" : "entries"} in ${esc(where)}, by ${srt.label}${without ? ` · ${without} without ${srt.label} not shown` : ""} · <button class="link" id="sortoff" type="button">Series order</button></p>` +
       (ordered.length ? entriesHtml(ordered.slice(0, S.shown), false, srt.note) : '<div class="empty"><h3>Nothing to sort here</h3><p>None of these entries has a ' + esc(srt.label) + ' yet.</p></div>') + more(ordered.length);

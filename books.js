@@ -65,6 +65,8 @@
       const authors = fields("100").map(f => personName(sub(f, "a")[0]));
       const others = fields("700").filter(f => !sub(f, "t").length);
       const translator = others.filter(f => /bersetz|översätt|translat|trl/i.test(sub(f, "e").concat(sub(f, "4")).join(" "))).map(f => personName(sub(f, "a")[0])).join(", ");
+      // an anonymous work (Nibelungenlied, Edda, Beowulf) is catalogued under its title (130), not under an author: its editors aren't its authors
+      if (!authors.length && !fields("110").length && fields("130").length) authors.push("Anonymous");
       if (!authors.length) others.filter(f => /(Verfasser|Hrsg|Herausgeber)/i.test(sub(f, "e").join(" "))).forEach(f => authors.push(personName(sub(f, "a")[0])));
       const t245 = fields("245")[0];
       const title = tidy([tidy(sub(t245, "a")[0]), tidy(sub(t245, "b")[0])].filter(Boolean).join(" – "));
