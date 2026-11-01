@@ -63,10 +63,11 @@ PUBLICATIONS
   ✓ Omaggio Abbonati  →  it/ABB  'Omaggio Abbonati'  (by code)
   ✓ Disney lingua latina  →  it/DLL  'Disney lingua latina'  (by code)
   ✓ Carl Barks Collection  →  de/CBC  'Carl Barks Collection'  (by code)
+  ✓ Stål-Kalle Pocket  →  se/SK  'Stål-Kalle'  (by code)
 
-issues in chosen publications: 21,341
-entries: 231,194, story versions: 117,448
-cover scans: 20,723 of 21,341 issues
+issues in chosen publications: 21,454
+entries: 231,675, story versions: 117,815
+cover scans: 20,816 of 21,454 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -129,6 +130,7 @@ FILES
   inducks-it-ABB.json: 24 issues, 72 KB  e.g. 1978 = it/ABB1978 1979 (10 stories)
   inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
   inducks-de-CBC.json: 30 issues, 75 KB  e.g. 6 = de/CBC  6 2007-04 (28 stories)
+  inducks-se-SK.json: 113 issues, 41 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
 directory.json: 2,592 publications (at, ch, de, dk, fi, it, no, se), 181 KB
 
 files in the ISV export: createtables.sql
