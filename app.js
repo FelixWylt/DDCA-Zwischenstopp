@@ -127,15 +127,20 @@ function soldLinks(c) {   // books only: single comic issues rarely sell on thei
   return [["eBay (sold)", `https://www.ebay.de/sch/i.html?_nkw=${e}&LH_Sold=1&LH_Complete=1`], ["Tradera", `https://www.tradera.com/search?q=${e}`], ["Ricardo", `https://www.ricardo.ch/de/s/${e}`]]
     .map(([n, u]) => `<a href="${u}" target="_blank" rel="noopener">${n}</a>`).join(" · ");
 }
+// where to read collector prices: Comicguide.de (German and other series) or the Seriesam guide (Swedish), opened in the browser
+function collectorName(key) { const se = seriesById(key); return String(key || "").startsWith("book:") ? key.slice(5) : se ? String(se.name).replace(/\s*\([^)]*\)\s*$/, "") : ""; }
+function collectorLinks(key) {
+  const se = seriesById(key), nm = collectorName(key); if (!nm) return "";
+  const lang = se ? seriesLang(se) : "", look = site => `https://duckduckgo.com/?q=${encodeURIComponent("site:" + site + " " + nm)}`;
+  const src = [lang !== "Swedish" ? `<a href="${look("comicguide.de")}" target="_blank" rel="noopener">Comicguide.de</a>` : "", lang === "Swedish" || !lang ? `<a href="https://www.seriesam.com/cgi-bin/guide?s=${encodeURIComponent(nm.split(/\s+/).slice(0, 2).join(" ").toUpperCase())}&covers=ON" target="_blank" rel="noopener">Seriesam guide</a> <span class="muted">(shop price; between collectors about half)</span>` : ""].filter(Boolean).join(" · ");
+  return src;
+}
 // the price ranges of one series, edited in the Series tab (saved as you type)
 function valueRulesHtml(key) {
   if (!key) return "";
   const rows = (S.valueRules || []).filter(r => r.s === key);
   const cur = r => CURRENCIES.map(x => `<option${(r.cur || "CHF") === x ? " selected" : ""}>${x}</option>`).join("");
-  // where to read collector prices: a web search on Comicguide.de (German) or Seriesam (Swedish), opened in the browser
-  const se = seriesById(key), nm = key.startsWith("book:") ? key.slice(5) : se ? String(se.name).replace(/\s*\([^)]*\)\s*$/, "") : "";
-  const lang = se ? seriesLang(se) : "", look = site => `https://duckduckgo.com/?q=${encodeURIComponent("site:" + site + " " + nm)}`;
-  const src = [lang !== "Swedish" ? `<a href="${look("comicguide.de")}" target="_blank" rel="noopener">Comicguide.de</a>` : "", lang === "Swedish" || !lang ? `<a href="https://www.seriesam.com/cgi-bin/guide?s=${encodeURIComponent(nm.split(/\s+/).slice(0, 2).join(" ").toUpperCase())}&covers=ON" target="_blank" rel="noopener">Seriesam guide</a> <span class="muted">(shop price; between collectors about half)</span>` : ""].filter(Boolean).join(" · ");
+  const nm = collectorName(key), src = collectorLinks(key);
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
     ${nm ? `<span class="small muted">Collector prices: ${src}. Note a few prices for old and new issues, then make ranges.</span>` : ""}
     ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" inputmode="numeric" placeholder="from" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" inputmode="numeric" placeholder="to" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
@@ -1397,7 +1402,7 @@ ${isBook ? `
           <label><span class="l">Checked value <span class="muted">(sold price)</span></span><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
-${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : ""}</div>
+${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId) ? `<br>Collector prices: ${collectorLinks(d.seriesId)}` : ""}</div>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
