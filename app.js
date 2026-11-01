@@ -129,12 +129,22 @@ function soldLinks(c) {   // books only: single comic issues rarely sell on thei
 }
 // where to read collector prices: Comicguide.de (German and other series) or the Seriesam guide (Swedish), opened in the browser
 function collectorName(key) { const se = seriesById(key); return String(key || "").startsWith("book:") ? key.slice(5) : se ? String(se.name).replace(/\s*\([^)]*\)\s*$/, "") : ""; }
-function collectorLinks(key) {
+function collectorLinks(key, c) {
   const se = seriesById(key), nm = collectorName(key); if (!nm) return "";
-  const lang = se ? seriesLang(se) : "", look = site => `https://duckduckgo.com/?q=${encodeURIComponent("site:" + site + " " + nm)}`;
-  const src = [lang !== "Swedish" ? `<a href="${look("comicguide.de")}" target="_blank" rel="noopener">Comicguide.de</a>` : "", lang === "Swedish" || !lang ? `<a href="https://www.seriesam.com/cgi-bin/guide?s=${encodeURIComponent(nm.split(/\s+/).slice(0, 2).join(" ").toUpperCase())}&covers=ON" target="_blank" rel="noopener">Seriesam guide</a> <span class="muted">(shop price; between collectors about half)</span>` : ""].filter(Boolean).join(" · ");
-  // Seriekatalogen.se, the Swedish price guide: its title pages have their own names, so a site search finds the series
-  return src + (lang === "Swedish" || !lang ? ` · <a href="${look("seriekatalogen.se")}" target="_blank" rel="noopener">Seriekatalogen</a>` : "");
+  const lang = se ? seriesLang(se) : "", L = [];
+  const a = (u, n, note) => L.push(`<a href="${u}" target="_blank" rel="noopener">${n}</a>${note ? ` <span class="muted">(${note})</span>` : ""}`);
+  // Seriekatalogen names its pages after the series: "Kalle Anka & C:o" -> /magazine/kalle-anka-och-co
+  const skSlug = String(nm).toLowerCase().replace(/[:'’.]/g, "").replace(/&/g, " och ").replace(/[åä]/g, "a").replace(/ö/g, "o").replace(/[éè]/g, "e").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  if (lang === "Swedish" || !lang) {
+    a(`https://www.seriesam.com/cgi-bin/guide?s=${encodeURIComponent(nm.split(/\s+/).slice(0, 2).join(" ").toUpperCase())}&covers=ON`, "Seriesam guide", "shop price; between collectors about half");
+    a(`https://www.seriekatalogen.se/magazine/${skSlug}`, "Seriekatalogen");
+  }
+  if (lang === "Italian") {   // Italian dealers sell single issues with uniform titles ("TOPOLINO libretto n. 1862"), so sold listings are a fair guide
+    const num = c ? String(c.issueLabel || c.issue || "").replace(/^0+/, "") : "";
+    a(`https://www.ebay.it/sch/i.html?_nkw=${encodeURIComponent((nm + " " + num).trim())}&LH_Sold=1&LH_Complete=1`, "eBay.it (sold)");
+  }
+  if (lang !== "Swedish" && lang !== "Italian") a(`https://www.comicguide.de/search?search=${encodeURIComponent(nm)}`, "Comicguide.de");
+  return L.join(" · ");
 }
 // the price ranges of one series, edited in the Series tab (saved as you type)
 function valueRulesHtml(key) {
@@ -1403,7 +1413,7 @@ ${isBook ? `
           <label><span class="l">Checked value <span class="muted">(sold price)</span></span><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
-${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId) ? `<br>Collector prices: ${collectorLinks(d.seriesId)}` : ""}</div>
+${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId, d) ? `<br>Collector prices: ${collectorLinks(d.seriesId, d)}` : ""}</div>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
