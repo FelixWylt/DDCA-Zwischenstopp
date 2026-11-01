@@ -503,6 +503,12 @@
         "Disney De Luxe Edition",
         "Topolino De Luxe Edition"
       ]
+    },
+    {
+      "series": "Disney Definitive Collection",
+      "country": "it",
+      "code": "it/DDCO",
+      "title": "Disney Definitive Collection"
     }
   ]
 }
