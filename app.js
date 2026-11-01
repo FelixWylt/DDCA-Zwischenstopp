@@ -1225,7 +1225,57 @@ function duckipediaCard(c) {
   const facts = [["Title", i.title], ["Released", i.date], ["Price", i.price], ["Editor-in-chief", i.editor], ["Translation", i.translator], ["Pages", i.pages], ["ISBN", i.isbn], ["Notes", i.notes]].filter(x => x[1]);
   return `<div class="card stack dkcard"><div class="row between"><h3>Issue details from Duckipedia</h3><span class="small muted">${esc(dk.fetched || "")}</span></div>
     ${facts.length ? `<dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>` : ""}
-    <p class="small muted" style="margin:0">Text (also the story details and plots below) from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
+    <p class="small muted" style="margin:0">Text (also the story details and plots) from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
+}
+// one story with INDUCKS (title, code, writer, artist) and Duckipedia (German title, original, translator, characters, plot) together
+function storyView(s) {
+  const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + s.writer : s.writer && "Writer: " + s.writer, s.artist && s.artist !== s.writer ? "Artist: " + s.artist : "", s.hero].filter(Boolean).join(" · ");
+  const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
+  const other = s.dTitle && norm(s.dTitle) !== norm(s.title) ? s.dTitle : "";
+  return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
+    ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${esc(by)}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
+    ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
+    ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`;
+}
+
+// ---- a comic or book to look at, without editing: everything known about it, with Edit for changes ----
+function detailHtml(c) {
+  const isBook = c.kind === "book", se = isBook ? null : seriesById(c.seriesId);
+  const row = (k, v) => v || v === 0 ? `<dt>${esc(k)}</dt><dd>${v}</dd>` : "";
+  const t = esc;
+  const head = isBook ? c.title || "Untitled" : comicTag(c);
+  const grade = (GRADES.find(g => g[0] === c.grade) || [])[1];
+  const v = valueOf(c), lot = c.lotId ? lotInfo(c.lotId) : null;
+  const facts = isBook ? [
+      row("Series", t([c.seriesName, c.issue && "vol. " + c.issue].filter(Boolean).join(" "))), row("Author", t(c.author)), row("Translator", t(c.translator)), row("Original title", t(c.originalTitle)),
+      row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Language", t(c.lang)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
+    : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)),
+      row("INDUCKS", c.inducks ? `<a href="https://inducks.org/issue.php?c=${encodeURIComponent(c.inducks).replace(/%20/g, "+")}" target="_blank" rel="noopener">${t(c.inducks)}</a>` : ""), row("Facsimile", c.facsimile ? "yes, reprint" : "")];
+  const copy = c.status === "wanted"
+    ? [row("Wishlist", "yes"), row("Maximum price", t(money(c.pricePaid, c.currency))), row("Notes", t(c.notes))]
+    : [row("Condition", t(grade)), row("Copies", (c.copies || 1) > 1 ? c.copies : ""), row("Location", t(c.location)),
+      row("Paid", t(money(c.pricePaid, c.currency)) + (lot ? ` <span class="muted">(lot of ${lot.members.length}, ${t(money(lot.total, lot.currency))})</span>` : "")),
+      row("Bought", t([niceDate(c.purchaseDate), c.source].filter(Boolean).join(" · "))), row("Read", c.read ? "yes" + (c.readDate ? ", " + t(niceDate(c.readDate)) : "") : "not yet"),
+      row("For trade", c.forTrade ? "yes" : ""), row("Value", v ? t(money(v.amount * (c.copies || 1), v.cur)) + ` <span class="muted">(${v.how === "checked" ? "checked price" : v.how === "table" ? "price table" : "own estimate"})</span>` : ""),
+      row("Special", t(c.special)), row("Notes", t(c.notes))];
+  const cv = coverOf(c);
+  return `<div class="row between"><div><h2 style="margin:0">${t(head)}</h2>${!isBook && c.title ? "" : ""}<p class="lede" style="margin:4px 0 0">${t(isBook ? [c.author, c.date].filter(Boolean).join(" · ") : [c.title, niceDate(c.date)].filter(Boolean).join(" · "))}</p></div>
+      <span class="row" style="gap:6px"><button id="vback" type="button">Back</button><button id="vedit" class="primary" type="button">Edit</button></span></div>
+    <div class="card stack detail">
+      <div class="detailtop">${cv ? `<img class="cover" data-zoom="${t(c.id)}" src="${t(cv)}" alt="Cover, tap to enlarge" onerror="this.remove()">` : ""}
+        <dl class="facts">${facts.join("")}</dl></div>
+      ${c.status !== "wanted" ? `<div class="row" style="gap:10px;align-items:center">${heartHtml(c.fav, 'id="v-fav"')}${starsHtml(c.rating, 'id="v-rating"')}<span class="small muted">saved straight away</span></div>` : ""}
+    </div>
+    <div class="card stack"><h3>${c.status === "wanted" ? "On your wishlist" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl></div>
+    ${(c.stories || []).length ? `<div class="card stack"><h3>Stories <span class="muted small">${c.stories.length}</span></h3><div class="stories">${c.stories.map(storyView).join("")}</div></div>` : ""}
+    ${c.duckipedia ? duckipediaCard(c) : ""}`;
+}
+function bindDetail(c) {
+  $("#vback").onclick = () => goBack();
+  $("#vedit").onclick = () => { S.viewMode = false; renderKeep(); window.scrollTo(0, 0); };
+  const save = async patch => { try { const saved = await saveComic(Object.assign({}, S.comics.find(x => x.id === c.id) || c, patch)); S.draft = JSON.parse(JSON.stringify(saved)); } catch (e) { toast(errText(e)); } };
+  $("#v-fav") && ($("#v-fav").onclick = e => { const on = !e.currentTarget.classList.contains("on"); e.currentTarget.classList.toggle("on", on); e.currentTarget.textContent = on ? "♥" : "♡"; save({ fav: on }); });
+  bindStars($("#app"), v => save({ rating: v }));
 }
 // ---- Add / edit ----
 function defaultSeriesId() {
@@ -1240,10 +1290,11 @@ VIEWS.add = {
   html() {
     if (!S.draft) {
       const c = S.editing && S.comics.find(x => x.id === S.editing);
-      S.draft = c ? JSON.parse(JSON.stringify(c)) : blankDraft(); S.storyEdit = false;
+      S.draft = c ? JSON.parse(JSON.stringify(c)) : blankDraft(); S.storyEdit = false; S.viewMode = !!c;
       if (!S.draft.stories) S.draft.stories = [];
     }
     const d = S.draft, editing = !!d.id, isBook = d.kind === "book";
+    if (S.viewMode && editing) return detailHtml(d);
     const se = isBook ? null : seriesById(d.seriesId);
     const sopts = seriesOptions(d.seriesId, s => s.name + (s.country ? " (" + s.country + ")" : "")) + `<option value="_other"${!se ? " selected" : ""}>New series…</option>`;
     const hint = se && se.numbering === "year" ? "Year/number, e.g. 1985/12, double issue 1985/12-13" : "Number, e.g. 474";
@@ -1255,15 +1306,6 @@ VIEWS.add = {
     const curs = CURRENCIES.map(c => `<option${d.currency === c ? " selected" : ""}>${c}</option>`).join("");
     // one view per story with INDUCKS (title, code, writer, artist) and Duckipedia (German title, original, translator, characters, plot) together
     const storyEdit = S.storyEdit || !d.stories.length;
-    const storyView = s => {
-      const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + s.writer : s.writer && "Writer: " + s.writer, s.artist && s.artist !== s.writer ? "Artist: " + s.artist : "", s.hero].filter(Boolean).join(" · ");
-      const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
-      const other = s.dTitle && norm(s.dTitle) !== norm(s.title) ? s.dTitle : "";
-      return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
-        ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${esc(by)}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
-        ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
-        ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`;
-    };
     const stories = !storyEdit ? d.stories.map(storyView).join("") : d.stories.map((s, i) => `<div class="story" data-i="${i}">
         <label class="st-title"><span class="l">Story title</span><input data-sf="title" value="${esc(s.title)}"></label>
         <label><span class="l">Story code</span><input data-sf="code" class="mono" placeholder="I TL 1234-A" value="${esc(s.code)}"></label>
@@ -1375,6 +1417,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : ""}</div>
   },
   bind() {
     const d = S.draft;
+    if (S.viewMode && d && d.id) return bindDetail(d);
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     $("#f-fav") && ($("#f-fav").onclick = e => { d.fav = !d.fav; const b = e.currentTarget; b.classList.toggle("on", d.fav); b.textContent = d.fav ? "♥" : "♡"; b.setAttribute("aria-pressed", d.fav); });
