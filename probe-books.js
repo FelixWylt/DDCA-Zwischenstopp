@@ -114,8 +114,8 @@
   async function openLibraryIsbn(isbn) {
     const j = await getJson("https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:" + isbn);
     const x = j["ISBN:" + isbn]; if (!x) return [];
-    let fmt = ""; try { const ed = await getJson("https://openlibrary.org/isbn/" + isbn + ".json"); fmt = bindingOf(ed.physical_format); if (!x.number_of_pages && ed.number_of_pages) x.number_of_pages = ed.number_of_pages; } catch (e) {}
-    return [{ format: fmt, title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
+    let fmt = "", lang = ""; try { const ed = await getJson("https://openlibrary.org/isbn/" + isbn + ".json"); fmt = bindingOf(ed.physical_format); lang = langName(String(((ed.languages || [])[0] || {}).key || "").split("/").pop()); if (!x.number_of_pages && ed.number_of_pages) x.number_of_pages = ed.number_of_pages; } catch (e) {}
+    return [{ format: fmt, lang, title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
       year: year(x.publish_date), pages: x.number_of_pages ? String(x.number_of_pages) : "", cover: (x.cover || {}).medium || "", genre: oneGenre((x.subjects || []).slice(0, 25).map(s => s.name).join(", "), true), isbn }];
   }
   async function openLibrarySearch(q) {
@@ -219,15 +219,27 @@
     return { isbn, sources: hits.map(x => x.name), data };
   }
   // a school or study edition often has no genre of its own: take it from other editions of the same work
+  // the work's title without edition words: "Strange Case of Dr. Jekyll and Mr. Hyde, Norton Critical Editions, 2nd Edition" -> "Strange Case of Dr. Jekyll and Mr. Hyde"
+  function workTitle(t) {
+    let x = tidy(String(t || "").split(" – ")[0]).replace(/\s*\([^)]*\)\s*$/, "");
+    for (let i = 0; i < 3; i++) x = x.replace(/,\s*[^,]*\b(editions?|ausgabe|auflage|upplaga|edizione|classics|reader)\b[^,]*$/i, "");
+    return x.trim();
+  }
+  const workKey = t => workTitle(t).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
   async function genreFromOtherEditions(data, isbn) {
-    const title = tidy(String(data.title).split(" – ")[0]), author = (data.authors || [])[0] || "";
+    const title = workTitle(data.title), author = (data.authors || [])[0] || "";
     if (!title) return "";
-    const surname = author.split(" ").pop(), key = t => tidy(String(t || "").split(" – ")[0]).toLowerCase().normalize("NFC");
+    const surname = author.split(" ").pop();
     // the same work: same title, and the same author when the record names one (older records of the same ISBN count too)
-    const same = r => r && key(r.title) === key(title) && (!surname || !(r.authors || []).length || (r.authors || []).some(a => a.toLowerCase().includes(surname.toLowerCase())));
+    const same = r => r && workKey(r.title) === workKey(title) && (!surname || !(r.authors || []).length || (r.authors || []).some(a => a.toLowerCase().includes(surname.toLowerCase())));
+    const olSubjects = async () => {
+      const j = await getJson("https://openlibrary.org/search.json?limit=8&fields=title,author_name,subject&title=" + encodeURIComponent(title) + (surname ? "&author=" + encodeURIComponent(surname) : ""));
+      return (j.docs || []).map(d => ({ title: d.title, authors: d.author_name || [], genre: oneGenre((d.subject || []).slice(0, 40).join(", "), true) }));
+    };
     const asks = [
       dnb('tit="' + title + '"' + (surname ? ' and per="' + surname + '"' : ""), 12).catch(() => []),
-      libris('tit:"' + title + '"', 12).catch(() => [])
+      libris('tit:"' + title + '"', 12).catch(() => []),
+      olSubjects().catch(() => [])
     ];
     const recs = [].concat(...await Promise.all(asks));
     return oneGenre(recs.filter(same).map(r => r.genre).filter(Boolean).join(", "));
