@@ -13,20 +13,10 @@ jobs:
         run: |
           set +e
           exec > probe-result.txt 2>&1
-          UA="DagobertDucksArchiv-probe/1.0 (personal collection app)"
-          A="https://de.duckipedia.org/api.php?format=json&formatversion=2"
-          curl -s -A "$UA" -G "$A" --data-urlencode action=parse --data-urlencode page="Ausgabenliste Donald Duck Taschenbuch" --data-urlencode redirects=1 --data-urlencode prop=wikitext > al.json
-          python3 - <<'EOF'
-          import json, re
-          t = json.load(open('al.json'))['parse']['wikitext']
-          print(t[:1500])
-          print('---- lines with Test/Probe/0x')
-          for l in t.split('\n'):
-              if re.search(r'test|probe|\[\[DD 0|DD 0\d', l, re.I): print(l[:300])
-          print('---- links'); print(sorted(set(re.findall(r'\[\[([^\]|]+)', t)))[:80])
-          EOF
-          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode list=allpages --data-urlencode apprefix="DD 0" --data-urlencode aplimit=20; echo
-          curl -s -A "$UA" -G "$A" --data-urlencode action=query --data-urlencode list=search --data-urlencode srsearch="Donald Duck Taschenbuch Testausgabe" --data-urlencode srlimit=10; echo
+          UA="Mozilla/5.0 (Linux; Android 14) Mobile"
+          echo "=== seriekatalogen forms/scripts"; curl -s -L -A "$UA" https://www.seriekatalogen.se/ > sk.html; grep -io '<form[^>]*>\|<input[^>]*>\|/search[^"]*\|sok[^"]*"' sk.html | head -20; grep -o 'href="/[a-z]*/[^"]*"' sk.html | head -15
+          for u in magazine/kalle-anka-och-co magazine/kalle-ankas-pocket magazine/bjornligan magazine/farbror-joakim magazine/kalle-ankas-pocket-special "search?q=kalle" "sok?q=kalle" "?s=kalle"; do printf "%s -> " "$u"; curl -s -o /tmp/p -w "%{http_code} %{url_effective}\n" -L -A "$UA" "https://www.seriekatalogen.se/$u"; grep -o '<title>[^<]*' /tmp/p | head -1; done
+          echo "=== comicguide forms"; curl -s -L -A "$UA" https://www.comicguide.de/ > cg.html; grep -io '<form[^>]*>\|<input[^>]*name="[^"]*"[^>]*>' cg.html | head -12
       - name: Save
         if: always()
         run: |
