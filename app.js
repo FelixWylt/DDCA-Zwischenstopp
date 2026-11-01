@@ -313,7 +313,8 @@ function valueCard(own) {
     <details class="small"><summary>Exchange rates</summary><div class="gfactors"><label><span class="l">CHF per EUR</span><input data-rate="EUR" inputmode="decimal" value="${rateOf("EUR")}"></label><label><span class="l">CHF per SEK</span><input data-rate="SEK" inputmode="decimal" value="${rateOf("SEK")}"></label></div>
       <div class="row" style="margin-top:6px"><button type="button" class="ghost" id="rateauto">Use today's ECB rates</button></div><p class="muted" style="margin:4px 0 0">Changing a rate keeps your own rates until you tap the button.</p></details>`;
   if (!curs.length) return `<div class="card stack"><h3>Collection value</h3><p class="small muted" style="margin:0">No values yet. Add price ranges to your series in the Series tab (open a series › Value per issue), using sold prices from eBay, Tradera or Ricardo. Books also have links to their sold listings.</p>${factors}</div>`;
-  const top = list.sort((a, b) => b.total - a.total).slice(0, 20);
+  // compared in CHF, so 50 CHF ranks above 150 SEK
+  const top = list.sort((a, b) => toCHF(b.total, b.v.cur) - toCHF(a.total, a.v.cur)).slice(0, 20);
   // everything in CHF: value, range, and what you paid
   let lik = 0, lo = 0, hi = 0, paid = 0, paidN = 0, paidOfValued = 0;
   curs.forEach(k => { const x = per[k], f = rateOf(k); lik += (x.checked + x.table + x.estimate) * f; lo += (x.checked * 0.9 + (x.table + x.estimate) * 0.6) * f; hi += (x.checked * 1.1 + (x.table + x.estimate) * 1.4) * f; });
@@ -329,7 +330,7 @@ function valueCard(own) {
     <div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Likely</th><th>Range</th><th>Checked</th><th>Table</th><th>Own est.</th></tr></thead><tbody>${curs.map(k => { const x = per[k], t = x.checked + x.table + x.estimate, lo = x.checked * 0.9 + (x.table + x.estimate) * 0.6, hi = x.checked * 1.1 + (x.table + x.estimate) * 1.4;
       return `<tr><td>${k}</td><td><strong>${fmt2(t)}</strong></td><td>${fmt2(lo)}–${fmt2(hi)}</td><td>${fmt2(x.checked)}</td><td>${fmt2(x.table)}</td><td>${fmt2(x.estimate)}</td></tr>`; }).join("")}</tbody></table></div>
     <p class="small muted" style="margin:0">${list.length} of ${own.length.toLocaleString("de-CH")} have a value${none ? ", " + none + " none yet" : ""}. The range allows ±10% for checked prices and −40%/+40% for table values and own estimates. Dealers usually pay well below these values.</p>
-    <div class="small"><strong>Most valuable: check these first</strong><ol class="toplist">${top.map(({ c, v, total }) => { const nm = c.kind === "book" ? c.title || "Untitled" : comicTag(c); return `<li><button class="link" data-open="${esc(c.id)}" title="${esc(nm)}">${esc(nm)}</button><span class="muted">${money(total, v.cur)} · ${how[v.how]}</span></li>`; }).join("")}</ol></div>
+    <div class="small"><strong>Most valuable: check these first</strong><ol class="toplist">${top.map(({ c, v, total }) => { const nm = c.kind === "book" ? c.title || "Untitled" : comicTag(c); return `<li><button class="link" data-open="${esc(c.id)}" title="${esc(nm)}">${esc(nm)}</button><span class="muted">${money(total, v.cur)}${v.cur && v.cur !== "CHF" ? " (≈ CHF " + Math.round(toCHF(total, v.cur)).toLocaleString("de-CH") + ")" : ""} · ${how[v.how]}</span></li>`; }).join("")}</ol></div>
     ${factors}</div>`;
 }
 // ---- favourites and half-star ratings (0.5–5) ----
