@@ -84,7 +84,8 @@
         rawSeries: tidy(first("490", "a") || first("830", "a")), rawVolume: tidy(first("490", "v") || first("830", "v")),
         genre: fields("655").map(f => sub(f, "a")[0]).filter(Boolean)
           .concat(oneGenre(fields("650").map(f => sub(f, "a")[0]).filter(Boolean).join(", "), true))
-          .concat(fields("084").filter(f => sub(f, "2")[0] === "sdnb").map(f => SDNB[sub(f, "a")[0]] || "")).filter(Boolean).join(", "), isbn
+          .concat(fields("084").filter(f => sub(f, "2")[0] === "sdnb").map(f => SDNB[sub(f, "a")[0]] || ""))
+          .concat(fields("082").filter(f => /sdnb/.test(sub(f, "2")[0] || "")).flatMap(f => sub(f, "a")).filter(a => a === "B" || a === "K").map(a => SDNB[a])).filter(Boolean).join(", "), isbn
       };
     });
   }
@@ -221,14 +222,15 @@
   async function genreFromOtherEditions(data, isbn) {
     const title = tidy(String(data.title).split(" – ")[0]), author = (data.authors || [])[0] || "";
     if (!title) return "";
-    const surname = author.split(" ").pop();
-    const same = r => r && r.title && tidy(r.title.split(" – ")[0]).toLowerCase() === title.toLowerCase() && r.isbn !== isbn;
-    try {
-      const swedish = /^97[89]91/.test(isbn) || data.lang === "Swedish";
-      const recs = swedish ? await libris('tit:"' + title + '"' + (surname ? " forf:" + surname : ""), 10)
-        : await dnb('tit="' + title + '"' + (surname ? ' and per="' + surname + '"' : ""), 10);
-      return oneGenre(recs.filter(same).map(r => r.genre).filter(Boolean).join(", "));
-    } catch (e) { return ""; }
+    const surname = author.split(" ").pop(), key = t => tidy(String(t || "").split(" – ")[0]).toLowerCase().normalize("NFC");
+    // the same work: same title, and the same author when the record names one (older records of the same ISBN count too)
+    const same = r => r && key(r.title) === key(title) && (!surname || !(r.authors || []).length || (r.authors || []).some(a => a.toLowerCase().includes(surname.toLowerCase())));
+    const asks = [
+      dnb('tit="' + title + '"' + (surname ? ' and per="' + surname + '"' : ""), 12).catch(() => []),
+      libris('tit:"' + title + '"', 12).catch(() => [])
+    ];
+    const recs = [].concat(...await Promise.all(asks));
+    return oneGenre(recs.filter(same).map(r => r.genre).filter(Boolean).join(", "));
   }
   // title/author search: several catalogues, one list without duplicates
   async function search(q) {
