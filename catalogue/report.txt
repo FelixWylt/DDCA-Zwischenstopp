@@ -1,4 +1,4 @@
-INDUCKS publications: 7,360
+INDUCKS publications: 7,368
 
 PUBLICATIONS
   ✓ Lustiges Taschenbuch  →  de/LTB  'Lustiges Taschenbuch'  (by code)
@@ -68,15 +68,15 @@ PUBLICATIONS
   ✓ Disney Definitive Collection  →  it/DDCO  'Disney Definitive Collection'  (by code)
   ✓ Capolavori della letteratura  →  it/CALE  'Capolavori della Letteratura (libreria)'  (by code)
 
-issues in chosen publications: 21,615
-entries: 233,751, story versions: 119,183
-cover scans: 20,974 of 21,615 issues
+issues in chosen publications: 21,617
+entries: 233,775, story versions: 119,192
+cover scans: 20,976 of 21,617 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
   inducks-de-LTBSP.json: 133 issues, 290 KB  e.g. 67 = de/LTBSP 67 2015-11-19 (14 stories)
   inducks-de-MM.json: 3,437 issues, 2,759 KB  e.g. 1988/43 = de/MM1988-43 1988-10-20 (5 stories)
-  inducks-de-TGDD.json: 473 issues, 437 KB  e.g. 237 = de/TGDD 237 2007-02-06 (9 stories)
+  inducks-de-TGDD.json: 474 issues, 438 KB  e.g. 238 = de/TGDD 238 2007-03-06 (7 stories)
   inducks-de-LTBM.json: 21 issues, 30 KB  e.g. 11 = de/LTBM 11 2019-10-29 (11 stories)
   inducks-de-LTBEX.json: 4 issues, 5 KB  e.g. 3 = de/LTBEX 3 2014-11-04 (8 stories)
   inducks-de-LTBGA.json: 6 issues, 8 KB  e.g. 4 = de/LTBGA  4 2018-08-17 (8 stories)
@@ -126,7 +126,7 @@ FILES
   inducks-de-DD.json: 533 issues, 350 KB  e.g. 263 = de/DD 263 1983-06-24 (6 stories)
   inducks-de-MC.json: 352 issues, 801 KB  e.g. 120 = de/MC120 2016-Q2 (18 stories)
   inducks-de-MMT.json: 36 issues, 71 KB  e.g. 19 = de/MMT  19 2020-01-24 (15 stories)
-  inducks-it-DSBP.json: 96 issues, 125 KB  e.g. 54 = it/DSBP 54 2024 (6 stories)
+  inducks-it-DSBP.json: 97 issues, 126 KB  e.g. 54 = it/DSBP 54 2024 (6 stories)
   inducks-de-PK.json: 17 issues, 9 KB  e.g. 9 = de/PK  9 1987-01-08 (3 stories)
   inducks-it-PBST.json: 71 issues, 109 KB  e.g. 36 = it/PBST 36 2017-07 (11 stories)
   inducks-it-DSB.json: 8 issues, 9 KB  e.g. 5 = it/DSB   5 2017-03 (7 stories)
@@ -137,6 +137,6 @@ FILES
   inducks-it-TLDLE.json: 86 issues, 47 KB  e.g. 32 = it/TLDLE32 2021-11 (3 stories)
   inducks-it-DDCO.json: 49 issues, 33 KB  e.g. 24 = it/DDCO 24 2018-01-15 (3 stories)
   inducks-it-CALE.json: 26 issues, 15 KB  e.g. 14 = it/CALE 14 2019-09 (1 stories)
-directory.json: 2,766 publications (at, ch, de, it, se, uk, us), 198 KB
+directory.json: 2,774 publications (at, ch, de, it, se, uk, us), 199 KB
 
 files in the ISV export: createtables.sql

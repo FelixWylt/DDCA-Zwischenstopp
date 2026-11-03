@@ -1,5 +1,5 @@
 {
- "built": "2026-11-01T21:57",
+ "built": "2026-11-03T07:25",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -33,7 +33,7 @@
    "code": "de/TGDD",
    "title": "Die tollsten Geschichten von Donald Duck (Sonderheft)",
    "file": "inducks-de-TGDD.json",
-   "issues": 473
+   "issues": 474
   },
   "lustiges taschenbuch maus edition": {
    "series": "Lustiges Taschenbuch Maus-Edition",
@@ -442,7 +442,7 @@
    "code": "it/DSBP",
    "title": "Disney Special Books Panini",
    "file": "inducks-it-DSBP.json",
-   "issues": 96
+   "issues": 97
   },
   "panzerknacker co": {
    "series": "Panzerknacker & Co",
