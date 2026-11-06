@@ -1129,6 +1129,12 @@ function nav(v) {
 const moreMenu = (open) => { const m = $("#moremenu"), b = $("#morebtn"); if (!m) return; m.hidden = !open; b.setAttribute("aria-expanded", open ? "true" : "false"); };
 document.getElementById("morebtn").addEventListener("click", e => { e.stopPropagation(); moreMenu($("#moremenu").hidden); });
 document.addEventListener("click", e => { if (!e.target.closest("#moremenu, #morebtn")) moreMenu(false); });
+// while the keyboard is open, pinned bars (Series buttons, bottom navigation) let go instead of riding up on top of it
+const typingField = el => el && (el.tagName === "TEXTAREA" || el.isContentEditable || (el.tagName === "INPUT" && !/^(checkbox|radio|button|submit|range|color|file)$/i.test(el.type)));
+const setKb = () => document.body.classList.toggle("kb", typingField(document.activeElement) || (window.visualViewport ? window.visualViewport.height < window.innerHeight * 0.75 : false));
+document.addEventListener("focusin", setKb);
+document.addEventListener("focusout", () => setTimeout(setKb, 120));
+if (window.visualViewport) window.visualViewport.addEventListener("resize", setKb);
 document.getElementById("tabs").addEventListener("click", e => {
   const a = e.target.closest("a[data-v]"); if (!a) return;
   moreMenu(false);
