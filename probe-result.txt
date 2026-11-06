@@ -1,68 +1,154 @@
-Artemis Fowl 2 Eoin Colfer German {
- "ms": 2559,
- "n": 7,
- "top": [
-  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
-  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803",
-  "Artemis Fowl - Die Verschwörung â€“ 4 CDs | Eoin Colfer | 2015 | German | Ein Artemis-Fowl-Roman | 2 | 9783869091938",
-  "Die Verschwörung | Eoin Colfer | 2015 | German | Artemis Fowl | Band 2 | 9783957130167"
- ]
-}
-Artemis Fowl 2  English {
- "ms": 2501,
- "n": 7,
- "top": [
-  "Artemis Fowl and the arctic incident | Eoin Colfer | 2011 | English | Artemis Fowl | book 2 | 9780141339108",
-  "Artemis Fowl - the Arctic incident | Eoin Colfer | 2009 | English | Artemis Fowl | 2. | 9781423124542",
-  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
-  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803"
- ]
-}
-Artemis Fowl 2 Eoin Colfer Swedish {
- "ms": 3112,
- "n": 7,
- "top": [
-  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
-  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803",
-  "Artemis Fowl - Die Verschwörung â€“ 4 CDs | Eoin Colfer | 2015 | German | Ein Artemis-Fowl-Roman | 2 | 9783869091938",
-  "Die Verschwörung | Eoin Colfer | 2015 | German | Artemis Fowl | Band 2 | 9783957130167"
- ]
-}
-Percy Jackson 3  Swedish {
- "ms": 3598,
- "n": 7,
- "top": [
-  "Der Fluch des Titanen - Percy Jackson, Teil 3 (Ungekürzt) | Rick Riordan | 2025 | German | Percy Jackson | Teil 3: Der Fluch des Titanen | 9783754018637",
-  "Percy Jackson |  | 2020 | German | Percy Jackson | 3 | ",
-  "Percy Jackson and the Titan's Curse | Rick Riordan | 2020 | English | Percy Jackson | book 3 | 9780141962283",
-  "Der Fluch des Titanen | Rick Riordan | 2016 | German | Percy Jackson | 3 | "
- ]
-}
-Mistborn 1 Brandon Sanderson English {
- "ms": 2981,
- "n": 8,
- "top": [
-  "Mistborn â€“ the final empire | Brandon Sanderson | 2023 | English | Mistborn original trilogy | 1 | 9781250868282",
-  "The final empire | Brandon Sanderson | 2016 | English | Mistborn | 1 | 9781473216815",
-  "The final empire | Brandon Sanderson | 2016 | English | Mistborn | [1]. | ",
-  "The final empire | Brandon Sanderson | 2009 | English | Mistborn | 1 | 9780575089914"
- ]
-}
-Woodwalkers 1  German {
- "ms": 9394,
- "n": 23,
- "top": [
-  "Woodwalkers - Graphic Novel (1). Jeffreys große Chance | Katja Brandis | 2026 | German |  |  | 9783401608686",
-  "Das Vermächtnis der Wandler | Katja Brandis | 2022 | German | Woodwalkers - die Rückkehr | [1] | 9783401606408",
-  "Carags Verwandlung | Katja Brandis | 2020 | German | Woodwalkers | 1 | 9783401606064",
-  "Carags Verwandlung | Katja Brandis | 2020 | German | Woodwalkers | [1] | 9783401512259"
- ]
-}
-Spejarens lärling 4  Swedish {
- "ms": 8542,
- "n": 2,
- "top": [
-  "Slaget om Skandia | John Flanagan | 2014 | Swedish | Spejarens lärling | 4 | 9789132163234",
-  "Slaget om Skandia | John Flanagan | 2008 | Swedish | Spejarens lärling | 4 | 9789132153389"
- ]
-}
+
+=== SBN old XML
+9788852240317
+  server:  200 206607B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788852230943
+  server:  200 206607B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788804494010
+  server:  200 206607B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788894243307
+  server:  200 206607B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+
+=== SBN new search
+9788852240317
+  server:  200 203019B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788852230943
+  server:  200 203020B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788804494010
+  server:  200 203019B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788894243307
+  server:  200 203020B acao=- isbn-in-answer | title: Risultati ricerca - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+
+=== SBN SRU guess
+9788852240317
+  server:  404 171794B acao=- isbn-in-answer | title: Home - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788852230943
+  server:  404 171794B acao=- isbn-in-answer | title: Home - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788804494010
+  server:  404 171794B acao=- isbn-in-answer | title: Home - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+9788894243307
+  server:  404 171794B acao=- isbn-in-answer | title: Home - OPAC SBN | BLOCK-PAGE?
+  browser: BLOCKED (Failed to fetch)
+
+=== swisscovery
+9788852240317
+  server:  200 420B acao=* records=0
+  browser: 200 420B readable
+9788852230943
+  server:  200 420B acao=* records=0
+  browser: 200 420B readable
+9788804494010
+  server:  200 420B acao=* records=0
+  browser: 200 420B readable
+9788894243307
+  server:  200 420B acao=* records=0
+  browser: 200 420B readable
+
+=== K10plus
+9788852240317
+  server:  200 463B acao=* records=0 | isbn-in-answer
+  browser: 200 463B readable
+9788852230943
+  server:  200 463B acao=* records=0 | isbn-in-answer
+  browser: 200 463B readable
+9788804494010
+  server:  200 463B acao=* records=0 | isbn-in-answer
+  browser: 200 463B readable
+9788894243307
+  server:  200 463B acao=* records=0 | isbn-in-answer
+  browser: 200 463B readable
+
+=== lobid (hbz)
+9788852240317
+  server:  200 186B acao=* records=0 | isbn-in-answer
+  browser: BLOCKED (Failed to fetch)
+9788852230943
+  server:  200 186B acao=* records=0 | isbn-in-answer
+  browser: BLOCKED (Failed to fetch)
+9788804494010
+  server:  200 186B acao=* records=0 | isbn-in-answer
+  browser: BLOCKED (Failed to fetch)
+9788894243307
+  server:  200 186B acao=* records=0 | isbn-in-answer
+  browser: BLOCKED (Failed to fetch)
+
+=== BnF
+9788852240317
+  server:  200 603B acao=* records=0 | isbn-in-answer
+  browser: 200 603B readable
+9788852230943
+  server:  200 603B acao=* records=0 | isbn-in-answer
+  browser: 200 603B readable
+9788804494010
+  server:  200 603B acao=* records=0 | isbn-in-answer
+  browser: 200 603B readable
+9788894243307
+  server:  200 603B acao=* records=0 | isbn-in-answer
+  browser: 200 603B readable
+
+=== SUDOC
+9788852240317
+  server:  ERR fetch failed
+  browser: BLOCKED (Failed to fetch)
+9788852230943
+  server:  ERR fetch failed
+  browser: BLOCKED (Failed to fetch)
+9788804494010
+  server:  ERR fetch failed
+  browser: BLOCKED (Failed to fetch)
+9788894243307
+  server:  ERR fetch failed
+  browser: BLOCKED (Failed to fetch)
+
+=== Wikidata
+9788852240317
+  server:  200 83B acao=* 
+  browser: 200 83B readable
+9788852230943
+  server:  200 83B acao=* 
+  browser: 200 83B readable
+9788804494010
+  server:  200 83B acao=* 
+  browser: 200 83B readable
+9788894243307
+  server:  200 83B acao=* 
+  browser: 200 83B readable
+
+=== Open Library
+9788852240317
+  server:  200 2B acao=- 
+  browser: 200 2B readable
+9788852230943
+  server:  200 2B acao=- 
+  browser: 200 2B readable
+9788804494010
+  server:  200 2B acao=- 
+  browser: 200 2B readable
+9788894243307
+  server:  200 2B acao=- 
+  browser: 200 2B readable
+
+=== Google Books
+9788852240317
+  server:  429 1306B acao=- 
+  browser: 429 1306B readable
+9788852230943
+  server:  429 1306B acao=- 
+  browser: 429 1306B readable
+9788804494010
+  server:  429 1306B acao=- 
+  browser: 429 1306B readable
+9788894243307
+  server:  429 1306B acao=- 
+  browser: 429 1306B readable
