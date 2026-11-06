@@ -1794,7 +1794,7 @@ ${dupHtml(d)}
 ${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
         <div class="isbnrow">
-          <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="978-3-…"></label>
+          <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="13 or old 10 digits"></label>
           <button id="isbnfill" type="button">Fill from book databases</button>
           <button id="isbnscan" type="button" class="ghost" aria-label="Scan the barcode with the camera">Scan barcode</button>
         </div>
@@ -2913,7 +2913,7 @@ async function fillFromIsbn(d, grab) {
   grab();
   if (!window.Books) return;
   const isbn = Books.normalize(d.isbn);
-  if (!isbn) { bookMsg('<div class="banner warn">That isn\'t a valid ISBN. It has 10 or 13 digits and is printed above the barcode.</div>'); return; }
+  if (!isbn) { bookMsg('<div class="banner warn">That isn\'t a valid ISBN. New books have 13 digits above the barcode. Older books have 10 digits, usually on the back or the copyright page; if the last one is an X, type the other 9 and leave the X off. Books from before about 1970 often have no ISBN at all: search by title instead.</div>'); return; }
   const dup = S.comics.find(c => c.id !== d.id && c.kind === "book" && Books.normalize(c.isbn) === isbn);
   bookMsg('<div class="banner">Looking up ' + isbn + '…</div>');
   const res = await Books.lookupIsbn(isbn);

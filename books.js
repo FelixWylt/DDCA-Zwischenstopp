@@ -15,7 +15,18 @@
   function valid10(s) { if (!/^\d{9}[\dX]$/.test(s)) return false; let t = 0; for (let i = 0; i < 10; i++) t += (s[i] === "X" ? 10 : +s[i]) * (10 - i); return t % 11 === 0; }
   function to13(s) { const b = "978" + s.slice(0, 9); let t = 0; for (let i = 0; i < 12; i++) t += +b[i] * (i % 2 ? 3 : 1); return b + ((10 - t % 10) % 10); }
   // returns the ISBN-13, or "" if it isn't a valid ISBN
-  function normalize(isbn) { const s = clean(isbn); if (valid13(s) && /^97[89]/.test(s)) return s; if (valid10(s)) return to13(s); return ""; }
+  // old numbers: an ISBN-10 (1970–2006) becomes its ISBN-13; a 9-digit SBN (British and American books 1966–1974) is an ISBN-10 without its leading 0;
+  // a phone's number keyboard has no X, so an ISBN-10 typed without its final X is completed too
+  function normalize(isbn) {
+    const s = clean(isbn); if (valid13(s) && /^97[89]/.test(s)) return s; if (valid10(s)) return to13(s);
+    if (/^\d{9}$/.test(s)) { if (valid10("0" + s)) return to13("0" + s); if (valid10(s + "X")) return to13(s + "X"); }
+    return "";
+  }
+  // the ISBN-10 form of a 978 ISBN-13: older books are often catalogued only under it
+  function to10(s13) {
+    if (!/^978\d{10}$/.test(s13)) return ""; const b = s13.slice(3, 12); let t = 0;
+    for (let i = 0; i < 9; i++) t += +b[i] * (10 - i); const c = (11 - t % 11) % 11; return b + (c === 10 ? "X" : c);
+  }
   function hyphenless(isbn) { return clean(isbn); }
 
   // ---- helpers ----
@@ -227,15 +238,10 @@
   async function lookupIsbn(raw) {
     const isbn = normalize(raw);
     if (!isbn) return { error: "invalid" };
-    const tries = [
-      // one ISBN can stand for a boxed set and its volumes: the set is the record the others name as their series
-      ["Deutsche Nationalbibliothek", async () => { const rs = await dnb("isbn=" + isbn, 5); const set = rs.find(r => rs.some(o => o !== r && o.rawSeries && r.title && tidy(r.title.split(" – ")[0]).toLowerCase() === tidy(o.rawSeries).toLowerCase())); return set ? [set].concat(rs.filter(r => r !== set)) : rs; }],
-      ["LIBRIS", () => libris("isbn:" + isbn)],
-      ["Open Library", () => openLibraryIsbn(isbn)],
-      ["Google Books", () => google("isbn:" + isbn)]
-    ];
-    const res = await Promise.all(tries.map(([name, f]) => f().then(r => ({ name, r: r[0] || null }), e => ({ name, r: null, err: e }))));
-    const hits = res.filter(x => x.r && x.r.title);
+    // ask under the ISBN-13; if no database knows it, ask again under the old 10-digit form
+    let res = await askIsbn(isbn), hits = res.filter(x => x.r && x.r.title);
+    const ten = to10(isbn);
+    if (!hits.length && ten) { const res10 = await askIsbn(ten); if (res10.some(x => x.r && x.r.title)) { res = res10; hits = res10.filter(x => x.r && x.r.title); } }
     if (!hits.length) return { isbn, sources: [], offline: res.every(x => x.err), data: null };
     const data = merge(hits.map(x => x.r));
     if (!data.genre && data.title) data.genre = await genreFromOtherEditions(data, isbn);
@@ -244,6 +250,16 @@
     // no database names the language: the ISBN's country group usually does (978-0/1 English, 978-3 German, 978-91 Swedish ...)
     if (!data.lang) data.lang = langFromIsbn(isbn);
     return { isbn, sources: hits.map(x => x.name), data };
+  }
+  async function askIsbn(isbn) {
+    const tries = [
+      // one ISBN can stand for a boxed set and its volumes: the set is the record the others name as their series
+      ["Deutsche Nationalbibliothek", async () => { const rs = await dnb("isbn=" + isbn, 5); const set = rs.find(r => rs.some(o => o !== r && o.rawSeries && r.title && tidy(r.title.split(" – ")[0]).toLowerCase() === tidy(o.rawSeries).toLowerCase())); return set ? [set].concat(rs.filter(r => r !== set)) : rs; }],
+      ["LIBRIS", () => libris("isbn:" + isbn)],
+      ["Open Library", () => openLibraryIsbn(isbn)],
+      ["Google Books", () => google("isbn:" + isbn)]
+    ];
+    return Promise.all(tries.map(([name, f]) => f().then(r => ({ name, r: r[0] || null }), e => ({ name, r: null, err: e }))));
   }
   // a school or study edition often has no genre of its own: take it from other editions of the same work
   // the work's title without edition words: "Strange Case of Dr. Jekyll and Mr. Hyde, Norton Critical Editions, 2nd Edition" -> "Strange Case of Dr. Jekyll and Mr. Hyde"
