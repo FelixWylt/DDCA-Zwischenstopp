@@ -1,6 +1,93 @@
-no button for page 2
-DEBUG DIV.MuiSelect-select MuiSelect-standard MuiInputBase-input MuiInput-input mui-b6zikb=50
-TOTAL 50
+last page 12
+DEBUG BUTTON[Filtrera med taggar||MuiButtonBase-root MuiIconButton-root Mu]=0
+BUTTON[Välj färgtema||MuiButtonBase-root MuiIconButton-root Mu]=
+BUTTON[||MuiButtonBase-root MuiButton-root MuiBut]=Logga in
+LI[||MuiListItem-root MuiListItem-gutters mui]=Inlogg
+A[||MuiButtonBase-root MuiListItemButton-roo]=Inlogg
+DIV[||MuiBox-root mui-1kzwhv6]=Inlogg
+DIV[||MuiListItemText-root mui-14rdsw0]=Inlogg
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Inlogg
+LI[||MuiListItem-root MuiListItem-gutters mui]=Samla
+A[||MuiButtonBase-root MuiListItemButton-roo]=Samla
+DIV[||MuiBox-root mui-1kzwhv6]=Samla
+DIV[||MuiListItemText-root mui-14rdsw0]=Samla
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Samla
+LI[||MuiListItem-root MuiListItem-gutters mui]=Om oss
+A[||MuiButtonBase-root MuiListItemButton-roo]=Om oss
+DIV[||MuiBox-root mui-1kzwhv6]=Om oss
+DIV[||MuiListItemText-root mui-14rdsw0]=Om oss
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Om oss
+LI[||MuiListItem-root MuiListItem-gutters mui]=Om serier
+A[||MuiButtonBase-root MuiListItemButton-roo]=Om serier
+DIV[||MuiBox-root mui-1kzwhv6]=Om serier
+DIV[||MuiListItemText-root mui-14rdsw0]=Om serier
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Om serier
+LI[||MuiListItem-root MuiListItem-gutters mui]=Skickkoder
+A[||MuiButtonBase-root MuiListItemButton-roo]=Skickkoder
+DIV[||MuiBox-root mui-1kzwhv6]=Skickkoder
+DIV[||MuiListItemText-root mui-14rdsw0]=Skickkoder
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Skickkoder
+LI[||MuiListItem-root MuiListItem-gutters mui]=Vi köper
+A[||MuiButtonBase-root MuiListItemButton-roo]=Vi köper
+DIV[||MuiBox-root mui-1kzwhv6]=Vi köper
+DIV[||MuiListItemText-root mui-14rdsw0]=Vi köper
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Vi köper
+LI[||MuiListItem-root MuiListItem-gutters mui]=Kontakt
+A[||MuiButtonBase-root MuiListItemButton-roo]=Kontakt
+DIV[||MuiBox-root mui-1kzwhv6]=Kontakt
+DIV[||MuiListItemText-root mui-14rdsw0]=Kontakt
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Kontakt
+LI[||MuiListItem-root MuiListItem-gutters mui]=Packguide
+A[||MuiButtonBase-root MuiListItemButton-roo]=Packguide
+DIV[||MuiBox-root mui-1kzwhv6]=Packguide
+DIV[||MuiListItemText-root mui-14rdsw0]=Packguide
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Packguide
+LI[||MuiListItem-root MuiListItem-gutters mui]=NyheterNytt
+A[||MuiButtonBase-root MuiListItemButton-roo]=NyheterNytt
+DIV[||MuiBox-root mui-1kzwhv6]=NyheterNytt
+DIV[||MuiListItemText-root mui-14rdsw0]=Nyheter
+SPAN[||MuiTypography-root MuiTypography-body1 M]=Nyheter
+DIV[||MuiChip-root MuiChip-filled MuiChip-size]=Nytt
+SPAN[||MuiChip-label MuiChip-labelSmall mui-4y4]=Nytt
+BUTTON[||MuiButtonBase-root MuiButton-root MuiBut]=Skapa konto
+BUTTON[||MuiButtonBase-root MuiButton-root MuiBut]=Logga in
+BUTTON[||MuiButtonBase-root MuiIconButton-root Mu]=
+BUTTON[Visa/Göm filter||MuiButtonBase-root MuiIconButton-root Mu]=
+BUTTON[||MuiButtonBase-root MuiIconButton-root Mu]=
+BUTTON[Expandera alla||MuiButtonBase-root MuiIconButton-root Mu]=
+SPAN[Sortera efter År stigande||MuiButtonBase-root MuiTableSortLabel-roo]=
+SPAN[Sortera efter # stigande||MuiButtonBase-root MuiTableSortLabel-roo]=
+SPAN[Sortera efter Titel stigande||MuiButtonBase-root MuiTableSortLabel-roo]=
+BUTTON[Gå till första sidan||MuiButtonBase-root MuiIconButton-root Mu]=
+PAGTEXT los fotspår	-	10	20	30	40
+
+
+	2026	584	Den går in!	-	10	20	30	40
+
+
+	2026	585	Sommar, sol och ...	-	10	20	30	40
+
+
+	2026	586	Strandträngsel	-	10	20	30	40
+
+
+	2026	587	Fascination för Formula 1	-	10	20	30	40
+
+
+	2026	588	Uppdrag måne	-	10	20	30	40
+
+
+	2026	589	Legenderna från svarta slottet 
+Nytt
+	-	10	20	30	40
+
+Rader per sida
+50
+551-590 av 590
+VISA ALLA UPPLAGOR
+VISA ALLA OMSLAG
+Bläddra omslag som lista
+TOTAL 589
 1968	1	Tuff till tusen miljarder	100	200	300	750	1500
 1968	2	Farbror Joakims skattjakt	30	70	100	250	500
 1969	3	Kalle Anka i knipa	30	70	100	250	500
@@ -51,3 +138,543 @@ TOTAL 50
 1983	48	Kalle i full karriär	-	10	20	50	100
 1983	49	Högt spel, Farbror Joakim	-	10	20	50	100
 1983	50	Musse Piggs äventyr i rymden	-	10	20	50	100
+1983	51	Kalla mig Kalle!	-	10	20	50	100
+1984	52	Kalle Anka tar hem spelet	-	10	20	50	100
+1984	53	Musse Pigg griper in	-	10	20	50	100
+1984	54	Farbror Joakims rika liv	-	10	20	50	100
+1984	55	Simma lugnt, Kalle!	-	10	20	50	100
+1984	56	Långbens olympiska spel	-	10	20	50	100
+1984	57	Farbror Joakim på djupt vatten	-	10	20	50	100
+1984	58	Håll balansen, Farbror Joakim!	-	10	20	50	100
+1984	59	Se upp för Kalle Anka!	-	10	20	50	100
+1985	60	Stål-Kalle övervinner allt	-	10	20	50	100
+1985	61	Fantastiske Kalle Anka	-	10	20	30	40
+1985	62	Kalle Anka har otur	-	10	20	30	40
+1985	63	Sikta rätt, Kalle!	-	10	20	30	40
+1985	64	Kalle Ankas glada dagar	-	10	20	30	40
+1985	65	Sakta i backarna, Kalle!	-	10	20	30	40
+1985	66	Kalle sjunger ut	-	10	20	30	40
+1985	67	Högt spel i Vilda Västern	-	10	20	30	40
+1986	68	Kalle klipper till!	-	10	20	30	40
+1986	69	Kalle + Kajsa = sant	-	10	20	30	40
+1986	70	Friska tag, farbror Joakim!	-	10	20	30	40
+1986	71	Skratta lagom, Kalle!	-	10	20	30	40
+1986	72	Full rulle, Kalle!	-	10	20	30	40
+1986	73	Kalle går i fällan	-	10	20	30	40
+1986	74	Här kommer Kalle!	-	10	20	30	40
+1986	75	Kalle får pippi	-	10	20	30	40
+1986	76	Kalle Anka - säker i sadeln	-	10	20	30	40
+1987	77	Kalle och vinden från Södern	-	10	20	30	40
+1987	78	Kalle Kalle Anka	-	10	20	30	40
+1987	79	Den flygande mattan	-	10	20	30	40
+1987	80	Kalle siktar högt	-	10	20	30	40
+1987	81	Kom loss, Kalle!	-	10	20	30	40
+1987	82	Äventyrens Kalle	-	10	20	30	40
+1987	83	Kämpa på, Kalle!	-	10	20	30	40
+1987	84	Kalle hugger till	-	10	20	30	40
+1987	85	Tufft, Kalle!	-	10	20	30	40
+1987	86	Håll takten, Kalle!	-	10	20	30	40
+1987	87	Kalle i högform	-	10	20	30	40
+1987	88	Listigt, Kalle!	-	10	20	30	40
+1987	89	God Jul!	-	10	20	30	40
+1987	90	Vilken panggrej, Kalle!	-	10	20	30	40
+1987	91	Försöka duger, Kalle!	-	10	20	30	40
+1987	92	Vilken tur, Kalle!	-	10	20	30	40
+1987	93	Alp-service	-	10	20	30	40
+1987	94	Mata inte djuren!	-	10	20	30	40
+1987	95	Kalle tar det lugnt	-	10	20	30	40
+1988	96	Hoppsan, Kalle!	-	10	20	30	40
+1988	97	Snopet, Kalle!	-	10	20	30	40
+1988	98	Kalle i Korea	-	10	20	30	40
+1988	99		-	10	20	30	40
+1988	100	Friskt vågat, Kalle!	-	10	20	30	40
+1988	101	Vilket flås, Kalle!	-	10	20	30	40
+1988	102	Kalle hugger i sten	-	10	20	30	40
+1988	103	Kalle drämmer till	-	10	20	30	40
+1988	104	Se upp i backen, Kalle!	-	10	20	30	40
+1988	105	Ge dig inte, Kalle!	-	10	20	30	40
+1989	106	Toppen, Kalle!	-	10	20	30	40
+1989	107	Välkommen, Kalle!	-	10	20	30	40
+1989	108	Ingen rök utan eld!	-	10	20	30	40
+1989	109	Lugn i stormen, Kalle!	-	10	20	30	40
+1989	110	Kalle fixar allt!	-	10	20	30	40
+1989	111	Fnatta på, Fnatte!	-	10	20	30	40
+1989	112	Det var droppen, Kalle!	-	10	20	30	40
+1989	113	Mitt i prick, Kalle!	-	10	20	30	40
+1989	114	Visst nappar det, Kalle!	-	10	20	30	40
+1989	115	Hoppa högt, Kalle!	-	10	20	30	40
+1989	116	Koppla av, Kalle!	-	10	20	30	40
+1989	117	Det var katten, Kalle!	-	10	20	30	40
+1989	118	Inte rent spel, Kalle!	-	10	20	30	40
+1990	119	Vilken blåsning, Kalle!	-	10	20	30	40
+1990	120	Fritt fall, Kalle!	-	10	20	30	40
+1990	121	Öka takten, Kalle!	-	10	20	30	40
+1990	122	Rena snurren, Kalle!	-	10	20	30	40
+1990	123	Tappa inte taget, Kalle!	-	10	20	30	40
+1990	124	Nu bränns det, Kalle!	-	10	20	30	40
+1990	125	Knivigt, Kalle!	-	10	20	30	40
+1990	126	Akta häcken, Kalle!	-	10	20	30	40
+1990	127	Hajar du, Kalle!	-	10	20	30	40
+1990	128	Har du sett på magen, Kalle!	-	10	20	30	40
+1990	129	Håll i hatten, Kalle!	-	10	20	30	40
+1990	130	Jakten på zodiaken	-	10	20	30	40
+1991	131	Jakten på zodiaken går vidare	-	10	20	30	40
+1991	132	Vilket hästjobb, Kalle!	-	10	20	30	40
+1991	133	Akta plattfötterna, Kalle!	-	10	20	30	40
+1991	134	Kalle på djupt vatten	-	10	20	30	40
+1991	135	Vilken rysare, Kalle!	-	10	20	30	40
+1991	136	Se upp för snyltgäster, Kalle!	-	10	20	30	40
+1991	137	Bakom flötet, konstapeln?	-	10	20	30	40
+1991	138	Anfall är bästa försvar!	-	10	20	30	40
+1991	139	Hopplöst, Kalle!	-	10	20	30	40
+1991	140	Resan till Gyllene Getens dal!	-	10	20	30	40
+1991	141	Ankornas sju underverk!	-	10	20	30	40
+1992	142	Jakten på den glömda skatten!	-	10	20	30	40
+1992	143	Det stora klippet!	-	10	20	30	40
+1992	144	Grottfolkets fångar!	-	10	20	30	40
+1992	145	Stål-Kalle slår till igen!	-	10	20	30	40
+1992	146	En hårresande historia!	-	10	20	30	40
+1992	147	Hårda bandage, Kalle!	-	10	20	30	40
+1992	148	Se upp för bakhåll, Kalle!	-	10	20	30	40
+1992	149	Guldjakt på Ovädersön!	-	10	20	30	40
+1992	150	Kalle på EuroDisney!	-	10	20	30	40
+1992	151	Nu sitter du i klistret, Stål-Kalle!	-	10	20	30	40
+1993	152	Nu trillar du dit, Kalle!	-	10	20	30	40
+1993	153	Kalle, du har en skruv lös!	-	10	20	30	40
+1993	154	Tomt var det här, Kalle!	-	10	20	30	40
+1993	155	Nu är det klippt, Bolivar!	-	10	20	30	40
+1993	156	Strul på hjul, Kalle!	-	10	20	30	40
+1993	157	Vilket set, Kalle!	-	10	20	30	40
+1993	158	Godnatt, Kalle!	-	10	20	30	40
+1993	159	Kalle ger upp poppet!	-	10	20	30	40
+1993	160	Pippi på lunch, Kalle!	-	10	20	30	40
+1993	161	Lurad igen, Kalle!	-	10	20	30	40
+1993	162	Fest i Ankeborg!	-	10	20	30	40
+1993	163	Knattarna sätter sina spår, Kalle!	-	10	20	30	40
+1993	164	Stål-Kalle på skattjakt!	-	10	20	30	40
+1994	165	Kalle släcker törsten!	-	10	20	30	40
+1994	166	Vart tog väggen vägen?	-	10	20	30	40
+1994	167	Knattarna klipper till igen!	-	10	20	30	40
+1994	168	Grattis, Kalle!	10	20	30	40	60
+1994	169	Se upp för stenskott, Kalle!	-	10	20	30	40
+1994	170	Där fick han på pälsen, Kalle!	-	10	20	30	40
+1994	171	Släpp taget, Kalle!	-	10	20	30	40
+1994	172	Smart, Kalle!	-	10	20	30	40
+1994	173	Stål-Kalle - alla bovars skräck!	-	10	20	30	40
+1994	174	Tjura inte, Kalle!	-	10	20	30	40
+1994	175	Du är bäst, Kalle!	-	10	20	30	40
+1994	176	Buskul, Kalle!	-	10	20	30	40
+1995	177	Typiskt Joakim!	-	10	20	30	40
+1995	178	Hur gick det här till, Kalle?	-	10	20	30	40
+1995	179	Ger du upp, Kalle?	-	10	20	30	40
+1995	180	Det är fusk, Kalle!	-	10	20	30	40
+1995	181	Full fart, Kalle!	10	20	30	40	60
+1995	182	Inget att hänga upp sig på, Kalle!	-	10	20	30	40
+1995	183	Nu ligger du illa till, Kalle!	-	10	20	30	40
+1995	184	Full sprutt, Kalle!	-	10	20	30	40
+1995	185	Du har pippi på tårta, Kalle!	-	10	20	30	40
+1995	186	Du är bäst på plan, Kalle!	-	10	20	30	40
+1995	187	Sista skriket, Kalle!	-	10	20	30	40
+1995	188	Du är nummer ett, Kalle!	10	20	30	40	60
+1995	189	Helt uppåt väggarna, Kalle!	-	10	20	30	40
+1996	190	Trassligt värre, Kalle!	-	10	20	30	40
+1996	191	På en skör tråd, Kalle!	-	10	20	30	40
+1996	192	Fiffigt, Kalle!	-	10	20	30	40
+1996	193	Fy för katten, Kalle!	-	10	20	30	40
+1996	194	Vågat, Kalle!	10	20	30	40	60
+1996	195	OSis, Kalle!	-	10	20	30	40
+1996	196	Mat på gång, Kalle!	-	10	20	30	40
+1996	197	Spänn av, Kalle!	-	10	20	30	40
+1996	198	Klämmigt, Kalle!	-	10	20	30	40
+1996	199	Omkörd, Kalle!	-	10	20	30	40
+1996	200		10	20	30	40	60
+1996	201		-	10	20	30	40
+1996	202		-	10	20	30	40
+1997	203		-	10	20	30	40
+1997	204		-	10	20	30	40
+1997	205		-	10	20	30	40
+1997	206		-	10	20	30	40
+1997	207		10	20	30	40	60
+1997	208		-	10	20	30	40
+1997	209		-	10	20	30	40
+1997	210		-	10	20	30	40
+1997	211		-	10	20	30	40
+1997	212		-	10	20	30	40
+1997	213		10	20	30	40	60
+1997	214		-	10	20	30	40
+1997	215		-	10	20	30	40
+1998	216		-	10	20	30	40
+1998	217		-	10	20	30	40
+1998	218		-	10	20	30	40
+1998	219		-	10	20	30	40
+1998	220		10	20	30	40	60
+1998	221		-	10	20	30	40
+1998	222		-	10	20	30	40
+1998	223		-	10	20	30	40
+1998	224		-	10	20	30	40
+1998	225		-	10	20	30	40
+1998	226	Trubbel på tundran	10	20	30	40	60
+1998	227	Varning! Konstnär i arbete!	-	10	20	30	40
+1999	228	Vulkan-dykarna!	-	10	20	30	40
+1999	229	Magiska krafter, Kalle!	-	10	20	30	40
+1999	230	Den mäktige Vindigo!	-	10	20	30	40
+1999	231	Otur, Kalle!	-	10	20	30	40
+1999	232	Ducka, Joakim!	-	10	20	30	40
+1999	233	Vad händer, Kalle?	10	20	30	40	60
+1999	234	Önskeljuset	-	10	20	30	40
+1999	235	I sandhäxans klor!	-	10	20	30	40
+1999	236	Den magiska ringen	-	10	20	30	40
+1999	237	Rally-Kalle	-	10	20	30	40
+1999	238	Iskallt, Kalle!	10	20	30	40	60
+1999	239	Fullträff, Kalle	-	10	20	30	40
+1999	240	Millennie-yra!	-	10	20	30	40
+2000	241	Den röda Näbbgäddan	-	10	20	30	40
+2000	242	Hjälp sökes!!!	-	10	20	30	40
+2000	243	De magiska stenarna!	-	10	20	30	40
+2000	244	Intergalaktiskt besök!	-	10	20	30	40
+2000	245	Ingen flax, Kalle!	-	10	20	30	40
+2000	246	Fullt ös, Kalle!	10	20	30	40	60
+2000	247	Fotbollstokig!	-	10	20	30	40
+2000	248	Landet på andra sidan	-	10	20	30	40
+2000	249	Olympiskt spektakel	-	10	20	30	40
+2000	250	Spökhuset	-	10	20	30	40
+2000	251	Jakten på silverskalbaggen	-	10	20	30	40
+2000	252	Djungelhjälten	10	20	30	40	60
+2000	253	I banditernas våld	-	10	20	30	40
+2001	254	Iskalla typer!	-	10	20	30	40
+2001	255	Den gåtfulla masken	-	10	20	30	40
+2001	256	Kalabalik på hotellet	-	10	20	30	40
+2001	257	Den glömda dalen	-	10	20	30	40
+2001	258	Topp tunnor rasande	-	10	20	30	40
+2001	259	En fena på fiske!	10	20	30	40	60
+2001	260	Kapten Hafsklunks turkrona	-	10	20	30	40
+2001	261	Kampen om jorden	-	10	20	30	40
+2001	262	Kaj Haj	-	10	20	30	40
+2001	263	Blått regn	-	10	20	30	40
+2001	264	Mumien	-	10	20	30	40
+2001	265	Tidsdörren	10	20	30	40	60
+2001	266	Den store hjälten	-	10	20	30	40
+2001	267	En fot för Ankefot	-	10	20	30	40
+2002	268	Jakten på Storfot	-	10	20	30	40
+2002	269	Tillbaka till TNT	-	10	20	30	40
+2002	270	Grobianernas planet	-	10	20	30	40
+2002	271	Maskoten	-	10	20	30	40
+2002	272	Full fart framåt!	10	20	30	40	60
+2002	273	Stråtrövaren	-	10	20	30	40
+2002	274	Full rulle på bildrulle	-	10	20	30	40
+2002	275	Önsketänkande	-	10	20	30	40
+2002	276	En solskenshistoria	-	10	20	30	40
+2002	277	Ett tidigare liv	-	10	20	30	40
+2002	278	Temporärt arbetslös	10	20	30	40	60
+2002	279	Ett hälsosamt val	-	10	20	30	40
+2002	280	Dummosthenes sten	-	10	20	30	40
+2003	281	På djupt vatten	-	10	20	30	40
+2003	282	Spökråttorna	-	10	20	30	40
+2003	283	Den svarta kulan	-	10	20	30	40
+2003	284	Ökenvandringen	-	10	20	30	40
+2003	285	Sommarledig	10	20	30	40	60
+2003	286	Ett föredöme för ungdomen	-	10	20	30	40
+2003	287	Topp tunnor rasande	-	10	20	30	40
+2003	288	Ankfots brud	-	10	20	30	40
+2003	289	Avalons daggdroppe	-	10	20	30	40
+2003	290	Falska förfalskare	-	10	20	30	40
+2003	291	Sagan om tingen	10	20	30	40	60
+2003	292	En mogen mandarin	-	10	20	30	40
+2004	293	Trollkonstens mästare	-	10	20	30	40
+2004	294	Mästerfotograf i onåd	-	10	20	30	40
+2004	295	En andra chans	-	10	20	30	40
+2004	296	Makt och pengar	-	10	20	30	40
+2004	297	Vikingafejden	-	10	20	30	40
+2004	298	Skickligt, Kalle!	10	20	30	40	60
+2004	299	På äventyr i Sargasso	-	10	20	30	40
+2004	300	Strandhjälten	-	10	20	30	40
+2004	301	Den hemliga lådan	-	10	20	30	40
+2004	302	Bubbeltrubbel	-	10	20	30	40
+2004	303	Sångarstriden	-	10	20	30	40
+2004	304	Tålamodets konst	10	20	30	40	60
+2004	305	Spärrvakten	-	10	20	30	40
+2004	306	Ofrivillig spion	-	10	20	30	40
+2005	307	Jakten på den magiska källan	-	10	20	30	40
+2005	308	En kvarts berömmelse	-	10	20	30	40
+2005	309	Sjusovaren	-	10	20	30	40
+2005	310	Star fars	-	10	20	30	40
+2005	311	Boll-Kalle	10	20	30	40	60
+2005	312	I halsen på Kalle	-	10	20	30	40
+2005	313	Kör så det ryker, 313!	-	10	20	30	40
+2005	314	Drakriddaren	-	10	20	30	40
+2005	315	Ett äpple om natten ...	-	10	20	30	40
+2005	316	Krossade drömmar	-	10	20	30	40
+2005	317	Luftens herre	10	20	30	40	60
+2005	318	Hjältegärningar	-	10	20	30	40
+2006	319	Skattefnatt	-	10	20	30	40
+2006	320	Bluffankan	-	10	20	30	40
+2006	321	Glada brallan	-	10	20	30	40
+2006	322	Vilken fest!	-	10	20	30	40
+2006	323	Trollkarlen i träsket	-	10	20	30	40
+2006	324	Sommarskoj	10	20	30	40	60
+2006	325	Krympgasen	-	10	20	30	40
+2006	326	Storm	-	10	20	30	40
+2006	327	Gröna fingrar	-	10	20	30	40
+2006	328	Inre rikedom	-	10	20	30	40
+2006	329	Sheriffen	-	10	20	30	40
+2006	330	Hårda puckar	10	20	30	40	60
+2006	331	Förbannelsen	-	10	20	30	40
+2007	332	Kameler & keramik	-	10	20	30	40
+2007	333	Körd i botten	-	10	20	30	40
+2007	334	Fast i forntiden	-	10	20	30	40
+2007	335	Tuffa tag	-	10	20	30	40
+2007	336	Fruset guld	-	10	20	30	40
+2007	337	Plums i plurret	10	20	30	40	60
+2007	338	Sjögång	-	10	20	30	40
+2007	339	Livrädd	-	10	20	30	40
+2007	340	På väg upp!	-	10	20	30	40
+2007	341	I hårdträning!	-	10	20	30	40
+2007	342	Kung Kalle	-	10	20	30	40
+2007	343	Mästertjuven	10	20	30	40	60
+2007	344	Grävaren	-	10	20	30	40
+2008	345	Tur & otur	-	10	20	30	40
+2008	346	Ett eget land	-	10	20	30	40
+2008	347	Högspänning	-	10	20	30	40
+2008	348	Helt sjukt	-	10	20	30	40
+2008	349	Alkemisten	-	10	20	30	40
+2008	350	Stick, Kalle!	10	20	30	40	60
+2008	351	Stora små krigare	-	10	20	30	40
+2008	352	Toppen är nådd!	-	10	20	30	40
+2008	353	Trångt läge	-	10	20	30	40
+2008	354	Mumma för mammon	-	10	20	30	40
+2008	355	Färg i fara	-	10	20	30	40
+2008	356	Knivigt läge	10	20	30	40	60
+2008	357	Björnen sover inte	-	10	20	30	40
+2009	358	Snabba pengar	-	10	20	30	40
+2009	359	Rösta på mej!	-	10	20	30	40
+2009	360	Korven med stort K	-	10	20	30	40
+2009	361	Nere för räkning!	-	10	20	30	40
+2009	362	Ankan som visste för mycket	-	10	20	30	40
+2009	363	Kalasläge	-	10	20	30	40
+2009	364	Badankor!	10	20	30	40	60
+2009	365	S.O.S	-	10	20	30	40
+2009	366	Änder och demoner!	-	10	20	30	40
+2009	367	Hemlig agent	-	10	20	30	40
+2009	368	Kris? Vilken kris?	-	10	20	30	40
+2009	369	Robottjuven	10	20	30	40	60
+2009	370	Kommer Tomten?	-	10	20	30	40
+2010	371	Pengabingen länsad!	-	10	20	30	40
+2010	372	Min första miljon	-	10	20	30	40
+2010	373	Ruskbjörnar	-	10	20	30	40
+2010	374	Dubbeldeckarn slår till!	-	10	20	30	40
+2010	375	Tur... och otur	-	10	20	30	40
+2010	376	Måååååål! Fotboll för hela slanten!	10	20	30	40	60
+2010	377	Aaah... Sommar!	-	10	20	30	40
+2010	378	Frityrernas herre	-	10	20	30	40
+2010	379	Vampyren	-	10	20	30	40
+2010	380	Det hänger på håret	-	10	20	30	40
+2010	381	Stål-Kalles rival	-	10	20	30	40
+2010	382	Äventyr i rymden!	10	20	30	40	60
+2010	383	Heja Ankeborg!	-	10	20	30	40
+2011	384	På hal is	-	10	20	30	40
+2011	385	Hjältar i snön	-	10	20	30	40
+2011	386	Jägare - och byten!	-	10	20	30	40
+2011	387	Nattens riddare	-	10	20	30	40
+2011	388	Piratens hämnd	-	10	20	30	40
+2011	389	Kaos i knoppen	10	20	30	40	60
+2011	390	Sommar!	-	10	20	30	40
+2011	391	Semester!	-	10	20	30	40
+2011	392	Stål-Kalle slår tillbaka!	-	10	20	30	40
+2011	393	Ankornas kamp	-	10	20	30	40
+2011	394	Anka på uppdrag	-	10	20	30	40
+2011	395	Högt spel!	10	20	30	40	60
+2011	396	Pengabingen i fara	-	10	20	30	40
+2011	397	Efterlyst: 313	-	10	20	30	40
+2012	398	Full fart!	-	10	20	30	40
+2012	399	Kul för pengarna!	-	10	20	30	40
+2012	400	Kalle Kalle Kalle Kalle	-	10	20	30	40
+2012	401	Kalla killar!	-	10	20	30	40
+2012	402	Mästaren!	10	20	30	40	60
+2012	403	Sommar till tusen!	-	10	20	30	40
+2012	404	Sol - sommar - serier!	-	10	20	30	40
+2012	405	Korvkriget	-	10	20	30	40
+2012	406	Skattjakt	-	10	20	30	40
+2012	407	Mayamysteriet	-	10	20	30	40
+2012	408	Klädd för trubbel!	10	20	30	40	60
+2012	409	Vinternöje	-	10	20	30	40
+2013	410	Gå försiktigt!	-	10	20	30	40
+2013	411	Smaskens, Kalle!	-	10	20	30	40
+2013	412	Små glädjeämnen	-	10	20	30	40
+2013	413	Kalle i kubik!	-	10	20	30	40
+2013	414	Kampen börjar!	-	10	20	30	40
+2013	415	Våghals i farten!	10	20	30	40	60
+2013	416	Sommarlov	-	10	20	30	40
+2013	417	Stress i solen ...?	-	10	20	30	40
+2013	418	Sommardröm	-	10	20	30	40
+2013	419	Taggigt värre!	-	10	20	30	40
+2013	420	Stjärnkamp	-	10	20	30	40
+2013	421	En oväntad resa	10	20	30	40	60
+2013	422	Julbesök	-	10	20	30	40
+2014	423	Trollkungen	-	10	20	30	40
+2014	424	Iskalla fjärilar	-	10	20	30	40
+2014	425	Skurkarna kommer!	-	10	20	30	40
+2014	426	Kamp på djupet	-	10	20	30	40
+2014	427	Se upp, Kalle!	-	10	20	30	40
+2014	428	Grattis, Kalle!	10	20	30	40	60
+2014	429	Sommarskatter	-	10	20	30	40
+2014	430	Sommarkul	-	10	20	30	40
+2014	431	Skattkistan full!	-	10	20	30	40
+2014	432	Fel färg i Ankeborg	-	10	20	30	40
+2014	433	Busar i bingen	-	10	20	30	40
+2014	434	Mästarringen	10	20	30	40	60
+2014	435	Mäktigt jul	-	10	20	30	40
+2015	436	Storfångst!	-	10	20	30	40
+2015	437	Riddargåsen!	-	10	20	30	40
+2015	438	Kampen om myntet	-	10	20	30	40
+2015	439	Superhjältar!	-	10	20	30	40
+2015	440	På djupt vatten	-	10	20	30	40
+2015	441	Grillfest!	10	20	30	40	60
+2015	442	Strandad tur	-	10	20	30	40
+2015	443	Blött värre!	-	10	20	30	40
+2015	444	Full fart!	-	10	20	30	40
+2015	445	Den hemliga ön	-	10	20	30	40
+2015	446	Vampyr för en natt	-	10	20	30	40
+2015	447	Klappat & klart	10	20	30	40	60
+2015	448	Trubbel i rymden	-	10	20	30	40
+2016	449	Se upp för frost!	-	10	20	30	40
+2016	450	Diamantfeber	-	10	20	30	40
+2016	451	Världens ände?	-	10	20	30	40
+2016	452	Magiska krafter	-	10	20	30	40
+2016	453	Godsaker!	-	10	20	30	40
+2016	454	Frispark	10	20	30	40	60
+2016	455	Plums i böljan!	-	10	20	30	40
+2016	456	Njut av sommaren!	-	10	20	30	40
+2016	457	Sommarknipa	-	10	20	30	40
+2016	458	Uppdrag Kalle	-	10	20	30	40
+2016	459	Fars på Mars	-	10	20	30	40
+2016	460	Rött larm!	10	20	30	40	60
+2016	461	Cyber... attack!	-	10	20	30	40
+2017	462	Nytt år!	-	10	20	30	40
+2017	463	Iskallt uppdrag	-	10	20	30	40
+2017	464	Monster i Ankeborg	-	10	20	30	40
+2017	465	Farlig fälla	-	10	20	30	40
+2017	466	Tidsbrott	-	10	20	30	40
+2017	467	Korv till alla!	10	20	30	40	60
+2017	468	Under ytan	-	10	20	30	40
+2017	469	Sommarfnatt	-	10	20	30	40
+2017	470	Semesterkul	-	10	20	30	40
+2017	471	Eld och lågor	-	10	20	30	40
+2017	472	Fjärilsfolket	-	10	20	30	40
+2017	473	Den stora kappkörningen	10	20	30	40	60
+2017	474	Guld och glädje	-	10	20	30	40
+2018	475	Stål-Kalle - på öppet hav	-	10	20	30	40
+2018	476	Våghalsigt vinternöje	-	10	20	30	40
+2018	477	Slemmigt värre	-	10	20	30	40
+2018	478	Tillträde förbjudet!	-	10	20	30	40
+2018	479	Spårlös	-	10	20	30	40
+2018	480	Räddar dagen!	10	20	30	40	60
+2018	481	50	-	10	20	30	40
+2018	482	Sommarlycka	-	10	20	30	40
+2018	483	Mumiechock	-	10	20	30	40
+2018	484	Det luktar guld!	-	10	20	30	40
+2018	485	Ankenstein!	-	10	20	30	40
+2018	486	Grattis, Musse!	10	20	30	40	60
+2018	487	Mitt i prick!	-	10	20	30	40
+2019	488	Virtuell verklighet	-	10	20	30	40
+2018	489	Frostig post	-	10	20	30	40
+2019	490	Ta det lugnt Kalle!	-	10	20	30	40
+2019	491	Tuffa tag!	-	10	20	30	40
+2019	492	Monstret i Dystringe dal	-	10	20	30	40
+2019	493	Grattis Kalle! 85 år	10	20	30	40	60
+2019	494	50 år med Stål-Kalle	-	10	20	30	40
+2019	495	Månen tur och retur ... eller?	-	10	20	30	40
+2019	496	Kryssningar på kors och tvärs!	-	10	20	30	40
+2019	497	Dubbeldeckarns sista uppdrag?	-	10	20	30	40
+2019	498	Hejdlösa hemligheter	-	10	20	30	40
+2019	499	Jakt genom Berlin	10	20	30	40	60
+2019	500	500	-	10	20	30	40
+2020	501	Den stora sagan!	-	10	20	30	40
+2020	502	Nya hjältar	-	10	20	30	40
+2020	503	Farbror Joakims hemlighet	-	10	20	30	40
+2020	504	Tid för skratt!	-	10	20	30	40
+2020	505	Drömomaten	-	10	20	30	40
+2020	506	Gentlemannatjuven Fantomius - Så började det	10	20	30	40	60
+2020	507	Sisten i är en badkruka	-	10	20	30	40
+2020	508	Planlös i paradiset	-	10	20	30	40
+2020	509	Ärkefiender	-	10	20	30	40
+2020	510	313 nya meddelanden	-	10	20	30	40
+2020	511	Häxans förbannelse	-	10	20	30	40
+2020	512	Tillbaka på brottsplats Ankeborg	-	10	20	30	40
+2020	513	Groll & Gruff	-	10	20	30	40
+2021	514	Pingvinernas skatt	-	10	20	30	40
+2021	515	Bemästra tiden, Stål-Kalle!	-	10	20	30	40
+2021	516	Uppdrag rymden	-	10	20	30	40
+2021	517	Rasande hastigt och lustigt	-	10	20	30	40
+2021	518	Omusséen	-	10	20	30	40
+2021	519	Avspark i Europa	-	10	20	30	40
+2021	520	Mot havet	-	10	20	30	40
+2021	521	Högre snabbare längre!	-	10	20	30	40
+2021	522	Dino-möte	-	10	20	30	40
+2021	523	Resan mot jordens mitt	-	10	20	30	40
+2021	524	Musse i fara!	-	10	20	30	40
+2021	525	70 år med Björnligan	-	10	20	30	40
+2021	526	Hur allt började ...	-	10	20	30	40
+2022	527	På språn dag som natt	-	10	20	30	40
+2022	528	På skidor i det blå	-	10	20	30	40
+2022	529	Den mytiska och mystiska pengabingen	-	10	20	30	40
+2022	530	Hisnande kul	-	10	20	30	40
+2022	531	Tidsportal	-	10	20	30	40
+2022	532	En handfast uppfinning	-	10	20	30	40
+2022	533	Mot stranden!	-	10	20	30	40
+2022	534	Mot havet!	-	10	20	30	40
+2022	535	En världsomsegling under havet	-	10	20	30	40
+2022	536	Jagad av alla	-	10	20	30	40
+2022	537	I mikrovärlden	-	10	20	30	40
+2022	538	Kalle forward	-	10	20	30	40
+2022	539	Gyllene jubileum	-	10	20	30	40
+2023	540	Vilken tur!	-	10	20	30	40
+2023	541	Var finns snön?	-	10	20	30	40
+2023	542	Gröngölingar i djungeln	-	10	20	30	40
+2023	543	Kalles hemlighet	-	10	20	30	40
+2023	544	Här grillar jag	-	10	20	30	40
+2023	545	Det gåtfulla templet	10	20	30	40	60
+2023	546	Drömresor	-	10	20	30	40
+2023	547	Drömresor	-	10	20	30	40
+2023	548	Bäst med dubbla hjältar	-	10	20	30	40
+2023	549	Var finns första kronan?	-	10	20	30	40
+2023	550	Spökhuset	-	10	20	30	40
+2023	551	Mästertjuven Kalle	-	10	20	30	40
+2023	552	Ankeborgs hemligheter	-	10	20	30	40
+2024	553	Vem var det?	-	10	20	30	40
+2024	554	Frostfästningen	-	10	20	30	40
+2024	555	Det gyllene tornet	-	10	20	30	40
+2024	556	Nötilus dyker upp igen	-	10	20	30	40
+2024	557	Sköldpaddasövärlden	-	10	20	30	40
+2024	558	Låt spelet börja!	-	10	20	30	40
+2024	559	Party på stranden	-	10	20	30	40
+2024	560	Sport på stranden	-	10	20	30	40
+2024	561	eSport-finalen	-	10	20	30	40
+2024	562	Kapplöpning mot Mars	-	10	20	30	40
+2024	563	Förbannelsernas bok	-	10	20	30	40
+2024	564	Farbror Joakim och evighetskronan	-	10	20	30	40
+2024	565	Galaxräddarna	-	10	20	30	40
+2025	566	Pistens hjälte	-	10	20	30	40
+2025	567	Dinosaurier i Ankeborg	-	10	20	30	40
+2025	568	Sandokalle Sjöfararen	-	10	20	30	40
+2025	569	En fantasimiljardär i svårigheter	-	10	20	30	40
+2025	570	På farligt uppdrag	-	10	20	30	40
+2025	571	Tänk om... Kalle blev Wolverine	-	10	20	30	40
+2025	572	Varning ankor!	-	10	20	30	40
+2025	573	Sommartider	-	10	20	30	40
+2025	574	Tillbaka till mikrovärlden	-	10	20	30	40
+2025	575	Slutet på en legend	-	10	20	30	40
+2025	576	Spöket från Klondike	-	10	20	30	40
+2025	577	E-313	-	10	20	30	40
+2025	578	En riktigt God Jul	-	10	20	30	40
+2026	579	Fantomen på operan	-	10	20	30	40
+2026	580	Snömagi	-	10	20	30	40
+2026	581	Den magiska stenen	-	10	20	30	40
+2026	582	Flyktspelet	-	10	20	30	40
+2026	583	I Marco Polos fotspår	-	10	20	30	40
+2026	584	Den går in!	-	10	20	30	40
+2026	585	Sommar, sol och ...	-	10	20	30	40
+2026	586	Strandträngsel	-	10	20	30	40
+2026	587	Fascination för Formula 1	-	10	20	30	40
+2026	588	Uppdrag måne	-	10	20	30	40
+2026	589	Legenderna från svarta slottet 
+Nytt	-	10	20	30	40
