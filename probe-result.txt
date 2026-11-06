@@ -1,10 +1,68 @@
-console: Failed to load resource: the server responded with a status of 429 ()
-3855041814 {"ms":1189,"isbn":"9783855041817","src":["Deutsche Nationalbibliothek","Open Library"],"d":{"title":"Ende gut, alles gut! â€“ 1990 - 2000, ein Jahrhundertende in Karikaturen","author":["Patrick Chappatte"],"year":"1999","lang":"German","genre":"Karikatur","fmt":"Box set"}}
-3-423-11015-6 {"ms":1,"err":"invalid"}
-console: Failed to load resource: the server responded with a status of 429 ()
-0552131059 {"ms":339,"isbn":"9780552131056","src":["LIBRIS","Open Library"],"d":{"title":"Equal rites â€“ [a Discworld novel]","author":["Terry Pratchett"],"year":"1987","lang":"English","genre":"Fantasy, Science Fiction","fmt":"Paperback","pages":"285"}}
-9129538413 {"ms":0,"err":"invalid"}
-91-29-53841-3 {"ms":0,"err":"invalid"}
-console: Failed to load resource: the server responded with a status of 429 ()
-console: Failed to load resource: the server responded with a status of 429 ()
-345242238 {"ms":619,"isbn":"9780345242235","src":[],"d":null}
+Artemis Fowl 2 Eoin Colfer German {
+ "ms": 2559,
+ "n": 7,
+ "top": [
+  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
+  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803",
+  "Artemis Fowl - Die Verschwörung â€“ 4 CDs | Eoin Colfer | 2015 | German | Ein Artemis-Fowl-Roman | 2 | 9783869091938",
+  "Die Verschwörung | Eoin Colfer | 2015 | German | Artemis Fowl | Band 2 | 9783957130167"
+ ]
+}
+Artemis Fowl 2  English {
+ "ms": 2501,
+ "n": 7,
+ "top": [
+  "Artemis Fowl and the arctic incident | Eoin Colfer | 2011 | English | Artemis Fowl | book 2 | 9780141339108",
+  "Artemis Fowl - the Arctic incident | Eoin Colfer | 2009 | English | Artemis Fowl | 2. | 9781423124542",
+  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
+  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803"
+ ]
+}
+Artemis Fowl 2 Eoin Colfer Swedish {
+ "ms": 3112,
+ "n": 7,
+ "top": [
+  "Die Verschwörung | Eoin Colfer | 2022 | German | Artemis Fowl | Band 2 | ",
+  "Artemis Fowl - Die Verschwörung (Ein Artemis-Fowl-Roman 2) | Eoin Colfer | 2020 | German | Ein Artemis-Fowl-Roman | 2 | 9783844923803",
+  "Artemis Fowl - Die Verschwörung â€“ 4 CDs | Eoin Colfer | 2015 | German | Ein Artemis-Fowl-Roman | 2 | 9783869091938",
+  "Die Verschwörung | Eoin Colfer | 2015 | German | Artemis Fowl | Band 2 | 9783957130167"
+ ]
+}
+Percy Jackson 3  Swedish {
+ "ms": 3598,
+ "n": 7,
+ "top": [
+  "Der Fluch des Titanen - Percy Jackson, Teil 3 (Ungekürzt) | Rick Riordan | 2025 | German | Percy Jackson | Teil 3: Der Fluch des Titanen | 9783754018637",
+  "Percy Jackson |  | 2020 | German | Percy Jackson | 3 | ",
+  "Percy Jackson and the Titan's Curse | Rick Riordan | 2020 | English | Percy Jackson | book 3 | 9780141962283",
+  "Der Fluch des Titanen | Rick Riordan | 2016 | German | Percy Jackson | 3 | "
+ ]
+}
+Mistborn 1 Brandon Sanderson English {
+ "ms": 2981,
+ "n": 8,
+ "top": [
+  "Mistborn â€“ the final empire | Brandon Sanderson | 2023 | English | Mistborn original trilogy | 1 | 9781250868282",
+  "The final empire | Brandon Sanderson | 2016 | English | Mistborn | 1 | 9781473216815",
+  "The final empire | Brandon Sanderson | 2016 | English | Mistborn | [1]. | ",
+  "The final empire | Brandon Sanderson | 2009 | English | Mistborn | 1 | 9780575089914"
+ ]
+}
+Woodwalkers 1  German {
+ "ms": 9394,
+ "n": 23,
+ "top": [
+  "Woodwalkers - Graphic Novel (1). Jeffreys große Chance | Katja Brandis | 2026 | German |  |  | 9783401608686",
+  "Das Vermächtnis der Wandler | Katja Brandis | 2022 | German | Woodwalkers - die Rückkehr | [1] | 9783401606408",
+  "Carags Verwandlung | Katja Brandis | 2020 | German | Woodwalkers | 1 | 9783401606064",
+  "Carags Verwandlung | Katja Brandis | 2020 | German | Woodwalkers | [1] | 9783401512259"
+ ]
+}
+Spejarens lärling 4  Swedish {
+ "ms": 8542,
+ "n": 2,
+ "top": [
+  "Slaget om Skandia | John Flanagan | 2014 | Swedish | Spejarens lärling | 4 | 9789132163234",
+  "Slaget om Skandia | John Flanagan | 2008 | Swedish | Spejarens lärling | 4 | 9789132153389"
+ ]
+}
