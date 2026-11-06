@@ -1,17 +1,23 @@
-// Probe: open the SBN search link the app shows in a real browser (as a phone would) and read what the page shows.
+// Probe: let SBN's own pages build the search, then report the resulting link and what it shows.
 import { chromium } from "playwright";
-const T = { "9788852230943": /paperdinastia|barks/i, "9788804494010": /pocket english/i, "9788852240317": /spy stories/i };
-const URLS = {
-  "app link (item:1032 @frase@)": i => `https://opac.sbn.it/risultati-ricerca-avanzata?item:1032:ISBN::@frase@=${i}`,
-  "item:8": i => `https://opac.sbn.it/risultati-ricerca-avanzata?item:8:ISBN::${i}`,
-};
+const I = "9788804494010", TEN = "8804494018";
 const b = await chromium.launch(); const p = await b.newPage();
-for (const [name, u] of Object.entries(URLS)) for (const [i, re] of Object.entries(T)) {
-  try {
-    await p.goto(u(i), { timeout: 30000, waitUntil: "domcontentloaded" }); await p.waitForTimeout(6000);
-    const txt = (await p.evaluate(() => document.body.innerText)).replace(/\s+/g, " ");
-    const at = txt.search(re), nr = txt.search(/risultat|nessun/i);
-    console.log(`${name} ${i}: found-title=${at >= 0} | ${at >= 0 ? txt.slice(Math.max(0, at - 100), at + 100) : ""}\n   near 'risultati': ${nr >= 0 ? txt.slice(Math.max(0, nr - 60), nr + 120) : "-"}`);
-  } catch (e) { console.log(`${name} ${i}: ERR ${e.message.split("\n")[0]}`); }
-}
+const show = async (label) => { await p.waitForTimeout(6000); const t = (await p.evaluate(() => document.body.innerText)).replace(/\s+/g, " "); const k = t.search(/pocket english|nessun risultato/i); console.log(`\n## ${label}\nURL: ${p.url()}\n${k >= 0 ? t.slice(Math.max(0, k - 150), k + 150) : t.slice(0, 300)}`); };
+try { // 1. simple search box on the home page
+  await p.goto("https://opac.sbn.it/", { timeout: 30000 }); await p.waitForTimeout(3000);
+  const box = p.locator('input[type="text"], input[type="search"]').first(); await box.fill(I); await box.press("Enter"); await show("home search " + I);
+} catch (e) { console.log("home ERR " + e.message.split("\n")[0]); }
+try { // 2. advanced form: list the field choices, then choose ISBN
+  await p.goto("https://opac.sbn.it/ricerca-avanzata", { timeout: 30000 }); await p.waitForTimeout(4000);
+  const sels = await p.evaluate(() => [...document.querySelectorAll("select")].map(s => s.name + "#" + s.id + ": " + [...s.options].map(o => o.value + "=" + o.text.trim()).slice(0, 40).join(" ; ")));
+  console.log("\nSELECTS:\n" + sels.join("\n"));
+  const inputs = await p.evaluate(() => [...document.querySelectorAll("input")].filter(x => x.type !== "hidden").map(x => x.type + " " + x.name + "#" + x.id).slice(0, 30));
+  console.log("INPUTS: " + inputs.join(" | "));
+  for (const v of [I, TEN]) {
+    await p.goto("https://opac.sbn.it/ricerca-avanzata", { timeout: 30000 }); await p.waitForTimeout(4000);
+    const s = p.locator("select").filter({ has: p.locator("option", { hasText: /^\s*ISBN\s*$/ }) }).first();
+    await s.selectOption({ label: "ISBN" }).catch(async () => { const o = await s.locator("option", { hasText: "ISBN" }).first().getAttribute("value"); await s.selectOption(o); });
+    const row = p.locator('input[type="text"]').first(); await row.fill(v); await row.press("Enter"); await show("advanced ISBN " + v);
+  }
+} catch (e) { console.log("advanced ERR " + e.message.split("\n")[0]); }
 await b.close();
