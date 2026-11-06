@@ -10,7 +10,8 @@ for (let pg = 1; pg <= 40; pg++) {
   if (!ok) { console.log("last page", pg); break; }
   await q.waitForTimeout(1500);
 }
-console.log("DEBUG", await q.evaluate(() => [...document.querySelectorAll("*")].filter(x => x.children.length === 0 && /^\d+$/.test(x.textContent.trim()) && !x.closest("table")).slice(0, 12).map(x => x.tagName + "." + x.className + "=" + x.textContent.trim()).join(" | ")));
+console.log("DEBUG", await q.evaluate(() => [...document.querySelectorAll("button, [role=button], nav *")].filter(x => x.offsetParent).map(x => x.tagName + "[" + (x.getAttribute("aria-label") || "") + "|" + (x.title || "") + "|" + x.className.slice(0, 40) + "]=" + x.textContent.trim().slice(0, 15)).slice(0, 60).join("\n")));
+console.log("PAGTEXT", await q.evaluate(() => { const t = document.querySelector("table"); let p = t; for (let i = 0; i < 5 && p.parentElement; i++) p = p.parentElement; return p.innerText.slice(-400); }));
 console.log("TOTAL", all.size);
 console.log([...all.values()].join("\n"));
 await b.close();
