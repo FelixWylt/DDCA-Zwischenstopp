@@ -297,5 +297,23 @@
     return out.slice(0, 30).map(r => Object.assign({}, r, { genre: oneGenre(r.genre || ""), authors: cleanPeople(r.authors) }));
   }
 
-  root.Books = { normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
+  // how many volumes a series has in this language's national library: the highest volume number listed under exactly that series name
+  async function seriesVolumes(name, lang) {
+    const key = x => String(x || "").toLowerCase().normalize("NFC").replace(/[\s.;:,\/]+$/, "").replace(/\s+/g, " ").trim();
+    const want = key(name);
+    const read = xml => {
+      const doc = new DOMParser().parseFromString(xml, "text/xml"); let max = 0;
+      [...doc.getElementsByTagNameNS("*", "datafield")].filter(f => ["490", "830"].includes(f.getAttribute("tag"))).forEach(f => {
+        const sub = c => ([...f.children].find(x => x.getAttribute("code") === c) || {}).textContent || "";
+        if (key(sub("a")) !== want) return;
+        const n = parseInt(String(sub("v")).replace(/^\D+/, ""), 10); if (n > 0 && n < 500) max = Math.max(max, n);
+      });
+      return max;
+    };
+    const asks = [];
+    if (lang !== "German") asks.push(getText("https://libris.kb.se/xsearch?format=marcxml&n=200&query=" + encodeURIComponent('"' + name + '"')).then(read).catch(() => 0));
+    if (lang !== "Swedish") asks.push(getText("https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&recordSchema=MARC21-xml&maximumRecords=100&query=" + encodeURIComponent('WOE="' + name + '"')).then(read).catch(() => 0));
+    return Math.max(0, ...(await Promise.all(asks)));
+  }
+  root.Books = { seriesVolumes, normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
 })(typeof window !== "undefined" ? window : globalThis);
