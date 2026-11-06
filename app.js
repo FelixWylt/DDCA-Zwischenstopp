@@ -2368,7 +2368,7 @@ function wishlistBySeries(wl) {
   S.wishOpen = S.wishOpen || {};
   return '<div class="list">' + keys.map(k => {
     const list = groups[k], se = seriesById(k), max = list.filter(c => typeof c.pricePaid === "number");
-    const sub = [list.length + (list.length === 1 ? " issue wanted" : " issues wanted"), se ? se.publisher : "", max.length ? "budget " + money(max.reduce((a, c) => a + c.pricePaid, 0), max[0].currency) : ""].filter(Boolean).join(" · ");
+    const sub = [list.length + (list.every(c => c.kind === "book") ? (list.length === 1 ? " volume wanted" : " volumes wanted") : (list.length === 1 ? " issue wanted" : " issues wanted")), se ? se.publisher : "", max.length ? "budget " + money(max.reduce((a, c) => a + c.pricePaid, 0), max[0].currency) : ""].filter(Boolean).join(" · ");
     return `<details class="wishseries" data-wk="${esc(k)}"${S.wishOpen[k] ? " open" : ""}><summary class="folder"><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div><div class="s">${esc(sub)}</div></div><span class="count wanted-count">${list.length}</span><span class="chev" aria-hidden="true">›</span></summary>
       <div class="list" style="margin-top:8px">${list.map(wishItem).join("")}</div></details>`;
   }).join("") + '</div>';
