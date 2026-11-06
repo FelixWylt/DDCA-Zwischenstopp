@@ -1,13 +1,10 @@
-3855041814 DNB 3 | LIBRIS 0 | OL Ende gut, alles gut! | G HTTP429
-9783855041817 DNB 3 | LIBRIS 0 | OL Ende gut, alles gut! | G HTTP429
-0552131059 DNB 0 | LIBRIS 1 | OL EQUAL RITES | G HTTP429
-9780552131056 DNB 0 | LIBRIS 1 | OL EQUAL RITES | G HTTP429
-0345339703 DNB 0 | LIBRIS 1 | OL The Lord Of The Rings: The Fellowship of the Ring | G HTTP429
-9780345339706 DNB 0 | LIBRIS 1 | OL The Lord Of The Rings: The Fellowship of the Ring | G HTTP429
-9129538413 DNB 0 | LIBRIS 0 | OL none | G HTTP429
-9789129538415 DNB 0 | LIBRIS 0 | OL none | G HTTP429
-3423110156 DNB 2 | LIBRIS 0 | OL none | G HTTP429
-9783423110150 DNB 2 | LIBRIS 0 | OL Die Schule Der Diktatoren Eine Komodie in Nevn Bildern | G HTTP429
-DNBor 3
-LIBRISor 0
-OLboth {"ISBN:0552131059": {"url": "http://openlibrary.org/books/OL26211577M/EQUAL_RITES", "key": "/books/OL26211577M", "title"
+console: Failed to load resource: the server responded with a status of 429 ()
+3855041814 {"ms":1189,"isbn":"9783855041817","src":["Deutsche Nationalbibliothek","Open Library"],"d":{"title":"Ende gut, alles gut! â€“ 1990 - 2000, ein Jahrhundertende in Karikaturen","author":["Patrick Chappatte"],"year":"1999","lang":"German","genre":"Karikatur","fmt":"Box set"}}
+3-423-11015-6 {"ms":1,"err":"invalid"}
+console: Failed to load resource: the server responded with a status of 429 ()
+0552131059 {"ms":339,"isbn":"9780552131056","src":["LIBRIS","Open Library"],"d":{"title":"Equal rites â€“ [a Discworld novel]","author":["Terry Pratchett"],"year":"1987","lang":"English","genre":"Fantasy, Science Fiction","fmt":"Paperback","pages":"285"}}
+9129538413 {"ms":0,"err":"invalid"}
+91-29-53841-3 {"ms":0,"err":"invalid"}
+console: Failed to load resource: the server responded with a status of 429 ()
+console: Failed to load resource: the server responded with a status of 429 ()
+345242238 {"ms":619,"isbn":"9780345242235","src":[],"d":null}
