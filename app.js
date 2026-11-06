@@ -71,11 +71,13 @@ function arrangeSeries(se) {
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
 }
+// for comics, "Comics" or "Graphic novels" says nothing: it's what they all are
+const noComicsGenre = g => String(g || "").split(/\s*,\s*/).filter(x => x && !/^(comics?|graphic novels?|comic books?|tegneserier|serier|fumetti|bandes dessinées)$/i.test(x)).join(", ");
 // a comic's genres from its stories (Duckipedia: Abenteuer, Komik, Krimi ...), in the app's genre names
 // in a comic, "Komödie" or "Gag" is humour, not a stage play
 function storyGenres(c) {
   if (!(window.Books && Books.oneGenre)) return "";
-  const MAP = [[/gagstory|einseiter|gag|komödie|komik|slapstick|parodie|satire|humoreske|witz|comedy/i, "Humour"], [/kriminal|krimi|detektiv|mystery|agenten|spionage/i, "Crime"],
+  const MAP = [[/einseiter|one-pager|onepager|ensidig/i, "One-pager"], [/gagstory|gag|komödie|komik|slapstick|parodie|satire|humoreske|witz|comedy/i, "Humour"], [/kriminal|krimi|detektiv|mystery|agenten|spionage/i, "Crime"],
     [/abenteuer|schatzsuche|expedition|reise|western|piraten|dschungel/i, "Adventure"], [/science-fiction|science fiction|weltraum|zeitreise|zukunft|erfindung|düsentrieb/i, "Science Fiction"],
     [/superheld|phantomias|paperinik|duck avenger/i, "Superheroes"], [/horror|grusel|gespenst|geister/i, "Horror"], [/magie|zauber|hexe|fantasy|märchen|sagen/i, "Fantasy"],
     [/historisch|geschichte der|antike|mittelalter/i, "Historical"], [/sport|fussball|fußball/i, "Sport"], [/liebe|romantik/i, "Romance"]];
@@ -271,12 +273,16 @@ function parsePrices(key, text, fallbackCur, edition) {
       edRows.push({ n: +cg[1], ed: editionKey(ed), label: ed.replace(/\s*\b(1[89]|20)\d{2}\b/g, "").trim(), price: p }); return;
     }
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
-    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(?:\s*-\s*(\d{1,4}))?((?:\s+\d+){5})\s*$/.exec(line);
+    // Seriekatalogen: year (or nothing), issue or issue range, an optional title, then five prices G VG FN VF NM ("-" = no price)
+    // e.g. "1949 2 650 1300 2000 5000 10000" (Kalle Anka & C:o) or "1968 1 Tuff till tusen miljarder 100 200 300 750 1500" (Kalle Ankas Pocket)
+    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
     if (sk) {
       kind = kind || "Seriekatalogen";
-      const nums = sk[4].trim().split(/\s+/).map(Number), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[3] ? +sk[3] : a;
+      const nums = sk[5].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[3] ? +sk[3] : a;
       if (yearly && !y) { unread.push(line); return; }
-      items.push({ lo: at(y, a), hi: at(y, b), price: nums[3], cur: "SEK" }); return;
+      if (nums[3] == null) { unread.push(line); return; }   // no VF price listed
+      // running series (Kalle Ankas Pocket): the year column is only the publication year
+      items.push({ lo: yearly ? at(y, a) : a, hi: yearly ? at(y, b) : b, price: nums[3], cur: "SEK" }); return;
     }
     // typed ranges, several per line
     let any = false;
@@ -440,7 +446,7 @@ function bindStars(root, onSet) {
 }
 const heartHtml = (on, attr) => `<button type="button" class="heart${on ? " on" : ""}" ${attr || ""} aria-pressed="${on ? "true" : "false"}" title="Favourite">${on ? "♥" : "♡"}</button>`;
 const ratingTxt = v => v ? "★ " + String(v).replace(".", ",") : "";
-function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 2600); }
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3200); }
 function seriesById(id) { return S.series.find(s => s.id === id); }
 function parseIssue(series, raw) {
   const s = String(raw || "").trim();
@@ -648,6 +654,19 @@ async function boot() {
       Object.keys(sz).concat(Object.keys(mt)).forEach(k => { if (!used.has(k) && lower.has(k.toLowerCase())) { delete sz[k]; delete mt[k]; ch = true; } });
       if (ch) { S.bookSizes = sz; S.bookMeta = mt; await setConfig("bookSizes", sz); await setConfig("bookSeriesInfo", mt); }
       await setConfig("bookSeriesTidy1", true);
+    }
+    // once: "Comics" removed as a genre of comics and comic books; app-made comic genres redone (One-pager for Einseiter)
+    if (!(await getConfig("comicGenre3")) && window.Books && Books.oneGenre) {
+      const appNames = new Set(["Adventure", "Crime", "Short Stories", "Science Fiction", "Horror", "Fantasy", "Humour", "Superheroes", "Historical", "Sport", "Romance", "Comics"]);
+      const fix = [];
+      S.comics.forEach(c => {
+        if (isNovel(c) || !c.genre) return;
+        let g = noComicsGenre(c.genre);
+        if (c.kind !== "book" && storyGenres(c) && String(c.genre).split(/\s*,\s*/).every(x => appNames.has(x))) g = storyGenres(c);
+        if (g !== c.genre) fix.push(Object.assign({}, c, { genre: g }));
+      });
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("comicGenre3", true); await setConfig("comicGenre2", true);
     }
     if (!(await getConfig("comicGenre2")) && window.Books && Books.oneGenre) {
       const oldRule = c => Books.oneGenre((c.stories || []).map(s => s.genre).filter(Boolean).join(", ").replace(/\b(komödie|komödien|komik|gags?|slapstick|parodie|satire|witz|humoreske|comedy)\b/gi, "Humour").replace(/\b(schatzsuche|expedition|reise)\b/gi, "Adventure"), true);
@@ -1799,7 +1818,7 @@ ${isBook ? `
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
         </div>
-        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales"].concat(S.comics.map(c => c.genre).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "One-pager", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"].concat(S.comics.map(c => c.publisher).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
@@ -2063,7 +2082,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         }
         rememberSeries(saved.seriesId);
         if (S.lastSeries !== saved.seriesId) { S.lastSeries = saved.seriesId; setConfig("lastSeries", saved.seriesId).catch(() => {}); }
-        toast((moved ? (target.short || target.name) + " " + p.label + " moved from your wishlist to your collection" : c.status === "wanted" ? "Added to wishlist" : "Saved to archive") + lotNote);
+        const what = (target.short || target.name) + " " + (p.label || "");
+        toast("✓ " + (moved ? what + " moved from your wishlist to your collection" : S.editing ? "Changes saved: " + what : c.status === "wanted" ? what + " added to your wishlist" : what + " saved to your archive") + lotNote);
         if (next) {
           S.lastSaved = (target.short || target.name) + " " + p.label;
           goNext(c, p, se);
@@ -2106,7 +2126,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         if (!prepareLot(d, c, before)) { btns.forEach(b => b.disabled = false); return; }
         const saved = await saveComic(c);
         const lotNote = await afterLotSave(saved, before);
-        toast((c.status === "wanted" ? "Book added to wishlist" : "Book saved") + lotNote);
+        toast("✓ " + (S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : "Saved to your archive: ") + (c.title || "book") + lotNote);
         if (next) {
           S.editing = null;
           S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
@@ -2269,19 +2289,25 @@ function wishBudget(c) {
   return { est, max, ok: est <= max + 0.005, v };
 }
 function wishlistView() {
-  const all = sortComics(S.comics.filter(c => c.status === "wanted"));
+  // comics and books apart: one chip each
+  const every = sortComics(S.comics.filter(c => c.status === "wanted")), wc = every.filter(c => !isNovel(c)), wb = every.filter(c => isNovel(c));
+  if (!S.wishKind) S.wishKind = wc.length || !wb.length ? "comics" : "books";
+  if (S.wishKind === "comics" && !wc.length && wb.length) S.wishKind = "books";
+  if (S.wishKind === "books" && !wb.length && wc.length) S.wishKind = "comics";
+  const all = S.wishKind === "books" ? wb : wc;
+  const kindChips = wb.length && wc.length ? `<div class="subtabs" role="tablist" aria-label="Wishlist"><button role="tab" type="button" data-wkind="comics" aria-selected="${S.wishKind === "comics"}">Comics <span class="muted">${wc.length}</span></button><button role="tab" type="button" data-wkind="books" aria-selected="${S.wishKind === "books"}">Books <span class="muted">${wb.length}</span></button></div>` : "";
   const fits = all.filter(c => (wishBudget(c) || {}).ok);
   if (S.wishFilter === "budget" && !fits.length) S.wishFilter = "all";
   const wl = S.wishFilter === "budget" ? fits : all;
   const chip = (k, label) => `<button type="button" class="fchip${(S.wishFilter || "all") === k ? " on" : ""}" data-wf="${k}" aria-pressed="${(S.wishFilter || "all") === k}">${label}</button>`;
-  return gapTabs() + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><button type="button" id="wcopy">Copy list for comic fair</button></div>
+  return gapTabs() + kindChips + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><button type="button" id="wcopy">Copy list for comic fair</button></div>
       <textarea id="wcopybox" class="mono" rows="6" readonly hidden></textarea>
-      <p class="small muted" style="margin:0">${wl.length} ${wl.length === 1 ? "issue" : "issues"} ${S.wishFilter === "budget" ? "worth no more than your maximum price (by your price table)" : "wanted"}. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
+      <p class="small muted" style="margin:0">${wl.length} ${S.wishKind === "books" ? (wl.length === 1 ? "book" : "books") : (wl.length === 1 ? "issue" : "issues")} ${S.wishFilter === "budget" ? "worth no more than your maximum price (by your price table)" : "wanted"}. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
     : '<div class="empty"><h3>Your wishlist is empty</h3><p>In Gaps, tap a grey number to put it on your wishlist.</p></div>') + '<div id="cellpick"></div>';
 }
 // the wishlist as short text for a comic fair: "LTB: 12, 45, 101–103 (max CHF 8)"
 function wishlistText() {
-  const wl = sortComics(S.comics.filter(c => c.status === "wanted")), groups = new Map();
+  const every = sortComics(S.comics.filter(c => c.status === "wanted")), wl = every.filter(c => !isNovel(c)).concat(every.filter(c => isNovel(c))), groups = new Map();
   wl.forEach(c => { const k = seriesKeyOf(c); (groups.get(k) || groups.set(k, []).get(k)).push(c); });
   const lines = [];
   groups.forEach((list, k) => {
@@ -2298,6 +2324,7 @@ function wishlistText() {
     });
     flush();
     const name = c0 => c0.kind === "book" ? (c0.seriesName || "Books") : se ? (se.short ? se.short + " – " + se.name : se.name) : c0.seriesName || "";
+    if (isNovel(list[0]) && !groups._bk) { groups._bk = true; lines.push("", "Books:"); }
     if (list[0].kind === "book" && !list[0].seriesName) list.forEach(c => lines.push("Book: " + [c.title, c.author].filter(Boolean).join(" – ") + (maxOf(c) ? " (" + maxOf(c) + ")" : "")));
     else lines.push(name(list[0]) + ": " + parts.join(", "));
   });
@@ -2306,6 +2333,7 @@ function wishlistText() {
 function bindWishlist() {
   bindGapTabs();
   document.querySelectorAll("[data-wf]").forEach(b => b.onclick = () => { S.wishFilter = b.dataset.wf; renderKeep(); });
+  document.querySelectorAll("[data-wkind]").forEach(b => b.onclick = () => { S.wishKind = b.dataset.wkind; S.wishFilter = "all"; renderKeep(); });
   $("#wcopy") && ($("#wcopy").onclick = async () => {
     const txt = wishlistText(), box = $("#wcopybox");
     try { await navigator.clipboard.writeText(txt); toast("Wishlist copied. Paste it into Keep or a message."); }
@@ -2552,7 +2580,8 @@ function pickInfo(pick) {
     miss: [c => !!MISSING[val] && MISSING[val].test(c), `without ${(MISSING[val] || {}).label || val}`],
     added: [c => boughtOn(c).startsWith(val), `bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
     entered: [c => enteredOn(c).startsWith(val), `entered in the app ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
-    read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`]
+    read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`],
+    readnodate: [c => c.read && !/^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""), "read, without a read date"]
   }[type] || [() => false, "?"];
   return { test: c => c.status !== "wanted" && inScope(c) && T[0](c), label: T[1], scope };
 }
@@ -2763,6 +2792,7 @@ VIEWS.stats = {
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     $("#stAllSeries") && ($("#stAllSeries").onclick = () => { S.statAllSeries = !S.statAllSeries; render(); });
     document.querySelectorAll("[data-range]").forEach(b => b.onclick = () => { S.statRange = b.dataset.range; renderKeep(); });
+    document.querySelectorAll("[data-readnow]").forEach(b => b.onclick = async () => { const c = S.comics.find(x => x.id === b.dataset.readnow); if (!c) return; try { await saveComic(Object.assign({}, c, { read: true, readDate: todayIso() })); toast("✓ " + (isNovel(c) ? c.title : comicTag(c)) + " marked read"); renderKeep(); } catch (e) { toast(errText(e)); } });
     document.querySelectorAll(".folder[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("[data-scol]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.col = JSON.parse(b.dataset.scol); S.shown = 200; nav("collection"); });
     $("#goPrices") && ($("#goPrices").onclick = () => nav("series"));
@@ -2794,17 +2824,40 @@ function ratedCard(list, word) {
   </div>`;
 }
 function readingCard(list, word) {
-  const dated = list.filter(c => c.read && /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""));
-  if (!dated.length) return "";
-  const scope = word === "books" ? "b" : "c", all = (S.statRange || "year") === "all", year = String(new Date().getFullYear());
+  if (!list.length) return "";
+  const nf = n => Number(n).toLocaleString("de-CH");
+  const read = list.filter(c => c.read), dated = read.filter(c => /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || "")), undated = read.length - dated.length;
+  const scope = word === "books" ? "b" : "c", all = (S.statRange || "year") === "all", now = new Date(), year = String(now.getFullYear());
   const per = {}, perPages = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; perPages[k] = (perPages[k] || 0) + (parseInt(c.pages, 10) || 0); });
   const inRange = dated.filter(c => all || c.readDate.startsWith(year)), pages = inRange.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
-  const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 3), w = n => n === 1 ? word.replace(/s$/, "") : word;
-  return `<div class="card stack"><div class="cardhead"><h3>Reading</h3>${rangeSwitch()}</div>
-    <div class="row" style="gap:24px"><div><div class="v2">${inRange.length}</div><div class="k small muted">${w(inRange.length)} read ${all ? "in all" : "in " + year}</div></div>${pages ? `<div><div class="v2">${pages.toLocaleString("de-CH")}</div><div class="k small muted">pages ${all ? "in all" : "in " + year}</div></div>` : ""}</div>
-    ${timeBars(per, word + " read", "read", scope)}
+  // months in the period, for an average
+  const first = dated.map(c => c.readDate).sort()[0] || "";
+  const months = all ? (first ? (now.getFullYear() - +first.slice(0, 4)) * 12 + now.getMonth() - (+first.slice(5, 7) - 1) + 1 : 1) : now.getMonth() + 1;
+  const avg = inRange.length / Math.max(1, months);
+  const w = n => n === 1 ? word.replace(/s$/, "") : word, pct = list.length ? Math.round(read.length / list.length * 100) : 0;
+  const tag = c => c.kind === "book" && isNovel(c) ? (c.title || "Untitled") : comicTag(c);
+  const thumb = c => { const cv = coverOf(c); return `<span class="rthumb">${cv ? `<img src="${esc(cv)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`; };
+  const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 4);
+  // up next: in each series you've been reading, the lowest unread copy after what you read; then unread copies bought most recently
+  const num = c => (c.issueSort != null ? +c.issueSort : parseFloat(c.issue)) || 0;
+  const key = c => isNovel(c) ? (c.seriesName ? "b:" + c.seriesName : "") : c.seriesId;
+  const lastRead = {}; read.forEach(c => { const k = key(c); if (!k) return; const d = c.readDate || "0"; if (!lastRead[k] || d > lastRead[k].d) lastRead[k] = { d, n: num(c) }; });
+  const unread = list.filter(c => !c.read && c.status !== "wanted" && !c.facsimile);
+  const cont = Object.keys(lastRead).sort((a, b) => lastRead[b].d.localeCompare(lastRead[a].d)).map(k => unread.filter(c => key(c) === k && num(c) > lastRead[k].n).sort((a, b) => num(a) - num(b))[0]).filter(Boolean);
+  const fresh = unread.filter(c => !cont.includes(c)).sort((a, b) => String(b.purchaseDate || b.createdAt || "").localeCompare(String(a.purchaseDate || a.createdAt || "")));
+  const next = cont.concat(fresh).slice(0, 4);
+  return `<div class="card stack reading"><div class="cardhead"><h3>Reading</h3>${rangeSwitch()}</div>
+    <div><div class="row between small"><span><strong>${nf(read.length)}</strong> of ${nf(list.length)} ${w(list.length)} read</span><span class="muted">${pct} %</span></div><div class="meter"><span style="width:${pct}%"></span></div></div>
+    <div class="row rstats">
+      <div><div class="v2">${nf(inRange.length)}</div><div class="k small muted">read ${all ? "in all" : "in " + year}</div></div>
+      <div><div class="v2">${avg >= 10 ? Math.round(avg) : avg.toFixed(1)}</div><div class="k small muted">per month</div></div>
+      ${pages ? `<div><div class="v2">${nf(pages)}</div><div class="k small muted">pages</div></div>` : ""}
+    </div>
+    ${dated.length ? timeBars(per, word + " read", "read", scope) : ""}
     ${pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
-    <p class="small muted" style="margin:0">Last read: ${last.map(c => `<button class="link" data-open="${esc(c.id)}">${esc(c.kind === "book" ? c.title : comicTag(c))}</button> (${esc(niceDate(c.readDate))})`).join(", ")}. Counts only what was marked as read since 31.10.2026. Tap a bar to see what you read then.</p></div>`;
+    ${last.length ? `<div class="small muted">Recently read</div><div class="rlist">${last.map(c => `<button class="ritem" data-open="${esc(c.id)}">${thumb(c)}<span class="rt">${esc(tag(c))}</span><span class="rd muted">${esc(niceDate(c.readDate))}</span></button>`).join("")}</div>` : ""}
+    ${next.length ? `<div class="small muted">Up next</div><div class="rlist">${next.map(c => `<div class="ritem">${thumb(c)}<button class="link rt" data-open="${esc(c.id)}">${esc(tag(c))}</button><button type="button" class="ghost tiny" data-readnow="${esc(c.id)}" aria-label="Mark ${esc(tag(c))} read today">✓ Read</button></div>`).join("")}</div>` : ""}
+    <p class="small muted" style="margin:0">${undated ? `<button type="button" class="link" data-pick="readnodate||${scope}">${nf(undated)} marked read without a date</button> count in the progress but not in the charts. ` : ""}Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----
 function bookStats(own, wanted) {
@@ -2851,7 +2904,7 @@ function bookStats(own, wanted) {
 function applyBookData(d, r) {
   const set = (k, v) => { if (v) d[k] = v; };
   set("title", r.title); set("author", (r.authors || []).join(", ")); set("publisher", r.publisher); set("date", r.year);
-  set("pages", r.pages); set("lang", r.lang); set("genre", r.genre); set("translator", r.translator); set("originalTitle", r.originalTitle);
+  set("pages", r.pages); set("lang", r.lang); set("genre", isNovel(d) ? r.genre : noComicsGenre(r.genre)); set("translator", r.translator); set("originalTitle", r.originalTitle);
   set("coverUrl", r.cover); set("isbn", r.isbn); set("format", r.format);
   if (r.series && !d.seriesName) { d.seriesName = r.series; if (r.volume && !d.issue) d.issue = String(r.volume).replace(/^\D+/, ""); }
 }
@@ -2864,7 +2917,7 @@ async function fillFromIsbn(d, grab) {
   const dup = S.comics.find(c => c.id !== d.id && c.kind === "book" && Books.normalize(c.isbn) === isbn);
   bookMsg('<div class="banner">Looking up ' + isbn + '…</div>');
   const res = await Books.lookupIsbn(isbn);
-  if (!res.data) { bookMsg(`<div class="banner warn">${res.offline ? "The book databases need an internet connection." : "None of the book databases knows ISBN " + isbn + ". Fill in the details yourself, or try “Search by title and author”."}</div>`); d.isbn = isbn; return; }
+  if (!res.data) { bookMsg(`<div class="banner warn">${res.offline ? "The book databases need an internet connection." : "None of the book databases knows ISBN " + isbn + "." + (/^97[89]88|^97912/.test(isbn) ? " Italian books are often only in the Italian national library, which apps can't ask, and in Google Books, whose free daily limit is sometimes used up (try again later)." : "") + " Look it up and copy title and author: " + `<a href="https://opac.sbn.it/risultati-ricerca-avanzata?item:1032:ISBN::@frase@=${encodeURIComponent(isbn)}" target="_blank" rel="noopener">Italian library (SBN)</a> · <a href="https://www.google.com/search?tbm=bks&q=isbn:${encodeURIComponent(isbn)}" target="_blank" rel="noopener">Google Books</a>, or try “Search by title and author”.`}</div>`); d.isbn = isbn; return; }
   applyBookData(d, res.data); render();
   bookMsg(`<div class="banner ok">Filled in from ${esc(res.sources.join(", "))}. Check the details and save.${dup ? ` <strong>You already have this ISBN: ${esc(dup.title)}${dup.status === "wanted" ? " (on your wishlist)" : ""}.</strong>` : ""}</div>`);
 }

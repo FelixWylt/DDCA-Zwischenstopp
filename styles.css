@@ -557,3 +557,18 @@ body.kb .savebar { position: static; border-top: 0; }
   body.kb nav.tabs { display: none; }
   body.kb { padding-bottom: 0; }
 }
+/* gap grid ⓘ: opens as a box inside the card instead of floating under the grid */
+.ginfo[open] { flex-basis: 100%; margin-left: 0; }
+.ginfo[open] summary { text-align: right; }
+.ginfo[open] .legend { position: static; width: auto; box-shadow: none; margin-top: 4px; }
+/* confirmations above the bottom navigation, not hidden behind it */
+.toast { z-index: 70; }
+@media (max-width: 760px) { .toast { bottom: calc(80px + env(safe-area-inset-bottom, 0px)); } body.kb .toast { bottom: calc(16px + env(safe-area-inset-bottom, 0px)); } }
+/* Reading card */
+.reading .rstats { gap: 24px; }
+.rlist { display: grid; gap: 6px; }
+.ritem { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: center; text-align: left; background: none; border: 0; padding: 2px 0; min-height: 0; font: inherit; color: inherit; }
+.ritem .rthumb { width: 28px; height: 40px; border-radius: 3px; overflow: hidden; background: var(--cell); display: block; }
+.ritem .rthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ritem .rt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; min-height: 0; padding: 0; }
+.ritem .rd { font-size: 0.8rem; white-space: nowrap; }

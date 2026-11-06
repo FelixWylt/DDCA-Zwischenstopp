@@ -228,7 +228,8 @@
     const isbn = normalize(raw);
     if (!isbn) return { error: "invalid" };
     const tries = [
-      ["Deutsche Nationalbibliothek", () => dnb("isbn=" + isbn)],
+      // one ISBN can stand for a boxed set and its volumes: the set is the record the others name as their series
+      ["Deutsche Nationalbibliothek", async () => { const rs = await dnb("isbn=" + isbn, 5); const set = rs.find(r => rs.some(o => o !== r && o.rawSeries && r.title && tidy(r.title.split(" – ")[0]).toLowerCase() === tidy(o.rawSeries).toLowerCase())); return set ? [set].concat(rs.filter(r => r !== set)) : rs; }],
       ["LIBRIS", () => libris("isbn:" + isbn)],
       ["Open Library", () => openLibraryIsbn(isbn)],
       ["Google Books", () => google("isbn:" + isbn)]
