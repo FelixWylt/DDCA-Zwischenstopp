@@ -1,9 +1,12 @@
-app link (item:1032 @frase@) 9788852230943: 200 found-title=false count="-" 
-app link (item:1032 @frase@) 9788804494010: 200 found-title=false count="-" 
-app link (item:1032 @frase@) 9788852240317: 200 found-title=false count="-" 
-item:8 9788852230943: 200 found-title=false count="-" 
-item:8 9788804494010: 200 found-title=false count="-" 
-item:8 9788852240317: 200 found-title=false count="-" 
-simple search 9788852230943: 404 found-title=false count="-" 
-simple search 9788804494010: 404 found-title=false count="-" 
-simple search 9788852240317: 404 found-title=false count="-" 
+app link (item:1032 @frase@) 9788852230943: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO CENTR
+app link (item:1032 @frase@) 9788804494010: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO CENTR
+app link (item:1032 @frase@) 9788852240317: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO CENTR
+item:8 9788852230943: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca ICCU ISTITUTO CENTRALE PER IL CATALOGO UNICO DELLE BIBLIOTECHE ITALIANE Viale Castro Pretorio, 105 001
+item:8 9788804494010: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca ICCU ISTITUTO CENTRALE PER IL CATALOGO UNICO DELLE BIBLIOTECHE ITALIANE Viale Castro Pretorio, 105 001
+item:8 9788852240317: found-title=false | 
+   near 'risultati': ALOGHI SERVIZI BIBLIOTECHE search OPAC SBN Ricerca avanzata Risultati ricerca ICCU ISTITUTO CENTRALE PER IL CATALOGO UNICO DELLE BIBLIOTECHE ITALIANE Viale Castro Pretorio, 105 001
