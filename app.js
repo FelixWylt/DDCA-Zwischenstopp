@@ -1802,7 +1802,7 @@ ${isBook ? `
         <div class="grid-form">
           <label class="wide"><span class="l">Title</span><input id="f-title" value="${esc(d.title)}" placeholder="${isNovel(d) ? "e.g. Der kleine Hobbit" : "e.g. Carl Barks: Die Ducks"}"></label>
           <label class="wide"><span class="l">${isNovel(d) ? "Author" : "Author or editor"}</span><input id="f-author" value="${esc(d.author)}" placeholder="${isNovel(d) ? "e.g. J. R. R. Tolkien" : "e.g. Carl Barks, Don Rosa"}"></label>
-          <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title and author</button></div>
+          <div class="wide row" style="gap:8px"><button class="ghost" id="booksearch" type="button">No ISBN? Search by title, author or series and volume</button></div>
           ${isNovel(d) ? `<label><span class="l">Original title</span><input id="f-originalTitle" value="${esc(d.originalTitle || "")}" placeholder="if translated"></label>
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
           ` : ""}
@@ -2923,10 +2923,15 @@ async function fillFromIsbn(d, grab) {
 }
 async function searchBooks(d, grab) {
   grab();
-  const q = [d.title, d.author].filter(Boolean).join(" ").trim();
-  if (!q) { bookMsg('<div class="banner warn">Type at least part of the title or the author first.</div>'); $("#f-title").focus(); return; }
+  const series = String(d.seriesName || "").trim(), vol = String(d.issue || "").trim();
+  // no title yet, but series and volume: look the volume up by its number
+  const bySeries = !String(d.title || "").trim() && series && /\d/.test(vol) && Books.seriesSearch;
+  const q = [d.title, d.author].filter(Boolean).join(" ").trim() || (series ? [series, vol].filter(Boolean).join(" ") : "");
+  if (!q) { bookMsg('<div class="banner warn">Type part of the title or the author first, or the series name and volume number.</div>'); $("#f-title").focus(); return; }
   bookMsg('<div class="banner">Searching…</div>');
-  const list = await Books.search(q);
+  let list = bySeries ? await Books.seriesSearch(series, vol, { author: d.author, lang: d.lang }) : [];
+  // the libraries don't know the series: an ordinary search with series name, volume and author still often finds it
+  if (!list.length) list = await Books.search(bySeries ? [series, vol, d.author].filter(Boolean).join(" ") : q);
   if (!list.length) { bookMsg('<div class="banner warn">Nothing found' + (navigator.onLine ? "" : " (you seem to be offline)") + '. Try fewer or other words.</div>'); return; }
   bookMsg(`<div class="card stack bookhits"><div class="row between"><strong>${list.length} found. Tap your edition:</strong><button class="ghost" id="bhx" type="button">Close</button></div>
     ${list.map((r, i) => `<button class="bookhit" data-hit="${i}" type="button">${r.cover ? `<img src="${esc(r.cover)}" alt="" loading="lazy" onerror="this.remove()">` : '<span class="nocover"></span>'}<span><span class="t">${esc(r.title)}</span><span class="s">${esc([(r.authors || []).join(", "), r.publisher, r.year, r.lang, r.isbn ? "ISBN " + r.isbn : ""].filter(Boolean).join(" · "))}</span></span></button>`).join("")}</div>`);

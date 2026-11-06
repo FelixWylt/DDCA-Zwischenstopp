@@ -314,6 +314,40 @@
     return out.slice(0, 30).map(r => Object.assign({}, r, { genre: oneGenre(r.genre || ""), authors: cleanPeople(r.authors) }));
   }
 
+  // one volume of a series, found by series name and volume number alone (title not known yet):
+  // the national libraries record the series and the volume number, so ask them for the series and keep the records with that number
+  async function seriesSearch(name, vol, opts) {
+    opts = opts || {};
+    const key = x => String(x || "").toLowerCase().normalize("NFC").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+    const want = key(name), num = parseFloat(String(vol).replace(",", "."));
+    if (!want || !(num >= 0)) return [];
+    const nOf = v => { const m = /(\d+(?:[.,]\d+)?)/.exec(String(v || "")); return m ? parseFloat(m[1].replace(",", ".")) : NaN; };
+    const author = String(opts.author || "").trim();
+    const asks = [
+      dnb('WOE="' + name + '"' + (author ? ' and PER="' + author.split(/\s+/).pop() + '"' : ""), 100),
+      libris('"' + name + '"' + (author ? " " + author.split(/\s+/).pop() : ""), 100)
+    ];
+    const res = await Promise.all(asks.map(p => p.catch(() => [])));
+    const seen = new Set(), out = [];
+    res.flat().forEach(r => {
+      if (!r || !r.title) return;
+      const sname = key(r.series || r.rawSeries), title = key(r.title);
+      const inSeries = sname && (sname === want || sname.startsWith(want + " ") || sname.includes(want));
+      const v = inSeries ? (Number.isFinite(nOf(r.volume)) ? nOf(r.volume) : nOf(r.rawVolume)) : NaN;
+      // some books carry the series only in the title: "Artemis Fowl 2 – Die Verschwörung", "Artemis Fowl – Band 2"
+      const tv = !inSeries && title.startsWith(want) ? nOf(title.slice(want.length).replace(/^\D*?(band|bd|vol|volume|del|teil|book|bok)?\s*/, "")) : NaN;
+      if (v !== num && tv !== num) return;
+      const k = r.isbn || title + "|" + r.year; if (seen.has(k)) return; seen.add(k);
+      const score = (sname === want ? 4 : 0) + (r.isbn ? 2 : 0) - (/audio|e-book/i.test(r.format || "") || /\bcds?\b|ungekürzt|hörbuch|ljudbok/i.test(r.title) ? 5 : 0);
+      out.push(Object.assign({}, r, { genre: oneGenre(r.genre || ""), authors: cleanPeople(r.authors), _score: score }));
+    });
+    // the reader's language first, then the exact series with an ISBN (printed books before audiobooks), then newest
+    const lang = opts.lang || "";
+    out.sort((a, b) => ((b.lang === lang) - (a.lang === lang)) || (b._score - a._score) || (+b.year || 0) - (+a.year || 0));
+    out.forEach(r => delete r._score);
+    return out.slice(0, 30);
+  }
+
   // how many volumes a series has in this language's national library: the highest volume number listed under exactly that series name
   async function seriesVolumes(name, lang) {
     const key = x => String(x || "").toLowerCase().normalize("NFC").replace(/[\s.;:,\/]+$/, "").replace(/\s+/g, " ").trim();
@@ -332,5 +366,5 @@
     if (lang !== "Swedish") asks.push(getText("https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&recordSchema=MARC21-xml&maximumRecords=100&query=" + encodeURIComponent('WOE="' + name + '"')).then(read).catch(() => 0));
     return Math.max(0, ...(await Promise.all(asks)));
   }
-  root.Books = { seriesVolumes, normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
+  root.Books = { seriesVolumes, seriesSearch, normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
 })(typeof window !== "undefined" ? window : globalThis);
