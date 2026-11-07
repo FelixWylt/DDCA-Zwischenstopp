@@ -1131,9 +1131,12 @@ function seriesFromCatalogue(se, file, entry) {
     if (!se.firstYear) { se.firstYear = Math.min(...ys); changed = true; }
     if (!se.lastYear) { se.lastYear = Math.max(...ys); changed = true; }
     if (!se.perYear) { se.perYear = Math.min(60, Math.max(...ns)); changed = true; }
-  } else if (se.numbering !== "year" && !se.latest) {
+  } else if (se.numbering !== "year") {
     const nums = labs.filter(l => /^\d+$/.test(l)).map(Number);
-    if (nums.length) { se.latest = Math.max(...nums); changed = true; }
+    if (nums.length && !se.latest) { se.latest = Math.max(...nums); changed = true; }
+    // one issue a year, numbered by the year (Kalle Ankas julbok 1941, 1942 …): the grid starts at the first year, not at 1
+    if (nums.length && !se.first && Math.min(...nums) >= 1800 && Math.max(...nums) <= 2100) { se.first = Math.min(...nums); changed = true; }
+    if (nums.length && +se.first > 1 && +se.latest < +se.first) { se.latest = Math.max(...nums); changed = true; }   // "latest 77" was the number of books
   }
   return changed;
 }
@@ -1401,7 +1404,7 @@ function bookAboutObj(key) {
 // the series' description and facts (filled from INDUCKS / Duckipedia in Series), above its issues
 function seriesAbout(se) {
   if (!se || !(se.about || se.pubHouse || se.format)) return "";
-  const yrs = se.latestTxt != null ? se.latestTxt : se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? "to issue " + se.latest : "";
+  const yrs = se.latestTxt != null ? se.latestTxt : se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? (se.first > 1 ? "issues " + se.first + "–" : "to issue ") + se.latest : "";
   const facts = [esc(se.pubHouse || ""), esc(se.format || ""), esc(yrs), se.code && `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(se.code)}" target="_blank" rel="noopener">INDUCKS ${esc(se.code)}</a>`];
   return `<details class="card serabout"${S.aboutOpen ? " open" : ""}><summary><strong>About this series</strong></summary>
     ${se.about ? `<p style="margin:8px 0 6px">${esc(se.about)}</p>` : ""}
@@ -2480,9 +2483,10 @@ VIEWS.gaps = {
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
       const highest = Math.max(0, ...mine.filter(c => /^\d+$/.test(c.issueLabel || "")).map(c => +c.issueLabel));
-      const max = Math.max(+se.latest || 10, highest); total = max + (zero.has("run") ? 1 : 0); let cells = "";
+      const first = Math.max(1, +se.first || 1), max = Math.max(+se.latest || first + 9, highest);
+      total = max - first + 1 + (zero.has("run") ? 1 : 0); let cells = "";
       if (zero.has("run")) cells += cell("0", 0);
-      for (let n = 1; n <= max; n++) cells += cell(String(n), n);
+      for (let n = first; n <= max; n++) cells += cell(String(n), n);
       grid = '<div class="cells">' + cells + '</div>';
     }
     // every comic of this series the grid can't show, with the reason
@@ -2502,6 +2506,7 @@ VIEWS.gaps = {
         : /\?/.test(lab) ? "Number unknown. Edit it, or match it under Series › INDUCKS."
         : gridLabels.has(lab) ? "Second entry with the same number" + ((c.copies || 1) > 1 ? "" : ". Use “Copies” instead, or delete one.")
         : (() => { const m = /^(\d{4})\/(\d{1,3})$/.exec(lab); return m && cat0 && perY[m[1]] && +m[2] > perY[m[1]]; })() ? "INDUCKS lists only " + lab.slice(0, 4) + "/01–" + lab.slice(0, 4) + "/" + String(perY[lab.slice(0, 4)]).padStart(2, "0") + " for that year. Check the number, or delete this entry."
+        : se.numbering !== "year" && /^\d+$/.test(lab) && +se.first > 1 && +lab < +se.first ? "Lower than the first issue (" + se.first + "). Change “First issue” under Series if the series starts earlier."
         : !lab ? "No issue number" : "Number “" + lab + "” doesn't fit this series' numbering" + (se.numbering === "year" ? " (year/number, e.g. 1985/12)." : ".");
       notInGrid.push({ c, why });
     });
@@ -2519,7 +2524,7 @@ VIEWS.gaps = {
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
     const edList = seriesEditions(se.id);
     return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),
@@ -2690,10 +2695,10 @@ VIEWS.stats = {
       const ce = catEntry(s), gridN = s.numbering === "year" ? yearGridTotal(s) : null, catN = gridN || (ce && +ce.issues) || 0;
       if (s.numbering === "year" && ce && gridN == null && !S.catCache[ce.file] && !(S.statCat || {})[ce.file]) { S.statCat = Object.assign({}, S.statCat, { [ce.file]: 1 }); catalogueFile(ce).then(() => { if (S.view === "stats") renderKeep(); }).catch(() => {}); }
       const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book"), zero = zeroSquares(s, ce && S.catCache[ce.file], S.comics.filter(c => c.seriesId === s.id));
-      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : (+s.latest || 0) + (zero.has("run") ? 1 : 0);
+      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : Math.max(0, (+s.latest || 0) - Math.max(1, +s.first || 1) + 1) + (zero.has("run") ? 1 : 0);
       // count the squares the gap grid shows as owned, so both screens agree
       const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^0+$/.test(k)) return zero.has("run");
-        return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
+        return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
       const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
     }).filter(x => x.tot && x.n).sort((a, b) => b.n - a.n);
@@ -3687,7 +3692,7 @@ async function fillSeriesInfo(se) {
     set("pubHouse", p[5] || "", "publisher"); set("format", p[6] || "", "format");
   }
   if (entry) {
-    const before = JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest]);
+    const before = JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest, se.first]);
     const file = await catalogueFile(entry).catch(() => null);
     if (file) {
       seriesFromCatalogue(se, file, entry);
@@ -3695,7 +3700,7 @@ async function fillSeriesInfo(se) {
       if (se.numbering === "year") { const ys = Object.keys(file.issues || {}).map(l => +(/^(\d{4})\//.exec(l) || [])[1]).filter(Boolean); if (ys.length && Math.max(...ys) > (se.lastYear || 0)) se.lastYear = Math.max(...ys); if (ys.length && (!se.firstYear || Math.min(...ys) < +se.firstYear)) se.firstYear = Math.min(...ys); }
       else { const ns = Object.keys(file.issues || {}).filter(l => /^\d+$/.test(l)).map(Number); if (ns.length && Math.max(...ns) > (se.latest || 0)) se.latest = Math.max(...ns); }
     }
-    if (JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest]) !== before) got.push(se.numbering === "year" ? "years" : "latest issue");
+    if (JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest, se.first]) !== before) got.push(se.numbering === "year" ? "years" : se.first > 1 ? "first and latest issue" : "latest issue");
   } else if (p && se.numbering === "year") {
     if (!se.firstYear && p[3]) { se.firstYear = p[3]; got.push("years"); } if (p[4] && p[4] > (se.lastYear || 0)) { se.lastYear = p[4]; if (!got.includes("years")) got.push("years"); }
   } else if (p && !se.latest && p[2]) { se.latest = p[2]; got.push("latest issue"); }
@@ -3904,7 +3909,7 @@ function serListHtml(tab) {
   const used = {}; S.comics.forEach(c => { used[c.seriesId] = (used[c.seriesId] || 0) + 1; });
   const uOf = s => s.publisher || "No universe yet", gOf = s => s.group || OTHER_GROUP;
   const row = (s, where) => { const i = S.series.indexOf(s), ce = catEntry(s);
-    const sub = [where, s.short, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
+    const sub = [where, s.short, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? (s.first > 1 ? s.first + "–" : "to ") + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
     return folder(`data-sopen="${i}"`, seriesLabel(s) || s.name || "New series", sub, used[s.id] || 0); };
   if (words.length) {
     const hits = S.series.filter(s => words.every(w => norm([s.name, s.short, s.group, uOf(s), s.code].join(" ")).includes(w)));
@@ -4106,7 +4111,7 @@ VIEWS.series = {
       const span = b.length && e.length ? " · " + boundText(key, Math.min(...b)) + "–" + boundText(key, Math.max(...e), true) : "";
       return rs.length + (rs.length === 1 ? " range" : " ranges") + span + " · " + fmt2(Math.min(...ps)).replace(/\.00$/, "") + (ps.length > 1 ? "–" + fmt2(Math.max(...ps)).replace(/\.00$/, "") : "") + " " + cur; };
     const fields = (s, i) => { const key = s.id || "new";
-      return sect(key, "details", "Details", [s.short, s.code, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : ""].filter(Boolean).join(" · "), `<div class="seriesrow" data-i="${i}">
+      return sect(key, "details", "Details", [s.short, s.code, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? (s.first > 1 ? s.first + "–" : "to ") + s.latest : ""].filter(Boolean).join(" · "), `<div class="seriesrow" data-i="${i}">
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
       <label><span class="l">Universe</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
@@ -4117,7 +4122,7 @@ VIEWS.series = {
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
         ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
-        : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label>`}
+        : `<label><span class="l">First issue</span><input data-k="first" type="number" min="1" placeholder="1" value="${esc(s.first || "")}"></label><label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label>`}
       <label><span class="l">Publisher</span><input data-k="pubHouse" value="${esc(s.pubHouse || "")}" placeholder="Egmont Ehapa"></label>
       <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label></div>`, true)
       + sect(key, "about", "Description", s.about ? s.about.slice(0, 40) + "…" : "empty", `<div class="seriesrow" data-i="${i}">
@@ -4189,7 +4194,7 @@ VIEWS.series = {
       row.querySelectorAll("[data-k]").forEach(inp => {
         const k = inp.dataset.k, v = inp.value.trim();
         if (k === "years") { const m = v.match(/(\d{4})\D+(\d{4})/); if (m) { s.firstYear = +m[1]; s.lastYear = +m[2]; } }
-        else if (k === "latest" || k === "perYear") s[k] = parseInt(v, 10) || "";
+        else if (k === "latest" || k === "perYear" || k === "first") s[k] = parseInt(v, 10) || "";
         else s[k] = v;
       });
       if (!s.id) { const base = (s.code || s.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== s && x.id === id)) id = base + "-" + k++; s.id = id; }
