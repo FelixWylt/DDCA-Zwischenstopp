@@ -150,7 +150,7 @@ function valueNumber(c) {   // the number a price range is compared with: issue 
     const n = c.issueNum || +((/^\d{4}\D+(\d{1,3})/.exec(lab) || [])[1]) || 0;
     return y * 1000 + n;
   }
-  return c.issueNum || parseInt(lab, 10) || null;
+  return c.issueNum || parseInt(lab, 10) || (/^0+$/.test(lab.trim()) ? 0 : null);   // issue 0 (Nullnummer) counts too
 }
 // a range's "from" or "to" as a number: "1952/4" or "4/1952" is year 1952 issue 4; a year alone is all of that year
 function rangeBound(key, v, isTo) {
@@ -253,18 +253,26 @@ function parsePrices(key, text, fallbackCur, edition) {
   let reprints = 0, kind = "";
   const lines = String(text || "").split(/\r?\n/).map(l => l.replace(/ /g, " ").trim()).filter(Boolean);
   lines.forEach(line => {
+    // the Nullnummer has no number in Comicguide's list: it is issue 0 (Micky Maus Magazin 1951/0); "(Nullnummer) 9000.00 €"
+    if (/null-?nummer/i.test(line)) {
+      const pm = /(\d[\d.,]*)\s*(€|eur|euro)?\s*$/i.exec(line), p = pm && priceAmount(pm[1]);
+      const y = +((/^(\d{4})\b/.exec(line) || [])[1]) || (yearly ? +(se.firstYear || 0) || null : null);
+      if (p == null || (yearly && !y)) { unread.push(line); return; }
+      kind = kind || "Comicguide";
+      items.push({ lo: at(y, 0), hi: at(y, 0), price: p, cur: pm[2] || !/kr|sek|chf/i.test(line) ? "EUR" : fallbackCur, zero: true }); return;
+    }
     // Comicguide
-    let m = /^(?:(\d{4})\s*:\s*)?Nr\.?\s*(\d{1,4})\s*(?:-\s*(\d{1,4}))?\s*(\(.*?\))?\s*([\d.,]+)\s*(€|EUR)?\s*$/i.exec(line);
+    let m = /^(?:(\d{4})\s*:\s*)?Nr\.?\s*(\d{1,4})\s*(?:-\s*(\d{1,4}))?\s*(\(.*?\))?\s*([\d.,]+)\s*(€|EUR|Euro)?\s*$/i.exec(line);
     if (m) {
       kind = kind || "Comicguide";
       if (m[4]) { reprints++; return; }
       const y = m[1] ? +m[1] : null, a = +m[2], b = m[3] ? +m[3] : a, p = priceAmount(m[5]);
       if (yearly && !y) { unread.push(line); return; }
       if (p == null) { unread.push(line); return; }
-      items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€/.test(line) ? "EUR" : fallbackCur }); return;
+      items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€|euro/i.test(line) ? "EUR" : fallbackCur }); return;
     }
     // Comicguide with titles and editions: "1 Der Kolumbusfalter (1. Auflage) Softcover 1000.00 €"
-    const cg = /^(\d{1,4})\s+(.*\S)\s+(\d[\d.,]*)\s*(€|EUR)\s*$/i.exec(line);
+    const cg = /^(\d{1,4})\s+(.*\S)\s+(\d[\d.,]*)\s*(€|EUR|Euro)\s*$/i.exec(line);
     if (cg) {
       kind = kind || "Comicguide";
       if (yearly) { unread.push(line); return; }
@@ -314,13 +322,16 @@ function parsePrices(key, text, fallbackCur, edition) {
   const listed = items.filter(x => !x.typed).sort((a, b) => a.lo - b.lo), ranges = [];
   listed.forEach(x => {
     const last = ranges[ranges.length - 1];
-    if (last && last.price === x.price && last.cur === x.cur) last.hi = Math.max(last.hi, x.hi); else ranges.push(Object.assign({}, x));
+    if (x.zero) { ranges.push(Object.assign({}, x)); return; }   // the Nullnummer keeps its own range
+    if (last && !last.zero && last.price === x.price && last.cur === x.cur) last.hi = Math.max(last.hi, x.hi); else ranges.push(Object.assign({}, x));
   });
   items.filter(x => x.typed).forEach(x => ranges.push(x));
   // from a pasted list, lines with a price that couldn't be placed (e.g. "(Nullnummer) 9000.00 €") are listed for you
   if (kind && kind !== "typed") skipped.filter(x => /€|\d[.,]\d\d\b/.test(x)).forEach(x => unread.push(x));
   return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing, byEdition };
 }
+// issue 0 written so it can't be mistaken for a whole year: "1951/0", or "0" in a running series
+function zeroText(key, v) { const se = seriesById(key); return se && se.numbering === "year" ? Math.floor(v / 1000) + "/0" : "0"; }
 function boundText(key, v, isTo) {
   if (v == null) return "";
   const se = seriesById(key);
@@ -334,7 +345,7 @@ function bindPasteBox(root) {
       const res = parsePrices(key, d.querySelector("[data-ptext]").value, d.querySelector("[data-pcur]").value, d.dataset.ped);
       if (!res.ranges.length) { out.innerHTML = '<div class="banner warn small">No prices found. Paste the lines with issue numbers and prices, or type ranges like 1-25 8.</div>'; return; }
       const have = (S.valueRules || []).filter(r => r.s === key).length;
-      const span = r => { const a = r.lo == null ? "" : boundText(key, r.lo), z = r.hi == null ? "" : boundText(key, r.hi, true); return !a ? "all up to " + z : !z ? a + " and later" : a === z ? a : a + " – " + z; };
+      const span = r => { if (r.zero) return zeroText(key, r.lo) + " (Nullnummer)"; const a = r.lo == null ? "" : boundText(key, r.lo), z = r.hi == null ? "" : boundText(key, r.hi, true); return !a ? "all up to " + z : !z ? a + " and later" : a === z ? a : a + " – " + z; };
       const line = r => `<li>${esc(span(r))} → ${esc(money(r.price, r.cur))}</li>`;
       const notes = [res.kind && res.kind !== "typed" ? `Read as a ${res.kind} list: ${res.issues} issues${res.kind === "Seriekatalogen" ? ", VF prices" : ""}` : "", res.reprints ? res.reprints + " reprints skipped" : ""].filter(Boolean).join(" · ");
       const left = res.unread.concat(res.skipped);
@@ -349,7 +360,7 @@ function bindPasteBox(root) {
         <div class="row"><button type="button" class="primary" data-padd>${res.editions.length > 1 ? "Add all " + res.byEdition.reduce((a, e) => a + e.ranges.length, 0) + " ranges" : "Add " + res.ranges.length + " " + (res.ranges.length === 1 ? "range" : "ranges")}</button></div></div>`;
       out.querySelector("[data-padd]").onclick = () => {
         const rep = out.querySelector("[data-preplace]"), keep = rep && rep.checked ? (S.valueRules || []).filter(r => r.s !== key) : (S.valueRules || []);
-        const mk = (r, ed) => ({ id: newId(), s: key, from: r.lo == null ? "" : boundText(key, r.lo), to: r.hi == null ? "" : boundText(key, r.hi, true), price: r.price, cur: r.cur, note: res.kind && res.kind !== "typed" ? res.kind : "", ed: ed || "" });
+        const mk = (r, ed) => ({ id: newId(), s: key, from: r.zero ? zeroText(key, r.lo) : r.lo == null ? "" : boundText(key, r.lo), to: r.zero ? zeroText(key, r.hi) : r.hi == null ? "" : boundText(key, r.hi, true), price: r.price, cur: r.cur, note: res.kind && res.kind !== "typed" ? res.kind : "", ed: ed || "" });
         const multi = res.editions.length > 1;
         S.valueRules = keep.concat(multi ? res.byEdition.flatMap(e => e.ranges.map(r => mk(r, e.label))) : res.ranges.map(r => mk(r)));
         if (multi) { const se = seriesById(key), def = res.byEdition.find(e => e.key === res.edition); if (se && def) { se.defaultEdition = def.label; saveSeries().catch(() => {}); } }
