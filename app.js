@@ -2242,6 +2242,14 @@ async function buildMatchRun() {
 // wishlist: one folder per series, opened by tapping
 // how many squares the gap grid of a year-numbered series has, from its INDUCKS catalogue file (null when not loaded yet);
 // Stats uses it too, so both screens give the same total
+// a Nullnummer (issue 0) gets a square where INDUCKS lists one or you have entered one:
+// year series "1951/00", running series "0"
+function zeroSquares(se, cat, mine) {
+  const out = new Set(), keys = Object.keys((cat && cat.issues) || {});
+  const add = lab => { const m = /^(\d{4})\/0{1,3}$/.exec(lab || ""); if (m) out.add(m[1]); else if (/^0+$/.test(lab || "")) out.add("run"); };
+  keys.forEach(add); mine.forEach(c => { if (!c.facsimile) add(c.issueLabel || c.issue); });
+  return out;   // years, and "run" for a running series
+}
 function yearGridTotal(se) {
   const ent = catEntry(se), cat = ent && S.catCache[ent.file]; if (!cat || se.numbering !== "year") return null;
   const mine = S.comics.filter(c => c.seriesId === se.id && !c.facsimile), perY = {}, perYSet = {};
@@ -2250,11 +2258,12 @@ function yearGridTotal(se) {
   const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
   const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
   const y0 = Math.min(+se.firstYear || 1950, ...ownYears, ...(catYears.length ? [Math.min(...catYears)] : [])), y1 = Math.max(+se.lastYear || new Date().getFullYear(), ...ownYears), per = Math.max(+se.perYear || 52, ownMax);
-  let total = 0;
+  let total = 0; const zero = zeroSquares(se, cat, mine);
   for (let y = y0; y <= y1; y++) {
+    if (zero.has(String(y))) total++;
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
     const py = y > catLast ? per : Math.max(perY[y] || 0, ...owned); if (!py) continue;
-    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += set.size; } else total += py;
+    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py;
   }
   return total;
 }
@@ -2429,6 +2438,7 @@ VIEWS.gaps = {
     const sparse = y => perYSet[y] && perYSet[y].size * 2 < perY[y];
     const yearNums = (y, py) => { if (!sparse(y)) return Array.from({ length: py }, (_, i) => i + 1); const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
+    const zero = zeroSquares(se, cat0, mine);
     if (se.numbering === "year") {
       const ownYears = mine.map(c => c.issueYear || +((/^(\d{4})\//.exec(c.issueLabel || "") || [])[1]) || 0).filter(Boolean);
       const ownMax = Math.max(0, ...mine.map(c => +((/^\d{4}\/(\d{1,3})$/.exec(c.issueLabel || "") || [])[1]) || 0));
@@ -2442,17 +2452,19 @@ VIEWS.gaps = {
         const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
       };
-      total = years.reduce((a, y) => a + (perFor(y) ? yearNums(y, perFor(y)).length : 0), 0);
+      // the Nullnummer comes first in its year
+      const numsOf = y => { const py = perFor(y), nums = py ? yearNums(y, py).filter(n => n > 0) : []; return zero.has(String(y)) ? [0].concat(nums) : nums; };
+      total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
-        const py = perFor(y); if (!py) return "";
-        const nums = yearNums(y, py); let cells = ""; nums.forEach(n => { cells += cell(y + "/" + String(n).padStart(2, "0"), n); });
+        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(y + "/" + String(n).padStart(2, "0"), n); });
         const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
     } else {
       const highest = Math.max(0, ...mine.filter(c => /^\d+$/.test(c.issueLabel || "")).map(c => +c.issueLabel));
-      const max = Math.max(+se.latest || 10, highest); total = max; let cells = "";
+      const max = Math.max(+se.latest || 10, highest); total = max + (zero.has("run") ? 1 : 0); let cells = "";
+      if (zero.has("run")) cells += cell("0", 0);
       for (let n = 1; n <= max; n++) cells += cell(String(n), n);
       grid = '<div class="cells">' + cells + '</div>';
     }
@@ -2660,10 +2672,11 @@ VIEWS.stats = {
     const perSeries = S.series.map(s => {
       const ce = catEntry(s), gridN = s.numbering === "year" ? yearGridTotal(s) : null, catN = gridN || (ce && +ce.issues) || 0;
       if (s.numbering === "year" && ce && gridN == null && !S.catCache[ce.file] && !(S.statCat || {})[ce.file]) { S.statCat = Object.assign({}, S.statCat, { [ce.file]: 1 }); catalogueFile(ce).then(() => { if (S.view === "stats") renderKeep(); }).catch(() => {}); }
-      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : (+s.latest || 0);
-      const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book");
+      const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book"), zero = zeroSquares(s, ce && S.catCache[ce.file], S.comics.filter(c => c.seriesId === s.id));
+      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : (+s.latest || 0) + (zero.has("run") ? 1 : 0);
       // count the squares the gap grid shows as owned, so both screens agree
-      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
+      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^0+$/.test(k)) return zero.has("run");
+        return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= 1 && +k <= +s.latest; };
       const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
     }).filter(x => x.tot && x.n).sort((a, b) => b.n - a.n);
