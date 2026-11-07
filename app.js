@@ -702,6 +702,13 @@ async function boot() {
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
     // once: prices kept as text ("12.50", from imports) become numbers, purchase dates "12.10.2026" become 2026-10-12, so every sum and chart counts them
+    if (!(await getConfig("otherGroupFix1")) && arrangedInUse()) {
+      const n = [];
+      S.series.forEach(se => { if (!se.code || (se.publisher || DISNEY) !== DISNEY || (se.group && se.group !== OTHER_GROUP)) return;
+        const a = arrangeSeries(se); if (a.group && a.group !== OTHER_GROUP) { se.group = a.group; n.push(se.name + " → " + a.group); } });
+      if (n.length) { await setConfig("series", S.series); setTimeout(() => toast("Series group fixed: " + n.join(", ")), 2500); }
+      await setConfig("otherGroupFix1", true);
+    }
     if (!(await getConfig("dkShortFix1"))) {
       const n = [];
       S.series.forEach(se => { const m = /duckipedia\.org\/(.+)$/.exec(se.aboutSrc || ""); if (!m) return;
@@ -1178,7 +1185,9 @@ function applyIssueFromCatalogue(c, label, hit) {
 // fills in missing series details (INDUCKS code, numbering, size) from the catalogue
 function seriesFromCatalogue(se, file, entry) {
   let changed = false;
-  if (!se.code) { se.code = entry.code; changed = true; }
+  if (!se.code) { se.code = entry.code; changed = true;
+    // the group was guessed from the name alone (it/TLDLE "Disney De Luxe" -> Other series); the code tells the country
+    if (arrangedInUse() && (se.publisher || DISNEY) === DISNEY && (!se.group || se.group === OTHER_GROUP)) Object.assign(se, arrangeSeries(se)); }
   const labs = Object.keys(file.issues || {});
   const yearLabs = labs.map(l => /^(\d{4})\/(\d{1,3})$/.exec(l)).filter(Boolean);
   if (yearLabs.length > labs.length / 2) {

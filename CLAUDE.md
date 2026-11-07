@@ -13,7 +13,9 @@
    (`git log -1 --format=%ad --date=format:%H:%M:%S`). Don't start the clock at your first command:
    that misses the thinking/writing before it. Give a range where the minute precision matters.
 3. **After publishing**, report estimate vs. real time. Never report a guess as a measurement.
-4. **Add a line to the log below** in the same commit.
+4. **Add a line to the log below** in the same commit, with the real time read from the clock IN the commit
+   command (python/`date` just before `git commit`), never written by hand beforehand. Start = user's message
+   minute, so give it as a range (e.g. message 22:56, commit 22:58:10 → "1–2 min").
 
 ### Time log (estimate → real, Claude's working time only)
 | Date | Job | Estimate | Real |
@@ -26,7 +28,8 @@
 | 2026-11-07 | Find why Disney De Luxe isn't linked to the catalogue (answer only) | 1–2 min | ~1 min |
 | 2026-11-07 | New series created on leaving the "New series name" field, linked to INDUCKS | 2–4 min | ~1–1.5 min |
 | 2026-11-07 | Fill from INDUCKS also fills publisher, format, genres | 1–3 min | ~1.5–2 min |
-| 2026-11-07 | Suggestion-list rows overlapping (CSS) + check other menus | 1–3 min | ~2–3 min (22:51 → commit) |
+| 2026-11-07 | Suggestion-list rows overlapping (CSS) + check other menus | 1–3 min | ~1–1.5 min |
+| 2026-11-07 | New INDUCKS-linked series get their country group (it → Italia) + one-time fix of existing ones | 1–2 min | 0.0–1.0 min (22:56 → 22:57:01) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
