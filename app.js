@@ -3705,6 +3705,9 @@ async function fillSeriesInfo(se) {
       // through it only counts when its title fits the series' name
       const short = se.short && /^[A-Z]/.test(se.short) ? se.short : "";
       let d = await Duckipedia.fetchSeries([se.name, p && p[1]]);
+      // a Sonderheft, Spezial or Extra often has no page of its own on Duckipedia, but is part of its main series' page
+      // ("MEGA Micky Maus Sonderheft" is on the page "MEGA Micky Maus")
+      if (!d) { const main = [se.name, p && p[1]].filter(Boolean).map(mainSeriesName).filter(Boolean); if (main.length) { const m = await Duckipedia.fetchSeries(main); if (m && (m.publisher || m.years || m.schedule)) d = m; } }   // only a publication's page (with publisher or years), not a character's
       if (!d && short) { const viaShort = await Duckipedia.fetchSeries([short]); if (viaShort && pageFits(viaShort.page, se, p)) d = viaShort; }
       if (d) {
         set("about", d.description, "description");
@@ -3743,6 +3746,11 @@ function catalogueRequestUrl(code, name) {
 }
 // INDUCKS publications with exactly this series' name, in its country (searched in the whole directory, not just the top hits)
 // a web request that gives up after ms milliseconds (some sites never answer)
+// "MEGA Micky Maus Sonderheft" -> "MEGA Micky Maus"; "" when the name has no such ending
+function mainSeriesName(n) {
+  const m = /^(.{4,}?)\s*[-–:(]?\s*\b(sonderhefte?|sonderb(?:a|ä)nde?|sonderausgabe|sonderedition|spezial|special|extra|sammelb(?:a|ä)nde?)\b\)?\s*$/i.exec(String(n || "").trim());
+  return m ? m[1].trim() : "";
+}
 // does a Duckipedia page title fit a series? "Lustiges Taschenbuch" fits LTB; "Micky Maus SPEZIAL!" doesn't fit MEGA Micky Maus Sonderheft
 function pageFits(title, se, p) {
   const words = t => norm(t).split(" ").filter(w => w.length > 2 && !["der", "die", "das", "und", "von", "the", "and"].includes(w));
@@ -4114,7 +4122,7 @@ VIEWS.series = {
       <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label></div>`, true)
       + sect(key, "about", "Description", s.about ? s.about.slice(0, 40) + "…" : "empty", `<div class="seriesrow" data-i="${i}">
       <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="4">${esc(s.about || "")}</textarea></label>
-      ${s.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GNU FDL 1.2)</div>` : ""}</div>`, false)
+      ${s.aboutSrc ? (t => `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a>${t && norm(t) !== norm(s.name) ? ` page “${esc(t)}”` : ""} (GNU FDL 1.2)</div>`)((() => { try { return decodeURIComponent((/duckipedia\.org\/(.+)$/.exec(s.aboutSrc) || [])[1] || "").replace(/_/g, " "); } catch (e) { return ""; } })()) : ""}</div>`, false)
       + (s.id ? sect(key, "prices", "Price ranges", priceMeta(s.id), `<div class="sform">${valueRulesHtml(s.id)}</div>`, false) : "")
       + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`; };
     // ---- the lists: Universe › Group › Series, like Collection ----
