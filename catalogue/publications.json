@@ -515,6 +515,12 @@
       "country": "it",
       "code": "it/CALE",
       "title": "Capolavori della letteratura"
+    },
+    {
+      "series": "Mega Micky Maus Sonderheft",
+      "country": "de",
+      "code": "de/MMS",
+      "title": "Mega Micky Maus Sonderheft"
     }
   ]
 }
