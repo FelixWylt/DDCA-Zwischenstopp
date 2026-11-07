@@ -1244,6 +1244,12 @@ if (window.visualViewport) window.visualViewport.addEventListener("resize", setK
 // suggestion lists for text fields (publisher, genres, edition, universe, group): DuckDuckGo on Android doesn't open
 // the browser's own <datalist> menus, so the app shows its own. The <datalist> stays as the source of the choices.
 // Genres take several values separated by commas: only the part being typed is matched and replaced.
+// shops and sellers you've bought from, the ones you use most first (case and spaces don't make a new one)
+function sourceList() {
+  const n = {}, name = {};
+  S.comics.forEach(c => { const v = String(c.source || "").trim(); if (!v) return; const k = v.toLowerCase(); n[k] = (n[k] || 0) + 1; name[k] = name[k] || v; });
+  return Object.keys(n).sort((a, b) => n[b] - n[a] || a.localeCompare(b)).map(k => name[k]);
+}
 const Sugg = { box: null, el: null };
 const suggClose = () => { if (Sugg.box) Sugg.box.remove(); Sugg.box = null; };
 const suggMulti = el => el.id === "f-genre";
@@ -1254,7 +1260,7 @@ function suggShow(el) {
   const q = parts[parts.length - 1].trim().toLowerCase(), taken = new Set(parts.slice(0, -1).map(s => s.trim().toLowerCase()));
   const all = [...new Set([...dl.options].map(o => (o.value || o.textContent || "").trim()).filter(Boolean))];
   const hits = all.filter(v => { const k = v.toLowerCase(); return !taken.has(k) && k !== q && (!q || k.includes(q)); })
-    .sort((a, b) => (b.toLowerCase().startsWith(q) - a.toLowerCase().startsWith(q))).slice(0, 8);
+    .sort((a, b) => (b.toLowerCase().startsWith(q) - a.toLowerCase().startsWith(q))).slice(0, 30);
   if (!hits.length) return;
   const box = document.createElement("div"); box.className = "sugg"; box.setAttribute("role", "listbox");
   box.innerHTML = hits.map(v => `<button type="button" role="option" data-sv="${esc(v)}">${esc(v)}</button>`).join("");
@@ -2012,9 +2018,9 @@ ${isBook ? `
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc([v.rule.from, v.rule.to].filter(Boolean).join("–") || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
 ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId, d) ? `<br>Collector prices: ${collectorLinks(d.seriesId, d)}` : ""}</div>
           <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
-          <label><span class="l">Bought from</span><input id="f-source" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"></label>
+          <label><span class="l">Bought from</span><input id="f-source" list="sources" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"><datalist id="sources">${sourceList().map(n => `<option>${esc(n)}</option>`).join("")}</datalist></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
-          ${d.read ? `<label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="${d.readDate ? "TT.MM.JJJJ" : "not recorded"}"></label>` : ""}
+          ${d.read ? `<label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="${d.readDate ? "TT.MM.JJJJ, MM.JJJJ or JJJJ" : "not recorded"}"></label>` : ""}
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
           ${isBook ? "" : `<label class="check wide"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
@@ -2769,7 +2775,8 @@ const MISSING = {
   cover: { label: "cover picture", test: c => !c.coverUrl },
   genre: { label: "genre", test: c => !c.genre && !(c.kind !== "book" && storyGenres(c)) },
   pages: { label: "pages", test: c => !parseInt(c.pages, 10) },
-  date: { label: "purchase date", test: c => !c.purchaseDate }
+  date: { label: "purchase date", test: c => !c.purchaseDate },
+  source: { label: "where it was bought", test: c => !String(c.source || "").trim() }
 };
 function pickInfo(pick) {
   const [type, val, scope] = String(pick || "").split("|");
@@ -2787,7 +2794,8 @@ function pickInfo(pick) {
     added: [c => boughtOn(c).startsWith(val), `bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
     entered: [c => enteredOn(c).startsWith(val), `entered in the app ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
     read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`],
-    readnodate: [c => c.read && !/^\d{4}-\d{2}-\d{2}$/.test(c.readDate || ""), "read, without a read date"]
+    src: [c => String(c.source || "").trim().toLowerCase() === val.toLowerCase(), `bought from ${val}`],
+    readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"]
   }[type] || [() => false, "?"];
   return { test: c => c.status !== "wanted" && inScope(c) && T[0](c), label: T[1], scope };
 }
@@ -2930,6 +2938,16 @@ VIEWS.stats = {
       <div class="small" style="margin-top:6px"><strong>CHF ${fmt2(inRange(perSpent))}</strong> <span class="muted">spent ${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>
       ${timeBars(perSpent, "CHF spent", "", "a", n => "CHF " + fmt2(n))}
       <p class="small muted" style="margin:0">By purchase date. ${noDate ? `<button type="button" class="link" data-pick="miss|date|a">${nf(noDate)} ${noDate === 1 ? "entry has" : "entries have"} none</button> and ${noDate === 1 ? "isn't" : "aren't"} shown. ` : ""}Tap a bar in the upper chart to see what was bought then.</p></div>`;
+    // where you buy: entries and money per shop or seller (same name in other spelling of case counts together)
+    const srcT = {}; let noSrc = 0;
+    all.forEach(c => { const v = String(c.source || "").trim(); if (!v) { noSrc++; return; } const k = v.toLowerCase(), t = srcT[k] = srcT[k] || { name: v, n: 0, chf: 0 };
+      t.n++; if (typeof c.pricePaid === "number") t.chf += toCHF(c.pricePaid * (c.copies || 1), c.currency); });
+    const bySpent = S.statSrcBy === "chf", srcRows = Object.values(srcT).sort((a, b) => bySpent ? b.chf - a.chf || b.n - a.n : b.n - a.n || b.chf - a.chf);
+    const srcShown = S.statAllSrc ? srcRows : srcRows.slice(0, 10), srcMax = Math.max(1, ...srcRows.map(x => bySpent ? x.chf : x.n));
+    const ovSource = srcRows.length ? `<div class="card stack"><div class="cardhead"><h3>Bought from</h3><div class="seg" role="group" aria-label="Sort"><button type="button" data-srcby="" aria-pressed="${!bySpent}">Most entries</button><button type="button" data-srcby="chf" aria-pressed="${bySpent}">Most spent</button></div></div>
+      <div class="hbars">${srcShown.map(x => `<button class="hbar" data-pick="${esc("src|" + x.name + "|a")}" title="${esc(x.name)}: ${x.n} · CHF ${fmt2(x.chf)}"><span class="lab">${esc(x.name)}</span><span class="track"><span class="fill" style="width:${((bySpent ? x.chf : x.n) / srcMax * 100).toFixed(1)}%"></span></span><span class="n">${bySpent ? fmt2(x.chf) + `<small>${nf(x.n)} ${x.n === 1 ? "entry" : "entries"}</small>` : nf(x.n) + `<small>CHF ${fmt2(x.chf)}</small>`}</span></button>`).join("")}</div>
+      ${srcRows.length > 10 ? `<button class="ghost" id="stAllSrc" type="button">${S.statAllSrc ? "Show fewer" : "Show all " + srcRows.length}</button>` : ""}
+      <p class="small muted" style="margin:0">Comics and books you own, money in CHF. Tap a line to see what you bought there.${noSrc ? ` <button type="button" class="link" data-pick="miss|source|a">${nf(noSrc)} ${noSrc === 1 ? "entry has" : "entries have"} no “Bought from”</button>.` : ""}</p></div>` : "";
     // what is still missing, so values and reading stats can be trusted
     const missRows = [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"], ["Cover picture", "cover", "a"], ["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]]
       .map(([l, k, sc]) => { const pk = `miss|${k}|${sc}`, n = all.filter(pickInfo(pk).test).length; return [l, n, pk]; }).filter(x => x[1]);
@@ -2959,7 +2977,7 @@ VIEWS.stats = {
     const tab = S.statTab || "overview";
     const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs four" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="overview" aria-selected="${tab === "overview"}">Overview</button><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
     if (tab === "books") return tabs + (novels.length || novelsWanted.length ? bookStats(novels, novelsWanted).replace('<h2 class="sectionhead">Books</h2>', "") : '<div class="empty"><h3>No books yet</h3><p>Books you add show up here.</p></div>');
-    if (tab === "overview") return tabs + ovHero + ovMonth + ovTime + ovMissing;
+    if (tab === "overview") return tabs + ovHero + ovMonth + ovTime + ovSource + ovMissing;
     if (tab === "value") return tabs + `${money}${serCard}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
     return tabs + `
       <div class="hero card">
@@ -2984,6 +3002,8 @@ VIEWS.stats = {
   },
   bind() {
     document.querySelectorAll("[data-sttab]").forEach(b => b.onclick = () => { S.statTab = b.dataset.sttab; render(); window.scrollTo(0, 0); });
+    document.querySelectorAll("[data-srcby]").forEach(b => b.onclick = () => { S.statSrcBy = b.dataset.srcby; renderKeep(); });
+    $("#stAllSrc") && ($("#stAllSrc").onclick = () => { S.statAllSrc = !S.statAllSrc; renderKeep(); });
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { tab: "all", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
@@ -3028,13 +3048,15 @@ function ratedCard(list, word) {
 function readingCard(list, word) {
   if (!list.length) return "";
   const nf = n => Number(n).toLocaleString("de-CH");
-  const read = list.filter(c => c.read), dated = read.filter(c => /^\d{4}-\d{2}-\d{2}$/.test(c.readDate || "")), undated = read.length - dated.length;
+  const read = list.filter(c => c.read), dated = read.filter(c => /^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || "")), undated = read.length - dated.length;
   const scope = word === "books" ? "b" : "c", all = (S.statRange || "year") === "all", now = new Date(), year = String(now.getFullYear());
   const per = {}, perPages = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; perPages[k] = (perPages[k] || 0) + (parseInt(c.pages, 10) || 0); });
   const inRange = dated.filter(c => all || c.readDate.startsWith(year)), pages = inRange.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
   // months in the period, for an average
   const first = dated.map(c => c.readDate).sort()[0] || "";
-  const months = all ? (first ? (now.getFullYear() - +first.slice(0, 4)) * 12 + now.getMonth() - (+first.slice(5, 7) - 1) + 1 : 1) : now.getMonth() + 1;
+  const months = all ? (first ? (now.getFullYear() - +first.slice(0, 4)) * 12 + now.getMonth() - ((+first.slice(5, 7) || 1) - 1) + 1 : 1) : now.getMonth() + 1;
+  // read dates with only a year can't go into a month bar: they count in the totals and in the yearly bars
+  const yearOnly = all ? 0 : inRange.filter(c => c.readDate.length === 4).length;
   const avg = inRange.length / Math.max(1, months);
   const w = n => n === 1 ? word.replace(/s$/, "") : word, pct = list.length ? Math.round(read.length / list.length * 100) : 0;
   const tag = c => c.kind === "book" && isNovel(c) ? (c.title || "Untitled") : comicTag(c);
@@ -3059,7 +3081,7 @@ function readingCard(list, word) {
     ${pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
     ${last.length ? `<div class="small muted">Recently read</div><div class="rlist">${last.map(c => `<button class="ritem" data-open="${esc(c.id)}">${thumb(c)}<span class="rt">${esc(tag(c))}</span><span class="rd muted">${esc(niceDate(c.readDate))}</span></button>`).join("")}</div>` : ""}
     ${next.length ? `<div class="small muted">Up next</div><div class="rlist">${next.map(c => `<div class="ritem">${thumb(c)}<button class="link rt" data-open="${esc(c.id)}">${esc(tag(c))}</button><button type="button" class="ghost tiny" data-readnow="${esc(c.id)}" aria-label="Mark ${esc(tag(c))} read today">✓ Read</button></div>`).join("")}</div>` : ""}
-    <p class="small muted" style="margin:0">${undated ? `<button type="button" class="link" data-pick="readnodate||${scope}">${nf(undated)} marked read without a date</button> count in the progress but not in the charts. ` : ""}Tap a bar to see what you read then.</p></div>`;
+    <p class="small muted" style="margin:0">${undated ? `<button type="button" class="link" data-pick="readnodate||${scope}">${nf(undated)} marked read without a date</button> count in the progress but not in the charts. ` : ""}${yearOnly ? `${nf(yearOnly)} read in ${year} without a month count in the total but not in the month bars. ` : ""}Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----
 // condition of graded entries; scope "c" comics, "b" books
