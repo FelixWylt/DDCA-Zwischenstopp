@@ -521,6 +521,36 @@
       "country": "de",
       "code": "de/LTBCOH",
       "title": "Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)"
+    },
+    {
+      "series": "Walt Disney's Serier (1990–1992)",
+      "country": "se",
+      "code": "se/WDSA",
+      "title": "Walt Disney's Serier (album 1990-1992)",
+      "aliases": [
+        "Walt Disney's Serier (album 1990-1992)",
+        "Walt Disney's Serier 1990"
+      ]
+    },
+    {
+      "series": "Walt Disney's Serier (1996–2001)",
+      "country": "se",
+      "code": "se/WDSB",
+      "title": "Walt Disney's Serier (album 1996-)",
+      "aliases": [
+        "Walt Disney's Serier (album 1996-)",
+        "Walt Disney's Serier 1996"
+      ]
+    },
+    {
+      "series": "Kalle Anka & C:o (B-nummer)",
+      "country": "se",
+      "code": "se/B",
+      "title": "Kalle Anka & C:o (B-nummer)",
+      "aliases": [
+        "B-nummer",
+        "Kalle Anka B-nummer"
+      ]
     }
   ]
 }

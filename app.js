@@ -1304,8 +1304,19 @@ function seriesTitle(key) {
 // "Spider-Man (German)" when two series share a name
 function seriesLabel(se) {
   const same = n => String(n || "").trim().toLowerCase();
-  if (!S.series.some(x => x !== se && same(x.name) === same(se.name))) return se.name;
-  const l = seriesLang(se); return l ? se.name + " (" + l + ")" : se.name;
+  // series of the same name in another language: "Donald Duck & Co (German)"
+  if (S.series.some(x => x !== se && same(x.name) === same(se.name))) { const l = seriesLang(se); if (l && S.series.some(x => x !== se && same(x.name) === same(se.name) && seriesLang(x) !== l)) return se.name + " (" + l + ")"; }
+  // several runs of one title (Walt Disney's Serier 1954–1977, 1990–1992, 1996–2001): the name with the years
+  const base = n => norm(String(n || "").replace(/\s*\([^)]*\)\s*$/, ""));
+  if (!S.series.some(x => x !== se && base(x.name) && base(x.name) === base(se.name))) return se.name;
+  const y = seriesYears(se); return y ? String(se.name).replace(/\s*\([^)]*\)\s*$/, "") + " (" + y + ")" : se.name;
+}
+// the years a series ran: its own years, else INDUCKS', else those of your comics in it
+function seriesYears(se) {
+  let a = +se.firstYear || 0, b = +se.lastYear || 0;
+  if (!a) { const p = (S.inducksDir || []).find(x => x[0] === se.code); if (p) { a = +p[3]; b = +p[4]; } }
+  if (!a) { const ys = S.comics.filter(c => c.seriesId === se.id).map(c => c.issueYear || +String(c.date || "").slice(0, 4)).filter(y => y > 1900); if (ys.length) { a = Math.min(...ys); b = Math.max(...ys); } }
+  return a ? (b && b !== a ? a + "–" + b : String(a)) : "";
 }
 function groupRank(name) { return name === BOOK_GROUP ? 2 : (name === OTHER_GROUP || name === "Other comics") ? 1 : 0; }
 function groupCompare(a, b) { return groupRank(a) - groupRank(b) || String(a).localeCompare(String(b), "de", { numeric: true }); }
