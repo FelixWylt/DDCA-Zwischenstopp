@@ -38,6 +38,7 @@
 | 2026-11-08 | Do stats understand pages like "120 (116 numbered + 4 covers)"? (answer only: yes, they take the first number) | under 1 min | 0–0 min (00:26 → 00:26:15) |
 | 2026-11-08 | Why ISBN 9788828781608 (De Luxe 29) isn't found (answer only: not in the 4 databases, INDUCKS has no ISBN table, SBN can't be asked by apps) | 1–2 min | 1–2 min (00:30 → 00:31:40) |
 | 2026-11-08 | Fill from INDUCKS kept the old cover (29 → 29B): replace INDUCKS covers, show new picture over old stored copy | 1–3 min | 0–1 min (00:41 → 00:41:56) |
+| 2026-11-08 | "34 and 34B overlap": letter numbers with different INDUCKS titles count as different comics | 1–4 min | 0–1 min (00:57 → 00:58:06) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.

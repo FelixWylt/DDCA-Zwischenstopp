@@ -2238,7 +2238,11 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       let moved = false, alsoGone = [];
       if (!d.id && !c.facsimile && p.label && !/\?/.test(p.label)) {
         // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
-        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label));
+        // a letter is usually a variant cover (546A = 546), but INDUCKS also uses it for other items under one number:
+        // De Luxe 34B is a box, not Timecrime 34. Different titles in the catalogue = different comics
+        const ce = catEntry(target), cf = ce && S.catCache[ce.file], ttl = k => cf && cf.issues && cf.issues[k] ? norm(cf.issues[k].t || "") : "";
+        const otherItem = (a, b) => a !== b && ttl(a) && ttl(b) && ttl(a) !== ttl(b);
+        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label) && !otherItem(x.issueLabel || x.issue, p.label));
         const wishes = same.filter(x => x.status === "wanted"), wish = wishes.find(x => (x.issueLabel || x.issue) === p.label) || wishes[0];
         const have = same.find(x => x.status !== "wanted" && (x.issueLabel || x.issue) === p.label) || same.find(x => x.status !== "wanted");
         const haveLab = have && (have.issueLabel || have.issue), exact = haveLab === p.label;
