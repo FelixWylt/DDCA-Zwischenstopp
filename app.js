@@ -291,10 +291,20 @@ function parsePrices(key, text, fallbackCur, edition) {
     if (sk) {
       kind = kind || "Seriekatalogen";
       const nums = sk[5].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[3] ? +sk[3] : a;
-      if (yearly && !y) { unread.push(line); return; }
       if (nums[3] == null) { unread.push(line); return; }   // no VF price listed
+      // Kalle Ankas bästa: "2018 7 Kalle Ankas bästa fotbollsserier …" is book 7 (INDUCKS 2018/01), found by title or by number
+      if (yearly && listedSeries(se) && !(y && listedSeries(se).years[y] && listedSeries(se).years[y].includes(a) && !sk[4])) {
+        const k = (sk[4] && listedLabel(se, sk[4].trim())) || (!sk[3] && listedLabel(se, String(a), y));
+        if (k) { const v = rangeBound(key, k); items.push({ lo: v, hi: v, price: nums[3], cur: "SEK", single: true }); return; }
+      }
+      if (yearly && !y) { unread.push(line); return; }
       // running series (Kalle Ankas Pocket): the year column is only the publication year
       items.push({ lo: yearly ? at(y, a) : a, hi: yearly ? at(y, b) : b, price: nums[3], cur: "SEK" }); return;
+    }
+    // a title or book number with a price, in a series like Kalle Ankas bästa: "Spookyzone 2 120 kr", "Kalle Ankas bästa 4: 250"
+    if (yearly && listedSeries(se)) {
+      const tp = /^(.*?\D.*?)\s*[:=]?\s+(\d[\d.,]*)\s*(kr|sek|€|eur|euro|chf|fr\.?)?\s*$/i.exec(line), k = tp && !/^\d{4}\b/.test(tp[1]) && listedLabel(se, tp[1].replace(/[\s:–-]+$/, ""));
+      if (k && priceAmount(tp[2]) != null) { const v = rangeBound(key, k); kind = kind || "list"; items.push({ lo: v, hi: v, price: priceAmount(tp[2]), cur: tp[3] ? priceCur(tp[3], fallbackCur) : fallbackCur, single: true }); return; }
     }
     // typed ranges, several per line
     let any = false;
@@ -465,8 +475,33 @@ const heartHtml = (on, attr) => `<button type="button" class="heart${on ? " on" 
 const ratingTxt = v => v ? "★ " + String(v).replace(".", ",") : "";
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => t.hidden = true, 3200); }
 function seriesById(id) { return S.series.find(s => s.id === id); }
+// Kalle Ankas bästa: the books are numbered 1, 2, 3 … in order (only the first six say so on the cover), INDUCKS
+// lists them as year/number with gaps (2016/01–03, …, 2020/02, 05, 06). A small yearly series with gaps counts as such.
+function listedSeries(se) {
+  if (!se || se.numbering !== "year") return null;
+  const ent = catEntry(se), cat = ent && S.catCache[ent.file]; if (!cat) return null;
+  if (cat._listed !== undefined) return cat._listed;
+  const labs = Object.keys(cat.issues || {}).filter(k => /^\d{4}\/\d{1,3}$/.test(k)).sort();
+  const per = {}; labs.forEach(k => { const y = k.slice(0, 4), n = +k.slice(5); (per[y] = per[y] || []).push(n); });
+  const small = Object.values(per).every(ns => Math.max(...ns) <= 12), gaps = Object.values(per).some(ns => ns.length < Math.max(...ns));
+  const titles = new Map(); labs.forEach(k => { const t = norm(cat.issues[k].t || ""); if (t && !titles.has(t)) titles.set(t, k); });
+  cat._listed = labs.length && labs.length <= 400 && small && gaps ? { order: labs, titles, years: per } : null;
+  return cat._listed;
+}
+// "4", "Kalle Ankas bästa 4", "Spookyzone 2", "2018 7" (publication year, book 7) -> the INDUCKS label (2017/01, 2022/05, 2018/01)
+function listedLabel(se, raw, year) {
+  const L = listedSeries(se); if (!L) return "";
+  const t = norm(String(raw || "")); if (!t) return "";
+  const byTitle = L.titles.get(t) || L.titles.get(norm(se.name + " " + raw));
+  if (byTitle) return byTitle;
+  if (/^\d{1,3}$/.test(t)) { const k = L.order[+t - 1]; if (k && (!year || +k.slice(0, 4) === +year)) return k; }   // book number = position in the list
+  if (t.length >= 6) { const hits = [...L.titles.keys()].filter(x => x.length >= 6 && (x.includes(t) || t.includes(x))); if (hits.length === 1) return L.titles.get(hits[0]); }
+  return "";
+}
 function parseIssue(series, raw) {
   const s = String(raw || "").trim();
+  // a book number or title without a year, in a series like Kalle Ankas bästa
+  if (series && series.numbering === "year" && s && !/\d{4}/.test(s)) { const k = listedLabel(series, s.replace(/^(nr\.?|#)\s*/i, "")); if (k) return parseIssue(series, k); }
   if (series && series.numbering === "year") {
     // double issues: "2016/11-12", "2016 11+12", "11-12/2016" -> "2016-11-12", the INDUCKS form
     let dd = s.match(/(\d{4})\D+?(\d{1,3})\s*[-+&]\s*(\d{1,3})(?!\d)/), dr = !dd && s.match(/^\D*(\d{1,3})\s*[-+&]\s*(\d{1,3})\D+(\d{4})(?!\d)/);
@@ -2282,8 +2317,9 @@ function yearGridTotal(se) {
   for (let y = y0; y <= y1; y++) {
     if (zero.has(String(y))) total++;
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
-    const py = y > catLast ? per : Math.max(perY[y] || 0, ...owned); if (!py) continue;
-    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py;
+    const listed = listedSeries(se);
+    const py = y > catLast ? (listed ? Math.max(0, ...mine.filter(c => (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0)) : per) : Math.max(perY[y] || 0, ...owned); if (!py) continue;
+    if (perYSet[y] && (listed || perYSet[y].size * 2 < perY[y])) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py;
   }
   return total;
 }
@@ -2455,7 +2491,8 @@ VIEWS.gaps = {
     const perYSet = {};
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
     // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
-    const sparse = y => perYSet[y] && perYSet[y].size * 2 < perY[y];
+    const listed = listedSeries(se);
+    const sparse = y => perYSet[y] && (listed || perYSet[y].size * 2 < perY[y]);
     const yearNums = (y, py) => { if (!sparse(y)) return Array.from({ length: py }, (_, i) => i + 1); const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     const zero = zeroSquares(se, cat0, mine);
@@ -2468,6 +2505,7 @@ VIEWS.gaps = {
       for (let y = y1; y >= y0; y--) years.push(y);
       // with the INDUCKS catalogue, each year shows only the numbers that came out (KA 1948: 1–4)
       const perFor = y => {
+        if (listed && y > catLast) return Math.max(0, ...mine.filter(c => (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0));
         if (!cat0 || y > catLast) return per;
         const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
@@ -2476,7 +2514,7 @@ VIEWS.gaps = {
       const numsOf = y => { const py = perFor(y), nums = py ? yearNums(y, py).filter(n => n > 0) : []; return zero.has(String(y)) ? [0].concat(nums) : nums; };
       total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
-        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(y + "/" + String(n).padStart(2, "0"), n); });
+        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { const lab = y + "/" + String(n).padStart(2, "0"), pos = listed ? listed.order.indexOf(lab) + 1 : 0; cells += cell(lab, pos || n); });   // Kalle Ankas bästa: book number 1–25
         const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
@@ -2524,7 +2562,7 @@ VIEWS.gaps = {
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
     const edList = seriesEditions(se.id);
     return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" + (listedSeries(se) ? "; the squares show the book number (1–" + listedSeries(se).order.length + ")" : "") : esc(se.perYear || 52) + " issues a year"}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),
