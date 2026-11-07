@@ -584,3 +584,9 @@ body.kb .savebar { position: static; border-top: 0; }
 .sform > * { min-width: 0; }
 .sitem.sect > summary .t { font-family: var(--f-display); }
 .sitem.sect .valrules { border-top: 0; padding-top: 0; }
+
+/* wishlist levels: Must have gets a star, Dream is faded with a dashed edge */
+.cell.wanted.wl-must::after { content: "★"; position: absolute; top: 0; right: 2px; font-size: 0.55rem; line-height: 1; }
+.cell.wanted.wl-dream { opacity: 0.6; box-shadow: none; background: transparent; border: 1.5px dashed var(--wanted); }
+.chip.wl-must { background: var(--wanted-soft); color: var(--wanted); border-color: var(--wanted); font-weight: 700; }
+.chip.wl-dream { background: transparent; color: var(--muted); border-style: dashed; }
