@@ -2579,6 +2579,7 @@ function pickInfo(pick) {
     grade: [c => String(c.grade || "").split("-")[0] === val, `condition Z${val}`],
     dec: [c => { const y = yearOf(c.date) || c.issueYear; return y && Math.floor(y / 10) * 10 === +val; }, `published in the ${val}s`],
     fmt: [c => (c.format || "Not set") === val, `format ${val}`],
+    pub: [c => (c.publisher || "Not set") === val, `from ${val}`],
     author: [c => splitPeople(c.author).includes(val), `by ${val}`],
     miss: [c => !!MISSING[val] && MISSING[val].test(c), `without ${(MISSING[val] || {}).label || val}`],
     added: [c => boughtOn(c).startsWith(val), `bought ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
@@ -2672,13 +2673,7 @@ VIEWS.stats = {
     };
 
     // 5. condition and money, only when there's data
-    const graded = own.filter(c => c.grade);
-    const gradeMap = {}; graded.forEach(c => { const g = String(c.grade).split("-")[0]; gradeMap[g] = (gradeMap[g] || 0) + 1; });
-    const gradeNames = { 0: "Z0 as new", 1: "Z1 very good", 2: "Z2 good", 3: "Z3 worn", 4: "Z4 poor", 5: "Z5 very poor" };
-    const condition = graded.length ? `<div class="card stack"><div class="cardhead"><h3>Condition</h3><span class="muted small">${graded.length} of ${nf(own.length)} graded</span></div>
-      <div class="seg-bar" role="img" aria-label="Condition of graded comics">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span class="g${g}" style="flex:${gradeMap[g]}" title="${gradeNames[g]}: ${gradeMap[g]}"></span>`).join("")}</div>
-      <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<button type="button" class="legbtn" data-pick="grade|${g}|c"><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></button>`).join("")}</div>
-      <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade. Tap a grade to see those comics.</p></div>` : "";
+    const condition = conditionCard(own, "c");
     // Money: comics and books, each and together, in CHF; amounts per currency below
     const moneyOf = list => { const r = { paid: 0, value: 0, paidValued: 0, priced: 0, valued: 0, n: list.length, sums: {}, vals: {} };
       list.forEach(c => { const n = c.copies || 1, cur = c.currency || "CHF", v = valueOf(c);
@@ -2776,7 +2771,7 @@ VIEWS.stats = {
       </div>
       <div class="two">${comp}${years}</div>
       <div class="two">${completion}${closeCard}</div>
-      ${glCard}
+      <div class="two">${glCard}<div class="card stack"><div class="cardhead"><h3>Formats</h3><span class="muted small">comics</span></div>${pickBars(tallyOf(own, c => [c.format || "Not set"], 8).map(([n, k]) => [n, k, `fmt|${n}|c`]))}</div></div>
       <div class="two">${creatorCard("writers", "Top writers")}${creatorCard("artists", "Top artists")}</div>
       ${readingCard(own, "comics")}
       ${ratedCard(own, "comics")}
@@ -2863,6 +2858,17 @@ function readingCard(list, word) {
     <p class="small muted" style="margin:0">${undated ? `<button type="button" class="link" data-pick="readnodate||${scope}">${nf(undated)} marked read without a date</button> count in the progress but not in the charts. ` : ""}Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----
+// condition of graded entries; scope "c" comics, "b" books
+function conditionCard(list, scope) {
+  const graded = list.filter(c => c.grade), word = scope === "b" ? "books" : "comics";
+  if (!graded.length) return "";
+  const gradeMap = {}; graded.forEach(c => { const g = String(c.grade).split("-")[0]; gradeMap[g] = (gradeMap[g] || 0) + 1; });
+  const gradeNames = { 0: "Z0 as new", 1: "Z1 very good", 2: "Z2 good", 3: "Z3 worn", 4: "Z4 poor", 5: "Z5 very poor" };
+  return `<div class="card stack"><div class="cardhead"><h3>Condition</h3><span class="muted small">${graded.length} of ${Number(list.length).toLocaleString("de-CH")} graded</span></div>
+      <div class="seg-bar" role="img" aria-label="Condition of graded ${word}">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<span class="g${g}" style="flex:${gradeMap[g]}" title="${gradeNames[g]}: ${gradeMap[g]}"></span>`).join("")}</div>
+      <div class="legend2">${Object.keys(gradeNames).filter(g => gradeMap[g]).map(g => `<button type="button" class="legbtn" data-pick="grade|${g}|${scope}"><i class="g${g}"></i>${gradeNames[g]} <b>${gradeMap[g]}</b></button>`).join("")}</div>
+      <p class="small muted" style="margin:0">Half grades (Z1-2) count with the better grade. Tap a grade to see those ${word}.</p></div>`;
+}
 function bookStats(own, wanted) {
   const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
   const read = own.filter(c => c.read), pagesRead = read.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
@@ -2879,6 +2885,14 @@ function bookStats(own, wanted) {
   const sers = {}; own.forEach(c => { if (c.seriesName) (sers[c.seriesName] = sers[c.seriesName] || new Set()).add(String(c.issue || "")); });
   const serRows = Object.keys(sers).map(n => { const tot = +(S.bookSizes || {})[n] || 0, have = [...sers[n]].filter(v => /^\d+$/.test(v) && (!tot || +v <= tot)).length; return { n, have, tot }; }).filter(x => x.tot).sort((a, b) => (b.have / b.tot) - (a.have / a.tot) || a.n.localeCompare(b.n, "de"));
   const unsized = Object.keys(sers).length - serRows.length;
+  const pubs = pk(tallyOf(own, c => [c.publisher || "Not set"], 8), "pub");
+  const collectCard = `<div class="card stack"><div class="cardhead"><h3>What you collect</h3><span class="muted small">by publisher</span></div>${pickBars(pubs, "book")}</div>`;
+  const close = serRows.filter(x => x.have < x.tot).sort((a, b) => (a.tot - a.have) - (b.tot - b.have) || b.have - a.have).slice(0, 6);
+  const closeCard = close.length ? `<div class="card stack"><div class="cardhead"><h3>Closest to complete</h3><span class="muted small">fewest missing</span></div>
+    <div class="list">${close.map(x => { const w = wanted.filter(c => c.seriesName === x.n).length;
+      return `<button class="folder" data-bgap="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${nf(x.have)} of ${nf(x.tot)} · ${w ? nf(w) + " on wishlist" : "none on wishlist yet"}</div></div><span class="count wanted-count">${nf(x.tot - x.have)}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("")}</div>
+    <p class="small muted" style="margin:0">The number is how many volumes are missing. Tap a series for its gap grid.</p></div>` : "";
+  const condCard = conditionCard(own, "b");
   const serCard = Object.keys(sers).length ? `<div class="card stack"><div class="cardhead"><h3>Book series</h3><span class="muted small">${Object.keys(sers).length} series</span></div>
     ${serRows.length ? `<div class="hbars">${serRows.map(x => `<button class="hbar" data-bgap="${esc(x.n)}" title="${esc(x.n)}: ${x.have} of ${x.tot}"><span class="lab">${esc(x.n)}</span><span class="track"><span class="fill book" style="width:${Math.max(1, Math.min(100, x.have / x.tot * 100)).toFixed(1)}%"></span></span><span class="n">${x.have}/${x.tot}</span></button>`).join("")}</div>` : ""}
     <p class="small muted" style="margin:0">Tap a series for its gap grid.${unsized ? ` ${unsized} ${unsized === 1 ? "series has" : "series have"} no number of volumes yet: set it in Gaps under “Volumes in this series”.` : ""}</p></div>` : "";
@@ -2887,6 +2901,7 @@ function bookStats(own, wanted) {
       <div class="hero-main"><div class="v book">${nf(own.length)}</div><div class="k">${own.length === 1 ? "book" : "books"} you own</div><div class="small muted">novels, non-fiction and other books that aren't comics</div></div>
       <div class="hero-side">
         <div><div class="v2">${nf(wanted.length)}</div><div class="k">on wishlist</div></div>
+        <div><div class="v2">${nf(Object.keys(sers).length)}</div><div class="k">series</div></div>
         <div><div class="v2">${nf(new Set(own.map(c => c.author).filter(Boolean)).size)}</div><div class="k">${new Set(own.map(c => c.author).filter(Boolean)).size === 1 ? "author" : "authors"}</div></div>
         <div><div class="v2">${pct(read.length, own.length)} %</div><div class="k">read · ${nf(own.length - read.length)} to go</div><div class="meter"><span style="width:${pct(read.length, own.length)}%"></span></div></div>
         <div><div class="v2">${nf(pagesRead)}</div><div class="k">pages read</div></div>
@@ -2899,8 +2914,9 @@ function bookStats(own, wanted) {
       <div class="card stack"><div class="cardhead"><h3>Languages</h3><span class="muted small">books</span></div>${pickBars(langs, "book")}
         ${genres.length ? `<div class="cardhead" style="margin-top:8px"><h3>Genres</h3><span class="muted small">books</span></div>${pickBars(genres, "book")}` : ""}</div>
     </div>
-    <div class="two">${serCard}<div class="card stack"><div class="cardhead"><h3>Formats</h3><span class="muted small">books</span></div>${pickBars(formats, "book")}</div></div>
-    ${decCard}
+    <div class="two">${collectCard}${decCard}</div>
+    <div class="two">${serCard}${closeCard}</div>
+    <div class="two"><div class="card stack"><div class="cardhead"><h3>Formats</h3><span class="muted small">books</span></div>${pickBars(formats, "book")}</div>${condCard}</div>
     <p class="small muted">Tap any bar to see those books.</p>` : ""}`;
 }
 // ---- book lookup and barcode scanning ----
@@ -3617,6 +3633,7 @@ async function fillSeriesInfo(se) {
   if (!p) {   // without a code, only an exact name match counts (no guessing: "Kalle Anka" is not "Kalle Anka & C:o")
     const exact = exactInducks(se);
     if (exact.length === 1) p = exact[0];
+    else if (!exact.length) { const near = nearInducks(se); if (near.length === 1) p = near[0]; }
   }
   const badCode = se.code && S.inducksDir && /^(de|ch|at|se|it|us|uk)\//.test(se.code) && !S.inducksDir.some(x => x[0] === se.code);
   if (badCode && p) { got.push("INDUCKS code corrected from " + se.code + " to " + p[0]); se.code = p[0]; }
@@ -3624,6 +3641,7 @@ async function fillSeriesInfo(se) {
   const entry = catEntry(se) || (p && catEntry({ name: se.name, code: p[0] }));
   if (p) {
     set("code", p[0], "INDUCKS code"); set("name", p[1], "name");
+    set("short", p[0].split("/")[1] || "", "short name");   // de/MMS -> MMS
     set("country", p[0].split("/")[0].toUpperCase(), "country");
     set("pubHouse", p[5] || "", "publisher"); set("format", p[6] || "", "format");
   }
@@ -3656,7 +3674,7 @@ async function fillSeriesInfo(se) {
     const wl = { Swedish: "sv", Italian: "it", Norwegian: "no", English: "en", Danish: "da", French: "fr" }[seriesLang(se)] || "en";
     for (const t of [se.name, p && p[1]].filter(Boolean)) {
       try {
-        const r = await fetch(`https://${wl}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(String(t).replace(/ /g, "_"))}`);
+        const r = await fetchWithin(`https://${wl}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(String(t).replace(/ /g, "_"))}`, 10000);
         if (!r.ok) continue; const j = await r.json();
         if (j.type === "standard" && j.extract && /disney|kalle|anka|topolino|paperino|serie|tidning|fumetto|comic/i.test(j.extract)) { se.about = j.extract.slice(0, 700); se.aboutSrc = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ""; se.srcName = "Wikipedia"; se.srcLic = "CC BY-SA"; got.push("description"); break; }
       } catch (e) {}
@@ -3666,10 +3684,11 @@ async function fillSeriesInfo(se) {
 }
 // ---- INDUCKS status of a series: in the offline catalogue, only on INDUCKS, or not found ----
 function inducksCandidates(se) {
-  const dir = S.inducksDir; if (!dir) return [];
+  const dir = S.inducksDir; if (!dir) return []; const dn = dirNorm();
   const n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
   const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "uk"] }[lang] || null;
-  return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && (norm(p[1]) === n || norm(p[1]).replace(/\s+\d+$/, "") === n || (n.length > 8 && norm(p[1]).includes(n))))
+  const l = loose(n);
+  return dir.filter((p, i) => (!cc || cc.includes(p[0].split("/")[0])) && (dn[i] === n || dn[i].replace(/\s+\d+$/, "") === n || (n.length > 8 && dn[i].includes(n)) || (l.length >= 8 && S.dirLoose[i] === l)))
     .sort((a, b) => b[2] - a[2]).slice(0, 3);
 }
 // "Add to catalogue": a ready-filled request on the app's GitHub repository; a GitHub job adds the series and rebuilds the catalogue
@@ -3679,10 +3698,28 @@ function catalogueRequestUrl(code, name) {
   return `https://github.com/${APP_REPO}/issues/new?title=${encodeURIComponent("Add to catalogue: " + code)}&body=${encodeURIComponent(body)}`;
 }
 // INDUCKS publications with exactly this series' name, in its country (searched in the whole directory, not just the top hits)
-function exactInducks(se) {
-  const dir = S.inducksDir || [], n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
+// a web request that gives up after ms milliseconds (some sites never answer)
+async function fetchWithin(url, ms, opt) {
+  const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
+  try { return await fetch(url, Object.assign({}, opt, { signal: ac.signal })); } finally { clearTimeout(t); }
+}
+// the directory's names, simplified once (comparing 2,774 names for every series on every redraw was slow on the phone)
+function dirNorm() {
+  const dir = S.inducksDir || [];
+  if (S.dirNormOf !== dir) { S.dirNormOf = dir; S.dirNorm = dir.map(p => norm(p[1])); S.dirLoose = S.dirNorm.map(loose); }
+  return S.dirNorm;
+}
+// singular and plural count as the same name: "Sonderhefte" = "Sonderheft", "Taschenbücher" ≈ "Taschenbuch"
+const loose = n => n.replace(/ü/g, "u").split(" ").map(w => w.length > 4 ? w.replace(/(en|er|e|n|s)$/, "") : w).join(" ");
+function nearInducks(se) {
+  const dir = S.inducksDir || [], dn = dirNorm(), l = loose(norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, ""))), lang = seriesLang(se);
   const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "uk"] }[lang] || null;
-  return dir.filter(p => (!cc || cc.includes(p[0].split("/")[0])) && norm(p[1]) === n);
+  return l.length < 8 ? [] : dir.filter((p, i) => (!cc || cc.includes(p[0].split("/")[0])) && S.dirLoose[i] === l);
+}
+function exactInducks(se) {
+  const dir = S.inducksDir || [], dn = dirNorm(), n = norm(String(se.name).replace(/\s*\([^)]*\)\s*$/, "")), lang = seriesLang(se);
+  const cc = { German: ["de", "ch", "at"], Swedish: ["se"], Italian: ["it"], Norwegian: ["no"], Danish: ["dk"], English: ["us", "uk"] }[lang] || null;
+  return dir.filter((p, i) => (!cc || cc.includes(p[0].split("/")[0])) && dn[i] === n);
 }
 // Disney series that are on INDUCKS but not in the offline catalogue: by their code, or else by an exact name match only
 function missingFromCatalogue() {
@@ -3691,7 +3728,7 @@ function missingFromCatalogue() {
   S.series.forEach(se => {
     if ((se.publisher || DISNEY) !== DISNEY || catEntry(se)) return;
     let p = se.code && S.inducksDir.find(x => x[0] === se.code);
-    if (!p) { const ex = exactInducks(se); if (ex.length === 1) p = ex[0]; }
+    if (!p) { const ex = exactInducks(se); if (ex.length === 1) p = ex[0]; else if (!ex.length) { const nr = nearInducks(se); if (nr.length === 1) p = nr[0]; } }
     if (p) { if (!add.some(x => x.code === p[0])) add.push({ code: p[0], name: se.name }); }
     else if (inducksCandidates(se).length) unsure.push(se.name);
   });
@@ -3900,6 +3937,35 @@ async function fillBookSeries(name) {
   await setConfig("bookSeriesInfo", S.bookMeta);
   return got;
 }
+// ---- series with nothing in them: no owned and no wanted comics or books ----
+function emptySeries() {
+  const ids = new Set(S.comics.map(c => c.seriesId)), books = new Set(S.comics.filter(c => c.kind === "book" && c.seriesName).map(c => c.seriesName));
+  return { comics: S.series.filter(s => s.id && !ids.has(s.id)), books: (S.bookSeriesExtra || []).filter(x => x.name && !books.has(x.name)) };
+}
+function emptySeriesCard() {
+  const e = emptySeries(), n = e.comics.length + e.books.length;
+  if (!n) return "";
+  const names = e.comics.map(s => seriesLabel(s) || s.name).concat(e.books.map(x => x.name + " (books)"));
+  return `<div class="card stack" id="emptyser"><h3>Empty series</h3>
+    <p class="small muted" style="margin:0">${n} ${n === 1 ? "series has" : "series have"} nothing in it: no comics or books, owned or on the wishlist.</p>
+    ${S.emptyAsk ? `<div class="confirm stack" style="gap:8px"><strong>Delete ${n === 1 ? "this series" : "these " + n + " series"}?</strong>
+        <div class="small" style="max-height:220px;overflow:auto">${names.map(esc).join("<br>")}</div>
+        <p class="small muted" style="margin:0">Their price ranges go too. A backup brings them back (More › Backup › Restore).</p>
+        <div class="row"><button type="button" class="danger" id="emptygo">Delete ${n === 1 ? "it" : "all " + n}</button><button type="button" class="ghost" id="emptyno">Cancel</button></div></div>`
+      : `<div class="row"><button type="button" id="emptyask">Delete empty series</button></div>`}</div>`;
+}
+async function deleteEmptySeries() {
+  const e = emptySeries(), ids = new Set(e.comics.map(s => s.id)), names = new Set(e.books.map(x => x.name));
+  const keys = new Set([...ids].concat([...names].map(n => "book:" + n)));
+  S.series = S.series.filter(s => !ids.has(s.id));
+  S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => !names.has(x.name));
+  S.valueRules = (S.valueRules || []).filter(r => !keys.has(r.s));
+  const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}); names.forEach(n => { delete sizes[n]; delete meta[n]; });
+  S.bookSizes = sizes; S.bookMeta = meta;
+  await saveSeries(); await setConfig("bookSeriesExtra", S.bookSeriesExtra); await setConfig("valueRules", S.valueRules);
+  await setConfig("bookSizes", sizes); await setConfig("bookSeriesInfo", meta);
+  return ids.size + names.size;
+}
 // saves renamed book series and volume counts (called by "Save series")
 async function saveBookSeries() {
   const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}), fix = [];
@@ -3971,6 +4037,7 @@ VIEWS.series = {
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
+      ${emptySeriesCard()}
       ${(st => st.length ? `<div class="card stack"><h3>Books that belong to a comic series</h3><p class="small muted" style="margin:0">These are saved as books, but their book series has the name of one of your comic series, so gap grid and stats can't count them as issues.</p>
         <div class="list">${st.map(({ c, se }) => `<div class="small">${esc(c.title || "Untitled")} · book series “${esc(c.seriesName)}” ${esc(c.issue || "")} → <strong>${esc(se.short || se.name)} ${esc(c.issue || "")}</strong></div>`).join("")}</div>
         <div class="row"><button type="button" class="primary" id="moveallstray">Move ${st.length === 1 ? "it" : "all " + st.length}</button></div></div>` : "")(strayBooks())}
@@ -4039,6 +4106,9 @@ VIEWS.series = {
     document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
     bindRefresh(); bindRefreshBooks();
     $("#moveallstray") && ($("#moveallstray").onclick = async () => { try { const n = await moveStrays(strayBooks()); toast(n + (n === 1 ? " copy moved" : " copies moved")); renderKeep(); } catch (e) { toast(errText(e)); } });
+    $("#emptyask") && ($("#emptyask").onclick = () => { S.emptyAsk = true; renderKeep(); });
+    $("#emptyno") && ($("#emptyno").onclick = () => { S.emptyAsk = false; renderKeep(); });
+    $("#emptygo") && ($("#emptygo").onclick = async () => { S.emptyAsk = false; try { const n = await deleteEmptySeries(); toast(n + (n === 1 ? " empty series deleted" : " empty series deleted")); } catch (e) { toast(errText(e)); } renderKeep(); });
     $("#fillall") && ($("#fillall").onclick = async () => {
       if (S.fillAll && S.fillAll.running) { S.fillAll.stop = true; return; }
       grab();
@@ -4115,7 +4185,9 @@ VIEWS.series = {
       S.series.forEach(s => { if (!s.group) s.group = OTHER_GROUP; if (!s.publisher) s.publisher = OTHER_PUB; });
       S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group));
       const ids = S.series.map(s => s.id); if (new Set(ids).size !== ids.length) { toast("Two series have the same INDUCKS code"); return; }
-      try { await saveBookSeries(); await saveSeries(); toast("Series saved"); render(); } catch (e) { toast(errText(e)); }
+      const btn = $("#saveser"); btn.disabled = true; btn.textContent = "Saving…";
+      try { await saveBookSeries(); await saveSeries(); toast("Series saved"); } catch (e) { toast(errText(e)); }
+      requestAnimationFrame(() => setTimeout(render, 0));   // let the message show before the page is redrawn
     };
   }
 };

@@ -130,7 +130,10 @@
 
   async function api(params) {
     const url = API + "?" + new URLSearchParams(Object.assign({ format: "json", formatversion: "2", origin: "*" }, params));
-    const r = await fetch(url, { headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } });
+    // Duckipedia sometimes doesn't answer at all: give up after 12 seconds instead of waiting forever
+    const ac = new AbortController(), timer = setTimeout(() => ac.abort(), 12000);
+    let r; try { r = await fetch(url, { signal: ac.signal, headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } }); }
+    catch (e) { throw new Error(ac.signal.aborted ? "Duckipedia didn't answer" : e.message); } finally { clearTimeout(timer); }
     if (!r.ok) throw new Error("Duckipedia answered " + r.status);
     return r.json();
   }

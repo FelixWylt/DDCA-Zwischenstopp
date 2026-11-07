@@ -28,6 +28,15 @@
     for (let i = 0; i < 9; i++) t += +b[i] * (10 - i); const c = (11 - t % 11) % 11; return b + (c === 10 ? "X" : c);
   }
   function hyphenless(isbn) { return clean(isbn); }
+  // a subtitle that only describes the book ("Schauspiel", "A Legend novel", "Norton critical editions, 2nd edition",
+  // "Buch mit Vokabelbeilage") isn't part of the title; a real subtitle ("oder Hin und zurück") is kept
+  const DESCRIBES = /\b(novel|novels|roman|romane|romanzo|erzählung|erzählungen|novelle|novellen|geschichten|stories|schauspiel|drama|tragödie|trauerspiel|komödie|lustspiel|gedichte|poems|play|plays|edition|editions|ausgabe|auflage|beilage|vokabel\w*|annotated|annotiert|critical|kommentiert|materialien|textausgabe|lektüre|unabridged|thriller|krimi|kriminalroman|jugendbuch|kinderbuch|bilderbuch|sachbuch|bestseller|reclam|book \d+|band \d+|volume \d+|teil \d+)\b/i;
+  function titleWith(title, sub) {
+    let t = tidy(title), s = tidy(sub);
+    // the subtitle is sometimes inside the title: "Prodigy: a Legend novel", "Wilhelm Tell - Schauspiel"
+    if (!s) { const m = /^(.{2,}?)\s*(?::|\s[-–]\s)\s*([^:–]+)$/.exec(t); if (m && DESCRIBES.test(m[2])) { t = m[1]; s = m[2]; } }
+    return { title: s && !DESCRIBES.test(s) ? t + " – " + s : t, sub: s };
+  }
   // Italian ISBNs (978-88, 979-12): the Italian union catalogue (SBN) can't be asked by apps, but it can be opened in the browser.
   // SBN files a book under the number printed on it (10 digits before 2007, 13 after), so the link asks for both forms
   function isItalian(isbn) { return /^97(888|912)/.test(normalize(isbn)); }
@@ -94,7 +103,7 @@
       if (!authors.length && !fields("110").length && fields("130").length) authors.push("Anonymous");
       if (!authors.length) others.filter(f => /(Verfasser|Hrsg|Herausgeber)/i.test(sub(f, "e").join(" "))).forEach(f => authors.push(personName(sub(f, "a")[0])));
       const t245 = fields("245")[0];
-      const title = tidy([tidy(sub(t245, "a")[0]), tidy(sub(t245, "b")[0])].filter(Boolean).join(" – "));
+      const { title, sub: subtitle } = titleWith(tidy(sub(t245, "a")[0]).replace(/\s*[:\/;=]$/, ""), tidy(sub(t245, "b")[0]).replace(/\s*[:\/;=]$/, ""));
       const orig = fields("700").map(f => sub(f, "t")[0]).filter(Boolean)[0] || fields("240").map(f => sub(f, "a")[0])[0] || "";
       const extent = first("300", "a");
       const pages = (/(\d+)\s*(?:s\.|s\b|seiten|sidor|p\.|pages?\b)/i.exec(extent) || (/tim|min|vol|band|cd|mp3|punktskrift/i.test(extent) ? null : /^\s*\[?(\d+)\]?\s*$/.exec(extent)) || [])[1] || "";
@@ -103,7 +112,7 @@
       const lang = langs.length > 1 ? (langs.find(l => l !== "German" && l !== "Swedish") || langs[0]) : langs[0] || "";
       const binding = bindingOf(fields("020").map(f => sub(f, "q").concat(sub(f, "c")).join(" ")).join(" ") + " " + fields("655").map(f => sub(f, "a")[0]).join(" "), lang === "Swedish");
       return {
-        title, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
+        title, subtitle, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
         publisher: tidy(first("264", "b") || first("260", "b")), year: year(first("264", "c") || first("260", "c")),
         pages, lang,
         // a publisher's paperback number (dtv 21412, rororo 23315), an author's collected works ("Das dramatische Werk", Werkausgabe)
@@ -126,7 +135,8 @@
   function fromLibris(x) {
     const pub = [].concat(x.publisher || []);
     const p = pub.map(s => (/:\s*(.+)$/.exec(s) || [])[1]).filter(Boolean)[0] || (pub.length > 1 ? pub[1] : "");
-    return { title: tidy(x.title), authors: [].concat(x.creator || []).map(personName), publisher: tidy(p), year: year(x.date), lang: langName(x.language), genre: [].concat(x.subject || [], x.genre || []).filter(v => typeof v === "string").join(", "), isbn: clean([].concat(x.isbn || [])[0]) };
+    const tt = titleWith(x.title);
+    return { title: tt.title, subtitle: tt.sub, authors: [].concat(x.creator || []).map(personName), publisher: tidy(p), year: year(x.date), lang: langName(x.language), genre: [].concat(x.subject || [], x.genre || []).filter(v => typeof v === "string").join(", "), isbn: clean([].concat(x.isbn || [])[0]) };
   }
   async function libris(query, n) {
     try {
@@ -143,7 +153,8 @@
     const j = await getJson("https://openlibrary.org/api/books?jscmd=data&format=json&bibkeys=ISBN:" + isbn);
     const x = j["ISBN:" + isbn]; if (!x) return [];
     let fmt = "", lang = ""; try { const ed = await getJson("https://openlibrary.org/isbn/" + isbn + ".json"); fmt = bindingOf(ed.physical_format); lang = langName(String(((ed.languages || [])[0] || {}).key || "").split("/").pop()); if (!x.number_of_pages && ed.number_of_pages) x.number_of_pages = ed.number_of_pages; } catch (e) {}
-    return [{ format: fmt, lang, title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
+    const tt = titleWith(x.title, x.subtitle);
+    return [{ format: fmt, lang, title: tt.title, subtitle: tt.sub, authors: (x.authors || []).map(a => a.name), publisher: tidy(((x.publishers || [])[0] || {}).name),
       year: year(x.publish_date), pages: x.number_of_pages ? String(x.number_of_pages) : "", cover: (x.cover || {}).medium || "", genre: oneGenre((x.subjects || []).slice(0, 25).map(s => s.name).join(", "), true), isbn }];
   }
   async function openLibrarySearch(q) {
@@ -156,7 +167,8 @@
   // ---- Google Books ----
   function fromGoogle(v) {
     const x = v.volumeInfo || {}, ids = x.industryIdentifiers || [];
-    return { title: tidy([x.title, x.subtitle].filter(Boolean).join(" – ")), authors: x.authors || [], publisher: tidy(x.publisher), year: year(x.publishedDate),
+    const tt = titleWith(x.title, x.subtitle);
+    return { title: tt.title, subtitle: tt.sub, authors: x.authors || [], publisher: tidy(x.publisher), year: year(x.publishedDate),
       pages: x.pageCount ? String(x.pageCount) : "", lang: langName(x.language), cover: ((x.imageLinks || {}).thumbnail || "").replace(/^http:/, "https:"),
       genre: (x.categories || []).join(", "), isbn: clean((ids.find(i => i.type === "ISBN_13") || ids[0] || {}).identifier) };
   }
@@ -231,7 +243,7 @@
     // genres from all databases together; the shared names make the same genre count once
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
     if (!out.genre || out.genre === "Novel") {
-      const sub = String(out.title || "").toLowerCase().normalize("NFC");
+      const sub = [out.title].concat(list.map(r => r && r.subtitle)).filter(Boolean).join(" ").toLowerCase().normalize("NFC");
       const m = /\b(dramatisches gedicht|schauspiel|tragödie|trauerspiel|komödie|lustspiel|drama|pjäs|comedy|tragedy|a play|play in \w+ acts?)\b/.exec(sub) ? "Drama"
         : /\b(novellen?|novella)\b/.exec(sub) ? "Novella" : /\b(erzählungen|kurzgeschichten|noveller)\b/.exec(sub) ? "Short Stories" : /\b(gedichte|dikter|poems)\b/.exec(sub) ? "Poetry"
         : /\b(roman|novel)\b/.exec(sub) ? "Novel" : "";
