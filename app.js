@@ -281,7 +281,7 @@ function parsePrices(key, text, fallbackCur, edition) {
       items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€|euro/i.test(line) ? "EUR" : fallbackCur }); return;
     }
     // Comicguide with titles and editions: "1 Der Kolumbusfalter (1. Auflage) Softcover 1000.00 €"
-    const cg = /^(\d{1,4})\s+(.*\S)\s+(\d[\d.,]*)\s*(€|EUR|Euro)\s*$/i.exec(line);
+    const cg = /^(\d{1,4})\s+(?![-–:=])(.*\S)\s+(\d[\d.,]*)\s*(€|EUR|Euro)\s*$/i.exec(line);   // a title, not "– 10: 1000 EUR"
     if (cg) {
       kind = kind || "Comicguide";
       if (yearly) { unread.push(line); return; }
