@@ -518,6 +518,7 @@ function amtVal(v) { const n = parseAmt(v); return n === "" ? (v == null ? "" : 
 function bindAmounts() { document.querySelectorAll("input.amt").forEach(el => el.addEventListener("blur", () => { const n = parseAmt(el.value); if (n !== "") el.value = n.toFixed(2); })); }
 function errText(e) {
   const n = e && (e.name || e.code);
+  if (n === "StorageWait") return "The phone's storage didn't answer for 20 seconds, so this wasn't saved. Close other tabs with this app (or close DuckDuckGo and open it again), then try again.";
   if (n === "QuotaExceededError") return "Your phone has no room left for the archive. Free some space and try again.";
   return "Saving failed (" + (n || "error") + "). Try again.";
 }
@@ -554,11 +555,13 @@ function openDb() {
 function tx(store, mode, fn) {
   return new Promise((res, rej) => {
     const t = S.db.transaction(store, mode), st = t.objectStore(store);
+    // the phone's storage can wait forever, e.g. for another tab with this app that Android has paused: give up after 20 s
+    const timer = setTimeout(() => { try { t.abort(); } catch (e) {} const e = new Error("storage did not answer"); e.name = "StorageWait"; rej(e); }, 20000);
     let out; const req = fn(st);
     if (req) req.onsuccess = () => { out = req.result; };
-    t.oncomplete = () => res(out);
-    t.onerror = () => rej(t.error);
-    t.onabort = () => rej(t.error);
+    t.oncomplete = () => { clearTimeout(timer); res(out); };
+    t.onerror = () => { clearTimeout(timer); rej(t.error); };
+    t.onabort = () => { clearTimeout(timer); rej(t.error || new Error("Saving was stopped")); };
   });
 }
 const getConfig = key => tx("config", "readonly", st => st.get(key)).then(r => r ? r.value : undefined);
