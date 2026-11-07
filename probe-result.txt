@@ -1,3 +1,35 @@
-or both 9788804494010 8804494018: FOUND …text_fields email Disney, Walt Disney's pocket english : imparare l'inglese divertendosi con Paperin | 
-or both 9788852230943 8852230947: FOUND …grafia 1 Tipo di risorsa testo 1 Autore barks, carl 1 disney <walt disney productions> 1 disney, wal | 
-or both 9788852240317 8852240314: FOUND … identificativi print text_fields email Spy stories Firenze ; Milano : Giunti, 2022 Testo - Monograf | 
+{
+ "redirects": [
+  {
+   "from": "Micky Maus Spezial",
+   "to": "Micky Maus SPEZIAL!"
+  },
+  {
+   "from": "MMS",
+   "to": "Micky Maus SPEZIAL!"
+  }
+ ],
+ "pages": [
+  [
+   "Mega Micky Maus",
+   "missing"
+  ],
+  [
+   "MEGA Micky Maus Sonderheft",
+   "missing"
+  ],
+  [
+   "Mega Micky Maus Sonderheft",
+   "missing"
+  ],
+  [
+   "MEGA Micky Maus",
+   "exists"
+  ],
+  [
+   "Micky Maus SPEZIAL!",
+   "exists"
+  ]
+ ]
+}
+search: 
