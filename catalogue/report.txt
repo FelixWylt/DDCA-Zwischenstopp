@@ -63,16 +63,15 @@ PUBLICATIONS
   ✓ Omaggio Abbonati  →  it/ABB  'Omaggio Abbonati'  (by code)
   ✓ Disney lingua latina  →  it/DLL  'Disney lingua latina'  (by code)
   ✓ Carl Barks Collection  →  de/CBC  'Carl Barks Collection'  (by code)
-  ✓ Stål-Kalle Pocket  →  se/SK  'Stål-Kalle'  (by code)
   ✓ Disney De Luxe  →  it/TLDLE  'De Luxe Edition'  (by code)
   ✓ Disney Definitive Collection  →  it/DDCO  'Disney Definitive Collection'  (by code)
   ✓ Capolavori della letteratura  →  it/CALE  'Capolavori della Letteratura (libreria)'  (by code)
   ✓ Mega Micky Maus Sonderheft  →  de/MMS  'MEGA Micky Maus Sonderheft'  (by code)
   ✓ Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)  →  de/LTBCOH  'Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)'  (by code)
 
-issues in chosen publications: 21,628
-entries: 233,927, story versions: 119,263
-cover scans: 20,988 of 21,628 issues
+issues in chosen publications: 21,515
+entries: 233,446, story versions: 118,896
+cover scans: 20,895 of 21,515 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -135,7 +134,6 @@ FILES
   inducks-it-ABB.json: 24 issues, 72 KB  e.g. 1978 = it/ABB1978 1979 (10 stories)
   inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
   inducks-de-CBC.json: 30 issues, 75 KB  e.g. 6 = de/CBC  6 2007-04 (28 stories)
-  inducks-se-SK.json: 113 issues, 41 KB  e.g. 2001/11 = se/SK 2001-11 2001-11-06 (1 stories)
   inducks-it-TLDLE.json: 86 issues, 47 KB  e.g. 32 = it/TLDLE32 2021-11 (3 stories)
   inducks-it-DDCO.json: 49 issues, 33 KB  e.g. 24 = it/DDCO 24 2018-01-15 (3 stories)
   inducks-it-CALE.json: 26 issues, 15 KB  e.g. 14 = it/CALE 14 2019-09 (1 stories)
