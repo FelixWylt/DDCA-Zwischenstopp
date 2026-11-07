@@ -551,6 +551,12 @@
         "B-nummer",
         "Kalle Anka B-nummer"
       ]
+    },
+    {
+      "series": "Super Almanacco Paperino (seconda serie)",
+      "country": "it",
+      "code": "it/SAP",
+      "title": "Super Almanacco Paperino (seconda serie)"
     }
   ]
 }
