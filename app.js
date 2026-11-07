@@ -2064,7 +2064,11 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     $("#booksearch") && ($("#booksearch").onclick = () => searchBooks(d, grab));
     // "Look up in SBN" shows up while the ISBN is an Italian one (978-88 or 979-12)
     if ($("#isbnsbn")) { const sb = $("#isbnsbn"), inp = $("#f-isbn"); inp.addEventListener("input", () => { sb.hidden = !Books.isItalian(inp.value); }); sb.onclick = () => { const u = Books.sbnUrl(inp.value); if (u) window.open(u, "_blank", "noopener"); }; }
-    $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); fillFromIsbn(d, grab); } });
+    $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (d.kind === "book") fillFromIsbn(d, grab); else e.target.blur(); } });
+    if (d.kind !== "book" && $("#f-isbn")) $("#f-isbn").onchange = async e => {
+      const sc = splitCode(e.target.value); if (!sc) return;
+      grab(); await comicFromCode(d, sc.isbn || sc.code, sc.ext || "");
+    };
     $("#isbnscan") && ($("#isbnscan").onclick = async () => {
       grab();
       try {
@@ -2165,8 +2169,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       // the ISBN-or-barcode field: an ISBN, or a magazine barcode with its add-on
       { const raw = String(d.isbn || "").trim(), digits = raw.replace(/[^0-9X ]/gi, "").trim();
         if (!raw) { d.isbn = ""; }
-        else if (window.Books && Books.normalize(raw)) { d.isbn = Books.normalize(raw); d.barcode = ""; d.barcodeExt = ""; }
-        else { const m = /^(\d{8,13})(?:\s+(\d{2}|\d{5}))?$/.exec(digits); if (m) { d.barcode = m[1]; d.barcodeExt = m[2] || d.barcodeExt || ""; d.isbn = ""; } } }
+        else { const sc = splitCode(raw);
+          if (sc && sc.isbn) { d.isbn = sc.isbn; d.barcode = ""; d.barcodeExt = ""; }
+          else if (sc) { d.barcode = sc.code; d.barcodeExt = sc.ext || d.barcodeExt || ""; d.isbn = ""; } } }
       const se = seriesById(d.seriesId);
       d.issue = String(d.issue || ""); d.seriesName = String(d.seriesName || "");
       if (!d.issue.trim() && se && se.numbering === "year" && !(d.id && !String((S.comics.find(x => x.id === d.id) || {}).issue || "").trim())) { toast("Enter an issue number first"); $("#f-issue").focus(); return; }
@@ -3194,6 +3199,20 @@ function seriesFromName(name) {
   const n = norm(name); if (!n) return null;
   return S.series.find(s => norm(s.name) === n || norm(s.short) === n) || S.series.find(s => n.startsWith(norm(s.name)) && norm(s.name).length > 5) || null;
 }
+// what's typed in a comic's "ISBN or barcode" field: an ISBN, or a magazine barcode with its add-on, given with a space
+// ("9772385018901 00026") or run together as one number (15 or 18 digits: 13 + 2 or 13 + 5), as phone scanner apps often give it
+function splitCode(raw) {
+  const t = String(raw || "").trim(); if (!t) return null;
+  if (window.Books && Books.normalize(t) && !/^\d{15}$|^\d{18}$/.test(t.replace(/[\s-]/g, ""))) return { isbn: Books.normalize(t) };
+  const g = t.replace(/[^0-9 ]/g, " ").trim().split(/\s+/);
+  if (g.length === 2 && /^\d{8,13}$/.test(g[0]) && /^(\d{2}|\d{5})$/.test(g[1])) return { code: g[0], ext: g[1] };
+  const j = g.join("");
+  if (/^\d{15}$|^\d{18}$/.test(j) && /^(97[789]|41)/.test(j)) return { code: j.slice(0, 13), ext: j.slice(13) };
+  if (g.length === 1 && /^\d{8,13}$/.test(j)) return { code: j, ext: "" };
+  return null;
+}
+// the issue number in a barcode add-on: 2 digits, or 5 where the last two are the number (German) or the whole is (Italian 00026, 00126)
+const addonNumber = ext => !ext ? 0 : /^00\d{3}$/.test(ext) ? +ext : +ext.slice(-2);
 async function comicFromCode(d, code, ext) {
   const isbn = window.Books && Books.normalize(code);
   if (isbn && /^97[89]/.test(code)) {
@@ -3221,7 +3240,7 @@ async function comicFromCode(d, code, ext) {
   if (!se) {
     // 977 barcodes carry the magazine's ISSN (digits 4–10 plus a check digit)
     const issn = /^977\d{10}$/.test(code) ? (x => { const t = [...x].reduce((a, ch, i) => a + +ch * (8 - i), 0), c = (11 - t % 11) % 11; return x.slice(0, 4) + "-" + x.slice(4) + (c === 10 ? "X" : c); })(code.slice(3, 10)) : "";
-    const n0 = ext ? +ext.slice(-2) : 0;
+    const n0 = addonNumber(ext);
     render();
     bookMsg(`<div class="banner"><div>Barcode ${esc(code)}${ext ? " with add-on " + esc(ext) : ""} isn't known yet${issn ? ` (magazine ISSN <a href="https://portal.issn.org/resource/ISSN/${issn}" target="_blank" rel="noopener">${issn}</a>)` : ""}. Pick its series${n0 ? "" : " and type the number"}, then save: from then on the app recognises this barcode.</div>
       <div class="row" style="gap:8px;margin-top:8px"><button type="button" class="primary" id="bcpick">Pick the series</button></div>
@@ -3236,7 +3255,7 @@ async function comicFromCode(d, code, ext) {
     return;
   }
   d.seriesId = se.id; d.seriesName = se.name;
-  const n = ext ? +ext.slice(-2) : 0;   // the add-on's last two digits are the issue number
+  const n = addonNumber(ext);
   if (!n) { render(); bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)}. The add-on with the number wasn't readable; type the number.</div>`); return; }
   if (se.numbering !== "year") { d.issue = String(n); render(); bookMsg(`<div class="banner ok">That's ${esc(se.short || se.name)} ${n}.</div>`); if (catEntry(se)) setTimeout(() => $("#lookup") && $("#lookup").click(), 50); return; }
   // weekly/monthly titles: the barcode has the number and (German magazines) the price, but no year.
