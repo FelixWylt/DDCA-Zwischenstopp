@@ -3852,15 +3852,16 @@ function bookSeriesGroup() {
 // ---- Wikidata (facts) and Wikipedia (description) for a book series; empty fields only, then your own books fill the rest ----
 const WD = "https://www.wikidata.org/w/api.php";
 async function wdGet(params) {
-  const r = await fetch(WD + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)), { headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } });
+  const r = await fetchWithin(WD + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)), 12000, { headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } });
   if (!r.ok) throw new Error("Wikidata answered " + r.status); return r.json();
 }
 async function findSeriesEntity(name, author) {
   const tries = [];
   for (const q of [name, /^(the|die|der|das) /i.test(name) ? "" : "The " + name]) for (const lang of ["en", "de", "sv"]) if (q) tries.push([q, lang]);
   const seen = new Set();
-  for (const [q, lang] of tries) {
-    const j = await wdGet({ action: "wbsearchentities", search: q, language: lang, uselang: "en", limit: "7", type: "item" });
+  const answers = await Promise.all(tries.map(([q, lang]) => wdGet({ action: "wbsearchentities", search: q, language: lang, uselang: "en", limit: "7", type: "item" }).catch(e => ({ failed: e }))));
+  if (answers.every(j => j.failed)) throw answers[0].failed;
+  for (const j of answers) {
     const hits = (j.search || []).filter(x => !seen.has(x.id)); hits.forEach(x => seen.add(x.id));
     const series = hits.filter(x => /\b(series|serie|reihe|trilogy|trilogie|saga|cycle|zyklus)\b/i.test(x.description || ""));
     const sur = String(author || "").split(/\s+/).pop();
@@ -3873,20 +3874,28 @@ async function wikiSummary(sitelinks) {
   for (const w of ["enwiki", "dewiki", "svwiki"]) {
     const t = sitelinks && sitelinks[w] && sitelinks[w].title; if (!t) continue;
     try {
-      const r = await fetch(`https://${w.slice(0, 2)}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, "_"))}`);
+      const r = await fetchWithin(`https://${w.slice(0, 2)}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, "_"))}`, 10000);
       if (r.ok) { const j = await r.json(); if (j.extract) return { text: j.extract.slice(0, 700), url: (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || `https://${w.slice(0, 2)}.wikipedia.org/wiki/${encodeURIComponent(t)}` }; }
     } catch (e) {}
   }
   return null;
 }
-async function fillBookSeries(name) {
+async function fillBookSeries(name, quick) {
   const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const m = Object.assign({}, bookInfo(name)), got = [];
+  // Fill all: a series asked in the last 30 days only gets what your own books tell (no internet); its own Fill button always asks
+  const recent = quick && m.asked && (Date.now() - Date.parse(m.asked)) < 30 * 864e5;
+  const langs = bs.map(c => c.lang).filter(Boolean), lang = langs.sort((a, b) => langs.filter(x => x === b).length - langs.filter(x => x === a).length)[0] || "";
+  // the library count runs at the same time as the Wikidata questions
+  const libAsk = recent || !(window.Books && Books.seriesVolumes) ? Promise.resolve(0) : Books.seriesVolumes(name, lang).catch(() => 0);
   const set = (k, v, label) => { if (v && !m[k]) { m[k] = v; got.push(label); } };
   const ownAuthor = [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
   let wdVols = 0;
-  try {
+  // a series Wikidata didn't know is asked again after 30 days, not on every run
+  const missRecent = !m.wikidata && m.wdMiss && (Date.now() - Date.parse(m.wdMiss)) < 30 * 864e5;
+  if (!recent && !missRecent) try {
     const id = m.wikidata || await findSeriesEntity(name, ownAuthor);
+    if (!id) m.wdMiss = todayIso();
     if (id) {
       m.wikidata = id;
       const e = Object.values((await wdGet({ action: "wbgetentities", ids: id, props: "claims|sitelinks" })).entities || {})[0] || {};
@@ -3919,14 +3928,14 @@ async function fillBookSeries(name) {
   } catch (e) { if (!(e && e.skip)) got.warn = "Wikidata couldn't be reached"; }
   // number of volumes: the national library of your books' language knows the translated edition (Spejarens lärling: 18),
   // Wikidata only the original series; a count only ever goes up, so one you set higher yourself stays
-  const langs = bs.map(c => c.lang).filter(Boolean), lang = langs.sort((a, b) => langs.filter(x => x === b).length - langs.filter(x => x === a).length)[0] || "";
-  let libVols = 0; try { libVols = window.Books && Books.seriesVolumes ? await Books.seriesVolumes(name, lang) : 0; } catch (e) {}
+  const libVols = await libAsk;
+  if (!recent) m.asked = todayIso();
   const vols = libVols || wdVols, have = +(S.bookSizes || {})[name] || 0, ownMax = Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0));
   const best = Math.max(vols, ownMax);
   // a count the app filled in itself may be corrected either way; one you set yourself only goes up
   const auto = m.volAuto != null ? +m.volAuto === have : !!(bookInfo(name) || {}).wikidata;
-  if (best && (best > have || (auto && best !== have))) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: best }); await setConfig("bookSizes", S.bookSizes); m.volAuto = best; got.push("volumes (" + best + (libVols ? ", from the " + (lang === "German" ? "German" : lang === "Swedish" ? "Swedish" : "national") + " library" : "") + ")"); }
-  else if (auto && !best && have) { const sz = Object.assign({}, S.bookSizes); delete sz[name]; S.bookSizes = sz; await setConfig("bookSizes", sz); delete m.volAuto; got.push("unsure volume count removed"); }
+  if (best && (best > have || (!recent && auto && best !== have))) { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: best }); await setConfig("bookSizes", S.bookSizes); m.volAuto = best; got.push("volumes (" + best + (libVols ? ", from the " + (lang === "German" ? "German" : lang === "Swedish" ? "Swedish" : "national") + " library" : "") + ")"); }
+  else if (!recent && auto && !best && have) { const sz = Object.assign({}, S.bookSizes); delete sz[name]; S.bookSizes = sz; await setConfig("bookSizes", sz); delete m.volAuto; got.push("unsure volume count removed"); }
   // what the databases don't know comes from your own books
   set("author", ownAuthor, "author");
   set("publisher", [...new Set(bs.map(c => c.publisher).filter(Boolean))].slice(0, 2).join(", "), "publisher");
@@ -4124,9 +4133,8 @@ VIEWS.series = {
       }
       for (let k = 0; k < books.length && !run.stop; k++) {
         if (prog && prog.isConnected) prog.textContent = `Book series ${k + 1} of ${books.length}: ${books[k]}`;
-        const got = await fillBookSeries(books[k]).catch(() => []);
+        const got = await fillBookSeries(books[k], true).catch(() => []);
         if (got.length) changed++; if (got.warn) warn = got.warn;
-        await sleep(300);
       }
       try { if (changed) await saveSeries(); } catch (e) { warn = errText(e); }
       run.running = false;
