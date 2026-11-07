@@ -71,10 +71,11 @@ PUBLICATIONS
   ✓ Walt Disney's Serier (1990–1992)  →  se/WDSA  'Walt Disney's Serier (album 1990-1992)'  (by code)
   ✓ Walt Disney's Serier (1996–2001)  →  se/WDSB  'Walt Disney's Serier (album 1996-)'  (by code)
   ✓ Kalle Anka & C:o (B-nummer)  →  se/B  'Kalle Anka & C:o (B-nummer)'  (by code)
+  ✓ Super Almanacco Paperino (seconda serie)  →  it/SAP  'Super Almanacco Paperino (seconda serie)'  (by code)
 
-issues in chosen publications: 21,552
-entries: 233,753, story versions: 119,090
-cover scans: 20,932 of 21,552 issues
+issues in chosen publications: 21,618
+entries: 234,459, story versions: 119,515
+cover scans: 20,998 of 21,618 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -145,6 +146,7 @@ FILES
   inducks-se-WDSA.json: 13 issues, 13 KB  e.g. 7 = se/WDSA 7 1991 (9 stories)
   inducks-se-WDSB.json: 8 issues, 4 KB  e.g. 5 = se/WDSB 5 2000-Q4 (1 stories)
   inducks-se-B.json: 16 issues, 6 KB  e.g. 1953/03 = se/B 1953-03 1953-03-13 (3 stories)
+  inducks-it-SAP.json: 66 issues, 78 KB  e.g. 34 = it/SAP  34 1983-04 (8 stories)
 directory.json: 2,775 publications (at, ch, de, it, se, uk, us), 199 KB
 
 files in the ISV export: createtables.sql
