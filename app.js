@@ -66,7 +66,7 @@ function arrangeSeries(se) {
   if (cc === "ch") return { publisher: DISNEY, group: CH_ALL };   // Swiss (Bollmann's Micky Maus Zeitung) and Austrian editions aren't German ones
   if (cc === "at") return { publisher: DISNEY, group: AT_ALL };
   if (lang === "German") return { publisher: DISNEY, group: /^(lustiges taschenbuch|ltb)\b|\bltb\b/.test(n) ? DE_LTB : /taschenb|^panzerknacker|^donald duck (co|und co)\b/.test(n) || ["de/DD", "de/PK", "de/DDCO"].includes(se.code) ? DE_TB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
-  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" || /^bjornligan\b/.test(n) || /^kalle ankas basta\b/.test(n) ? SE_POC : /^walt disney s (godbitar|klassiker)\b/.test(n) ? SE_MAG : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
+  if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" || /^bjornligan\b/.test(n) || /^kalle ankas basta\b/.test(n) ? SE_POC : /^walt disney s (godbitar|klassiker|serier)\b/.test(n) ? SE_MAG : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
   if (lang === "Italian") return { publisher: DISNEY, group: IT_ALL };
   if (lang === "Norwegian") return { publisher: DISNEY, group: NO_ALL };
   return { publisher: DISNEY, group: lang ? lang : OTHER_GROUP };
@@ -3790,6 +3790,11 @@ async function fillSeriesInfo(se) {
     set("short", p[0].split("/")[1] || "", "short name");   // de/MMS -> MMS
     set("country", p[0].split("/")[0].toUpperCase(), "country");
     set("pubHouse", p[5] || "", "publisher"); set("format", p[6] || "", "format");
+    // INDUCKS lists Disney publications: a series still without universe and group ("Other") gets Disney and its usual group
+    if ((!se.publisher || se.publisher === OTHER_PUB) && (!se.group || se.group === OTHER_GROUP)) {
+      const a = arrangeSeries(Object.assign({}, se, { publisher: DISNEY, group: "" }));
+      se.publisher = a.publisher; se.group = a.group; got.push("universe and group");
+    }
   }
   if (entry) {
     const before = JSON.stringify([se.numbering, se.firstYear, se.lastYear, se.latest, se.first]);
