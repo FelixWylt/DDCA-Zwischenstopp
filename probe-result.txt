@@ -1,35 +1,12 @@
-{
- "redirects": [
-  {
-   "from": "Micky Maus Spezial",
-   "to": "Micky Maus SPEZIAL!"
-  },
-  {
-   "from": "MMS",
-   "to": "Micky Maus SPEZIAL!"
-  }
- ],
- "pages": [
-  [
-   "Mega Micky Maus",
-   "missing"
-  ],
-  [
-   "MEGA Micky Maus Sonderheft",
-   "missing"
-  ],
-  [
-   "Mega Micky Maus Sonderheft",
-   "missing"
-  ],
-  [
-   "MEGA Micky Maus",
-   "exists"
-  ],
-  [
-   "Micky Maus SPEZIAL!",
-   "exists"
-  ]
- ]
-}
-search: 
+
+=== LIBRIS isbn 200
+{"xsearch":{"from":1,"to":1,"records":1,"list":[{"identifier":"http://libris.kb.se/bib/7757539","title":"Musse Piggs julsaga","isbn":"9186374079","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"}]}}
+
+=== LIBRIS julsaga 200
+{"xsearch":{"from":1,"to":1,"records":1,"list":[{"identifier":"http://libris.kb.se/bib/7757539","title":"Musse Piggs julsaga","isbn":"9186374079","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"}]}}
+
+=== LIBRIS publisher 91-86374 200
+{"xsearch":{"from":1,"to":16,"records":16,"list":[{"identifier":"http://libris.kb.se/bib/7757542","title":"Robin Hood och Hoppsans födelsedag","isbn":"9186374109","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1984","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757535","title":"Jakten på den försvunna skatten","creator":"Lucas, George, 1944-","isbn":"9186374036","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757538","title":"Jedins återkomst","creator":"Lucas, George, 1944-","isbn":"9186374060","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757543","title":"Dumbo","isbn":"9186374117","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1984","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757539","title":"Musse Piggs julsaga","isbn":"9186374079","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757540","title":"Min lilla åsna","isbn":"9186374087","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757537","title":"Rymdimperiet slår tillbaka","creator":"Lucas, George, 1944-","isbn":"9186374052","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757544","title":"Alice i Underlandet","isbn":"9186374125","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1984","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757536","title":"Tron","creator":"Walt Disney productions","isbn":"9186374044","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757547","title":"Den mörka kristallen","creator":"Henson, Jim, 1936-1990","isbn":"9186374168","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1984","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757534","title":"E.T. : the extra-terrestrial","isbn":"9186374028","type":"book","publisher":["Stockholm : Select video","Danmark"],"date":"1983","language":"swe"},{"identifier":"http://libris.kb.se/bib/7757545","title":"Svarta hingsten","isbn":"9186374133","type":"book","publisher":["Stockh
+
+=== Open Library 200
+{}
