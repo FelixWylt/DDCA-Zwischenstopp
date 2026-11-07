@@ -2340,6 +2340,8 @@ function zeroSquares(se, cat, mine) {
 // series INDUCKS lists completely although the numbers have gaps: the grid shows only those issues.
 // Kalle Anka & C:o (B-nummer): each carries the number of the Kalle Anka & C:o it came with (1953: 1B, 3B, 5B …)
 const LISTED_ONLY = new Set(["se/B"]);
+// publishers INDUCKS doesn't name, from Swedish Wikipedia and Seriesam's guide
+const PUBLISHER_FALLBACK = { "se/B": "Richters förlag" };
 // extra issues between the numbers (Walt Disney's Serier 1967 7½ = INDUCKS 1967X07): the X numbers of a year, from INDUCKS and your own
 function yearExtras(cat, mine, y) {
   const set = new Set(); const add = l => { const m = /^(\d{4})X(\d{1,3})$/.exec(l || ""); if (m && +m[1] === y) set.add(+m[2]); };
@@ -3789,7 +3791,7 @@ async function fillSeriesInfo(se) {
     set("code", p[0], "INDUCKS code"); set("name", p[1], "name");
     set("short", p[0].split("/")[1] || "", "short name");   // de/MMS -> MMS
     set("country", p[0].split("/")[0].toUpperCase(), "country");
-    set("pubHouse", p[5] || "", "publisher"); set("format", p[6] || "", "format");
+    set("pubHouse", p[5] || PUBLISHER_FALLBACK[p[0]] || "", "publisher"); set("format", p[6] || "", "format");
     // INDUCKS lists Disney publications: a series still without universe and group ("Other") gets Disney and its usual group
     if ((!se.publisher || se.publisher === OTHER_PUB) && (!se.group || se.group === OTHER_GROUP)) {
       const a = arrangeSeries(Object.assign({}, se, { publisher: DISNEY, group: "" }));
