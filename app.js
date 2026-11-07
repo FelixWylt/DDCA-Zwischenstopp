@@ -914,7 +914,15 @@ function showCover(id) {
 document.addEventListener("click", e => { const z = e.target.closest && e.target.closest("[data-zoom]"); if (!z) return; e.preventDefault(); e.stopPropagation(); showCover(z.dataset.zoom); }, true);
 // still worth looking for a cover: never found one, or the catalogue is newer than the last try
 const needsKeep = c => c.coverUrl && !/^data:/.test(c.coverUrl) && !S.coverHas[c.id + "|" + c.coverUrl] && c.coverKeepFail !== c.coverUrl;
-const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || !!(S.catalogue && S.catalogue.built && S.catalogue.built > c.coverNone));
+// a catalogue rebuild (monthly, or whenever a series is added) only brings a new try when it can help:
+// the comic's series is newly in the catalogue, or the last try is at least 30 days old
+const coverRetry = c => {
+  if (!(S.catalogue && S.catalogue.built && S.catalogue.built > c.coverNone)) return false;
+  const ent = catEntry(seriesById(c.seriesId)), file = ent ? ent.file : "";
+  if (c.coverNoneCat !== undefined && file !== c.coverNoneCat) return true;
+  return Date.now() - Date.parse(c.coverNone + "Z") >= 30 * 864e5;
+};
+const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || coverRetry(c));
 const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
 // finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
 async function fetchAllCovers() {
@@ -933,7 +941,7 @@ async function fetchAllCovers() {
       if (!url && se && Duckipedia.candidates(dkSeries(se), c).length) { const d = await Duckipedia.fetchIssue(dkSeries(se), c); if (d && d.issue.cover) url = d.issue.cover; }
     } catch (e) {}
     if (url) { const saved = await saveComic(Object.assign({}, c, { coverUrl: url }), true).catch(() => null); if (saved) run.found++; }
-    else await saveComic(Object.assign({}, c, { coverNone: new Date().toISOString().slice(0, 16) }), true).catch(() => null);   // not asked again
+    else { const ent = catEntry(se); await saveComic(Object.assign({}, c, { coverNone: new Date().toISOString().slice(0, 16), coverNoneCat: ent ? ent.file : "" }), true).catch(() => null); }   // not asked again
     run.done++; draw();
   }
   const rest = keep(); run.total = run.done + rest.length; draw();
