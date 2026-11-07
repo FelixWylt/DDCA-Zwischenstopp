@@ -1,5 +1,5 @@
 {
- "built": "2026-11-03T07:25",
+ "built": "2026-11-07T12:07",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -25,7 +25,7 @@
    "code": "de/MM",
    "title": "Micky Maus",
    "file": "inducks-de-MM.json",
-   "issues": 3437
+   "issues": 3438
   },
   "die tollsten geschichten von donald duck sonderheft": {
    "series": "Die tollsten Geschichten von Donald Duck Sonderheft",
@@ -115,7 +115,7 @@
    "code": "se/KA",
    "title": "Kalle Anka & C:o",
    "file": "inducks-se-KA.json",
-   "issues": 3631
+   "issues": 3632
   },
   "kalle ankas pocket": {
    "series": "Kalle Ankas Pocket",
@@ -197,7 +197,7 @@
    "code": "no/DD",
    "title": "Donald Duck & Co",
    "file": "inducks-no-DD.json",
-   "issues": 4066
+   "issues": 4067
   },
   "micky maus zeitung": {
    "series": "Micky Maus Zeitung",
@@ -391,7 +391,7 @@
    "code": "de/LTBSB",
    "title": "Lustiges Taschenbuch Sonderband: Weihnachten",
    "file": "inducks-de-LTBSB.json",
-   "issues": 31
+   "issues": 32
   },
   "lustiges taschenbuch winter sonderband": {
    "series": "Lustiges Taschenbuch Winter (Sonderband)",
@@ -442,7 +442,7 @@
    "code": "it/DSBP",
    "title": "Disney Special Books Panini",
    "file": "inducks-it-DSBP.json",
-   "issues": 97
+   "issues": 98
   },
   "panzerknacker co": {
    "series": "Panzerknacker & Co",
@@ -527,6 +527,14 @@
    "title": "Capolavori della Letteratura (libreria)",
    "file": "inducks-it-CALE.json",
    "issues": 26
+  },
+  "mega micky maus sonderheft": {
+   "series": "Mega Micky Maus Sonderheft",
+   "aliases": [],
+   "code": "de/MMS",
+   "title": "MEGA Micky Maus Sonderheft",
+   "file": "inducks-de-MMS.json",
+   "issues": 1
   }
  }
 }
