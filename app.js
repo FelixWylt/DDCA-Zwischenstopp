@@ -3378,11 +3378,18 @@ async function scanBarcode(opts) {
   const close = () => { stop = true; if (stream) stream.getTracks().forEach(t => t.stop()); box.remove(); };
   return new Promise(async (resolve, reject) => {
     box.querySelector("button").onclick = () => { close(); resolve(null); };
-    let firstHit = 0, best = null;
+    let firstHit = 0, best = null; const seen = {};
     const done = (code, ext) => {
-      // magazines: keep looking briefly for the add-on, which tells the issue number
-      if (wantExt && !ext && !/^97[89]/.test(code)) { best = best || { code, ext: "" }; if (!firstHit) firstHit = Date.now(); if (Date.now() - firstHit < 1800) return false; }
-      close(); resolve(ext || !best ? { code, ext: ext || "" } : best); return true;
+      // magazines: keep looking briefly for the add-on, which tells the issue number. Its check digit is weak, so one
+      // blurry frame can misread it (De Luxe 34 read as another issue): only an add-on read the same in two frames counts
+      if (wantExt && !/^97[89]/.test(code)) {
+        if (!firstHit) firstHit = Date.now();
+        best = best || { code, ext: "" };
+        if (ext) { const k = code + " " + ext; seen[k] = (seen[k] || 0) + 1; if (seen[k] >= 2) { close(); resolve({ code, ext }); return true; } }
+        if (Date.now() - firstHit < 3000) return false;
+        close(); resolve(best); return true;   // no add-on read twice: the number is typed by hand
+      }
+      close(); resolve({ code, ext: ext || "" }); return true;
     };
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 } }, audio: false });

@@ -34,6 +34,7 @@
 | 2026-11-07 | Add Super Almanacco Paperino (it/SAP = Paperino Mese 1–66) to the catalogue, incl. finding the code | 1–2 min (+1 min wait) | 0–1 min (23:27 → 23:28:07, before the rebuild) |
 | 2026-11-07 | Check price range for Super Almanacco Paperino 1–66 (2 searches; answer only) | 1–2 min | 0–1 min (23:33 → 23:33:32) |
 | 2026-11-08 | Covers searched again after every catalogue rebuild → only when the series is new in the catalogue or 30 days passed | 1–3 min | 0–1 min (00:06 → 00:06:53) |
+| 2026-11-08 | Barcode add-on misread (De Luxe 34 → wrong issue/cover): add-on must be read the same in two frames | 2–4 min | 1–2 min (00:17 → 00:18:37) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
