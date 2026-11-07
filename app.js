@@ -2337,6 +2337,9 @@ function zeroSquares(se, cat, mine) {
   keys.forEach(add); mine.forEach(c => { if (!c.facsimile) add(c.issueLabel || c.issue); });
   return out;   // years, and "run" for a running series
 }
+// series INDUCKS lists completely although the numbers have gaps: the grid shows only those issues.
+// Kalle Anka & C:o (B-nummer): each carries the number of the Kalle Anka & C:o it came with (1953: 1B, 3B, 5B …)
+const LISTED_ONLY = new Set(["se/B"]);
 // extra issues between the numbers (Walt Disney's Serier 1967 7½ = INDUCKS 1967X07): the X numbers of a year, from INDUCKS and your own
 function yearExtras(cat, mine, y) {
   const set = new Set(); const add = l => { const m = /^(\d{4})X(\d{1,3})$/.exec(l || ""); if (m && +m[1] === y) set.add(+m[2]); };
@@ -2370,7 +2373,7 @@ function yearGridTotal(se) {
     if (!perY[y] && y <= catLast && yearExtras(cat, mine, y).length) { total += yearExtras(cat, mine, y).length; continue; }
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
     const py = y > catLast ? per : Math.max(perY[y] || 0, ...owned); if (!py) continue;
-    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py - yearStart(perYSet, mine, y) + 1;
+    if (perYSet[y] && (LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y])) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py - yearStart(perYSet, mine, y) + 1;
     total += yearExtras(cat, mine, y).length;
     Object.values(yearSplits(cat, y)).forEach(l => { total += l.length - 1; });
   }
@@ -2545,7 +2548,7 @@ VIEWS.gaps = {
     const perYSet = {};
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
     // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
-    const sparse = y => perYSet[y] && perYSet[y].size * 2 < perY[y];
+    const sparse = y => perYSet[y] && (LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y]);
     const yearNums = (y, py) => { if (!sparse(y)) { const st = yearStart(perYSet, mine, y); return Array.from({ length: Math.max(0, py - st + 1) }, (_, i) => i + st); } const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     const zero = zeroSquares(se, cat0, mine);
@@ -2569,7 +2572,7 @@ VIEWS.gaps = {
         nums = nums.concat(yearExtras(cat0, mine, y).map(n => n + 0.5)).sort((a, b) => a - b); return zero.has(String(y)) ? [0].concat(nums) : nums; };
       const labOf = (y, n) => { if (Number.isInteger(n)) return y + "/" + String(n).padStart(2, "0"); const b = Math.floor(n), f = Math.round((n - b) * 100);
         return f === 50 ? y + "X" + String(b).padStart(2, "0") : y + "-" + String(b).padStart(2, "0") + String.fromCharCode(64 + f); };
-      const txtOf = n => { if (Number.isInteger(n)) return n; const b = Math.floor(n), f = Math.round((n - b) * 100); return b + (f === 50 ? "½" : String.fromCharCode(64 + f)); };
+      const txtOf = n => { if (Number.isInteger(n)) return se.code === "se/B" ? n + "B" : n; const b = Math.floor(n), f = Math.round((n - b) * 100); return b + (f === 50 ? "½" : String.fromCharCode(64 + f)); };
       total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
         const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(labOf(y, n), txtOf(n)); });
