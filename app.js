@@ -148,6 +148,8 @@ function valueNumber(c) {   // the number a price range is compared with: issue 
   if (se && se.numbering === "year") {
     const y = c.issueYear || +((/^(\d{4})/.exec(lab) || [])[1]) || null; if (!y) return null;
     const n = c.issueNum || +((/^\d{4}\D+(\d{1,3})/.exec(lab) || [])[1]) || 0;
+    if (/^\d{4}X\d{1,3}$/.test(lab)) return y * 1000 + n + 0.5;                                   // extra: 1967X07 = 7½
+    const v = /^\d{4}-\d{1,3}([A-Z])$/.exec(lab); if (v) return y * 1000 + n + (v[1].charCodeAt(0) - 64) / 100;   // 1967-02B = 2B
     return y * 1000 + n;
   }
   return c.issueNum || parseInt(lab, 10) || (/^0+$/.test(lab.trim()) ? 0 : null);   // issue 0 (Nullnummer) counts too
@@ -157,7 +159,10 @@ function rangeBound(key, v, isTo) {
   const t = String(v == null ? "" : v).trim(); if (!t) return NaN;
   const se = seriesById(key);
   if (se && se.numbering === "year") {
-    let m = /^(\d{4})\s*[\/.:-]\s*(?:nr\.?\s*)?(\d{1,3})$/i.exec(t); if (m) return +m[1] * 1000 + +m[2];
+    // a plain number's "to" also covers its extras and variants (to 1967/7 includes 7½ and 7A)
+    let m = /^(\d{4})\s*[\/.:-]\s*(?:nr\.?\s*)?(\d{1,3})$/i.exec(t); if (m) return +m[1] * 1000 + +m[2] + (isTo ? 0.99 : 0);
+    m = /^(\d{4})\s*(?:[\/.:-]\s*(\d{1,3})\s*½|X(\d{1,3}))$/i.exec(t); if (m) return +m[1] * 1000 + +(m[2] || m[3]) + 0.5;
+    m = /^(\d{4})\s*[\/.:-]\s*(\d{1,3})\s*([A-Z])$/.exec(t); if (m) return +m[1] * 1000 + +m[2] + (m[3].charCodeAt(0) - 64) / 100;
     m = /^(\d{1,3})\s*[\/.]\s*(\d{4})$/.exec(t); if (m) return +m[2] * 1000 + +m[1];
     m = /^(\d{4})$/.exec(t); if (m) return +m[1] * 1000 + (isTo ? 999 : 0);
     return NaN;
@@ -287,13 +292,15 @@ function parsePrices(key, text, fallbackCur, edition) {
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
     // Seriekatalogen: year (or nothing), issue or issue range, an optional title, then five prices G VG FN VF NM ("-" = no price)
     // e.g. "1949 2 650 1300 2000 5000 10000" (Kalle Anka & C:o) or "1968 1 Tuff till tusen miljarder 100 200 300 750 1500" (Kalle Ankas Pocket)
-    const sk = /^(?:(\d{4})\s+)?(\d{1,4})([A-Z])?(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
+    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(½|[A-Z])?(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
     if (sk) {
       kind = kind || "Seriekatalogen";
-      // "1950 11B": the B-nummer, extra issues of Kalle Anka & C:o 1950–1954 (INDUCKS se/B), listed with Walt Disney's Serier
-      const bSeries = !!(se && se.code === "se/B");
-      if (sk[3]) { if (sk[3] === "B" && !bSeries) { bnum++; return; } if (sk[3] !== "B") { unread.push(line); return; } }
-      else if (bSeries) { others++; return; }   // pasted into the B-nummer: the ordinary Walt Disney's Serier lines aren't theirs
+      // "1950 11B" (1950–1954): the B-nummer, extra issues of Kalle Anka & C:o (INDUCKS se/B), listed with Walt Disney's Serier;
+      // "1967 2B" is Walt Disney's Serier 1967-02B, "1967 7½" its extra 1967X07
+      const bSeries = !!(se && se.code === "se/B"), yr = sk[1] ? +sk[1] : 0; let frac = 0;
+      if (sk[3] === "½") frac = 0.5;
+      else if (sk[3]) { if (sk[3] === "B" && bSeries) frac = 0; else if (sk[3] === "B" && yr >= 1950 && yr <= 1954) { bnum++; return; } else frac = (sk[3].charCodeAt(0) - 64) / 100; }
+      if (bSeries && sk[3] !== "B") { others++; return; }   // pasted into the B-nummer: the ordinary Walt Disney's Serier lines aren't theirs
       const nums = sk[6].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[4] ? +sk[4] : a;
       if (nums[3] == null) { unread.push(line); return; }   // no VF price listed
       // Kalle Ankas bästa: "2016 4" and "2017 5" are cover numbers (book 4 = INDUCKS 2017/01); a year/number INDUCKS knows is used as it is
@@ -303,7 +310,7 @@ function parsePrices(key, text, fallbackCur, edition) {
       }
       if (yearly && !y) { unread.push(line); return; }
       // running series (Kalle Ankas Pocket): the year column is only the publication year
-      items.push({ lo: yearly ? at(y, a) : a, hi: yearly ? at(y, b) : b, price: nums[3], cur: "SEK" }); return;
+      items.push({ lo: yearly ? at(y, a) + frac : a + frac, hi: yearly ? at(y, b) + (sk[4] ? 0 : frac) : b + (sk[4] ? 0 : frac), price: nums[3], cur: "SEK" }); return;
     }
     // a title or book number with a price, in a series like Kalle Ankas bästa: "Spookyzone 2 120 kr", "Kalle Ankas bästa 4: 250"
     if (yearly && listedSeries(se)) {
@@ -353,7 +360,12 @@ function zeroText(key, v) { const se = seriesById(key); return se && se.numberin
 function boundText(key, v, isTo) {
   if (v == null) return "";
   const se = seriesById(key);
-  if (se && se.numbering === "year") { const y = Math.floor(v / 1000), n = v % 1000; return n === 0 && !isTo ? String(y) : n === 999 ? String(y) : y + "/" + n; }
+  if (se && se.numbering === "year") {
+    const y = Math.floor(v / 1000), r = Math.round((v - y * 1000) * 100) / 100, n = Math.floor(r), f = Math.round((r - n) * 100);
+    if (f === 50) return y + "/" + n + "½";                                     // extra
+    if (f > 0 && f <= 26 && f !== 99) return y + "/" + n + String.fromCharCode(64 + f);   // variant 2B
+    return n === 0 && !isTo ? String(y) : n === 999 ? String(y) : y + "/" + n;
+  }
   return String(v);
 }
 function bindPasteBox(root) {
@@ -508,6 +520,9 @@ function parseIssue(series, raw) {
   // a book number or title without a year, in a series like Kalle Ankas bästa
   if (series && series.numbering === "year" && s && !/\d{4}/.test(s)) { const k = listedLabel(series, s.replace(/^(nr\.?|#)\s*/i, "")); if (k) return parseIssue(series, k); }
   if (series && series.numbering === "year") {
+    // extras between two numbers, INDUCKS writes them 1967X07: "1967/7½", "1967 7 1/2", "1967X07"
+    const xh = s.match(/^(\d{4})\s*(?:[\/:.-]\s*|\s)(?:nr\.?\s*)?(\d{1,3})\s*(?:½|1\/2|,5|\.5)$/i) || s.match(/^(\d{4})X(\d{1,3})$/i);
+    if (xh) return { year: +xh[1], n: +xh[2], sort: +xh[1] * 1000 + +xh[2] + 0.5, label: xh[1] + "X" + String(+xh[2]).padStart(2, "0") };
     // double issues: "2016/11-12", "2016 11+12", "11-12/2016" -> "2016-11-12", the INDUCKS form
     let dd = s.match(/(\d{4})\D+?(\d{1,3})\s*[-+&]\s*(\d{1,3})(?!\d)/), dr = !dd && s.match(/^\D*(\d{1,3})\s*[-+&]\s*(\d{1,3})\D+(\d{4})(?!\d)/);
     if (dr) dd = [dr[0], dr[3], dr[1], dr[2]];
@@ -2310,6 +2325,25 @@ function zeroSquares(se, cat, mine) {
   keys.forEach(add); mine.forEach(c => { if (!c.facsimile) add(c.issueLabel || c.issue); });
   return out;   // years, and "run" for a running series
 }
+// extra issues between the numbers (Walt Disney's Serier 1967 7½ = INDUCKS 1967X07): the X numbers of a year, from INDUCKS and your own
+function yearExtras(cat, mine, y) {
+  const set = new Set(); const add = l => { const m = /^(\d{4})X(\d{1,3})$/.exec(l || ""); if (m && +m[1] === y) set.add(+m[2]); };
+  Object.keys((cat && cat.issues) || {}).forEach(add); mine.forEach(c => add(c.issueLabel)); return [...set].sort((a, b) => a - b);
+}
+// numbers INDUCKS lists only with letters (Walt Disney's Serier 1967-02A and 1967-02B, no plain 1967/02): different issues,
+// each with its own square. Variants of a number that also exists plainly (1984/19 and 1984-19A) share its square as before.
+function yearSplits(cat, y) {
+  const out = {}, iss = (cat && cat.issues) || {};
+  Object.keys(iss).forEach(k => { const m = /^(\d{4})-(\d{1,3})([A-Z])$/.exec(k); if (m && +m[1] === y && !iss[m[1] + "/" + m[2].padStart(2, "0")]) (out[+m[2]] = out[+m[2]] || []).push(m[3]); });
+  Object.values(out).forEach(l => l.sort()); return out;
+}
+function splitLabel(cat, lab) { const m = /^(\d{4})-(\d{1,3})([A-Z])$/.exec(lab || ""); return !!(m && cat && cat.issues && cat.issues[lab] && !cat.issues[m[1] + "/" + m[2].padStart(2, "0")]); }
+// a year INDUCKS starts later than 1 (Walt Disney's Serier 1954 starts at 3, 1963 at 4, numbered on from 1962): its first number
+function yearStart(perYSet, mine, y) {
+  if (!perYSet[y]) return 1;
+  const own = mine.map(c => /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || "")).filter(m => m && +m[1] === y).map(m => +m[2]);
+  return Math.max(1, Math.min(...perYSet[y], ...own));
+}
 function yearGridTotal(se) {
   const ent = catEntry(se), cat = ent && S.catCache[ent.file]; if (!cat || se.numbering !== "year") return null;
   const mine = S.comics.filter(c => c.seriesId === se.id && !c.facsimile), perY = {}, perYSet = {};
@@ -2321,9 +2355,12 @@ function yearGridTotal(se) {
   let total = 0; const zero = zeroSquares(se, cat, mine);
   for (let y = y0; y <= y1; y++) {
     if (zero.has(String(y))) total++;
+    if (!perY[y] && y <= catLast && yearExtras(cat, mine, y).length) { total += yearExtras(cat, mine, y).length; continue; }
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
     const py = y > catLast ? per : Math.max(perY[y] || 0, ...owned); if (!py) continue;
-    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py;
+    if (perYSet[y] && perYSet[y].size * 2 < perY[y]) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py - yearStart(perYSet, mine, y) + 1;
+    total += yearExtras(cat, mine, y).length;
+    Object.values(yearSplits(cat, y)).forEach(l => { total += l.length - 1; });
   }
   return total;
 }
@@ -2466,7 +2503,8 @@ VIEWS.gaps = {
     const mine = S.comics.filter(c => c.seriesId === se.id);
     const own = new Map(), want = new Map();
     // a double issue like 2012-13-14 fills both of its numbers
-    const covered = issueSquares;
+    const catSq = (e => e && S.catCache[e.file])(catEntry(se));
+    const covered = lab => splitLabel(catSq, lab) ? [lab] : issueSquares(lab);   // 1967-02B has its own square
     const inSquare = new Map();   // square -> every comic in it (variants, double issues)
     mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
     // owned and wished at once: the same comic both ways (546A owned with 546B wished is fine)
@@ -2485,7 +2523,7 @@ VIEWS.gaps = {
       const all = inSquare.get(label) || [];
       const vars = all.filter(c => variantOf(c.issueLabel || c.issue));
       const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => c.status !== "wanted") && all.filter(c => c.status !== "wanted").every(c => c.read) ? " read" : "");
-      const vtxt = vars.length ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
+      const vtxt = vars.length && !splitLabel(catSq, label) ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
       const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
       const eds = [...new Set(all.filter(c => c.status !== "wanted" && c.edition && editionKey(c.edition) !== editionKey(defEd)).map(c => editionMark(c.edition)))];
       const etxt = eds.length ? `<span class="edb">${esc(eds.join(" "))}</span>` : "";
@@ -2496,7 +2534,7 @@ VIEWS.gaps = {
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
     // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
     const sparse = y => perYSet[y] && perYSet[y].size * 2 < perY[y];
-    const yearNums = (y, py) => { if (!sparse(y)) return Array.from({ length: py }, (_, i) => i + 1); const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
+    const yearNums = (y, py) => { if (!sparse(y)) { const st = yearStart(perYSet, mine, y); return Array.from({ length: Math.max(0, py - st + 1) }, (_, i) => i + st); } const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     const zero = zeroSquares(se, cat0, mine);
     if (se.numbering === "year") {
@@ -2513,11 +2551,17 @@ VIEWS.gaps = {
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
       };
       // the Nullnummer comes first in its year
-      const numsOf = y => { const py = perFor(y), nums = py ? yearNums(y, py).filter(n => n > 0) : []; return zero.has(String(y)) ? [0].concat(nums) : nums; };
+      // extras (7½) sit right after their number
+      const numsOf = y => { const py = perFor(y), sp = yearSplits(cat0, y);
+        let nums = (py ? yearNums(y, py).filter(n => n > 0) : []).flatMap(n => sp[n] ? sp[n].map(L => n + (L.charCodeAt(0) - 64) / 100) : [n]);
+        nums = nums.concat(yearExtras(cat0, mine, y).map(n => n + 0.5)).sort((a, b) => a - b); return zero.has(String(y)) ? [0].concat(nums) : nums; };
+      const labOf = (y, n) => { if (Number.isInteger(n)) return y + "/" + String(n).padStart(2, "0"); const b = Math.floor(n), f = Math.round((n - b) * 100);
+        return f === 50 ? y + "X" + String(b).padStart(2, "0") : y + "-" + String(b).padStart(2, "0") + String.fromCharCode(64 + f); };
+      const txtOf = n => { if (Number.isInteger(n)) return n; const b = Math.floor(n), f = Math.round((n - b) * 100); return b + (f === 50 ? "½" : String.fromCharCode(64 + f)); };
       total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
-        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(y + "/" + String(n).padStart(2, "0"), n); });
-        const cnt = [...own.keys()].filter(k => String(k).startsWith(y + "/")).length;
+        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(labOf(y, n), txtOf(n)); });
+        const cnt = nums.filter(n => own.has(labOf(y, n))).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");
       grid = '<div class="stack" style="gap:10px">' + grid + '</div>';
@@ -2737,7 +2781,8 @@ VIEWS.stats = {
       const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book"), zero = zeroSquares(s, ce && S.catCache[ce.file], S.comics.filter(c => c.seriesId === s.id));
       const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : Math.max(0, (+s.latest || 0) - Math.max(1, +s.first || 1) + 1) + (zero.has("run") ? 1 : 0);
       // count the squares the gap grid shows as owned, so both screens agree
-      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^0+$/.test(k)) return zero.has("run");
+      const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^\d{4}X\d{2,3}$/.test(k)) return !!catN;   // extras (7½) have squares
+        if (splitLabel(ce && S.catCache[ce.file], k)) return true;                  // 1967-02B has its own square if (/^0+$/.test(k)) return zero.has("run");
         return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
       const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
