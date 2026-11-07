@@ -2148,10 +2148,22 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       try {
         const res = await Duckipedia.fetchIssue(dkSeries(se0), probe);
         if (!res) { toast("Duckipedia has no page for this issue"); btn.disabled = false; btn.textContent = "Get details from Duckipedia"; return; }
-        S.draft = Duckipedia.merge(d, res); render();
+        S.draft = Duckipedia.merge(d, res); if (!String(S.draft.genre || "").trim() && storyGenres(S.draft)) S.draft.genre = storyGenres(S.draft); render();
         toast("Duckipedia details added (" + res.stories.length + " stories). Tap Save to keep them.");
       } catch (e) { toast(navigator.onLine ? "Duckipedia didn't answer. Try again later." : "Duckipedia needs an internet connection."); btn.disabled = false; btn.textContent = "Get details from Duckipedia"; }
     });
+    // after Fill from INDUCKS: publisher, format and genres, which the INDUCKS issue data doesn't have.
+    // Publisher and format come from your other comics in this series (most used), else from the INDUCKS directory;
+    // genres from the stories (Duckipedia's story genres). Fields you've already filled stay as they are.
+    const fillExtras = async se => {
+      if (!S.inducksDir && se.code) { try { const r = await fetch("catalogue/directory.json"); if (r.ok) S.inducksDir = (await r.json()).publications || []; } catch (e) {} }
+      const mine = S.comics.filter(c => c.id !== d.id && c.seriesId === se.id && c.kind !== "book");
+      const most = k => { const n = {}; mine.forEach(c => { const v = String(c[k] || "").trim(); if (v) n[v] = (n[v] || 0) + 1; }); return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || ""; };
+      const dir = se.code && S.inducksDir ? S.inducksDir.find(x => x[0] === se.code) : null;
+      if (!String(d.publisher || "").trim()) d.publisher = most("publisher") || (dir && dir[5]) || se.pubHouse || PUBLISHER_FALLBACK[se.code] || "";
+      if (!d.format) d.format = most("format") || (/pocket|taschenbuch/i.test(se.name + " " + (dir ? dir[6] : "") + " " + (se.group || "")) ? "Taschenbuch / Pocket" : "");
+      if (!String(d.genre || "").trim() && storyGenres(d)) d.genre = storyGenres(d);
+    };
     $("#lookup") && ($("#lookup").onclick = async () => {
       grab(); const se = seriesById(d.seriesId); if (!se) return;
       const hit = await catalogueLookup(se, d.issue);
@@ -2171,11 +2183,11 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       if (hit.ic) {   // compact catalogue format
         d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (!d.coverUrl && hit.cv) d.coverUrl = inducksImg(hit.cv);
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
-        d.inducks = hit.ic; render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
+        d.inducks = hit.ic; await fillExtras(se); render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
       }
       d.title = d.title || hit.title || ""; d.date = hit.date || d.date; d.pages = hit.pages || d.pages; d.coverUrl = d.coverUrl || hit.cover || "";
       d.stories = (hit.stories || []).map(s => ({ title: s.title || "", code: s.code || "", writer: s.writer || "", artist: s.artist || "", hero: s.hero || "" }));
-      d.inducks = hit.issuecode || ""; render(); toast("Filled from INDUCKS");
+      d.inducks = hit.issuecode || ""; await fillExtras(se); render(); toast("Filled from INDUCKS");
     });
     const doSave = async (next) => {
       grab();

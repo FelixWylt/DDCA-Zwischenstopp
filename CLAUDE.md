@@ -24,7 +24,8 @@
 | 2026-11-07 | Disney De Luxe barcode (joined barcode+add-on, typed lookup) incl. investigation | 5–10 min | ~2.5 min |
 | 2026-11-07 | Add this log to CLAUDE.md | 20–40 s | ~15 s (measured by the user) |
 | 2026-11-07 | Find why Disney De Luxe isn't linked to the catalogue (answer only) | 1–2 min | ~1 min |
-| 2026-11-07 | New series created on leaving the "New series name" field, linked to INDUCKS | 2–4 min | see below in log next time |
+| 2026-11-07 | New series created on leaving the "New series name" field, linked to INDUCKS | 2–4 min | ~1–1.5 min |
+| 2026-11-07 | Fill from INDUCKS also fills publisher, format, genres | 1–3 min | see commit time |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
