@@ -923,7 +923,8 @@ const coverRetry = c => {
   return Date.now() - Date.parse(c.coverNone + "Z") >= 30 * 864e5;
 };
 const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || coverRetry(c));
-const coverOf = c => (S.coverObj && S.coverObj[c.id]) || c.coverUrl || "";
+// the stored copy only while it is of the current picture: after a cover change the new one shows (and is stored next)
+const coverOf = c => (S.coverObj && S.coverObj[c.id] && (!c.coverUrl || S.coverHas[c.id + "|" + c.coverUrl]) ? S.coverObj[c.id] : "") || c.coverUrl || "";
 // finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
 async function fetchAllCovers() {
   if (S.cv && S.cv.running) return;
@@ -2198,7 +2199,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return;
       }
       if (hit.ic) {   // compact catalogue format
-        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (!d.coverUrl && hit.cv) d.coverUrl = inducksImg(hit.cv);
+        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
         d.inducks = hit.ic; await fillExtras(se); render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
       }
