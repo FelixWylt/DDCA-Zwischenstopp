@@ -161,7 +161,7 @@ function rangeBound(key, v, isTo) {
   if (se && se.numbering === "year") {
     // a plain number's "to" also covers its extras and variants (to 1967/7 includes 7½ and 7A)
     let m = /^(\d{4})\s*[\/.:-]\s*(?:nr\.?\s*)?(\d{1,3})$/i.exec(t); if (m) return +m[1] * 1000 + +m[2] + (isTo ? 0.99 : 0);
-    m = /^(\d{4})\s*(?:[\/.:-]\s*(\d{1,3})\s*½|X(\d{1,3}))$/i.exec(t); if (m) return +m[1] * 1000 + +(m[2] || m[3]) + 0.5;
+    m = /^(\d{4})\s*(?:[\/.:-]\s*(\d{1,3})\s*(?:½|[.,]5|1\/2)|X(\d{1,3}))$/i.exec(t); if (m) return +m[1] * 1000 + +(m[2] || m[3]) + 0.5;   // 7½, 7.5, 7,5
     m = /^(\d{4})\s*[\/.:-]\s*(\d{1,3})\s*([A-Z])$/.exec(t); if (m) return +m[1] * 1000 + +m[2] + (m[3].charCodeAt(0) - 64) / 100;
     m = /^(\d{1,3})\s*[\/.]\s*(\d{4})$/.exec(t); if (m) return +m[2] * 1000 + +m[1];
     m = /^(\d{4})$/.exec(t); if (m) return +m[1] * 1000 + (isTo ? 999 : 0);
@@ -292,13 +292,13 @@ function parsePrices(key, text, fallbackCur, edition) {
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
     // Seriekatalogen: year (or nothing), issue or issue range, an optional title, then five prices G VG FN VF NM ("-" = no price)
     // e.g. "1949 2 650 1300 2000 5000 10000" (Kalle Anka & C:o) or "1968 1 Tuff till tusen miljarder 100 200 300 750 1500" (Kalle Ankas Pocket)
-    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(½|[A-Z])?(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
+    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(½|[.,]5(?!\d)|[A-Z])?(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
     if (sk) {
       kind = kind || "Seriekatalogen";
       // "1950 11B" (1950–1954): the B-nummer, extra issues of Kalle Anka & C:o (INDUCKS se/B), listed with Walt Disney's Serier;
       // "1967 2B" is Walt Disney's Serier 1967-02B, "1967 7½" its extra 1967X07
       const bSeries = !!(se && se.code === "se/B"), yr = sk[1] ? +sk[1] : 0; let frac = 0;
-      if (sk[3] === "½") frac = 0.5;
+      if (sk[3] === "½" || /^[.,]5$/.test(sk[3] || "")) frac = 0.5;
       else if (sk[3]) { if (sk[3] === "B" && bSeries) frac = 0; else if (sk[3] === "B" && yr >= 1950 && yr <= 1954) { bnum++; return; } else frac = (sk[3].charCodeAt(0) - 64) / 100; }
       if (bSeries && sk[3] !== "B") { others++; return; }   // pasted into the B-nummer: the ordinary Walt Disney's Serier lines aren't theirs
       const nums = sk[6].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[4] ? +sk[4] : a;
@@ -319,8 +319,9 @@ function parsePrices(key, text, fallbackCur, edition) {
     }
     // typed ranges, several per line
     let any = false;
-    line.split(/[,;]/).map(x => x.trim()).filter(Boolean).forEach(part => {
-      const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3})?)" : "(\\d{1,5})";
+    // "6,5" is a half number, not two ranges
+    line.split(/;|,(?!5(?!\d))/).map(x => x.trim()).filter(Boolean).forEach(part => {
+      const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3}(?:½|[.,]5|[A-Z])?)?)" : "(\\d{1,5})";
       const r = new RegExp("^" + B + "?\\s*([-–])?\\s*" + B + "?\\s*[:=→>]?\\s+([\\d.,]+)\\s*(€|eur|kr|sek|chf|fr\\.?)?$", "i").exec(part);
       if (!r || (!r[1] && !r[3])) { skipped.push(part); return; }
       const p = priceAmount(r[4]); if (p == null) { skipped.push(part); return; }
