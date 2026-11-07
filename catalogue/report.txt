@@ -68,10 +68,11 @@ PUBLICATIONS
   ✓ Disney Definitive Collection  →  it/DDCO  'Disney Definitive Collection'  (by code)
   ✓ Capolavori della letteratura  →  it/CALE  'Capolavori della Letteratura (libreria)'  (by code)
   ✓ Mega Micky Maus Sonderheft  →  de/MMS  'MEGA Micky Maus Sonderheft'  (by code)
+  ✓ Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)  →  de/LTBCOH  'Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)'  (by code)
 
-issues in chosen publications: 21,623
-entries: 233,893, story versions: 119,247
-cover scans: 20,983 of 21,623 issues
+issues in chosen publications: 21,628
+entries: 233,927, story versions: 119,263
+cover scans: 20,988 of 21,628 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -139,6 +140,7 @@ FILES
   inducks-it-DDCO.json: 49 issues, 33 KB  e.g. 24 = it/DDCO 24 2018-01-15 (3 stories)
   inducks-it-CALE.json: 26 issues, 15 KB  e.g. 14 = it/CALE 14 2019-09 (1 stories)
   inducks-de-MMS.json: 1 issues, 1 KB  e.g. 1 = de/MMS   1 2017-11-17 (6 stories)
+  inducks-de-LTBCOH.json: 5 issues, 4 KB  e.g. 3 = de/LTBCOH  3 2014-10-02 (5 stories)
 directory.json: 2,775 publications (at, ch, de, it, se, uk, us), 199 KB
 
 files in the ISV export: createtables.sql

@@ -1,5 +1,5 @@
 {
- "built": "2026-11-07T12:07",
+ "built": "2026-11-07T13:28",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -535,6 +535,14 @@
    "title": "MEGA Micky Maus Sonderheft",
    "file": "inducks-de-MMS.json",
    "issues": 1
+  },
+  "lustiges taschenbuch collection kampf der zauberer hardcover": {
+   "series": "Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)",
+   "aliases": [],
+   "code": "de/LTBCOH",
+   "title": "Lustiges Taschenbuch Collection - Kampf der Zauberer (Hardcover)",
+   "file": "inducks-de-LTBCOH.json",
+   "issues": 5
   }
  }
 }
