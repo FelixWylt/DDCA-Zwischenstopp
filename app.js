@@ -3764,7 +3764,9 @@ async function fillSeriesInfo(se) {
       try {
         const r = await fetchWithin(`https://${wl}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(String(t).replace(/ /g, "_"))}`, 10000);
         if (!r.ok) continue; const j = await r.json();
-        if (j.type === "standard" && j.extract && /disney|kalle|anka|topolino|paperino|serie|tidning|fumetto|comic/i.test(j.extract)) { se.about = j.extract.slice(0, 700); se.aboutSrc = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ""; se.srcName = "Wikipedia"; se.srcLic = "CC BY-SA"; got.push("description"); break; }
+        // not an article about a character ("Stål-Kalle Pocket" leads to the article on Stål-Kalle, a "seriefigur")
+        const character = /figur|karakt[äe]r|character|personaggio|personnage|skikkelse/i.test(j.description || "") || /^\S+(\s\S+)?\s(är|er|è|est|is)\s(en|ett|un|una|a|an)\s(fiktiv|tecknad|seriefigur|personaggio|fictional|cartoon)/i.test(j.extract);
+        if (j.type === "standard" && j.extract && !character && pageFits(j.title || t, se, p) && /disney|kalle|anka|topolino|paperino|serie|tidning|fumetto|comic/i.test(j.extract)) { se.about = j.extract.slice(0, 700); se.aboutSrc = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || ""; se.srcName = "Wikipedia"; se.srcLic = "CC BY-SA"; got.push("description"); break; }
       } catch (e) {}
     }
   }
