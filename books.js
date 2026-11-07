@@ -28,6 +28,13 @@
     for (let i = 0; i < 9; i++) t += +b[i] * (10 - i); const c = (11 - t % 11) % 11; return b + (c === 10 ? "X" : c);
   }
   function hyphenless(isbn) { return clean(isbn); }
+  // Italian ISBNs (978-88, 979-12): the Italian union catalogue (SBN) can't be asked by apps, but it can be opened in the browser.
+  // SBN files a book under the number printed on it (10 digits before 2007, 13 after), so the link asks for both forms
+  function isItalian(isbn) { return /^97(888|912)/.test(normalize(isbn)); }
+  function sbnUrl(isbn) {
+    const s = normalize(isbn) || clean(isbn); if (!s) return "";
+    return "https://opac.sbn.it/risultati-ricerca-avanzata?item:7:ISBN::@or@=" + encodeURIComponent([s, to10(s)].filter(Boolean).join(" "));
+  }
 
   // ---- helpers ----
   function withTimeout(p, ms) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]); }
@@ -366,5 +373,5 @@
     if (lang !== "Swedish") asks.push(getText("https://services.dnb.de/sru/dnb?version=1.1&operation=searchRetrieve&recordSchema=MARC21-xml&maximumRecords=100&query=" + encodeURIComponent('WOE="' + name + '"')).then(read).catch(() => 0));
     return Math.max(0, ...(await Promise.all(asks)));
   }
-  root.Books = { seriesVolumes, seriesSearch, normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
+  root.Books = { isItalian, sbnUrl, seriesVolumes, seriesSearch, normalize, hyphenless, lookupIsbn, search, parseMarc, fromLibris, langName, oneGenre, bindingOf };
 })(typeof window !== "undefined" ? window : globalThis);

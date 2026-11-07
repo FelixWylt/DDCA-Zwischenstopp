@@ -299,7 +299,7 @@ button.link { background: none; border: 0; padding: 0; color: var(--accent); fon
 
 /* books: ISBN lookup, search results, scanner */
 .banner.ok { background: var(--owned-soft); }
-.isbnrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: end; }
+.isbnrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: end; }
 @media (max-width: 520px) { .isbnrow { grid-template-columns: 1fr 1fr; } .isbnrow label { grid-column: 1 / -1; } }
 .coverrow { display: flex; }
 img.cover { max-height: 180px; max-width: 130px; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,.18); background: var(--cell); }

@@ -1797,6 +1797,7 @@ ${isBook ? `
           <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="13 or old 10 digits"></label>
           <button id="isbnfill" type="button">Fill from book databases</button>
           <button id="isbnscan" type="button" class="ghost" aria-label="Scan the barcode with the camera">Scan barcode</button>
+          <button id="isbnsbn" type="button" class="ghost"${window.Books && Books.isItalian(d.isbn) ? "" : " hidden"} title="Opens the Italian national library catalogue in the browser">Look up in SBN</button>
         </div>
         <div id="bookmsg"></div>
         <div class="grid-form">
@@ -1915,6 +1916,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       catch (e) { bookMsg('<div class="banner warn">' + (e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "The camera isn't allowed for this app. Allow it in the browser's site settings, then try again." : "The camera couldn't start. Type the number instead.") + '</div>'); }
     });
     $("#booksearch") && ($("#booksearch").onclick = () => searchBooks(d, grab));
+    // "Look up in SBN" shows up while the ISBN is an Italian one (978-88 or 979-12)
+    if ($("#isbnsbn")) { const sb = $("#isbnsbn"), inp = $("#f-isbn"); inp.addEventListener("input", () => { sb.hidden = !Books.isItalian(inp.value); }); sb.onclick = () => { const u = Books.sbnUrl(inp.value); if (u) window.open(u, "_blank", "noopener"); }; }
     $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); fillFromIsbn(d, grab); } });
     $("#isbnscan") && ($("#isbnscan").onclick = async () => {
       grab();
@@ -2917,7 +2920,7 @@ async function fillFromIsbn(d, grab) {
   const dup = S.comics.find(c => c.id !== d.id && c.kind === "book" && Books.normalize(c.isbn) === isbn);
   bookMsg('<div class="banner">Looking up ' + isbn + '…</div>');
   const res = await Books.lookupIsbn(isbn);
-  if (!res.data) { bookMsg(`<div class="banner warn">${res.offline ? "The book databases need an internet connection." : "None of the book databases knows ISBN " + isbn + "." + (/^97[89]88|^97912/.test(isbn) ? " Italian books are often only in the Italian national library, which apps can't ask, and in Google Books, whose free daily limit is sometimes used up (try again later)." : "") + " Look it up and copy title and author: " + `<a href="https://opac.sbn.it/risultati-ricerca-avanzata?item:1032:ISBN::@frase@=${encodeURIComponent(isbn)}" target="_blank" rel="noopener">Italian library (SBN)</a> · <a href="https://www.google.com/search?tbm=bks&q=isbn:${encodeURIComponent(isbn)}" target="_blank" rel="noopener">Google Books</a>, or try “Search by title and author”.`}</div>`); d.isbn = isbn; return; }
+  if (!res.data) { bookMsg(`<div class="banner warn">${res.offline ? "The book databases need an internet connection." : "None of the book databases knows ISBN " + isbn + "." + (/^97[89]88|^97912/.test(isbn) ? " Italian books are often only in the Italian national library, which apps can't ask, and in Google Books, whose free daily limit is sometimes used up (try again later)." : "") + " Look it up and copy title and author: " + `<a href="${esc(Books.sbnUrl(isbn))}" target="_blank" rel="noopener">Italian library (SBN)</a> · <a href="https://www.google.com/search?tbm=bks&q=isbn:${encodeURIComponent(isbn)}" target="_blank" rel="noopener">Google Books</a>, or try “Search by title and author”.`}</div>`); d.isbn = isbn; return; }
   applyBookData(d, res.data); render();
   bookMsg(`<div class="banner ok">Filled in from ${esc(res.sources.join(", "))}. Check the details and save.${dup ? ` <strong>You already have this ISBN: ${esc(dup.title)}${dup.status === "wanted" ? " (on your wishlist)" : ""}.</strong>` : ""}</div>`);
 }
