@@ -1241,6 +1241,46 @@ const setKb = () => document.body.classList.toggle("kb", typingField(document.ac
 document.addEventListener("focusin", setKb);
 document.addEventListener("focusout", () => setTimeout(setKb, 120));
 if (window.visualViewport) window.visualViewport.addEventListener("resize", setKb);
+// suggestion lists for text fields (publisher, genres, edition, universe, group): DuckDuckGo on Android doesn't open
+// the browser's own <datalist> menus, so the app shows its own. The <datalist> stays as the source of the choices.
+// Genres take several values separated by commas: only the part being typed is matched and replaced.
+const Sugg = { box: null, el: null };
+const suggClose = () => { if (Sugg.box) Sugg.box.remove(); Sugg.box = null; };
+const suggMulti = el => el.id === "f-genre";
+function suggShow(el) {
+  const dl = document.getElementById(el.dataset.sugg); suggClose(); Sugg.el = el;
+  if (!dl) return;
+  const parts = suggMulti(el) ? el.value.split(",") : [el.value];
+  const q = parts[parts.length - 1].trim().toLowerCase(), taken = new Set(parts.slice(0, -1).map(s => s.trim().toLowerCase()));
+  const all = [...new Set([...dl.options].map(o => (o.value || o.textContent || "").trim()).filter(Boolean))];
+  const hits = all.filter(v => { const k = v.toLowerCase(); return !taken.has(k) && k !== q && (!q || k.includes(q)); })
+    .sort((a, b) => (b.toLowerCase().startsWith(q) - a.toLowerCase().startsWith(q))).slice(0, 8);
+  if (!hits.length) return;
+  const box = document.createElement("div"); box.className = "sugg"; box.setAttribute("role", "listbox");
+  box.innerHTML = hits.map(v => `<button type="button" role="option" data-sv="${esc(v)}">${esc(v)}</button>`).join("");
+  // keep the keyboard open: the field must not lose focus when a choice is tapped
+  box.addEventListener("pointerdown", e => e.preventDefault());
+  box.addEventListener("mousedown", e => e.preventDefault());
+  box.addEventListener("click", e => {
+    const b = e.target.closest("[data-sv]"); if (!b) return;
+    const v = b.dataset.sv;
+    if (suggMulti(el)) { const p = el.value.split(","); p[p.length - 1] = (p.length > 1 ? " " : "") + v; el.value = p.join(",") + ", "; }
+    else el.value = v;
+    el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true }));
+    if (suggMulti(el)) suggShow(el); else suggClose();
+  });
+  el.parentNode.classList.add("sugghost"); el.insertAdjacentElement("afterend", box); Sugg.box = box;
+}
+document.addEventListener("focusin", e => {
+  const el = e.target;
+  if (el.tagName !== "INPUT") return;
+  // take the field off the browser's own list so the two menus don't show at the same time
+  if (el.hasAttribute("list")) { el.dataset.sugg = el.getAttribute("list"); el.removeAttribute("list"); }
+  if (el.dataset.sugg) suggShow(el);
+});
+document.addEventListener("input", e => { if (e.target.dataset && e.target.dataset.sugg && e.target === document.activeElement) suggShow(e.target); });
+document.addEventListener("focusout", e => { if (e.target === Sugg.el) setTimeout(() => { if (document.activeElement !== Sugg.el) suggClose(); }, 150); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && Sugg.box) suggClose(); });
 document.getElementById("tabs").addEventListener("click", e => {
   const a = e.target.closest("a[data-v]"); if (!a) return;
   moreMenu(false);
@@ -1917,9 +1957,9 @@ ${isBook ? `
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
         </div>
-        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "One-pager", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "One-pager", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
-        <datalist id="publishers">${[...new Set(["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"].concat(S.comics.map(c => c.publisher).filter(Boolean)))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="publishers">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d)).map(c => c.publisher).concat(isNovel(d) ? [] : ["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"], S.comics.map(c => c.publisher)).filter(Boolean))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
         <div class="lookup">
           <label><span class="l">Series</span><button type="button" class="pickbtn" id="f-series-btn"><span>${esc(se ? seriesLabel(se) : "New series…")}</span><span class="chev" aria-hidden="true">▾</span></button><select id="f-series" class="visually-hidden" tabindex="-1" aria-hidden="true">${sopts}</select></label>
@@ -1943,6 +1983,7 @@ ${isBook ? `
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
         </div>
+        <datalist id="genres">${[...new Set(["Humour", "Adventure", "Crime", "Fantasy", "Science Fiction", "Horror", "Mythology", "Fairy Tales", "History", "Superheroes", "One-pager"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.seriesId === d.seriesId).map(c => c.publisher).concat(S.comics.map(c => c.publisher)).filter(Boolean))].slice(0, 40).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 `}
       </div>
@@ -2030,6 +2071,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      // the suggestion list leaves "Fantasy, Adventure, " while typing: no empty genre at the end
+      if (d.genre) d.genre = d.genre.split(",").map(x => x.trim()).filter(Boolean).join(", ");
       if (d.kind !== "book") d.date = isoDate(d.date);
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
