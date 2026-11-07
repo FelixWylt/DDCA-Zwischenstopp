@@ -1,12 +1,3 @@
-item:7:ISBN::v 9788804494010: ? | 
-item:7:ISBN::v 8804494018: ? | 
-item:7:ISBN::v 9788852230943: ? | 
-item:7:ISBN::v 8852230947: ? | 
-item:7:ISBN::v 9788852240317: ? | 
-item:7:ISBN::v 8852240314: ? | 
-item:7:ISBN::@frase@=v 9788804494010: no results | Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO C
-item:7:ISBN::@frase@=v 8804494018: FOUND …text_fields email Disney, Walt Disney's pocket english : imparare l'inglese divertendosi con Paperin | 
-item:7:ISBN::@frase@=v 9788852230943: FOUND …grafia 1 Tipo di risorsa testo 1 Autore barks, carl 1 disney <walt disney productions> 1 disney, wal | 
-item:7:ISBN::@frase@=v 8852230947: no results | Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO C
-item:7:ISBN::@frase@=v 9788852240317: FOUND … identificativi print text_fields email Spy stories Firenze ; Milano : Giunti, 2022 Testo - Monograf | 
-item:7:ISBN::@frase@=v 8852240314: no results | Criteri di ricerca bookmark Raffina ricerca Nuova ricerca Nessun risultato trovato ICCU ISTITUTO C
+or both 9788804494010 8804494018: FOUND …text_fields email Disney, Walt Disney's pocket english : imparare l'inglese divertendosi con Paperin | 
+or both 9788852230943 8852230947: FOUND …grafia 1 Tipo di risorsa testo 1 Autore barks, carl 1 disney <walt disney productions> 1 disney, wal | 
+or both 9788852240317 8852240314: FOUND … identificativi print text_fields email Spy stories Firenze ; Milano : Giunti, 2022 Testo - Monograf | 
