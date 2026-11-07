@@ -9,8 +9,9 @@
 1. **Before starting** any job, give an estimate in real time as a range, plus how sure you are.
    Estimate at Claude's own pace, not a person's. Base it on the log below: Claude tends to estimate too HIGH.
    State waiting separately (GitHub Actions network probe: about 1 minute; the user's replies don't count).
-2. **Measure:** run `date +%T` as the first step (the user's message time only shows the minute),
-   and take the end from the commit (`git log -1 --format=%ad --date=format:%H:%M:%S`).
+2. **Measure from the user's message time** (system reminder, minute precision) to the commit time
+   (`git log -1 --format=%ad --date=format:%H:%M:%S`). Don't start the clock at your first command:
+   that misses the thinking/writing before it. Give a range where the minute precision matters.
 3. **After publishing**, report estimate vs. real time. Never report a guess as a measurement.
 4. **Add a line to the log below** in the same commit.
 
@@ -21,7 +22,9 @@
 | 2026-11-07 | Reading stats with month/year dates + Bought-from list + Bought-from stats card | (none) | ~2–3 min |
 | 2026-11-07 | Create CLAUDE.md | 1–2 min | ~20 s |
 | 2026-11-07 | Disney De Luxe barcode (joined barcode+add-on, typed lookup) incl. investigation | 5–10 min | ~2.5 min |
-| 2026-11-07 | Add this log to CLAUDE.md | 20–40 s | see git log |
+| 2026-11-07 | Add this log to CLAUDE.md | 20–40 s | ~15 s (measured by the user) |
+| 2026-11-07 | Find why Disney De Luxe isn't linked to the catalogue (answer only) | 1–2 min | ~1 min |
+| 2026-11-07 | New series created on leaving the "New series name" field, linked to INDUCKS | 2–4 min | see below in log next time |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.

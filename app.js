@@ -2116,6 +2116,20 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     // a single book has no series, so no volume number either
     $("#f-bseries-x") && ($("#f-bseries-x").onclick = () => { grab(); d.seriesName = ""; d.issue = ""; render(); });
+    // "New series name": the series is made as soon as the name is typed (on leaving the field), so Fill from INDUCKS works right away
+    if (d.kind !== "book" && !seriesById(d.seriesId) && $("#f-seriesName")) $("#f-seriesName").onchange = async e => {
+      const name = e.target.value.trim(); if (!name) return;
+      grab();
+      let se = findSeriesByName(name), made = false;
+      if (!se) {
+        se = newSeriesFor(name, []); made = true;
+        const entry = catEntry(se), file = entry && await catalogueFile(entry).catch(() => null);
+        if (file) seriesFromCatalogue(se, file, entry);
+        try { await saveSeries(); } catch (err) { S.series = S.series.filter(x => x !== se); toast(errText(err)); return; }
+      }
+      d.seriesId = se.id; d.seriesName = se.name; rememberSeries(se.id); render();
+      bookMsg(`<div class="banner ok">${made ? "New series “" + esc(se.name) + "” created" : "“" + esc(se.name) + "” is already one of your series: picked it"}${catEntry(se) ? ", linked to INDUCKS " + esc(catEntry(se).code) + ". Type the issue number and tap Fill from INDUCKS." : ". It isn't in the INDUCKS catalogue under this name: add its INDUCKS code under More › Series if it has one."}</div>`);
+    };
     $("#f-series-btn") && ($("#f-series-btn").onclick = async () => { const k = await pickSeries({ current: d.seriesId, allowNew: true, title: "Series" }); if (k) { grab(); d.seriesId = k; render(); } });
     $("#f-issue").oninput = e => {
       d.issue = e.target.value;
