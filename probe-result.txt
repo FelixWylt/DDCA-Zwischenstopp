@@ -1,120 +1,384 @@
-query "Walt Disney's musiksaga" → total so far 111
-query serie:(Walt Disney's musiksaga) → total so far 111
-query Walt Disney's musiksaga → total so far 111
-query musiksaga disney → total so far 115
-query disneys musiksaga → total so far 115
-?	101 dalmatiner	Egmont Music, 1997 / 	9179126812
-?	Aladar's äventyr : dinosaurier	Egmont Music/Egmont serieförl. 2000	9172690453
-?	Aladar's äventyr : dinosaurier	Egmont Music/Egmont serieförlaget, 2000	9172690496
-?	Aladdin : det magiska halsbandet	Egmont Music, [1994] / 	9179125395
-?	Aladdin : Jafars återkomst	Egmont Music, [1995] / 	9179125956
-?	Aladdin och äventyret i Mirakelgrottan	Serieförl. 1993 / 	9179125131
-?	Aristocats	Serieförl. [1994] / 	9179125565 / 
-?	Bambi : fjärilarnas hemlighet	Select/Hemmets journal, 1990 / 	9179122914
-?	Belle och vildsvinet	Serieförl. 1993 / 	9179125077
-?	Belles födelsedag	Egmont Music, [1994] / 	9179125379
-?	Bernard och Bianca i Australien	Select/Hemmets journal, 1991 / 	9179123333
-?	Darkwing Duck : farligt falskspel	Serieförl. 1994 / 	9179125239 / 
-?	Den lilla sjöjungfrun	Select/Hemmets journal, 1990 / 	9179122957
-?	Den lilla sjöjungfrun : [i människornas värld]	Select/Hemmets journal, 1993 / 	9179124992
-?	Den lilla sjöjungfrun och den hemliga grottan	Select/Hemmets journal, 1991 / 	9179123929
-?	Disney's Mulan	Egmont, p 1998	9179128181
-?	Djungelboken	Serieförl. [1994] / 	9179125549 / 
-?	Ett småkryps liv	Egmont Music, 1999	9179128602
-?	Här är ditt liv Kalle Anka : [de första åren]	Select/Hemmets journal, 1992 / 	9179124488
-?	Herkules	Egmont Music, 1997 / 	9179127215
-?	Janne Långben : the movie	Egmont Music, 1996 / 	9179126723
-?	Jul i havsriket	Egmont Music, 1994 / 	9179125336
-?	Kalle Anka och djungelns pajas	Select/Hemmets journal, 1990 / 	9179122930
-?	Knatte, Fnatte och Tjatte på äventyr : den farliga roboten	Select/Hemmets journal, 1990 / 	9179122353
-?	Lejonkungen	Egmont Music, 1994 / 	9179125506
-?	Lejonkungen : den klaraste stjärnan	Egmont Music, cop. 1995 / 	9179126103
-?	Lejonkungen II : Simbas skatt	Egmont Music, 1999	9179128629
-?	Lilla djungelboken : en natt i ödemarken	Egmont Music, 1998 / 	9179127738
-?	Lilla djungelboken : en natt i ödemarken	Egmont, p 1998	
-?	Luftens hjältar : Baloo fixar jobb	Select/Hemmets journal, 1991 / 	9179123945
-?	Luftens hjältar : en skön seger	Select/Hemmets journal, 1992 / 	9179123961
-?	Magica de Hex jagar turkronan	Select/Hemmets journal, 1990 / 	9179122892
-?	Mimmi och jag : ett magiskt zoo	Select/Hemmets journal, 1991 / 	9179124038
-?	Mimmi och jag : vi klär ut oss	Select/Hemmets journal, 1990 / 	9179123198
-?	Musses mysterier : det stora tågrånet : deckargåta	Serieförl. 1994 / 	9179125212
-?	Mysterier med Kalle och Musse	Select/Hemmets journal, 1991 / 	9179123236 / 
-?	Nalle Puh : en dag att minnas	Select/Hemmets journal, 1990 / 	917912237X
-?	Nalle Puh leker med färger	Egmont serieförl. 2000	9179129870
-?	Nalle Puh leker med siffror	Egmont serieförlaget, 2000	9179129854
-?	Nalle Puh och den stormiga dagen	Egmont Music, 1995 / 	9179125557
-?	Nalle Puh och den stormiga dagen	Egmont Music/Egmont serieförlaget, 2000	9172690402
-?	Nalle Puh och jakten på Christoffer Robin	Egmont, p 1998	9179127770
-?	Noas ark	Egmont serieförlaget, 2000	9179129897
-?	Peter Pan	Egmont, 1998	9179127797
-?	Piff och Puff räddningspatrullen : fallet med den flygande mattan	Select/Hemmets journal, 1990 / 	9179122337
-?	Piff och Puff räddningspatrullen : fallet med den vackra spionen	Select/Hemmets journal, 1992 / 	9179124011
-?	Piff och Puff räddningspatrullen : fallet med det förlorade ägget	Select/Hemmets journal, 1990 / 	9179122213
-?	Pocahontas	Egmont Music, 1995 / 	9179126243
-?	Pocahontas och nybyggarna	Egmont Music, 1996 / 	9179126456
-?	Pongo och de 101 dalmatinerna : från Disneys tecknade långfilm	Egmont Music, 1995 / 	9179125875
-?	Prinsen och tiggarpojken	Select/Hemmets journal, 1991 / 	9179123902
-?	Ringaren i Notre Dame	Egmont Music, 1996 / 	9179126553
-?	Skönheten och odjuret	Select/Hemmets journal, 1992 / 	9179124437
-?	Snövit och den magiska stenen	Select/Hemmets journal, 1991 / 	9179123295
-?	Tarzan	Egmont Music/Egmont serieförlaget, 1999	917912934X
-?	Tarzan	Egmont Music/Egmont serieförlaget, 1999	9179128645
-?	Tigers film	Egmont Music/Egmont serieförlaget, 2000	9172690445 / 
-?	Tigers film	Egmont Music, 2000	9172690461 / 
-?	Törnrosa	Egmont Music, [1997] / 	9179126774
-?	Toy story	Egmont Music, 1996 / 	9179126472
-?	Toy story 2	Egmont serieförl. 2000	9179129811
-?	Toy story 2	Egmont serieförl. 2000	917912979X
-?	Vi leker gömma nyckeln : [en berättelse]	Select/Hemmets journal, 1991 / 	9179123988
-1	Askungen	Hemmmets journal, 1979 / Västergötlands tr.	9173006033
-2	Djungelboken [1]	Hemmets journal, 1979 / Västergötlands tr.	917300605X
-3	Mary Poppins	Hemmets journal, 1979 / Västergötlands tr.	9173006068
-4	Robin Hood	Hemmets journal, 1979 / Västergötlands tr.	9173006041
-5	Peter Pan	Hemmets journal, 1979 / Malmö offsettr.	9173006076
-6	Snövit	Hemmets journal, 1979 / Västergötlands tr.	9173006017
-7	Aristocats	Hemmets journal, 1979 / Västergötlands tr.	9173006009
-8	Lady och Lufsen	Hemmets journal, 1979 / Västergötlands tr.	9173006025
-9	Peter och draken Elliott	Hemmets journal, 1979 / Västergötlands tr.	9173004111
-10	Nalle Puh och Tigger	Hemmets journal, 1979 / Västergötlands tr.	917300409X
-11	Bernard och Bianca	Hemmets journal, 1979 / Västergötlands tr.	917300412X
-12	Djungelboken 2 Vad hände sen?	Hemmets journal, 1979 / Västergötlands tr.	9173004103
-13	Törnrosa	Hemmets journal, 1980 / Västergötlands tr.	9173009024
-14	Bambi	Hemmets journal, 1980 / Västergötlands tr.	9173009040
-15	Djungelboken 3 Djungelskolan	Hemmets journal, 1980 / Tryckerigruppen	9173009067
-16	Tre små grisar	Hemmets journal, 1980 / Västergötlands tr.	9173009083
-17	Micke och Molle : vänner när det gäller	Hemmets journal, 1981 / Västergötland	9176740269
-18	Hiawatha	Hemmets journal, 1981 / Västergötland	9176740277
-19	Robin Hood och Hoppsans födelsedag	Select video, 1984 / 	9186374109
-20	Min lilla åsna	Select video, 1983 / 	9186374087
-21	Musse Piggs julsaga	Select video, 1983 / 	9186374079
-22	Har den äran på födelsedagen	[Select video], [1984] / 	9186374095
-23	Dumbo	Select video, 1984 / 	9186374117
-24	Alice i Underlandet	Select video, 1984 / 	9186374125
-25	Pinocchio	Select/Hemmets journal, 1985 / 	9176741907
-26	Nalle Puh och honungsträdet	Select/Hemmets journal, 1985 / 	9176741893
-27	Djurens ungar	Select/Hemmets journal, 1985 / 	9176741915
-28	Våra vänner i Ankeborg : det blir en fest	Select/Hemmets journal, 1985 / 	9176741931
-29	Musse Pigg och bönstjälken	Select/Hemmets journal, 1986 / 	9179120032
-30	Vi leker en sång : sjung och lek med Disney's glada figurer	Select/Hemmets journal, 1986 / 	917912013X
-31	Wuzzlarna och tjurfinksungen	Select/Hemmets journal, 1986 / 	9179120113
-32	Bumbi-björnarna och den elake skulptören	Select/Hemmets journal, 1986 / 	9179120105
-34	Mästerdetektiven Basil Mus	Select/Hemmets journal, 1987 / 	9179120253
-35	Pongo och valptjuvarna : (Pongo och de 101 dalmatinerna)	Select/Hemmets journal, 1987 / 	9179120385
-36	Ur Djungelboken: Mowgli i knipa	Select/Hemmets journal, 1987 / 	9179120628
-37	Jultomtens verkstad	Select/Hemmets journal, 1987 / 	9179120458
-39	Svärdet i stenen	Select/Hemmets journal, 1988 / 	9179120636
-40	Bumbi-björnarna : Bernhards trollformel	Select/Hemmets journal, 1988 / 	917912061X
-41	Alf : besök från rymden	Select/Hemmets journal, 1988 / 	9179121020
-42	Knatte, Fnatte och Tjatte på äventyr : välkommen till Ankeborg	Select/Hemmets journal, 1988 / 	9179121047
-43	Knatte, Fnatte och Tjatte på äventyr : farbror Joakims skattjakt	Select/Hemmets journal, 1988 / 	9179121063
-44	Nalle Puh och den stormiga dagen	Select/Hemmets journal, 1988 / 	9179121225
-47	Musse Pigg : Kalle Ankas hundtvätt	Select/Hemmets journal, 1988 / 	917912111X
-48	Vem satte dit Roger Rabbit	Select/Hemmets journal, 1988 / 	9179121071
-49	Willow	Select/Hemmets journal, 1988 / 	9179121055
-50	Bumbi-björnarna : Bombo får en vän : [översättare: Monica Forsberg]	Select/Hemmets journal, 1988 / 	9179121330
-51	Alf som detektiv	Select/Hemmets journal, 1988 / 	9179121357
-52	Knatte, Fnatte och Tjatte på äventyr : i dinosauriernas land	Select/Hemmets journal, 1989 / 	9179121837
-53	Musse Pigg : Musses nya frack	Select/Hemmets journal, 1989 / 	917912187X
-54	Vi målar med sång med Kalle Anka och hans vänner	Select/Hemmets journal, 1989 / 	917912190X
-55	Nalle Puh : Iors födelsedag	Select/Hemmets journal, 1989 / 	9179121942
-56	Oliver &amp; gänget	Select/Hemmets journal, 1989 / 	9179121985
+
+### OL today: q=Animal Farm 1961
+[
+ [
+  "Animal Farm with Connections",
+  "George Orwell",
+  1999,
+  [
+   "Holt Rinehart & Winston"
+  ]
+ ],
+ [
+  "byol song gzhis ka",
+  "1961",
+  2011,
+  [
+   "Kan su'u mi rigs dpe skrun khang"
+  ]
+ ],
+ [
+  "George Orwell's \" Animal Farm\"",
+  "I.L. Baker",
+  1961,
+  [
+   "Brodie",
+   "Bath: James Brodie 1961. (Notes on Chosen English Texts)"
+  ]
+ ],
+ [
+  "Fun e-Farm",
+  "Heather Wiseman",
+  2001,
+  [
+   "Tommy Nelson"
+  ]
+ ],
+ [
+  "The Cazuela That the Farm Maiden Stirred",
+  "Samantha R. Vamos",
+  2011,
+  [
+   "Scholastic Inc.",
+   "Charlesbridge Publishing, Incorporated",
+   "Live Oak Media"
+  ]
+ ],
+ [
+  "Kolhosp tvaryn",
+  "George Orwell",
+  1945,
+  [
+   "Prometeĭ",
+   "Vydavnyt︠s︡tvo Z︠H︡upanʹkoho"
+  ]
+ ],
+ [
+  "Farm",
+  "Sally Jennings",
+  1990,
+  [
+   "Warner Juvenile Books"
+  ]
+ ],
+ [
+  "Punjab livestock census of 1961",
+  "Punjab (India). Land Records Dept.",
+  1964,
+  [
+   "Printed by the Controller of Print. and Stationery, Punjab"
+  ]
+ ],
+ [
+  "On the farm",
+  "Powell, Richard",
+  1993,
+  [
+   "Doubleday"
+  ]
+ ],
+ [
+  "Baa!",
+  "Powell, Richard",
+  1995,
+  [
+   "Little Simon Merchandise"
+  ]
+ ],
+ [
+  "Walt Whitman",
+  "James T. F. Tanner",
+  1968,
+  [
+   "Kent State University Press"
+  ]
+ ],
+ [
+  "The cazuela that the farm maiden stirred",
+  "Samantha R. Vamos",
+  2011,
+  [
+   "Charlesbridge"
+  ]
+ ]
+]
+
+### OL editions: title:"animal farm" author:orwell publisher:penguin publish_year:1961
+{
+ "numFound": 0,
+ "docs": []
+}
+
+### OL editions: animal farm orwell penguin
+{
+ "numFound": 15,
+ "docs": [
+  {
+   "t": "Animal Farm",
+   "a": [
+    "George Orwell"
+   ],
+   "ed": {
+    "numFound": 657,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL49810784M",
+      "title": "Animal Farm. A fairy story (Penguin Books. No. 838.)",
+      "cover_i": 14870112,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Penguin Books"
+      ],
+      "publish_date": [
+       "1952"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "t": "Animal Farm / Nineteen Eighty-Four",
+   "a": [
+    "George Orwell",
+    "G Orwell",
+    "George Orwel",
+    "George Orwell"
+   ],
+   "ed": {
+    "numFound": 48,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL38010429M",
+      "title": "1984 and Animal Farm (PREMIUM PAPERBACK, PENGUIN INDIA)",
+      "cover_i": 13189768,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Penguin Books India PVT, Limited"
+      ],
+      "publish_date": [
+       "2022"
+      ],
+      "isbn": [
+       "9780143454205",
+       "014345420X"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "t": "Novels (Animal Farm / Burmese Days / Clergyman's Daughter / Coming Up for Air / Keep the Aspidistra Flying / Nineteen Eighty-Four)",
+   "a": [
+    "George Orwell"
+   ],
+   "ed": {
+    "numFound": 10,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL18877404M",
+      "title": "The Penguin complete novels of George Orwell.",
+      "cover_i": 12827617,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Penguin"
+      ],
+      "publish_date": [
+       "1983"
+      ],
+      "isbn": [
+       "0140182365",
+       "9780140182361"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "t": "Animal Farm",
+   "a": [
+    "Odyr",
+    "George Orwell",
+    "Bernardi Odyr"
+   ],
+   "ed": {
+    "numFound": 8,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL57269599M",
+      "title": "Animal farm",
+      "cover_i": 14895919,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Secker & Warburg"
+      ],
+      "publish_date": [
+       "1945"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "t": "Churchill and Orwell",
+   "a": [
+    "Thomas E. Ricks"
+   ],
+   "ed": {
+    "numFound": 9,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL26933733M",
+      "title": "Churchill and Orwell",
+      "cover_i": 13627805,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Penguin Audiobooks",
+       "Penguin Audio"
+      ],
+      "publish_date": [
+       "2017"
+      ],
+      "isbn": [
+       "9781524776640",
+       "1524776645"
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
+
+### OL editions: title:"animal farm" publish_year:1961
+{
+ "numFound": 2,
+ "docs": [
+  {
+   "t": "George Orwell's \" Animal Farm\"",
+   "a": [
+    "I.L. Baker"
+   ],
+   "ed": {
+    "numFound": 1,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL17294707M",
+      "title": "George Orwell's \" Animal Farm\".",
+      "cover_i": 13874432,
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "Brodie",
+       "Bath: James Brodie 1961. (Notes on Chosen English Texts)"
+      ],
+      "publish_date": [
+       "1961"
+      ],
+      "isbn": [
+       "0714200220",
+       "9780714200224"
+      ]
+     }
+    ]
+   }
+  },
+  {
+   "t": "George Orwell, Animal farm",
+   "a": [
+    "I. L. Baker"
+   ],
+   "ed": {
+    "numFound": 1,
+    "start": 0,
+    "numFoundExact": true,
+    "docs": [
+     {
+      "key": "/books/OL1134723M",
+      "title": "George Orwell, Animal farm",
+      "language": [
+       "eng"
+      ],
+      "publisher": [
+       "J. Brodie"
+      ],
+      "publish_date": [
+       "1961"
+      ]
+     }
+    ]
+   }
+  }
+ ]
+}
+
+### OL work /works/OL1168007W editions 1960/61 (657 total)
+[
+ [
+  "/books/OL47045059M",
+  "Animal Farm",
+  [
+   "Longmans"
+  ],
+  "1960-01-01",
+  null,
+  null,
+  null,
+  null
+ ],
+ [
+  "/books/OL24639203M",
+  "Animal Farm",
+  [
+   "Penguin Books"
+  ],
+  "1960",
+  null,
+  [
+   6737107
+  ],
+  null,
+  "Paperback"
+ ]
+]
+
+### Google intitle/inauthor
+[]
+
+### Google today: Animal Farm 1961
+[]
+
+### DNB tit+jhr
+[]
+
+### LIBRIS tit+år
+[
+ [
+  "Djurfarmen",
+  "Orwell, George, 1903-1950",
+  "Stockholm : Bonnier",
+  "1961"
+ ]
+]
