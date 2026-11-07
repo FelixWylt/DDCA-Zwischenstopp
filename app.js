@@ -221,15 +221,19 @@ function collectorLinks(key, c) {
 // the price ranges of one series, edited in the Series tab (saved as you type)
 function valueRulesHtml(key) {
   if (!key) return "";
-  const rows = (S.valueRules || []).filter(r => r.s === key);
+  // in order of the issues; a new empty range stays at the end; long lists show 10 until "Show all"
+  const pos = r => { const b = rangeBound(key, r.from); return r.price === "" && !r.from && !r.to ? Infinity : isNaN(b) ? -1 : b; };
+  const all = (S.valueRules || []).filter(r => r.s === key).sort((a, b) => pos(a) - pos(b) || rangeBound(key, a.to, true) - rangeBound(key, b.to, true));
+  const full = (S.vrAll || {})[key] || all.length <= 12, rows = full ? all : all.slice(0, 10).concat(all.filter(r => pos(r) === Infinity));
   const cur = r => CURRENCIES.map(x => `<option${(r.cur || "CHF") === x ? " selected" : ""}>${x}</option>`).join("");
   const nm = collectorName(key), src = collectorLinks(key), se = seriesById(key), yearly = se && se.numbering === "year";
   const im = yearly ? 'inputmode="text"' : 'inputmode="numeric"';
   const defCur = (rows[0] && rows[0].cur) || (se && seriesLang(se) === "Swedish" ? "SEK" : se && seriesLang(se) === "German" ? "EUR" : "CHF");
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
     ${nm ? `<span class="small muted">Collector prices: ${src}. Copy the price list there and paste it below, or note a few prices and make ranges.</span>` : ""}
-    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="ed" class="vnote" list="edlist" placeholder="edition (empty = every edition)" value="${esc(r.ed || "")}"><input data-vf="note" class="vnote" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vmore aria-label="Edition and note" title="Edition and where the price is from">⋯</button><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="ed" class="vnote${r.ed ? "" : " vhide"}" list="edlist" placeholder="edition (empty = every edition)" value="${esc(r.ed || "")}"><input data-vf="note" class="vnote vhide" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
     ${(eds => eds.length ? `<label class="small"><span class="l">Copies without an edition count as</span><select data-vdef="${esc(key)}"><option value="">Automatic</option>${eds.map(e => `<option${editionKey(e) === editionKey(defaultEditionOf(key)) ? " selected" : ""}>${esc(e)}</option>`).join("")}</select></label><datalist id="edlist">${eds.map(e => `<option>${esc(e)}</option>`).join("")}</datalist>` : "")(seriesEditions(key))}
+    ${full ? "" : `<button type="button" class="ghost" data-vall="${esc(key)}">Show all ${all.length} ranges</button>`}
     <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div>
     <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
       <div class="stack" style="margin-top:8px">
@@ -380,6 +384,8 @@ function bindValueRules(root) {
     const k = inp.dataset.vf; r[k] = k === "price" ? parseAmt(inp.value) : inp.value.trim(); save();
   }));
   (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
+  (root || document).querySelectorAll("[data-vmore]").forEach(b => b.onclick = () => b.closest(".vrow").classList.toggle("more"));
+  (root || document).querySelectorAll("[data-vall]").forEach(b => b.onclick = () => { S.vrAll = Object.assign({}, S.vrAll, { [b.dataset.vall]: true }); renderKeep(); });
   (root || document).querySelectorAll("[data-vdel]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).filter(r => r.id !== b.dataset.vdel); save(); renderKeep(); });
   (root || document).querySelectorAll("[data-vdef]").forEach(sel => sel.onchange = async () => { const se = seriesById(sel.dataset.vdef); if (!se) return; se.defaultEdition = sel.value; try { await saveSeries(); toast("Saved"); } catch (e) { toast(errText(e)); } });
   bindPasteBox(root);
@@ -3844,34 +3850,68 @@ function bindArrangeCard() {
 }
 // ---- book series (kept as a name on each book) in the Series tab: rename, volumes, info from Wikidata / Wikipedia ----
 const bookInfo = n => (S.bookMeta || {})[n] || {};
-function bookSeriesGroup() {
-  const bySer = {};
-  (S.bookSeriesExtra || []).forEach(x => { bySer[x.name] = bySer[x.name] || []; });   // set up in the Series tab, no book yet
-  S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (bySer[c.seriesName] = bySer[c.seriesName] || []).push(c); });
-  const names = Object.keys(bySer).sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
-  if (!names.length) return "";
-  const item = n => {
-    const bs = bySer[n], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, k = "book:" + n, m = bookInfo(n);
-    const authors = m.author || [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
-    const size = (S.bookSizes || {})[n] || "";
-    const meta = [authors, own + (own === 1 ? " book" : " books"), want ? want + " wanted" : "", size ? size + " volumes" : ""].filter(Boolean).join(" · ");
-    const f = (key, label, ph) => `<label><span class="l">${label}</span><input data-bk="${key}" value="${esc(m[key] || "")}" placeholder="${esc(ph || "")}"></label>`;
-    return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([n, authors, "book"].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(n)}</span><span class="muted small">${esc(meta)}</span></summary>
-      <div class="seriesrow bookrow" data-old="${esc(n)}">
-        <label class="sr-name"><span class="l">Name</span><input data-bk="name" value="${esc(n)}"></label>
-        <label><span class="l">Volumes in the series</span><input data-bk="size" type="number" min="1" inputmode="numeric" value="${esc(size)}" placeholder="${Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)) || ""}"></label>
-        ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}
-        <label class="wide"><span class="l">About this series</span><textarea data-bk="about" rows="3">${esc(m.about || "")}</textarea></label>
-        ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}
-        ${valueRulesHtml("book:" + n)}
-        <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div>
-        <div class="wide row"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div>
-      </div></details>`;
-  };
-  const isNovelSer = n => bySer[n].length ? bySer[n].some(isNovel) : !!((S.bookSeriesExtra || []).find(x => x.name === n) || {}).novel;
-  const novels = names.filter(isNovelSer), cbooks = names.filter(n => !novels.includes(n));
-  const grp = (u, list) => list.length ? `<details class="sgroup" data-u="${u}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${u}</span><span class="muted small">${list.length} series</span></summary>${list.map(item).join("")}</details>` : "";
-  return grp("Book series", novels) + grp("Comic book series", cbooks);
+// ---- Series tab: back path, lists and the book series page ----
+function serCrumbs(items, current) {
+  return `<nav class="crumbs" aria-label="Path">${items.map(([label, path]) => `<button type="button" class="crumb" data-scr='${esc(JSON.stringify(path))}'>${esc(label)}</button><span class="sep">›</span>`).join("")}<span aria-current="page">${esc(current)}</span></nav>`;
+}
+function bookSeriesNames() {
+  const set = new Set((S.bookSeriesExtra || []).map(x => x.name).filter(Boolean));
+  S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) set.add(c.seriesName); });
+  return [...set].sort((a, b) => a.localeCompare(b, "de", { numeric: true }));
+}
+function serListHtml(tab) {
+  const q = norm(S.serFind || ""), words = q ? q.split(" ") : [];
+  const folder = (attr, title, sub, count, cls) => `<button type="button" class="folder${cls ? " " + cls : ""}" ${attr}><div style="min-width:0"><div class="t">${esc(title)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div><span class="count">${count}</span><span class="chev" aria-hidden="true">›</span></button>`;
+  if (tab === "books") {
+    const names = bookSeriesNames(), by = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (by[c.seriesName] = by[c.seriesName] || []).push(c); });
+    const novel = n => (by[n] || []).length ? by[n].some(isNovel) : !!((S.bookSeriesExtra || []).find(x => x.name === n) || {}).novel;
+    const row = n => { const bs = by[n] || [], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, m = bookInfo(n), size = (S.bookSizes || {})[n] || "";
+      const authors = m.author || [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
+      return { n, find: norm([n, authors].join(" ")), html: folder(`data-sbook="${esc(n)}"`, n, [authors, want ? want + " wanted" : "", size ? size + " volumes" : ""].filter(Boolean).join(" · "), own) }; };
+    const rows = names.map(row).filter(r => words.every(w => r.find.includes(w)));
+    if (!rows.length) return `<p class="muted small" style="margin:0">${names.length ? "No book series matches." : "No book series yet. Books get one when you fill in Series on a book, or add one here."}</p>`;
+    const nov = rows.filter(r => novel(r.n)), cb = rows.filter(r => !novel(r.n));
+    return `<div class="list">${nov.length ? `<h4 class="sghead">Books</h4>` + nov.map(r => r.html).join("") : ""}${cb.length ? `<h4 class="sghead">Comic books</h4>` + cb.map(r => r.html).join("") : ""}</div>`;
+  }
+  const used = {}; S.comics.forEach(c => { used[c.seriesId] = (used[c.seriesId] || 0) + 1; });
+  const uOf = s => s.publisher || "No universe yet", gOf = s => s.group || OTHER_GROUP;
+  const row = (s, where) => { const i = S.series.indexOf(s), ce = catEntry(s);
+    const sub = [where, s.short, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
+    return folder(`data-sopen="${i}"`, seriesLabel(s) || s.name || "New series", sub, used[s.id] || 0); };
+  if (words.length) {
+    const hits = S.series.filter(s => words.every(w => norm([s.name, s.short, s.group, uOf(s), s.code].join(" ")).includes(w)));
+    return hits.length ? `<p class="small muted" style="margin:0 0 6px">${hits.length} found</p><div class="list">${hits.map(s => row(s, uOf(s) === DISNEY ? gOf(s) : uOf(s) + " › " + gOf(s))).join("")}</div>` : '<p class="muted small" style="margin:0">No series matches.</p>';
+  }
+  const path = S.serPath || {};
+  const inU = S.series.filter(s => uOf(s) === path.u), groups = [...new Set(inU.map(gOf))].sort(groupCompare);
+  const g = path.g || (path.u && groups.length === 1 ? groups[0] : null);   // a universe with one group shows its series at once
+  if (path.u && inU.length && g) {
+    const list = inU.filter(s => gOf(s) === g);
+    return serCrumbs(groups.length > 1 ? [["All", {}], [path.u, { u: path.u }]] : [["All", {}]], groups.length > 1 ? g : path.u) + `<div class="list">${list.map(s => row(s, "")).join("") || '<p class="muted small">No series here.</p>'}</div>`;
+  }
+  if (path.u && inU.length) {
+    return serCrumbs([["All", {}]], path.u) + `<div class="list">${groups.map(gr => { const l = inU.filter(s => gOf(s) === gr); return folder(`data-sg="${esc(gr)}"`, gr, l.length + (l.length === 1 ? " series" : " series"), l.reduce((a, s) => a + (used[s.id] || 0), 0)); }).join("")}</div>`;
+  }
+  const us = [...new Set(S.series.map(uOf))].sort(pubCompare);
+  return `<div class="list">${us.map(u => { const l = S.series.filter(s => uOf(s) === u); return folder(`data-su="${esc(u)}"`, u, l.length + " series", l.reduce((a, s) => a + (used[s.id] || 0), 0), "pub"); }).join("")}</div><p class="small muted" style="margin:6px 0 0">The number is how many comics you have entered.</p>`;
+}
+function bookSeriesPage(n, sect) {
+  const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === n), own = bs.filter(c => c.status !== "wanted").length, k = "book:" + n, m = bookInfo(n);
+  const size = (S.bookSizes || {})[n] || "";
+  const f = (key, label, ph) => `<label><span class="l">${label}</span><input data-bk="${key}" value="${esc(m[key] || "")}" placeholder="${esc(ph || "")}"></label>`;
+  return `<div class="row between" style="align-items:baseline"><h3 style="margin:0">${esc(n)}</h3><span class="muted small">${own} ${own === 1 ? "book" : "books"}${bs.length > own ? " · " + (bs.length - own) + " wanted" : ""}</span></div>
+    <div class="bookrow" data-old="${esc(n)}">
+    ${sect(k, "details", "Details", [m.author, size ? size + " volumes" : "", m.years].filter(Boolean).join(" · "), `<div class="sform">
+      <label class="sr-name"><span class="l">Name</span><input data-bk="name" value="${esc(n)}"></label>
+      <label><span class="l">Volumes in the series</span><input data-bk="size" type="number" min="1" inputmode="numeric" value="${esc(size)}" placeholder="${Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)) || ""}"></label>
+      ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}
+      <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div></div>`, true)}
+    ${sect(k, "about", "Description", m.about ? m.about.slice(0, 40) + "…" : "empty", `<div class="sform">
+      <label class="wide"><span class="l">About this series</span><textarea data-bk="about" rows="4">${esc(m.about || "")}</textarea></label>
+      ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}</div>`, false)}
+    ${sect(k, "prices", "Price ranges", (rs => rs.length ? rs.length + (rs.length === 1 ? " range" : " ranges") : "none yet")((S.valueRules || []).filter(r => r.s === k && typeof r.price === "number")), `<div class="sform">${valueRulesHtml(k)}</div>`, false)}
+    </div>
+    <div class="row" style="margin-top:10px"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div>`;
 }
 // ---- Wikidata (facts) and Wikipedia (description) for a book series; empty fields only, then your own books fill the rest ----
 const WD = "https://www.wikidata.org/w/api.php";
@@ -4030,7 +4070,15 @@ VIEWS.series = {
   html() {
     const used = {}; S.comics.forEach(c => { used[c.seriesId] = (used[c.seriesId] || 0) + 1; });
     S.serOpen = S.serOpen || {};
-    const fields = (s, i) => `<div class="seriesrow" data-i="${i}">
+    // ---- one series on its own page: folded sections Details, Description, Price ranges ----
+    const sect = (key, name, title, meta, body, openDef) => { const k = key + "|" + name, open = S.sect && k in S.sect ? S.sect[k] : openDef;
+      return `<details class="sitem sect" data-sect="${esc(k)}"${open ? " open" : ""}><summary><span class="t">${title}</span><span class="muted small">${esc(meta)}</span></summary>${body}</details>`; };
+    const priceMeta = key => { const rs = (S.valueRules || []).filter(r => r.s === key && typeof r.price === "number"); if (!rs.length) return "none yet";
+      const ps = rs.map(r => r.price), cur = [...new Set(rs.map(r => r.cur || "CHF"))].join("/"), b = rs.map(r => rangeBound(key, r.from)).filter(x => !isNaN(x)), e = rs.map(r => rangeBound(key, r.to, true)).filter(x => !isNaN(x));
+      const span = b.length && e.length ? " · " + boundText(key, Math.min(...b)) + "–" + boundText(key, Math.max(...e), true) : "";
+      return rs.length + (rs.length === 1 ? " range" : " ranges") + span + " · " + fmt2(Math.min(...ps)).replace(/\.00$/, "") + (ps.length > 1 ? "–" + fmt2(Math.max(...ps)).replace(/\.00$/, "") : "") + " " + cur; };
+    const fields = (s, i) => { const key = s.id || "new";
+      return sect(key, "details", "Details", [s.short, s.code, s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : ""].filter(Boolean).join(" · "), `<div class="seriesrow" data-i="${i}">
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
       <label><span class="l">Universe</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
@@ -4041,30 +4089,33 @@ VIEWS.series = {
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
         ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
-        : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label><span></span>`}
+        : `<label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label>`}
       <label><span class="l">Publisher</span><input data-k="pubHouse" value="${esc(s.pubHouse || "")}" placeholder="Egmont Ehapa"></label>
-      <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label>
-      ${valueRulesHtml(s.id)}
-      <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="3">${esc(s.about || "")}</textarea></label>
-      ${s.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GNU FDL 1.2)</div>` : ""}
-      <div class="wide row"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button></div>
-      <button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`;
-    // universe › group › series, each series a row that opens for editing
-    const tree = {};
-    S.series.forEach((s, i) => { const u = s.publisher || "No universe yet", g = s.group || OTHER_GROUP; ((tree[u] = tree[u] || {})[g] = tree[u][g] || []).push(i); });
-    const sKey = s => s.id || "new:" + S.series.indexOf(s);
-    const rows = Object.keys(tree).sort(pubCompare).map(u => {
-      const groups = tree[u], n = Object.values(groups).reduce((a, l) => a + l.length, 0);
-      return `<details class="sgroup" data-u="${esc(u)}"${S.serOpen["u:" + u] ? " open" : ""}><summary><span class="t">${esc(u)}</span><span class="muted small">${n} series</span></summary>` +
-        Object.keys(groups).sort(groupCompare).map(g => `<h4 class="sghead">${esc(g)}</h4>` + groups[g].map(i => {
-          const s = S.series[i], k = sKey(s), cnt = used[s.id] || 0;
-          const ce = catEntry(s);
-          const meta = [s.short, cnt === 1 ? "1 comic" : cnt + " comics", s.numbering === "year" ? (s.firstYear || "?") + "–" + (s.lastYear || "?") : s.latest ? "to " + s.latest : "", ce ? "INDUCKS ✓" : ""].filter(Boolean).join(" · ");
-          return `<details class="sitem" data-k="${esc(k)}" data-find="${esc(norm([s.name, s.short, s.group, u, s.code].join(" ")))}"${S.serOpen[k] ? " open" : ""}><summary><span class="t">${esc(seriesLabel(s) || "New series")}</span><span class="muted small">${esc(meta)}</span></summary>${fields(s, i)}</details>`;
-        }).join("")).join("") + '</details>';
-    }).join("") + bookSeriesGroup();
-    const tab = S.serTab || "list";
-    const tabs = `<h2 style="margin:0">Series</h2><div class="subtabs" role="tablist" aria-label="Show"><button role="tab" type="button" data-stab="list" aria-selected="${tab === "list"}">My series</button><button role="tab" type="button" data-stab="tools" aria-selected="${tab === "tools"}">Tools</button></div>`;
+      <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label></div>`, true)
+      + sect(key, "about", "Description", s.about ? s.about.slice(0, 40) + "…" : "empty", `<div class="seriesrow" data-i="${i}">
+      <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="4">${esc(s.about || "")}</textarea></label>
+      ${s.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a> (GNU FDL 1.2)</div>` : ""}</div>`, false)
+      + (s.id ? sect(key, "prices", "Price ranges", priceMeta(s.id), `<div class="sform">${valueRulesHtml(s.id)}</div>`, false) : "")
+      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`; };
+    // ---- the lists: Universe › Group › Series, like Collection ----
+    const tab = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
+    const bookNames = bookSeriesNames();
+    const tabs = `<h2 style="margin:0">Series</h2><div class="subtabs" role="tablist" aria-label="Show"><button role="tab" type="button" data-stab="comics" aria-selected="${tab === "comics"}">Comic series <span class="muted">${S.series.length}</span></button><button role="tab" type="button" data-stab="books" aria-selected="${tab === "books"}">Book series <span class="muted">${bookNames.length}</span></button><button role="tab" type="button" data-stab="tools" aria-selected="${tab === "tools"}">Tools</button></div>`;
+    const datalists = `<datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
+        <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>`;
+    const editIdx = S.serEditObj ? S.series.indexOf(S.serEditObj) : -1;
+    if (tab === "comics" && editIdx >= 0) {
+      const s = S.series[editIdx], u = s.publisher || "No universe yet", g = s.group || OTHER_GROUP;
+      return tabs + serCrumbs([["All", {}], [u, { u }], [g, { u, g }]], seriesLabel(s) || "New series") + `<div class="card stack seriespage">
+        <div class="row between" style="align-items:baseline"><h3 style="margin:0">${esc(s.name || "New series")}</h3><span class="muted small">${(c => c === 1 ? "1 comic" : c + " comics")(S.comics.filter(c => c.seriesId === s.id).length)}${catEntry(s) ? " · INDUCKS ✓" : ""}</span></div>
+        ${fields(s, editIdx)}${datalists}
+        <div class="row savebar"><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>`;
+    }
+    if (tab === "books" && S.serEditBook && bookNames.includes(S.serEditBook)) {
+      const n = S.serEditBook;
+      return tabs + serCrumbs([["All book series", {}]], n) + `<div class="card stack seriespage">${bookSeriesPage(n, sect)}
+        <div class="row savebar"><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>`;
+    }
     if (tab === "tools") return tabs + `
       <p class="small muted" style="margin:0">Bulk jobs for all your series and comics. The ones that need internet say so.</p>
       <div class="card stack"><h3>Fill all series</h3>
@@ -4084,22 +4135,27 @@ VIEWS.series = {
           <div class="row"><button class="primary" id="gomatch">Match my comics with INDUCKS</button></div>
           <p class="small muted" style="margin:0">Story data from <a href="https://inducks.org" target="_blank" rel="noopener">I.N.D.U.C.K.S.</a>, used under the Inducks licence. Thanks to its indexers.</p>`
           : `<p class="small muted" style="margin:0">Not loaded yet. Once it is, Add fills in titles, dates and full story lists from INDUCKS.</p>`}</div>`;
+    if (tab === "books") return tabs + `<div class="card stack">
+        <label><span class="l">Find a book series</span><input id="serfind" type="search" placeholder="Name or author" value="${esc(S.serFind || "")}"></label>
+        <div id="serlist">${serListHtml("books")}</div>
+        <div id="newbook"></div>
+        <div class="row"><button id="addbookser" type="button">Add book series</button></div></div>`;
     return tabs + `
       ${arrangeCard()}
       ${groupCheckCard()}
-      <div><p class="lede" style="margin:0">The series you collect. Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p></div>
       ${S.seriesSaved ? "" : '<div class="banner">These are the starting series. Save once to keep your own version.</div>'}
       <div class="card stack">
         <label><span class="l">Find a series</span><input id="serfind" type="search" placeholder="Name, short name, group or INDUCKS code" value="${esc(S.serFind || "")}"></label>
-        <div class="serieslist">${rows}</div>
-        <datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
-        <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>
-        <div id="newbook"></div>
-        <div class="row savebar"><button id="addser">Add series</button><button id="addbookser" type="button">Add book series</button><button class="primary" id="saveser"${S.db ? "" : " disabled"}>Save series</button></div></div>
+        <div id="serlist">${serListHtml("comics")}</div>
+        <div class="row"><button id="addser">Add series</button></div></div>
+      <p class="small muted">Universe and group decide where a series appears under Collection; the publisher is saved with each comic, since it changes over the years. The gap grid and completion stats use the latest issue, or the years and issues per year for weekly titles.</p>
 `;
   },
   bind() {
-    document.querySelectorAll("[data-stab]").forEach(b => b.onclick = () => { if (S.serTab !== b.dataset.stab) { try { grab(); } catch (e) {} } S.serTab = b.dataset.stab; render(); window.scrollTo(0, 0); });
+    document.querySelectorAll("[data-stab]").forEach(b => b.onclick = async () => {
+      const t = b.dataset.stab, cur = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
+      if (t === cur) { await go(() => { S.serPath = {}; }); return; }   // tapping the open tab goes back to its start
+      try { grab(); } catch (e) {} S.serTab = t; render(); window.scrollTo(0, 0); });
     const grab = () => document.querySelectorAll(".seriesrow:not(.bookrow)").forEach(row => {
       const s = S.series[+row.dataset.i];
       row.querySelectorAll("[data-k]").forEach(inp => {
@@ -4113,20 +4169,26 @@ VIEWS.series = {
     document.querySelectorAll('[data-k="numbering"]').forEach(sel => sel.onchange = () => { grab(); const s = S.series[+sel.closest(".seriesrow").dataset.i]; if (s.numbering === "year") { s.firstYear = s.firstYear || 1950; s.lastYear = s.lastYear || new Date().getFullYear(); s.perYear = s.perYear || 52; } render(); });
     $("#gomatch") && ($("#gomatch").onclick = () => { S.matchRun = null; nav("match"); });
     bindArrangeCard(); bindGroupCheck();
-    document.querySelectorAll("details.sgroup").forEach(el => el.ontoggle = () => { S.serOpen["u:" + el.dataset.u] = el.open; });
-    document.querySelectorAll("details.sitem").forEach(el => el.ontoggle = () => { S.serOpen[el.dataset.k] = el.open; });
-    const find = () => {
-      const q = norm(S.serFind || ""), words = q ? q.split(" ") : [];
-      document.querySelectorAll("details.sgroup").forEach(g => {
-        let any = false;
-        g.querySelectorAll("details.sitem").forEach(it => { const hit = words.every(w => it.dataset.find.includes(w)); it.hidden = !hit; any = any || hit; });
-        g.querySelectorAll(".sghead").forEach(h => { let el = h.nextElementSibling, vis = false; while (el && el.classList.contains("sitem")) { vis = vis || !el.hidden; el = el.nextElementSibling; } h.hidden = !vis; });
-        g.hidden = !any;
-        if (q) g.open = any; else g.open = !!S.serOpen["u:" + g.dataset.u];
-      });
+    document.querySelectorAll("details[data-sect]").forEach(el => el.ontoggle = () => { S.sect = S.sect || {}; S.sect[el.dataset.sect] = el.open; });
+    // leaving a series page keeps what was typed: it is saved (a new series without a name is dropped)
+    const leave = async () => {
+      if (!document.querySelector(".seriespage")) return;
+      try { grab(); } catch (e) {}
+      S.series = S.series.filter(s => s.name || s !== S.serEditObj);
+      if (S.series.some(s => !s.name)) return;
+      try { S.series.forEach(s => { if (!s.group) s.group = OTHER_GROUP; if (!s.publisher) s.publisher = OTHER_PUB; }); await saveBookSeries(); await saveSeries(); } catch (e) { toast(errText(e)); }
     };
-    $("#serfind") && ($("#serfind").oninput = e => { S.serFind = e.target.value; find(); });
-    if (S.serFind) find();
+    const go = async change => { await leave(); change(); S.serEditObj = null; S.serEditBook = null; render(); window.scrollTo(0, 0); };
+    const bindList = () => {
+      document.querySelectorAll("[data-scr]").forEach(b => b.onclick = () => go(() => { S.serPath = JSON.parse(b.dataset.scr); }));
+      document.querySelectorAll("[data-su]").forEach(b => b.onclick = () => go(() => { S.serPath = { u: b.dataset.su }; }));
+      document.querySelectorAll("[data-sg]").forEach(b => b.onclick = () => go(() => { S.serPath = { u: (S.serPath || {}).u, g: b.dataset.sg }; }));
+      document.querySelectorAll("[data-sopen]").forEach(b => b.onclick = () => { const s = S.series[+b.dataset.sopen]; S.serPath = { u: s.publisher || "No universe yet", g: s.group || OTHER_GROUP }; S.serEditObj = s; render(); window.scrollTo(0, 0); });
+      document.querySelectorAll("[data-sbook]").forEach(b => b.onclick = () => { S.serEditBook = b.dataset.sbook; render(); window.scrollTo(0, 0); });
+    };
+    bindList();
+    $("#serfind") && ($("#serfind").oninput = e => { S.serFind = e.target.value; $("#serlist").innerHTML = serListHtml(S.serTab === "books" ? "books" : "comics"); bindList(); });
+    document.querySelectorAll("[data-sgap]").forEach(b => b.onclick = async () => { await leave(); S.gapSeries = b.dataset.sgap; S.gapTab = "gaps"; nav("gaps"); });
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
     bindValueRules();
     document.querySelectorAll("[data-bkfill]").forEach(b => b.onclick = async () => {
@@ -4134,9 +4196,9 @@ VIEWS.series = {
       b.disabled = true; b.textContent = "Looking up…";
       const got = await fillBookSeries(b.dataset.bkfill);
       toast((got.length ? "Filled in: " + got.join(", ") : "Nothing new found") + (got.warn ? ". " + got.warn : ""));
-      S.serOpen["book:" + b.dataset.bkfill] = true; renderKeep();
+      renderKeep();
     });
-    document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
+    document.querySelectorAll("[data-bkgap]").forEach(b => b.onclick = async () => { await leave(); S.gapSeries = "book:" + b.dataset.bkgap; S.gapTab = "gaps"; nav("gaps"); });
     bindRefresh(); bindRefreshBooks();
     $("#moveallstray") && ($("#moveallstray").onclick = async () => { try { const n = await moveStrays(strayBooks()); toast(n + (n === 1 ? " copy moved" : " copies moved")); renderKeep(); } catch (e) { toast(errText(e)); } });
     $("#emptyask") && ($("#emptyask").onclick = () => { S.emptyAsk = true; renderKeep(); });
@@ -4171,7 +4233,6 @@ VIEWS.series = {
       b.disabled = true; b.textContent = "Looking up…";
       const got = await fillSeriesInfo(se);
       if (!se.id) { const base = (se.code || se.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== se && x.id === id)) id = base + "-" + k++; se.id = id; }
-      S.serOpen[se.id] = true;
       try { if (got.length) await saveSeries(); } catch (e) { toast(errText(e)); }
       toast((got.length ? "Filled in: " + got.join(", ") : "Nothing new found for this series") + (got.warn ? ". " + got.warn : ""));
       render();
@@ -4191,25 +4252,28 @@ VIEWS.series = {
         if (exists) { toast(name + " already exists"); return; }
         grab(); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat([{ name, novel }]);
         await setConfig("bookSeriesExtra", S.bookSeriesExtra);
-        S.serOpen["u:" + (novel ? "Book series" : "Comic book series")] = true; S.serOpen["book:" + name] = true;
+        S.serEditBook = name;
         toast(name + " created. Add its number of volumes, then Fill from Wikidata."); render();
       };
       setTimeout(() => $("#nbname").focus(), 50);
     };
     document.querySelectorAll("[data-bkrm]").forEach(b => b.onclick = async () => {
       S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== b.dataset.bkrm); await setConfig("bookSeriesExtra", S.bookSeriesExtra);
-      toast(b.dataset.bkrm + " removed"); renderKeep();
+      toast(b.dataset.bkrm + " removed"); S.serEditBook = null; render();
     });
     if ($("#addser")) $("#addser").onclick = () => {
-      grab(); S.series.push({ id: "", name: "", short: "", publisher: "", group: "", code: "", country: "", numbering: "running", latest: "" });
-      S.serFind = ""; S.serOpen["u:No universe yet"] = true; S.serOpen["new:" + (S.series.length - 1)] = true; render();
-      const ins = document.querySelectorAll('.seriesrow [data-k="name"]'); const last = ins[ins.length - 1]; last.scrollIntoView({ block: "center" }); last.focus();
+      const s = { id: "", name: "", short: "", publisher: (S.serPath || {}).u || "", group: (S.serPath || {}).g || "", code: "", country: "", numbering: "running", latest: "" };
+      if (s.publisher === "No universe yet") s.publisher = "";
+      S.series.push(s); S.serFind = ""; S.serEditObj = s; S.sect = Object.assign({}, S.sect, { "new|details": true }); render(); window.scrollTo(0, 0);
+      const inp = document.querySelector('.seriespage [data-k="name"]'); if (inp) inp.focus();
     };
     document.querySelectorAll("[data-rm]").forEach(b => b.onclick = () => {
       grab(); const s = S.series[+b.dataset.rm];
       const used = S.comics.filter(c => c.seriesId === s.id).length;
       if (used) { toast(used + " comics are in this series. Move or delete them first."); return; }
-      S.series.splice(+b.dataset.rm, 1); render();
+      S.series.splice(+b.dataset.rm, 1); S.serEditObj = null;
+      if (s.id) { (async () => { try { await saveSeries(); toast((s.name || "Series") + " removed"); } catch (e) { toast(errText(e)); } })(); }
+      render(); window.scrollTo(0, 0);
     });
     if ($("#saveser")) $("#saveser").onclick = async () => {
       grab();
@@ -4218,6 +4282,7 @@ VIEWS.series = {
       S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group));
       const ids = S.series.map(s => s.id); if (new Set(ids).size !== ids.length) { toast("Two series have the same INDUCKS code"); return; }
       const btn = $("#saveser"); btn.disabled = true; btn.textContent = "Saving…";
+      const renamed = document.querySelector('.bookrow [data-bk="name"]'); if (renamed && renamed.value.trim()) S.serEditBook = renamed.value.trim();
       try { await saveBookSeries(); await saveSeries(); toast("Series saved"); } catch (e) { toast(errText(e)); }
       requestAnimationFrame(() => setTimeout(render, 0));   // let the message show before the page is redrawn
     };
