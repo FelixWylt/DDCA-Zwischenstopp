@@ -254,7 +254,7 @@ function parsePrices(key, text, fallbackCur, edition) {
   const se = seriesById(key), yearly = !!(se && se.numbering === "year");
   const at = (y, n) => yearly ? (y || 0) * 1000 + (n || 0) : n;
   const items = [], skipped = [], unread = [], edRows = [];
-  let reprints = 0, kind = "";
+  let reprints = 0, kind = "", bnum = 0, others = 0;
   const lines = String(text || "").split(/\r?\n/).map(l => l.replace(/ /g, " ").trim()).filter(Boolean);
   lines.forEach(line => {
     // the Nullnummer has no number in Comicguide's list: it is issue 0 (Micky Maus Magazin 1951/0); "(Nullnummer) 9000.00 €"
@@ -287,14 +287,18 @@ function parsePrices(key, text, fallbackCur, edition) {
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
     // Seriekatalogen: year (or nothing), issue or issue range, an optional title, then five prices G VG FN VF NM ("-" = no price)
     // e.g. "1949 2 650 1300 2000 5000 10000" (Kalle Anka & C:o) or "1968 1 Tuff till tusen miljarder 100 200 300 750 1500" (Kalle Ankas Pocket)
-    const sk = /^(?:(\d{4})\s+)?(\d{1,4})(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
+    const sk = /^(?:(\d{4})\s+)?(\d{1,4})([A-Z])?(?:\s*-\s*(\d{1,4}))?(?:\s+(.*?\D.*?))?((?:\s+(?:\d+|[-–]))\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–])\s+(?:\d+|[-–]))\s*$/.exec(line);
     if (sk) {
       kind = kind || "Seriekatalogen";
-      const nums = sk[5].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[3] ? +sk[3] : a;
+      // "1950 11B": the B-nummer, extra issues of Kalle Anka & C:o 1950–1954 (INDUCKS se/B), listed with Walt Disney's Serier
+      const bSeries = !!(se && se.code === "se/B");
+      if (sk[3]) { if (sk[3] === "B" && !bSeries) { bnum++; return; } if (sk[3] !== "B") { unread.push(line); return; } }
+      else if (bSeries) { others++; return; }   // pasted into the B-nummer: the ordinary Walt Disney's Serier lines aren't theirs
+      const nums = sk[6].trim().split(/\s+/).map(x => /^\d+$/.test(x) ? +x : null), y = sk[1] ? +sk[1] : null, a = +sk[2], b = sk[4] ? +sk[4] : a;
       if (nums[3] == null) { unread.push(line); return; }   // no VF price listed
       // Kalle Ankas bästa: "2016 4" and "2017 5" are cover numbers (book 4 = INDUCKS 2017/01); a year/number INDUCKS knows is used as it is
-      if (yearly && listedSeries(se) && !sk[3] && !(y && listedSeries(se).years[y] && listedSeries(se).years[y].includes(a))) {
-        const k = listedLabel(se, String(a), y) || (sk[4] && listedLabel(se, sk[4].trim(), y));
+      if (yearly && listedSeries(se) && !sk[4] && !(y && listedSeries(se).years[y] && listedSeries(se).years[y].includes(a))) {
+        const k = listedLabel(se, String(a), y) || (sk[5] && listedLabel(se, sk[5].trim(), y));
         if (k) { const v = rangeBound(key, k); items.push({ lo: v, hi: v, price: nums[3], cur: "SEK", single: true }); return; }
       }
       if (yearly && !y) { unread.push(line); return; }
@@ -342,7 +346,7 @@ function parsePrices(key, text, fallbackCur, edition) {
   items.filter(x => x.typed).forEach(x => ranges.push(x));
   // from a pasted list, lines with a price that couldn't be placed (e.g. "(Nullnummer) 9000.00 €") are listed for you
   if (kind && kind !== "typed") skipped.filter(x => /€|\d[.,]\d\d\b/.test(x)).forEach(x => unread.push(x));
-  return { ranges, kind, reprints, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing, byEdition };
+  return { ranges, kind, reprints, bnum, others, unread, skipped: kind === "typed" ? skipped : [], issues: listed.length, editions, edition: chosen, edMissing, byEdition };
 }
 // issue 0 written so it can't be mistaken for a whole year: "1951/0", or "0" in a running series
 function zeroText(key, v) { const se = seriesById(key); return se && se.numbering === "year" ? Math.floor(v / 1000) + "/0" : "0"; }
@@ -361,7 +365,7 @@ function bindPasteBox(root) {
       const have = (S.valueRules || []).filter(r => r.s === key).length;
       const span = r => { if (r.zero) return zeroText(key, r.lo) + " (Nullnummer)"; const a = r.lo == null ? "" : boundText(key, r.lo), z = r.hi == null ? "" : boundText(key, r.hi, true); return !a ? "all up to " + z : !z ? a + " and later" : a === z ? a : a + " – " + z; };
       const line = r => `<li>${esc(span(r))} → ${esc(money(r.price, r.cur))}</li>`;
-      const notes = [res.kind && res.kind !== "typed" ? `Read as a ${res.kind} list: ${res.issues} issues${res.kind === "Seriekatalogen" ? ", VF prices" : ""}` : "", res.reprints ? res.reprints + " reprints skipped" : ""].filter(Boolean).join(" · ");
+      const notes = [res.kind && res.kind !== "typed" ? `Read as a ${res.kind} list: ${res.issues} issues${res.kind === "Seriekatalogen" ? ", VF prices" : ""}` : "", res.reprints ? res.reprints + " reprints skipped" : "", res.others ? res.others + " lines without B skipped (they belong to Walt Disney's Serier)" : "", res.bnum ? res.bnum + " B-nummer skipped (1950–1954, a series of their own: Kalle Anka & C:o (B-nummer), INDUCKS se/B)" : ""].filter(Boolean).join(" · ");
       const left = res.unread.concat(res.skipped);
       out.innerHTML = `<div class="stack small" style="gap:6px">
         <strong>${res.ranges.length} ${res.ranges.length === 1 ? "range" : "ranges"} found</strong>${notes ? `<span class="muted">${esc(notes)}</span>` : ""}
