@@ -30,6 +30,7 @@
 | 2026-11-07 | Fill from INDUCKS also fills publisher, format, genres | 1–3 min | ~1.5–2 min |
 | 2026-11-07 | Suggestion-list rows overlapping (CSS) + check other menus | 1–3 min | ~1–1.5 min |
 | 2026-11-07 | New INDUCKS-linked series get their country group (it → Italia) + one-time fix of existing ones | 1–2 min | 0.0–1.0 min (22:56 → 22:57:01) |
+| 2026-11-07 | Italian price ranges for Paste prices (research, 4 series groups; answer only) | 8–15 min | 2–3 min (23:16 → 23:18:52) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
