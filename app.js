@@ -646,6 +646,14 @@ async function boot() {
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
     // once: prices kept as text ("12.50", from imports) become numbers, purchase dates "12.10.2026" become 2026-10-12, so every sum and chart counts them
+    if (!(await getConfig("dkShortFix1"))) {
+      const n = [];
+      S.series.forEach(se => { const m = /duckipedia\.org\/(.+)$/.exec(se.aboutSrc || ""); if (!m) return;
+        let t = m[1]; try { t = decodeURIComponent(t); } catch (e) {} t = t.replace(/_/g, " ");
+        if (!pageFits(t, se)) { delete se.about; delete se.aboutSrc; n.push(se.name); } });
+      if (n.length) { await setConfig("series", S.series); setTimeout(() => toast("Wrong Duckipedia description removed from: " + n.join(", ")), 2000); }
+      await setConfig("dkShortFix1", true);
+    }
     if (!(await getConfig("moneyFix1"))) {
       const num = v => typeof v === "string" && v.trim() !== "" && typeof parseAmt(v) === "number";
       const fix = S.comics.filter(c => num(c.pricePaid) || num(c.value) || num(c.valueChecked) || num(c.lotTotal) || (c.purchaseDate && isoDate(c.purchaseDate) !== c.purchaseDate)).map(c => {
@@ -3693,8 +3701,11 @@ async function fillSeriesInfo(se) {
   } else if (p && !se.latest && p[2]) { se.latest = p[2]; got.push("latest issue"); }
   if (seriesLang(se) === "German" && (se.publisher || DISNEY) === DISNEY && typeof Duckipedia !== "undefined") {
     try {
+      // by name first; a short name (MMS) can lead to another series (Micky Maus SPEZIAL!), so a page found
+      // through it only counts when its title fits the series' name
       const short = se.short && /^[A-Z]/.test(se.short) ? se.short : "";
-      const d = await Duckipedia.fetchSeries([se.name, p && p[1], short]);
+      let d = await Duckipedia.fetchSeries([se.name, p && p[1]]);
+      if (!d && short) { const viaShort = await Duckipedia.fetchSeries([short]); if (viaShort && pageFits(viaShort.page, se, p)) d = viaShort; }
       if (d) {
         set("about", d.description, "description");
         if (d.description && !se.aboutSrc) se.aboutSrc = d.url;
@@ -3732,6 +3743,12 @@ function catalogueRequestUrl(code, name) {
 }
 // INDUCKS publications with exactly this series' name, in its country (searched in the whole directory, not just the top hits)
 // a web request that gives up after ms milliseconds (some sites never answer)
+// does a Duckipedia page title fit a series? "Lustiges Taschenbuch" fits LTB; "Micky Maus SPEZIAL!" doesn't fit MEGA Micky Maus Sonderheft
+function pageFits(title, se, p) {
+  const words = t => norm(t).split(" ").filter(w => w.length > 2 && !["der", "die", "das", "und", "von", "the", "and"].includes(w));
+  const like = (a, b) => { const wa = words(a), nb = " " + norm(b) + " "; return wa.length > 0 && wa.every(w => nb.includes(" " + w + " ")); };
+  return [se.name, p && p[1]].filter(Boolean).some(n => like(title, n) || like(n, title));
+}
 async function fetchWithin(url, ms, opt) {
   const ac = new AbortController(), t = setTimeout(() => ac.abort(), ms);
   try { return await fetch(url, Object.assign({}, opt, { signal: ac.signal })); } finally { clearTimeout(t); }
