@@ -1,5 +1,5 @@
 {
- "built": "2026-11-08T00:09",
+ "built": "2026-11-08T09:00",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -197,7 +197,7 @@
    "code": "no/DD",
    "title": "Donald Duck & Co",
    "file": "inducks-no-DD.json",
-   "issues": 4067
+   "issues": 4068
   },
   "micky maus zeitung": {
    "series": "Micky Maus Zeitung",
