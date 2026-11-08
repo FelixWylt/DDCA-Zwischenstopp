@@ -55,6 +55,7 @@
 | 2026-11-08 | Is the 16V lithograph hand-signed? (answer only, no search) | under 1 min | 0–1 min (10:27 → 10:27:38) |
 | 2026-11-08 | 16V: printed signature, copy 355 → value (answer only) | under 1 min | 0–0 min (10:31 → 10:31:21) |
 | 2026-11-08 | PK box (34B) picture is a lithograph: what it means for value and notes (answer only) | under 1 min | 0–1 min (10:34 → 10:35:00) |
+| 2026-11-08 | Whose Italian Disney signature is worth most (1 search; answer only) | 1–2 min | 0–1 min (10:37 → 10:38:11) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
