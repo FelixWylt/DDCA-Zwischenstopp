@@ -53,6 +53,7 @@
 | 2026-11-08 | Superpippo add-on (ISBN 9791221928587): found it/TLB Topolibri in the directory, added to the catalogue | under 1 min (+2 min wait) | 0–1 min (10:15 → 10:15:42, before the rebuild) |
 | 2026-11-08 | Value of DSBP 16V (Spada di Ghiaccio Limited Deluxe; 1 search; answer only) | 1–2 min | 0–1 min (10:24 → 10:24:45) |
 | 2026-11-08 | Is the 16V lithograph hand-signed? (answer only, no search) | under 1 min | 0–1 min (10:27 → 10:27:38) |
+| 2026-11-08 | 16V: printed signature, copy 355 → value (answer only) | under 1 min | 0–0 min (10:31 → 10:31:21) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
