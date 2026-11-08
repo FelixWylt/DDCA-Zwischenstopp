@@ -1,5 +1,5 @@
 {
- "built": "2026-11-07T22:28",
+ "built": "2026-11-08T00:09",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -576,6 +576,14 @@
    "title": "Super Almanacco Paperino (seconda serie)",
    "file": "inducks-it-SAP.json",
    "issues": 66
+  },
+  "topolino extra": {
+   "series": "Topolino Extra",
+   "aliases": [],
+   "code": "it/TXTR",
+   "title": "Topolino Extra",
+   "file": "inducks-it-TXTR.json",
+   "issues": 37
   }
  }
 }
