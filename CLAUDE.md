@@ -57,6 +57,7 @@
 | 2026-11-08 | PK box (34B) picture is a lithograph: what it means for value and notes (answer only) | under 1 min | 0–1 min (10:34 → 10:35:00) |
 | 2026-11-08 | Whose Italian Disney signature is worth most (1 search; answer only) | 1–2 min | 0–1 min (10:37 → 10:38:11) |
 | 2026-11-08 | Most valuable Disney comics signature worldwide (2 searches; answer only) | 1–2 min | 0–1 min (10:41 → 10:42:10) |
+| 2026-11-08 | Bob Karp and Al Taliaferro signatures/originals (1 search; answer only) | 1–2 min | 0–1 min (10:46 → 10:46:45) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
