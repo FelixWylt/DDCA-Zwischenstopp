@@ -557,6 +557,12 @@
       "country": "it",
       "code": "it/SAP",
       "title": "Super Almanacco Paperino (seconda serie)"
+    },
+    {
+      "series": "Topolino Extra",
+      "country": "it",
+      "code": "it/TXTR",
+      "title": "Topolino Extra"
     }
   ]
 }
