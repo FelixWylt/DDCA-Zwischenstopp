@@ -60,6 +60,7 @@
 | 2026-11-08 | Bob Karp and Al Taliaferro signatures/originals (1 search; answer only) | 1–2 min | 0–1 min (10:46 → 10:46:45) |
 | 2026-11-08 | Find Blixt Gordon 1973 nr 1 (1 search, 1 fetch; Seriekatalogen not reachable; answer only) | 1–2 min | 0–1 min (10:55 → 10:56:22) |
 | 2026-11-08 | Blixt Gordon: which universe and group (answer only) | under 1 min | 0–1 min (11:04 → 11:05:02) |
+| 2026-11-08 | Blixt Gordon universe corrected (by rights owner, like Swedish Spider-Man in Marvel; answer only) | under 1 min | 0–1 min (11:06 → 11:06:49) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
