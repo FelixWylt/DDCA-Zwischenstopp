@@ -1097,6 +1097,19 @@ function catEntry(se) {
   const cc = String(se.country || "").toLowerCase(), sameLand = x => !cc || String(x.code || "").split("/")[0] === cc;
   return [all[n]].concat(list.filter(x => (x.aliases || []).some(a => norm(a) === n))).find(x => x && sameLand(x)) || null;
 }
+// ---- "Find by title": books and specials found by the words on their cover (INDUCKS has no ISBNs) ----
+async function loadTitles() {
+  if (S.titles) return S.titles;
+  try { const r = await fetch("catalogue/titles.json"); if (r.ok) S.titles = (await r.json()).titles.map(x => ({ file: x[0], issue: x[1], t: x[2], d: x[3], pr: x[4], n: norm(x[2]) })); } catch (e) {}
+  return S.titles || [];
+}
+function findByTitle(q) {
+  const words = norm(q).split(" ").filter(w => w.length > 1); if (!words.length || !S.titles) return [];
+  const byFile = {}; Object.values((S.catalogue && S.catalogue.series) || {}).forEach(x => { byFile[x.file] = x; });
+  return S.titles.filter(x => words.every(w => x.n.includes(w)) && byFile[x.file])
+    .sort((a, b) => (a.d || "").localeCompare(b.d || "")).slice(0, 15)
+    .map(x => Object.assign({ entry: byFile[x.file], mine: S.series.find(s => { const e = catEntry(s); return e && e.file === x.file; }) }, x));
+}
 async function catalogueFile(entry) {
   if (!S.catCache[entry.file]) {
     const r = await fetch("catalogue/" + entry.file);
@@ -1993,6 +2006,7 @@ ${isBook ? `
         </div>
         <div class="row" style="gap:8px"><button class="ghost" id="comicscan" type="button">Scan barcode or ISBN</button></div>
         <div id="bookmsg"></div>
+        ${S.catalogue ? `<label><span class="l">Find by title</span><input id="f-titleq" type="search" autocomplete="off" placeholder="words from the cover, e.g. destino paperone"></label><div id="titlehits" class="stack"></div>` : ""}
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
         <p class="small muted" style="margin:0">${catReady ? "Fills in title, date and stories from INDUCKS." : S.catalogue ? "This series isn't in the INDUCKS catalogue." : "The INDUCKS catalogue isn't loaded yet, so auto-fill is off for now."}
           ${!isBook && window.Duckipedia && Duckipedia.candidates(dkSeries(se), { issueLabel: "1" }).length ? `<button class="ghost" id="dkfetch" type="button">${d.duckipedia ? "Refresh" : "Get"} details from Duckipedia</button>` : ""}
@@ -2121,6 +2135,20 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       else if (!seriesById(d.seriesId)) { d.seriesId = defaultSeriesId(); d.seriesName = ""; }
       render();
     });
+    // Find by title: a hit sets series and number, then fills from INDUCKS
+    if ($("#f-titleq")) {
+      let tq; const box = $("#titlehits");
+      $("#f-titleq").addEventListener("input", e => { clearTimeout(tq); const q = e.target.value; tq = setTimeout(async () => {
+        await loadTitles(); const hits = findByTitle(q);
+        box.innerHTML = norm(q).length < 3 ? "" : hits.length ? hits.map((h, i) => `<button type="button" class="ghost titlehit" data-th="${i}" style="text-align:left">${esc(h.t)}<br><span class="small muted">${esc((h.mine ? h.mine.short || h.mine.name : h.entry.series + " (new series)") + " " + h.issue + (h.d ? " · " + h.d.slice(0, 7) : "") + (h.pr ? " · " + h.pr : ""))}</span></button>`).join("") : '<p class="small muted" style="margin:0">No title in your INDUCKS catalogue has all these words. Try fewer words, or add the series under Series first.</p>';
+        box.querySelectorAll("[data-th]").forEach(b => b.onclick = async () => { const h = hits[+b.dataset.th]; grab();
+          if (h.mine) { d.seriesId = h.mine.id; d.seriesName = h.mine.name; } else { d.seriesId = ""; d.seriesName = h.entry.series; }
+          d.issue = h.issue; render();
+          // not one of your series yet: made and linked to INDUCKS, as when you type a new series name
+          const nm = $("#f-seriesName"); if (!h.mine && nm && nm.onchange) { nm.value = h.entry.series; await nm.onchange({ target: nm }); }
+          setTimeout(() => $("#lookup") && !$("#lookup").disabled && $("#lookup").click(), 50); });
+      }, 250); });
+    }
     $("#f-series") && ($("#f-series").onchange = e => { grab(); d.seriesId = e.target.value; rememberSeries(d.seriesId); render(); });
     // book series: the same searchable picker; choosing a comic series turns the entry into a comic issue of it
     $("#f-bseries-btn") && ($("#f-bseries-btn").onclick = async () => {
@@ -3270,7 +3298,7 @@ async function comicFromCode(d, code, ext) {
     bookMsg('<div class="banner">Looking up ISBN ' + isbn + '…</div>');
     const res = await Books.lookupIsbn(isbn), r = res.data;
     d.isbn = isbn;
-    if (!r) { render(); bookMsg(`<div class="banner warn">${res.offline ? "Looking up the ISBN needs an internet connection." : "The library databases don't know ISBN " + isbn + "."} Pick the series and number yourself; the ISBN is saved with the comic.${!res.offline && Books.isItalian(isbn) ? ` Italian books are often only in the Italian national library: <a href="${esc(Books.sbnUrl(isbn))}" target="_blank" rel="noopener">Look up in SBN</a>.` : ""}</div>`); return; }
+    if (!r) { render(); bookMsg(`<div class="banner warn">${res.offline ? "Looking up the ISBN needs an internet connection." : "The library databases don't know ISBN " + isbn + "."} Type a few words of the title into <strong>Find by title</strong> below, or pick the series and number yourself; the ISBN is saved with the comic.${!res.offline && Books.isItalian(isbn) ? ` Italian books are often only in the Italian national library: <a href="${esc(Books.sbnUrl(isbn))}" target="_blank" rel="noopener">Look up in SBN</a>.` : ""}</div>`); return; }
     const se = seriesFromName(r.rawSeries || r.series), vol = String(r.rawVolume || r.volume || "").replace(/^\D+/, "").replace(/\D.*$/, "");
     if (se && vol) {
       d.seriesId = se.id; d.seriesName = se.name; d.issue = vol; render();

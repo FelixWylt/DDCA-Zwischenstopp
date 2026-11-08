@@ -44,6 +44,10 @@ jobs:
         if: steps.dl.outcome == 'success'
         run: python3 scripts/build_catalogue.py data/isv catalogue
 
+      - name: Build title index
+        if: steps.dl.outcome == 'success'
+        run: python3 scripts/build_titles.py catalogue
+
       - name: Note a failed download
         if: steps.dl.outcome != 'success'
         run: |
