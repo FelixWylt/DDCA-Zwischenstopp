@@ -3270,7 +3270,7 @@ async function comicFromCode(d, code, ext) {
     bookMsg('<div class="banner">Looking up ISBN ' + isbn + '…</div>');
     const res = await Books.lookupIsbn(isbn), r = res.data;
     d.isbn = isbn;
-    if (!r) { render(); bookMsg(`<div class="banner warn">${res.offline ? "Looking up the ISBN needs an internet connection." : "The library databases don't know ISBN " + isbn + "."} Pick the series and number yourself; the ISBN is saved with the comic.</div>`); return; }
+    if (!r) { render(); bookMsg(`<div class="banner warn">${res.offline ? "Looking up the ISBN needs an internet connection." : "The library databases don't know ISBN " + isbn + "."} Pick the series and number yourself; the ISBN is saved with the comic.${!res.offline && Books.isItalian(isbn) ? ` Italian books are often only in the Italian national library: <a href="${esc(Books.sbnUrl(isbn))}" target="_blank" rel="noopener">Look up in SBN</a>.` : ""}</div>`); return; }
     const se = seriesFromName(r.rawSeries || r.series), vol = String(r.rawVolume || r.volume || "").replace(/^\D+/, "").replace(/\D.*$/, "");
     if (se && vol) {
       d.seriesId = se.id; d.seriesName = se.name; d.issue = vol; render();
