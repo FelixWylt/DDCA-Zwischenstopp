@@ -46,6 +46,7 @@
 | 2026-11-08 | Celoni/Mottura pictures bought for 15 € each → signed prints, value corrected (answer only) | under 1 min | 0–1 min (01:37 → 01:37:57) |
 | 2026-11-08 | Find "La vera storia di Novecento" in the catalogue (answer only) | under 1 min | 0–0 min (01:43 → 01:43:23) |
 | 2026-11-08 | Per-currency tables looked like a wrong conversion: "Priced in" label, explanation, ≈ CHF column (both tables) | 1–2 min | 0–1 min (01:54 → 01:54:42) |
+| 2026-11-08 | "Comics & comic books" / "Books" value tables: same fix already in da-v156; value per series converts (answer only) | 1–2 min | 0–0 min (01:56 → 01:56:25) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
