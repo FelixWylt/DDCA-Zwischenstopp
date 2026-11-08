@@ -40,6 +40,7 @@
 | 2026-11-08 | Fill from INDUCKS kept the old cover (29 → 29B): replace INDUCKS covers, show new picture over old stored copy | 1–3 min | 0–1 min (00:41 → 00:41:56) |
 | 2026-11-08 | "34 and 34B overlap": letter numbers with different INDUCKS titles count as different comics | 1–4 min | 0–1 min (00:57 → 00:58:06) |
 | 2026-11-08 | Value of a hand-drawn Celoni picture from Lucca 2025 (3 searches; answer only) | 2–4 min | 0–1 min (01:14 → 01:14:35) |
+| 2026-11-08 | Celoni picture: narrow the value (answer only, no search) | under 1 min | 0–1 min (01:20 → 01:20:31) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
