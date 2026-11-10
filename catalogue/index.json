@@ -1,5 +1,5 @@
 {
- "built": "2026-11-10T18:20",
+ "built": "2026-11-10T18:40",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -600,6 +600,14 @@
    "title": "Kalle Ankas Klassiker",
    "file": "inducks-se-KAKLS.json",
    "issues": 6
+  },
+  "letteratura disney panini": {
+   "series": "Letteratura Disney Panini",
+   "aliases": [],
+   "code": "it/LETP",
+   "title": "Letteratura Disney Panini",
+   "file": "inducks-it-LETP.json",
+   "issues": 20
   }
  }
 }

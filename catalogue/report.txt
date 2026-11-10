@@ -75,10 +75,11 @@ PUBLICATIONS
   ✓ Topolino Extra  →  it/TXTR  'Topolino Extra'  (by code)
   ✓ Topolibri  →  it/TLB  'Topolibri'  (by code)
   ✓ Kalle Ankas Klassiker  →  se/KAKLS  'Kalle Ankas Klassiker'  (by code)
+  ✓ Letteratura Disney Panini  →  it/LETP  'Letteratura Disney Panini'  (by code)
 
-issues in chosen publications: 21,672
-entries: 235,271, story versions: 120,026
-cover scans: 21,056 of 21,672 issues
+issues in chosen publications: 21,692
+entries: 235,561, story versions: 120,197
+cover scans: 21,076 of 21,692 issues
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -153,6 +154,7 @@ FILES
   inducks-it-TXTR.json: 37 issues, 25 KB  e.g. 15I = it/TXTR 15I 2023-05-25 (3 stories)
   inducks-it-TLB.json: 8 issues, 7 KB  e.g. 3653 = it/TLB3653 2025-11-26 (5 stories)
   inducks-se-KAKLS.json: 6 issues, 5 KB  e.g. 4 = se/KAKLS  4 2019 (6 stories)
+  inducks-it-LETP.json: 20 issues, 14 KB  e.g. 12 = it/LETP 12 2025-06-25 (6 stories)
 directory.json: 2,776 publications (at, ch, de, it, se, uk, us), 199 KB
 
 files in the ISV export: createtables.sql
