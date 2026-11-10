@@ -569,6 +569,12 @@
       "country": "it",
       "code": "it/TLB",
       "title": "Topolibri"
+    },
+    {
+      "series": "Kalle Ankas Klassiker",
+      "country": "se",
+      "code": "se/KAKLS",
+      "title": "Kalle Ankas Klassiker"
     }
   ]
 }
