@@ -575,6 +575,12 @@
       "country": "se",
       "code": "se/KAKLS",
       "title": "Kalle Ankas Klassiker"
+    },
+    {
+      "series": "Letteratura Disney Panini",
+      "country": "it",
+      "code": "it/LETP",
+      "title": "Letteratura Disney Panini"
     }
   ]
 }
