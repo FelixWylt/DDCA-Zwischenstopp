@@ -69,6 +69,7 @@
 | 2026-11-15 | Herman Hedning from the user's Seriekatalogen CSV: year/nr converted to the user's running numbers (checked with #86, #95), 6 ranges + latest 204 waiting | 1–1.5 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (18:39 → 18:41:47, incl. 1 run of ~2 min) |
 | 2026-11-15 | Herman Hedning by year: batch switches numbering, renumbers the user's copies (86 -> 2009/06), yearly prices + issue list + per year; test checks it | 2–3 min (gut 6–9 ÷ 3) + 1 run | 2–3 min (18:48 → 18:51:21, incl. 1 run of ~2 min) |
 | 2026-11-15 | Stats › no prices › "Single books" opened Series › Book series: now Collection › Comic books › Single books (comic books without a series); test | under 1 min (gut 1–2 ÷ 2) + 1 run | 4–5 min (18:56 → 19:00:41, incl. 2 runs of ~2 min: the first test used the wrong kind of book) |
+| 2026-11-15 | Herman Hedning Add all added nothing: list loaded fresh but the phone still ran older code (no numbering switch, yearly lines unread). Fix: minApp + APP_BUILD, list offered again; test | 1–2 min (gut 3–5 ÷ 3) + 1 run | 2–3 min (19:02 → 19:05:08, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
