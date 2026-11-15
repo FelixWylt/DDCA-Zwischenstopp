@@ -2,6 +2,17 @@
 // One of several plain scripts sharing their names (see index.html for the order).
 "use strict";
 // ---- Collection: groups > series > issues ----
+// "LTB – Lustiges Taschenbuch: 12, 45 (2 spare), 101–103": your duplicates for trade, by series
+function tradeText() {
+  const list = sortComics(S.comics.filter(c => c.status !== "wanted" && !isNovel(c) && (c.forTrade || (c.copies || 1) > 1)));
+  const groups = new Map(); list.forEach(c => { const k = seriesKeyOf(c); (groups.get(k) || groups.set(k, []).get(k)).push(c); });
+  const lines = [];
+  groups.forEach((cs, k) => {
+    const se = seriesById(k), name = se ? (se.short ? se.short + " – " + se.name : se.name) : seriesTitle(k);
+    lines.push(name + ": " + cs.map(c => { const lab = showLabel(c.issueLabel || c.issue || "") || c.title || "?", spare = (c.copies || 1) - (c.forTrade ? 0 : 1); return lab + (spare > 1 ? " (" + spare + " spare)" : "") + (c.grade ? " Z" + c.grade : ""); }).join(", "));
+  });
+  return "My duplicates for trade (" + list.length + ")\n" + lines.join("\n");
+}
 function statusMatch(c) {
   const f = S.filters.status;
   if (f === "owned") return c.status !== "wanted";
@@ -387,7 +398,12 @@ function drawResults() {
       `<p class="muted small" style="margin:0 0 8px">${esc([countText(list), valueTag(list)].filter(Boolean).join(" · "))}</p>` +
       (list.length ? entriesHtml(rows, true) : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this series fits “Show”. Change it above.</p></div>') + more(list.length);
   }
+  if (S.filters.status === "trade" && !books) html = `<div class="row" style="gap:8px;margin:0 0 8px"><button type="button" id="tradecopy">Copy trade list</button><span class="small muted">for swapping: series and numbers, spare copies marked</span></div><textarea id="tradebox" class="mono" rows="5" readonly hidden></textarea>` + html;
   box.innerHTML = html;
+  $("#tradecopy") && ($("#tradecopy").onclick = async () => {
+    const txt = tradeText(), tb = $("#tradebox");
+    try { await navigator.clipboard.writeText(txt); toast("Trade list copied"); } catch (e) { tb.value = txt; tb.hidden = false; tb.select(); toast("Press and hold the text, then Copy."); }
+  });
   box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
   const ab = box.querySelector(".serabout"); if (ab) ab.ontoggle = () => { S.aboutOpen = ab.open; };
   box.querySelectorAll(".item, .tile").forEach(b => b.onclick = () => {

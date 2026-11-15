@@ -78,6 +78,10 @@ ${isBook ? `
         <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d)).map(c => c.publisher).concat(isNovel(d) ? [] : ["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"], S.comics.map(c => c.publisher)).filter(Boolean))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
+        ${!editing && !d.issue ? (q => q ? `<div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted">Next:</span>${q}</div>` : "")((S.recentSeries || []).map(seriesById).filter(s => s && s.numbering !== "year" && !isSingleSeries(s)).slice(0, 3).map(s => {
+          const n = Math.max(0, ...S.comics.filter(c => c.seriesId === s.id && c.status !== "wanted" && Number.isInteger(c.issueNum)).map(c => c.issueNum));
+          return n ? `<button type="button" class="fchip" data-nextser="${esc(s.id)}" data-nextno="${n + 1}">${esc((s.short || s.name) + " " + (n + 1))}</button>` : "";
+        }).join("")) : ""}
         <div class="lookup">
           <label><span class="l">Series</span><button type="button" class="pickbtn" id="f-series-btn"><span>${esc(se ? seriesLabel(se) : "New series…")}</span><span class="chev" aria-hidden="true">▾</span></button><select id="f-series" class="visually-hidden" tabindex="-1" aria-hidden="true">${sopts}</select></label>
           <label><span class="l">Issue</span><input id="f-issue" placeholder="${esc(hint)}" value="${esc(d.issue)}"></label>
@@ -176,6 +180,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       catch (e) { bookMsg('<div class="banner warn">' + (e && (e.name === "NotAllowedError" || e.name === "SecurityError") ? "The camera isn't allowed for this app. Allow it in the browser's site settings, then try again." : "The camera couldn't start. Type the number instead.") + '</div>'); }
     });
     $("#booksearch") && ($("#booksearch").onclick = () => searchBooks(d, grab));
+    document.querySelectorAll("[data-nextser]").forEach(b => b.onclick = () => { grab(); const s = seriesById(b.dataset.nextser); d.seriesId = s.id; d.seriesName = s.name; d.issue = b.dataset.nextno; render(); if (catEntry(s)) setTimeout(() => $("#lookup") && $("#lookup").click(), 50); });
     // "Look up in SBN" shows up while the ISBN is an Italian one (978-88 or 979-12)
     if ($("#isbnsbn")) { const sb = $("#isbnsbn"), inp = $("#f-isbn"); inp.addEventListener("input", () => { sb.hidden = !Books.isItalian(inp.value); }); sb.onclick = () => { const u = Books.sbnUrl(inp.value); if (u) window.open(u, "_blank", "noopener"); }; }
     $("#f-isbn") && ($("#f-isbn").onkeydown = e => { if (e.key === "Enter") { e.preventDefault(); if (d.kind === "book") fillFromIsbn(d, grab); else e.target.blur(); } });

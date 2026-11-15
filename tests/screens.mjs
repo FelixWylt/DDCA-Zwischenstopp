@@ -16,11 +16,11 @@ const series = [
   { id: "mhdw", name: "Micky Holmes & Donald Watson", code: "de/MHDW", country: "de", publisher: "Disney", group: "Deutschland – Alben & Sammlerbände", numbering: "running" },
   { id: "kap", name: "Kalle Ankas Pocket", short: "KAP", code: "se/KAP", country: "se", publisher: "Disney", group: "Sverige – Pocket", numbering: "running" }
 ];
-const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
+const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), issueNum: parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
 const comics = [
   c("a1", "ltb", 1, { title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, source: "Ricardo", purchaseDate: "2025-03-01" }),
   c("a2", "ltb", 1, { title: "Der Kolumbusfalter", grade: "3", pricePaid: 12, source: "Flohmarkt", purchaseDate: "2025-06-01", notes: "Second copy" }),
-  c("a3", "ltb", 2, { title: "Hallo, hier Micky!" }),
+  c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2" }),
   c("a4", "tldle", "29B", { title: "PK Tube", issueSort: 29 }),
   c("a5", "tldle", 34, { title: "PK Timecrime DD" }),
   c("a6", "mhdw", 1, {}),
@@ -63,7 +63,8 @@ await shot("03-group-singles", () => { S.col = { p: "Disney", g: "Deutschland �
 await shot("04-wishlist", () => { S.gapTab = "wishlist"; S.wishKind = "comics"; S.wishOpen = { ltb: true }; nav("gaps"); });
 await shot("05-wishlist-books", () => { S.gapTab = "wishlist"; S.wishKind = "books"; nav("gaps"); });
 await shot("06-edit-comic", () => { S.editing = "a3"; S.draft = null; nav("add"); });
-await shot("07-new-comic", () => { S.editing = null; S.draft = null; nav("add"); });
+await shot("07-new-comic", () => { S.recentSeries = ["ltb", "tldle", "kap"]; S.editing = null; S.draft = null; nav("add"); });
+await shot("12-trade", () => { S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
 await shot("08-stats", () => { nav("stats"); });
 await shot("09-series", () => { nav("series"); });
 // the copy picker: tap the LTB 1 row with two copies

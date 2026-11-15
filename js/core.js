@@ -881,11 +881,20 @@ function backupNag() {
   const days = daysSince(S.lastBackup), ch = changedSinceBackup();
   if (days <= 14 && ch < 25) return "";
   const why = days === Infinity ? "You haven't made a backup yet." : `Last backup ${days === 0 ? "today" : days === 1 ? "yesterday" : days + " days ago"}` + (ch ? `, ${ch} ${ch === 1 ? "entry" : "entries"} changed since.` : ".");
-  return `<div class="banner warn nag"><span>${why}</span><div class="row" style="gap:6px"><button class="primary" id="nagcopy" type="button">Copy backup</button><button id="naggo" type="button">Backup page</button><button class="ghost" id="naglater" type="button">Later</button></div></div>`;
+  return `<div class="banner warn nag"><span>${why}</span><div class="row" style="gap:6px">${navigator.share && navigator.canShare ? '<button class="primary" id="nagshare" type="button">Send backup…</button><button id="nagcopy" type="button">Copy backup</button>' : '<button class="primary" id="nagcopy" type="button">Copy backup</button>'}<button id="naggo" type="button">Backup page</button><button class="ghost" id="naglater" type="button">Later</button></div></div>`;
 }
 function bindBackupNag() {
   $("#naglater") && ($("#naglater").onclick = () => { S.nagLater = true; renderKeep(); });
   $("#naggo") && ($("#naggo").onclick = () => nav("backup"));
+  $("#nagshare") && ($("#nagshare").onclick = async () => {
+    const f = backupFile(true); let ok = false;
+    try { ok = navigator.canShare({ files: [f] }); } catch (e) {}
+    try {
+      if (ok) { await navigator.share({ files: [f] }); toast("Backup sent"); }
+      else { await saveToDevice(f); toast("Saved to Downloads: " + f.name); }
+      await markBackedUp(); renderKeep();
+    } catch (e) { if (!(e && e.name === "AbortError")) { toast("Sending didn't work. Use the Backup page."); nav("backup"); } }
+  });
   $("#nagcopy") && ($("#nagcopy").onclick = async () => {
     try {
       const txt = await backupText();
