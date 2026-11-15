@@ -1,0 +1,65 @@
+{
+ "about": "Price suggestions per INDUCKS series for Paste prices (value for condition Z1). Edited by Claude; see CLAUDE.md.",
+ "series": {
+  "it/TL": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Topolino libretto. From Bolaffi 2024 auction (No. 1 6000 € top copy), articles (fumettirari), eBay/Catawiki 2025–26.",
+   "text": "1: 3000 €\n2: 800 €\n3-7: 250 €\n8: 600 €\n9-20: 150 €\n21-45: 80 €\n46-47: 100 €\n48-74: 60 €\n75-99: 40 €\n100: 120 €\n101-112: 30 €\n113: 60 €\n114-299: 20 €\n300-499: 12 €\n500: 80 €\n501-705: 7 €\n706-707: 25 €\n708-999: 6 €\n1000: 15 €\n1001-1700: 3 €\n1701-2999: 2 €\n3000: 10 €\n3001-3700: 2.5 €"
+  },
+  "it/TG": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Topolino giornale: auctions (No. 1 16,000 €), Little Nemo, Disneyana.it, eBay. Old issues are the least certain.",
+   "text": "1: 12000 €\n2-10: 2500 €\n11-136: 100 €\n137-250: 60 €\n251-329: 30 €\n330-563: 12 €\n564-738: 15 €"
+  },
+  "it/TLDLE": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Estimate from cover prices (no sales found).",
+   "text": "1-10: 18 €\n11-58: 14 €"
+  },
+  "it/SAP": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "eBay/Wallapop asking prices for 1985 issues (3–4.90 €); No. 1 is an estimate.",
+   "text": "1: 6 €\n2-66: 4 €"
+  },
+  "it/PM": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Estimate; one near-new issue sold for 1.50 €.",
+   "text": "67-200: 2 €\n201-556: 1.5 €"
+  },
+  "it/DDCO": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Estimate from cover prices (no sales found).",
+   "text": "1-30: 4 €\n31-38: 7 €"
+  },
+  "it/PBST": {
+   "cur": "EUR",
+   "date": "2026-11-07",
+   "note": "Estimate from cover prices (no sales found).",
+   "text": "1-56: 6 €\n57-71: 9 €"
+  },
+  "it/DSBP": {
+   "cur": "EUR",
+   "date": "2026-11-08",
+   "note": "Estimate from cover prices; 16V (Limited Deluxe) about 80 € on its own.",
+   "text": "1-105: 15 €"
+  },
+  "it/LETP": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Estimate from cover prices 21–27 € (no sales found).",
+   "text": "1-21: 18 €"
+  },
+  "it/CALE": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Used copy at Libraccio at about 55 % of cover price.",
+   "text": "1-11: 5.5 €\n12-19: 6.5 €\n20-25: 8 €"
+  }
+ }
+}

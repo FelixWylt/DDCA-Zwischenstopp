@@ -240,6 +240,7 @@ function valueRulesHtml(key) {
     ${(eds => eds.length ? `<label class="small"><span class="l">Copies without an edition count as</span><select data-vdef="${esc(key)}"><option value="">Automatic</option>${eds.map(e => `<option${editionKey(e) === editionKey(defaultEditionOf(key)) ? " selected" : ""}>${esc(e)}</option>`).join("")}</select></label><datalist id="edlist">${eds.map(e => `<option>${esc(e)}</option>`).join("")}</datalist>` : "")(seriesEditions(key))}
     ${full ? "" : `<button type="button" class="ghost" data-vall="${esc(key)}">Show all ${all.length} ranges</button>`}
     <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div>
+    ${(sg => sg ? `<div class="banner small" style="margin:0"><div><strong>Suggested prices</strong> (${esc(niceDate(sg.date))}, ${esc(sg.cur)}): ${esc(sg.note)}<br><span class="mono">${esc(sg.text.split("\n").slice(0, 4).join(", "))}${sg.text.split("\n").length > 4 ? " …" : ""}</span></div><div class="row" style="gap:8px;margin-top:6px"><button type="button" data-psugg="${esc(key)}">Use these prices</button></div></div>` : "")(se && S.priceSugg && S.priceSugg[(catEntry(se) || {}).code || se.code])}
     <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
       <div class="stack" style="margin-top:8px">
         <p class="small muted" style="margin:0">Paste a list copied from Comicguide.de (Zustand 1) or Seriekatalogen.se (the VF column is taken as Z1). Or type ranges, separated by commas: <span class="mono">${yearly ? "1951 800, 1952/1 450, 1952/4-1953/1 150" : "1-25 8, 26-80 5, 81- 3"}</span></p>
@@ -370,6 +371,13 @@ function boundText(key, v, isTo) {
   return String(v);
 }
 function bindPasteBox(root) {
+  // a suggested list goes into the paste box and is read like a pasted one: you still see it and confirm
+  (root || document).querySelectorAll("[data-psugg]").forEach(b => b.onclick = () => {
+    const key = b.dataset.psugg, se = seriesById(key), sg = se && S.priceSugg && S.priceSugg[(catEntry(se) || {}).code || se.code];
+    const d = [...document.querySelectorAll("details.pastebox")].find(x => x.dataset.pk === key); if (!sg || !d) return;
+    d.open = true; d.querySelector("[data-ptext]").value = sg.text; d.querySelector("[data-pcur]").value = sg.cur;
+    d.querySelector("[data-pread]").click(); d.scrollIntoView({ block: "start" });
+  });
   (root || document).querySelectorAll("details.pastebox").forEach(d => {
     const key = d.dataset.pk, out = d.querySelector("[data-pout]");
     const read = () => {
@@ -1087,6 +1095,8 @@ async function saveSeries() {
 }
 async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/index.json"); if (r.ok) { S.catalogue = await r.json(); render(); } } catch (e) { S.catalogue = null; }
+  // price suggestions per INDUCKS series (catalogue/prices.json, kept in the app's repository)
+  try { const r = await fetch("catalogue/prices.json"); if (r.ok) S.priceSugg = (await r.json()).series || {}; } catch (e) {}
 }
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
 function catEntry(se) {
@@ -4699,5 +4709,5 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   });
 }
 // only for the screenshot check on GitHub (address ending in ?test): lets it load sample comics and open screens
-if (/[?&]test\b/.test(location.search)) window.__dda = { S, nav, render, saveMany, saveSeries };
+if (/[?&]test\b/.test(location.search)) window.__dda = { S, nav, render, saveMany, saveSeries, parsePrices };
 })();
