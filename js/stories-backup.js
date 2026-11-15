@@ -205,7 +205,7 @@ function daysSince(d) { return d ? Math.floor((Date.now() - new Date(d)) / 864e5
 function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = msg; n.hidden = false; } else toast(msg); }
 // everything a backup holds: comics, series and every setting (cover pictures and exchange-rate downloads come back by themselves)
 function backupData() {
-  return { app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, bookSeriesExtra: S.bookSeriesExtra,
+  return { app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, valueHistory: S.valueHistory, bookSeriesExtra: S.bookSeriesExtra,
     groupKeep: S.groupKeep, barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, rates: S.rates };
 }
 // entries changed or added since the last backup
@@ -270,6 +270,32 @@ function csvFile() {
   const csv = Papa.unparse({ fields: cols, data: rows });
   return new File(["﻿" + csv], "dagobert-archiv-table-" + new Date().toISOString().slice(0, 10) + ".csv", { type: "text/csv" });
 }
+// ---- Insurance list: everything you own with condition and value in CHF, as a table or to print / save as PDF ----
+function insuranceRows() {
+  const gl = g => (GRADES.find(x => x[0] === g) || [, ""])[1];
+  return sortComics(S.comics.filter(c => c.status !== "wanted")).map(c => {
+    const se = seriesById(c.seriesId), v = valueOf(c), n = c.copies || 1, each = v ? toCHF(v.amount, v.cur) : null;
+    return { what: c.kind === "book" && isNovel(c) ? [c.author, c.title].filter(Boolean).join(": ") : comicTag(c) + (c.title ? " – " + c.title : ""), series: se ? se.name : c.seriesName || "",
+      grade: gl(c.grade) || "", copies: n, each, total: each == null ? null : each * n, paid: typeof c.pricePaid === "number" ? fmt2(c.pricePaid * n) + " " + (c.currency || "CHF") : "",
+      bought: [c.purchaseDate, c.source].filter(Boolean).join(", "), extras: (c.extras || []).map(x => x.what).filter(Boolean).join(", "), how: v ? { checked: "checked", table: "price table", estimate: "estimate" }[v.how] || "" : "" };
+  });
+}
+function insuranceCsv() {
+  const rows = insuranceRows(), d = new Date().toISOString().slice(0, 10);
+  const csv = Papa.unparse({ fields: ["Item", "Series", "Condition", "Copies", "Value each (CHF)", "Value (CHF)", "Value from", "Price paid", "Bought (date, from)", "Extras"],
+    data: rows.map(r => [r.what, r.series, r.grade, r.copies, r.each == null ? "" : r.each.toFixed(2), r.total == null ? "" : r.total.toFixed(2), r.how, r.paid, r.bought, r.extras]) });
+  return new File(["\ufeff" + csv], "insurance-list-" + d + ".csv", { type: "text/csv" });
+}
+function printInsurance() {
+  const rows = insuranceRows(), sum = rows.reduce((a, r) => a + (r.total || 0), 0), none = rows.filter(r => r.total == null).length;
+  let box = $("#printbox"); if (!box) { box = document.createElement("div"); box.id = "printbox"; document.body.appendChild(box); }
+  box.innerHTML = `<h1>Collection – insurance list</h1><p>${esc(stampDate(new Date().toISOString()))} · ${rows.length} entries · total value CHF ${fmt2(sum)}${none ? " (" + none + " without a value)" : ""}</p>
+    <table><thead><tr><th>Item</th><th>Condition</th><th>Copies</th><th>Value CHF</th><th>Paid</th><th>Bought</th></tr></thead><tbody>${rows.map(r => `<tr><td>${esc(r.what)}${r.extras ? "<br><small>+ " + esc(r.extras) + "</small>" : ""}</td><td>${esc(r.grade)}</td><td>${r.copies}</td><td>${r.total == null ? "–" : fmt2(r.total)}</td><td>${esc(r.paid)}</td><td>${esc(r.bought)}</td></tr>`).join("")}</tbody></table>`;
+  document.body.classList.add("printing");
+  const done = () => { document.body.classList.remove("printing"); window.removeEventListener("afterprint", done); };
+  window.addEventListener("afterprint", done); setTimeout(done, 60000);
+  window.print();
+}
 VIEWS.backup = {
   html() {
     const n = S.comics.length, days = daysSince(S.lastBackup);
@@ -291,6 +317,7 @@ VIEWS.backup = {
           ${canShare ? `<button class="primary" id="bshare"${n ? "" : " disabled"}>Send backup…</button>` : ""}
           <button ${canShare ? "" : 'class="primary" '}id="bsave"${n ? "" : " disabled"}>Save backup to Downloads</button>
           <button id="bcsv"${n ? "" : " disabled"}>Save table for Excel (.csv)</button>
+          <button id="binsc"${n ? "" : " disabled"}>Insurance list (.csv)</button><button id="binsp"${n ? "" : " disabled"}>Insurance list: print / PDF</button>
         </div>
         <div class="banner warn" id="bnote" hidden></div>
         <details class="card" style="padding:12px"><summary><strong>Downloads don't work in my browser</strong></summary>
@@ -332,6 +359,8 @@ VIEWS.backup = {
     });
     $("#bsave") && ($("#bsave").onclick = async () => { const f = backupFile(false); await saveToDevice(f); await markBackedUp(); render(); showBackupNote("Saved to Downloads as " + f.name + ". To send it: open the Files app › Downloads, press and hold the file, then tap Share."); });
     $("#bcsv") && ($("#bcsv").onclick = async () => { await saveToDevice(csvFile()); toast("Table saved to Downloads"); });
+    $("#binsc") && ($("#binsc").onclick = async () => { await saveToDevice(insuranceCsv()); toast("Insurance list saved to Downloads"); });
+    $("#binsp") && ($("#binsp").onclick = () => printInsurance());
     $("#bcopy") && ($("#bcopy").onclick = async () => {
       const btn = $("#bcopy"); btn.disabled = true;
       try {
@@ -372,6 +401,7 @@ VIEWS.backup = {
             if (Array.isArray(b.bookSeriesExtra)) { const have = new Set((S.bookSeriesExtra || []).map(x => x.name)); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat(b.bookSeriesExtra.filter(x => x && x.name && !have.has(x.name))); await setConfig("bookSeriesExtra", S.bookSeriesExtra); }
             if (Array.isArray(b.valueRules)) { const ids = new Set((S.valueRules || []).map(r => r.id)); S.valueRules = (S.valueRules || []).concat(b.valueRules.filter(r => r && !ids.has(r.id))); await setConfig("valueRules", S.valueRules); }
             if (b.gradeFactors && typeof b.gradeFactors === "object") { S.gradeFactors = Object.assign({}, b.gradeFactors, S.gradeFactors); await setConfig("gradeFactors", S.gradeFactors); }
+            if (b.valueHistory && typeof b.valueHistory === "object") { S.valueHistory = Object.assign({}, b.valueHistory, S.valueHistory); await setConfig("valueHistory", S.valueHistory); }
             if (b.bookSizes && typeof b.bookSizes === "object") { S.bookSizes = Object.assign({}, S.bookSizes, b.bookSizes); await setConfig("bookSizes", S.bookSizes); }
             if (b.bookSeriesInfo && typeof b.bookSeriesInfo === "object") { S.bookMeta = Object.assign({}, S.bookMeta, b.bookSeriesInfo); await setConfig("bookSeriesInfo", S.bookMeta); }
             if (Array.isArray(b.groupKeep)) { S.groupKeep = [...new Set((S.groupKeep || []).concat(b.groupKeep))]; await setConfig("groupKeep", S.groupKeep); }

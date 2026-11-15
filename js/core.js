@@ -718,6 +718,7 @@ async function boot() {
     S.bookSeriesExtra = await getConfig("bookSeriesExtra") || [];
     S.rates = await getConfig("rates") || null;
     S.gradeFactors = await getConfig("gradeFactors") || {};
+    S.valueHistory = await getConfig("valueHistory") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)

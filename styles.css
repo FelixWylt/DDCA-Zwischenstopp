@@ -616,3 +616,18 @@ body.kb .savebar { position: static; border-top: 0; }
 .banner.hadst ul { margin: 6px 0 0; padding-left: 18px; }
 .banner.hadst li { margin: 2px 0; }
 .personcard summary { cursor: pointer; }
+.vhist { width: 100%; height: auto; font-size: 10px; fill: var(--muted); }
+.vhist .grid { stroke: var(--line, #e3e6ee); stroke-width: 1; }
+.vhist path { fill: none; stroke-width: 2.5; stroke-linejoin: round; }
+.vhist path.v { stroke: var(--accent); } .vhist path.p { stroke: #c08a2c; stroke-dasharray: 5 4; }
+.vhist circle.v { fill: var(--accent); } .vhist circle.p { fill: #c08a2c; }
+.key { display: inline-block; width: 14px; height: 3px; vertical-align: middle; margin-right: 4px; background: var(--accent); }
+.key.p { background: #c08a2c; }
+#printbox { display: none; }
+@media print {
+  body.printing > *:not(#printbox) { display: none !important; }
+  body.printing #printbox { display: block; color: #000; font: 10pt/1.35 system-ui, sans-serif; }
+  #printbox table { width: 100%; border-collapse: collapse; }
+  #printbox th, #printbox td { border-bottom: 1px solid #bbb; padding: 3px 4px; text-align: left; vertical-align: top; }
+  #printbox h1 { font-size: 15pt; margin: 0 0 4px; }
+}

@@ -220,7 +220,7 @@ VIEWS.stats = {
     const tabs = `<h2 style="margin:0">Stats</h2><div class="subtabs four" role="tablist" aria-label="Show"><button role="tab" type="button" data-sttab="overview" aria-selected="${tab === "overview"}">Overview</button><button role="tab" type="button" data-sttab="comics" aria-selected="${tab === "comics"}">Comics</button><button role="tab" type="button" data-sttab="books" aria-selected="${tab === "books"}">Books</button><button role="tab" type="button" data-sttab="value" aria-selected="${tab === "value"}">Value</button></div>`;
     if (tab === "books") return tabs + (novels.length || novelsWanted.length ? bookStats(novels, novelsWanted).replace('<h2 class="sectionhead">Books</h2>', "") : '<div class="empty"><h3>No books yet</h3><p>Books you add show up here.</p></div>');
     if (tab === "overview") return tabs + ovHero + ovMonth + ovTime + ovSource + ovMissing;
-    if (tab === "value") return tabs + `${money}${serCard}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
+    if (tab === "value") return tabs + `${money}${historyCard(mAll)}${serCard}${valueCard(own, "Comics & comic books")}${valueCard(novels, "Books")}<div class="card stack"><h3>Settings for values</h3>${valueSettingsHtml()}</div>`;
     return tabs + `
       <div class="hero card">
         <div class="hero-main"><div class="v">${nf(own.length)}</div><div class="k">comics you own</div>
@@ -273,6 +273,25 @@ VIEWS.stats = {
     bindPicks(document.getElementById("app"));
   }
 };
+// ---- Value over time: one point per month (the month's latest value), kept on this phone in "valueHistory" ----
+function historyCard(m) {
+  const ym = todayIso().slice(0, 7), h = S.valueHistory || {};
+  if (m.valued) { const cur = { v: Math.round(m.value), p: Math.round(m.paid), n: m.n };
+    if (!h[ym] || h[ym].v !== cur.v || h[ym].p !== cur.p || h[ym].n !== cur.n) { S.valueHistory = Object.assign({}, h, { [ym]: cur }); setConfig("valueHistory", S.valueHistory).catch(() => {}); } }
+  const ks = Object.keys(S.valueHistory || {}).sort(); if (!ks.length) return "";
+  const pts = ks.map(k => S.valueHistory[k]), W = 360, H = 150, L = 46, B = 22, max = Math.max(1, ...pts.map(p => Math.max(p.v, p.p || 0))) * 1.1;
+  const x = i => ks.length === 1 ? L + (W - L) / 2 : L + i * (W - L - 8) / (ks.length - 1), y = v => H - B - v / max * (H - B - 8);
+  const line = key => pts.map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p[key] || 0).toFixed(1)).join(" ");
+  const ticks = [0, max / 2 / 1.1, max / 1.1].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v).toLocaleString("de-CH")}</text><line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join("");
+  const lab = k => { const [yy, mm] = k.split("-"); return mm + "/" + yy.slice(2); }, step = Math.ceil(ks.length / 6);
+  const xl = ks.map((k, i) => i % step && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${lab(k)}</text>`).join("");
+  const dots = key => pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[key] || 0)}" r="3" class="${key}"><title>${lab(ks[i])}: CHF ${(p[key] || 0).toLocaleString("de-CH")}</title></circle>`).join("");
+  const first = pts[0], last = pts[pts.length - 1], d = last.v - first.v;
+  return `<div class="card stack"><div class="cardhead"><h3>Value over time</h3><span class="muted small">CHF, per month</span></div>
+    <svg class="vhist" viewBox="0 0 ${W} ${H}" role="img" aria-label="Value per month">${ticks}${xl}<path d="${line("p")}" class="p"/><path d="${line("v")}" class="v"/>${dots("p")}${dots("v")}</svg>
+    <div class="row small" style="gap:14px"><span><span class="key v"></span> Value</span><span><span class="key p"></span> Paid</span>${ks.length > 1 ? `<span class="muted">Since ${lab(ks[0])}: ${d >= 0 ? "+" : "−"}CHF ${Math.abs(d).toLocaleString("de-CH")}</span>` : ""}</div>
+    <p class="small muted" style="margin:0">${ks.length === 1 ? "The chart starts this month. Each month you open Stats, that month's value is kept, so the line grows by itself." : "Each month's last value when you opened Stats. It changes when you add comics, prices or price tables."}</p></div>`;
+}
 // ---- Reading: what was marked as read, by month (dates are kept since 31.10.2026) ----
 // ---- Favourites and ratings ----
 function ratedCard(list, word) {
