@@ -101,6 +101,7 @@
 | 2026-11-15 | What If novels numbered by publication (1 Loki, 2 Wanda, 3 Marc Spector; 1 search corrected my memory); new batch key titleNumbers numbers the user's unnumbered books by title (also Glastronen, Eye of the World = 1), da-v205; local (bundle) | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:41 → 21:42:25) |
 | 2026-11-15 | What If 4 Kitty Pryde, 5 Multiverse Was Doomed (user, Penguin site); Ragnarök from the user's Seriekatalogen CSV: 1-3: 100 kr, 4-: 120 kr (replaces the estimate) + titles numbered; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:46 → 21:46:57) |
 | 2026-11-15 | Omaggio Abbonati (it/ABB, 24 gift volumes 1960–1993): 4 ranges, estimates (1 search found no sales); local (bundle) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (21:49 → 21:50:01) |
+| 2026-11-15 | Which German Spider-Man is #8 (2019-06, 36 pages, 3.99 €)? Likely Panini's Spider-Man Magazin (2018–), not the 2019 relaunch (1 search, answer only) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:53 → 21:53:28) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
