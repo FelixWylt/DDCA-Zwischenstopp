@@ -246,7 +246,7 @@ function valueRulesHtml(key) {
   const full = (S.vrAll || {})[key] || all.length <= 12, rows = full ? all : all.slice(0, 10).concat(all.filter(r => pos(r) === Infinity));
   const cur = r => CURRENCIES.map(x => `<option${(r.cur || "CHF") === x ? " selected" : ""}>${x}</option>`).join("");
   const nm = collectorName(key), src = collectorLinks(key), se = seriesById(key), yearly = se && se.numbering === "year";
-  const im = yearly ? 'inputmode="text"' : 'inputmode="numeric"';
+  const im = 'inputmode="text" autocapitalize="off"';   // normal keyboard: ranges can need / or - (1952/4), letters (34B) or ½
   const defCur = (rows[0] && rows[0].cur) || (se && seriesLang(se) === "Swedish" ? "SEK" : se && seriesLang(se) === "German" ? "EUR" : "CHF");
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
     ${nm ? `<span class="small muted">Collector prices: ${src}. Copy the price list there and paste it below, or note a few prices and make ranges.</span>` : ""}

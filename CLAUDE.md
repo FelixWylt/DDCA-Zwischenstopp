@@ -49,6 +49,7 @@
 | 2026-11-15 | Stats: free items/lots out of Best/worst buys; "Show them" list of series without prices (Value per series + To do), each opens its price ranges | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 1–2 min (15:46 → 15:47:55, incl. 1 run) |
 | 2026-11-15 | Price ranges with only From or only To: read as "and all later" / "all up to", shown under each row and in the comic's value line, ranking (closed, then From-only latest start, To-only, all) | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 2–3 min (15:52 → 15:54:39, incl. 1 run) |
 | 2026-11-15 | Backup check: all 3 stores and 16 settings compared with the backup; fixes: own exchange rates win on restore, last series added, value history in the compare table | about 2 min (gut 3–5 ÷ 2) | 1–2 min (16:06 → 16:07:27) |
+| 2026-11-15 | Price range From/To: normal keyboard for every series (number keyboard for running-number series since 2026-11-07 hid the slash) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:16 → 16:16:26) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
