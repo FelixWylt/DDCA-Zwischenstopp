@@ -56,8 +56,13 @@ function storyIndex(status) {
       if (!st.title && !st.code) return;
       const code = storyCode(st.code);
       let key = code ? "c:" + code : "x:" + c.id + ":" + i;
-      // parts of a serial can share one code inside a comic: then each part is its own story
-      if (map.has(key) && map.get(key).items.includes(c)) key += "#" + norm(st.dTitle || st.title) + "#" + i;
+      // parts of a serial can share one code inside a comic: a part with its own title is its own story;
+      // the same title again (Oscar the Ostrich over two weeks of strips in one Micky Maus Zeitung) is the same story, listed once
+      if (map.has(key) && map.get(key).items.includes(c)) {
+        const t = norm(st.dTitle || st.title);
+        if (!t || map.get(key).titles.some(x => norm(x) === t)) return;
+        key += "#" + t + "#" + i;
+      }
       if (map.has(key) && map.get(key).items.includes(c)) return;
       let e = map.get(key);
       if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }

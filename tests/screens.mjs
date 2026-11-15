@@ -37,6 +37,7 @@ const comics = [
   { id: "b1", kind: "book", bookType: "book", seriesId: "_book", title: "Der Hobbit", author: "J. R. R. Tolkien", status: "wanted", stories: [] },
   { id: "b2", kind: "book", bookType: "book", seriesId: "_book", title: "Momo", author: "Michael Ende", status: "owned", stories: [] },
   { id: "b3", kind: "book", bookType: "", seriesId: "_book", title: "Ende gut, alles gut!", status: "owned", stories: [] },
+  c("mmz14", "mm", "1937/14", { stories: [{ title: "Oscar the Ostrich", code: "YM 029" }, { title: "Oscar the Ostrich", code: "YM 029" }, { title: "Tolle Phantasien", code: "ZS 37-05-30" }] }),
   { id: "b4", kind: "book", bookType: "book", seriesId: "_book", seriesName: "A Song of Ice and Fire", issue: "1", issueLabel: "1", issueNum: 1, issueSort: 1, title: "A Game of Thrones", author: "George R. R. Martin", status: "owned", stories: [] },
   c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86)
 ];
@@ -82,6 +83,11 @@ await shot("17-stats-spend", () => { S.statTab = "money"; S.statMoney = "spend";
 await shot("18-stats-stories", () => { S.statTab = "stories"; nav("stats"); });
 await shot("19-stats-reading", () => { S.statTab = "reading"; nav("stats"); });
 await shot("08-stats", () => { S.statTab = "overview"; nav("stats"); });
+// a story twice in one comic with the same title and code (two weeks of a daily strip) is one story
+if (want("stories")) try {
+  const n = await page.evaluate(() => window.__dda.storyIndex("owned").filter(e => e.code && /ym029/i.test(e.code.replace(/\s+/g, ""))).length);
+  if (n !== 1) errors.push("stories: Oscar the Ostrich listed " + n + " times");
+} catch (e) { errors.push("stories: " + e.message); }
 // "Show them" › Single books opens Collection › Books at the single books (not the top of Series › Book series)
 if (want("stats-singles")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.statTab = "overview"; S.statNoVal = true; nav("stats"); }); await page.waitForTimeout(700);
