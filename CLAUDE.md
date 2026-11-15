@@ -99,6 +99,7 @@
 | 2026-11-15 | 4 book series: Glastronen 50 kr, Marvel What if 6 €, Ragnarök 100 kr (1 search, Finn.no), Wheel of Time 6 € (estimates); 3 books need a volume number; local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (21:35 → 21:35:47) |
 | 2026-11-15 | Marvel What If novels: a series, but unnumbered standalone stories; Loki is the 2nd by publication (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:39 → 21:39:43) |
 | 2026-11-15 | What If novels numbered by publication (1 Loki, 2 Wanda, 3 Marc Spector; 1 search corrected my memory); new batch key titleNumbers numbers the user's unnumbered books by title (also Glastronen, Eye of the World = 1), da-v205; local (bundle) | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:41 → 21:42:25) |
+| 2026-11-15 | What If 4 Kitty Pryde, 5 Multiverse Was Doomed (user, Penguin site); Ragnarök from the user's Seriekatalogen CSV: 1-3: 100 kr, 4-: 120 kr (replaces the estimate) + titles numbered; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:46 → 21:46:57) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 

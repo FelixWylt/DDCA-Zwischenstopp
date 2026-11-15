@@ -3357,15 +3357,24 @@
    "titleNumbers": {
     "Loki Was Worthy": "1",
     "Wanda Maximoff": "2",
-    "Marc Spector": "3"
+    "Marc Spector": "3",
+    "Kitty Pryde": "4",
+    "Multiverse Was Doomed": "5"
    }
   },
   {
    "id": "book:Ragnarök",
    "sugg": "id:book:Ragnarök",
    "replace": false,
-   "minApp": 200,
-   "added": "2026-11-15"
+   "minApp": 205,
+   "added": "2026-11-15",
+   "titleNumbers": {
+    "Fenrisulven": "1",
+    "Fimbulvinter": "2",
+    "Åskguden": "3",
+    "Yggdrasil": "4",
+    "Loke": "5"
+   }
   },
   {
    "id": "book:The Wheel of Time",
