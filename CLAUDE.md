@@ -61,6 +61,7 @@
 | 2026-11-15 | 91:an from the user's Seriekatalogen CSV: 18 yearly ranges (VF) + Per year text, prices.json, price check now uses a yearly series for yearly lists | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 3–4 min (18:01 → 18:04:23, incl. 1 run of ~2 min) |
 | 2026-11-15 | Price batch for Restore: Restore reads price-only files (replace a series' ranges, set per year/years), restore-batch.json + build script, notes | 1.5–2 min (gut 4–6 ÷ 3) | 1–2 min (18:05 → 18:06:46) |
 | 2026-11-15 | Restore file vs. Series › Tools button for the price batch (answer only, from the code) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:10 → 18:10:35) |
+| 2026-11-15 | Series › Tools › Price lists waiting (Add all: replace, years/per year, remembers what's added), price lists fetched fresh by the service worker, test with tap | 2–3 min (gut 6–9 ÷ 3) + 1 run | 4–5 min (18:16 → 18:20:17, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -73,13 +74,14 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v192)
-- **Price batch for Restore (the user's wish, 2026-11-15):** new price lists are COLLECTED, not sent one by one.
-  For each new list: add it to catalogue/prices.json (as usual) AND an entry to catalogue/restore-batch.json
-  (id = the user's series id from their backup, replace = true if the series already has ranges in the app, patch =
-  series settings such as perYear/firstYear/lastYear/defaultEdition). When the user says they're done, run
-  `python3 scripts/build_restore_batch.py > prices-restore.json`, send that file (Backup › Restore › choose file),
-  then empty the "series" list in restore-batch.json. Restore reads valueRulesReplace and seriesPatch (da-v192).
+## Where we left off (2026-11-15, app da-v193)
+- **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
+  **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
+  AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
+  replace = true if the series already has ranges in the app, patch = perYear/firstYear/lastYear/defaultEdition).
+  The app fetches both files fresh (service worker: network first for these two) and remembers what it added
+  (config priceBatchDone, key = series + list date + text length), so a corrected list shows up again. Old entries
+  can stay; remove them once the user has added them. Fallback: scripts/build_restore_batch.py makes a Restore file.
   Waiting now: Swedish Asterix (replaces the imported ranges), 91:an (+ years 1956–2026 and per year).
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
@@ -118,7 +120,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
   (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
-  series-ltb-copies, group-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
+  series-ltb-copies, group-singles, series-tools (also taps Add all), wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
   price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
 - Price suggestions live in `catalogue/prices.json` (per INDUCKS code, or `id:<series id>` for non-Disney series, text as for Paste prices). Add new price research
