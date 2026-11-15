@@ -570,11 +570,12 @@ function parseIssue(series, raw) {
     const xh = s.match(/^(\d{4})\s*(?:[\/:.-]\s*|\s)(?:nr\.?\s*)?(\d{1,3})\s*(?:½|1\/2|,5|\.5)$/i) || s.match(/^(\d{4})X(\d{1,3})$/i);
     if (xh) return { year: +xh[1], n: +xh[2], sort: +xh[1] * 1000 + +xh[2] + 0.5, label: xh[1] + "X" + String(+xh[2]).padStart(2, "0") };
     // double issues: "2016/11-12", "2016 11+12", "11-12/2016" -> "2016-11-12", the INDUCKS form
-    let dd = s.match(/(\d{4})\D+?(\d{1,3})\s*[-+&]\s*(\d{1,3})(?!\d)/), dr = !dd && s.match(/^\D*(\d{1,3})\s*[-+&]\s*(\d{1,3})\D+(\d{4})(?!\d)/);
+    // a variant of a double issue keeps its letter: "2019/1-2B" -> "2019-01-02B" (Herman Hedning)
+    let dd = s.match(/(\d{4})\D+?(\d{1,3})\s*[-+&]\s*(\d{1,3})(?!\d)\s*([A-Za-z](?![A-Za-z]))?/), dr = !dd && s.match(/^\D*(\d{1,3})\s*[-+&]\s*(\d{1,3})\D+(\d{4})(?!\d)/);
     if (dr) dd = [dr[0], dr[3], dr[1], dr[2]];
     if (dd && +dd[3] > +dd[2] && +dd[3] - +dd[2] <= 2) {
-      const pad = x => String(+x).padStart(2, "0");
-      return { year: +dd[1], n: +dd[2], sort: +dd[1] * 1000 + +dd[2], label: dd[1] + "-" + pad(dd[2]) + "-" + pad(dd[3]) };
+      const pad = x => String(+x).padStart(2, "0"), L = dd[4] ? dd[4].toUpperCase() : "";
+      return { year: +dd[1], n: +dd[2], sort: +dd[1] * 1000 + +dd[2] + (L ? (L.charCodeAt(0) - 64) / 100 : 0), label: dd[1] + "-" + pad(dd[2]) + "-" + pad(dd[3]) + L };
     }
     // variants: "1984/19A", "1984/19 B" -> "1984-19A", the INDUCKS form
     const vy = s.match(/(\d{4})\D+?(\d{1,3})\s*([A-Za-z])(?![A-Za-z])/);
@@ -1148,7 +1149,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 203;
+const APP_BUILD = 204;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

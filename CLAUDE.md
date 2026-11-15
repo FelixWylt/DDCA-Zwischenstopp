@@ -93,6 +93,7 @@
 | 2026-11-15 | Donald Duck & Co (Norway, no/DD): 11 yearly ranges in € (no NOK in the app), 1948/1 from a Finn.no sale, rest estimated like Kalle Anka (1 search); local (bundle) | 1.5–2 min (first guess 4–6 ÷ 3) | 0–1 min (21:20 → 21:21:29) |
 | 2026-11-15 | Donald Duck & Co Norway converted to Swedish kr (≈11 kr per €, rounded); local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:23 → 21:23:35) |
 | 2026-11-15 | "Swedish kr" meant: the list already is in Swedish kr (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:24 → 21:24:35) |
+| 2026-11-15 | Variants with a capital letter (rule): Bamse 2003/1B, 2019/15B; 91:an 1977/13B; Herman Hedning 2019/1-2B (35 kr, double issues now keep a letter); found and fixed sw.js emptied since 19:25 (da-v204); local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (21:26 → 21:27:47, incl. the sw.js repair) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -105,7 +106,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v203)
+## Where we left off (2026-11-15, app da-v204)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -148,6 +149,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - "Per year" in Series takes one number or ranges by year ("1978-1983: 12, 1984-: 24"); Gaps, Stats and Next issue use it.
 
 ## How to make price ranges (the user's way)
+- **Variants (the user's wish, 2026-11-15):** when Seriekatalogen ("Variant: Ja") or another source lists a variant,
+  add it as its own issue with a capital letter: issueList key "2003-01B" (double: "2019-01-02B"), and a price line
+  "2003/1B: 35 kr" only when its price differs from the plain issue. The plain issue keeps no letter.
 - **Value = condition Z1** (very good). Other conditions are worked out by the app's condition factors, so never lower
   a range for worn copies.
 - **Sources, best first:** Comicguide.de (column "Zustand 1"), Seriekatalogen.se (VF column), then real sold prices
@@ -171,6 +175,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - The app code is split by section into `js/*.js` (plain scripts sharing their names; order in index.html: core first,
   start last). Code that runs while a file loads may only use names from earlier files. New files: add them to
   index.html and to the file list in sw.js.
+- sw.js was found EMPTY on 2026-11-15 (wiped by the 19:25 commit, restored in da-v204): after editing it, check it isn't empty.
 - Raise `APP_VERSION` in sw.js with every change, and `APP_BUILD` in js/core.js to the same number (da-v199 → 199).
   A waiting price list that needs new app code gets "minApp": that build (old apps can't apply it properly: the price
   lists load fresh, the code only with the update). Changing "added" makes a list show up again. A push to `main` publishes to GitHub Pages.
