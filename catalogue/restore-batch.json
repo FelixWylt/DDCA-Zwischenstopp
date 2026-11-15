@@ -1754,6 +1754,15 @@
     ]
    },
    "added": "2026-11-15b"
+  },
+  {
+   "id": "x-herman-hedning-swedish",
+   "sugg": "id:x-herman-hedning-swedish",
+   "replace": true,
+   "patch": {
+    "latest": 204
+   },
+   "added": "2026-11-15"
   }
  ]
 }

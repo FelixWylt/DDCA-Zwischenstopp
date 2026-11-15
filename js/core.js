@@ -1161,7 +1161,7 @@ async function applyPriceBatch() {
     const se = seriesById(e.id), rules = priceBatchRules(e);
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
     S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
-    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition", "issueList"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }
   await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);
