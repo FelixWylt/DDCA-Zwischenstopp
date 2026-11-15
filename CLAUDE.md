@@ -62,6 +62,7 @@
 | 2026-11-15 | Price batch for Restore: Restore reads price-only files (replace a series' ranges, set per year/years), restore-batch.json + build script, notes | 1.5–2 min (gut 4–6 ÷ 3) | 1–2 min (18:05 → 18:06:46) |
 | 2026-11-15 | Restore file vs. Series › Tools button for the price batch (answer only, from the code) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:10 → 18:10:35) |
 | 2026-11-15 | Series › Tools › Price lists waiting (Add all: replace, years/per year, remembers what's added), price lists fetched fresh by the service worker, test with tap | 2–3 min (gut 6–9 ÷ 3) + 1 run | 3–4 min (18:16 → 18:20:17, incl. 1 run of ~2 min) |
+| 2026-11-15 | Does the 91:an list include issue numbers? (answer only) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:24 → 18:24:12) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
