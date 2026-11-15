@@ -68,7 +68,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v187)
+## Where we left off (2026-11-15, app da-v189)
 - Swedish Asterix: Seriesams Guide (seriesam.com/cgi-bin/guide?s=ASTERIX) shows catalogue values online for some issues;
   seriekatalogen.se itself can't be fetched from here.
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so
