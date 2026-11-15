@@ -68,7 +68,11 @@ async function comicFromCode(d, code, ext) {
   const isbn = window.Books && Books.normalize(code);
   if (isbn && /^97[89]/.test(code)) {
     const known = S.comics.find(c => c.id !== d.id && c.isbn && Books.normalize(c.isbn) === isbn);
-    if (known) { d.seriesId = known.seriesId; d.seriesName = known.seriesName; d.issue = known.issueLabel || known.issue; d.isbn = isbn; render(); bookMsg(`<div class="banner warn">You already have this ISBN: ${esc(comicTag(known))}${known.status === "wanted" ? " (on your wishlist)" : ""}. Saving asks what to do with it.</div>`); return; }
+    if (known) {
+      d.seriesId = known.seriesId; d.seriesName = known.seriesName; d.issue = known.issueLabel || known.issue; d.isbn = isbn;
+      // the comic's own details come along (title, cover, stories …), like "Add another copy"; your copy's fields stay empty
+      ["kind", "bookType", "title", "date", "pages", "stories", "coverUrl", "inducks", "duckipedia", "author", "publisher", "format", "lang", "genres"].forEach(k => { if (known[k] !== undefined && known[k] !== "" && !(Array.isArray(d[k]) && d[k].length)) d[k] = known[k]; });
+      render(); bookMsg(`<div class="banner warn">You already have this ISBN: ${esc(comicTag(known))}${known.status === "wanted" ? " (on your wishlist)" : ""}. Saving asks what to do with it.</div>`); return; }
     bookMsg('<div class="banner">Looking up ISBN ' + isbn + '…</div>');
     const res = await Books.lookupIsbn(isbn), r = res.data;
     d.isbn = isbn;
