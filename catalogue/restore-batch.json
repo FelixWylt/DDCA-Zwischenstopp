@@ -2246,8 +2246,11 @@
    "id": "x-spirous-aventyr",
    "sugg": "id:x-spirous-aventyr",
    "replace": true,
-   "minApp": 193,
-   "added": "2026-11-15"
+   "minApp": 196,
+   "added": "2026-11-15b",
+   "patch": {
+    "latest": 56
+   }
   }
  ]
 }

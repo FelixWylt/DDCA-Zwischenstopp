@@ -109,7 +109,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Legend (book series "book:Legend", Marie Lu): 1-4: 4 €. The user's Prodigy has no volume number and the Swedish Legend
   no series yet (told them to set them).
   Marvel mutanter (x-marvel-mutanter-swedish, yearly 1989–1990, issue list with double 1989/7-8); the user's 2 copies are "1989/?", "1990/?".
-  Spirous äventyr (x-spirous-aventyr): only no. 5 Guldmaskinen (1975) = 350 kr so far.
+  Spirous äventyr (x-spirous-aventyr): full list 0–56 (0 = Guldmaskinen 1975) + latest 56. The user's Guldmaskinen copy
+  is wrongly numbered 5: told them to change it to 0 by hand.
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
