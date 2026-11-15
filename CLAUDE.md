@@ -67,6 +67,7 @@
 | 2026-11-15 | Fused squares for double issues? (answer only) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:31 → 18:31:17) |
 | 2026-11-15 | Double issues as one wide square in Gaps (all yearly series), counted once in totals and Stats; test checks 91:an 2007 | 2–3 min (gut 6–9 ÷ 3) + 1 run | 5–6 min (18:32 → 18:37:43, incl. 2 runs of ~2 min: one with all screens, one after a test fix) |
 | 2026-11-15 | Herman Hedning from the user's Seriekatalogen CSV: year/nr converted to the user's running numbers (checked with #86, #95), 6 ranges + latest 204 waiting | 1–1.5 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (18:39 → 18:41:47, incl. 1 run of ~2 min) |
+| 2026-11-15 | Herman Hedning by year: batch switches numbering, renumbers the user's copies (86 -> 2009/06), yearly prices + issue list + per year; test checks it | 2–3 min (gut 6–9 ÷ 3) + 1 run | 2–3 min (18:48 → 18:51:21, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -79,7 +80,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v196)
+## Where we left off (2026-11-15, app da-v197)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -88,8 +89,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (config priceBatchDone, key = series + list date + text length), so a corrected list shows up again. Old entries
   can stay; remove them once the user has added them. Fallback: scripts/build_restore_batch.py makes a Restore file.
   Waiting now: Swedish Asterix (replaces the imported ranges), 91:an (+ years 1956–2026, per year, issue list),
-  Herman Hedning (x-herman-hedning-swedish, running numbers: Seriekatalogen's year/nr converted, + latest 204).
-  Patch keys: perYear, firstYear, lastYear, defaultEdition, issueList, latest.
+  Herman Hedning (x-herman-hedning-swedish): the user wants it BY YEAR like Seriekatalogen; the batch entry switches
+  numbering to year and has "renumber" (running number -> year/nr, e.g. 86 -> 2009/06) for the user's copies.
+  Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so
