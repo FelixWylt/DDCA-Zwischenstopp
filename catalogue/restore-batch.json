@@ -3160,6 +3160,13 @@
    "replace": false,
    "minApp": 200,
    "added": "2026-11-15"
+  },
+  {
+   "id": "book:The Stormlight archive",
+   "sugg": "id:book:The Stormlight archive",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }
