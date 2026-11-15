@@ -76,13 +76,14 @@
 | 2026-11-15 | Stats › Stories: "When the stories were made" only read dates starting with the year (missed 30.05.1937, Januar 1966); top characters checked (counts are real, per story); test | 1.5–2 min (gut 4–6 ÷ 3) + 1 run | 2–3 min (19:33 → 19:35:48, incl. 1 run of ~2 min) |
 | 2026-11-15 | Stats › When the stories were made: stories without a date placed by the oldest copy (lighter part of the bar, count in the note); test | about 1 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (19:38 → 19:40:47, incl. 1 run of ~2 min) |
 | 2026-11-15 | Why 48 → 28 series without prices? (answer from the code and the 15:55 backup: Add all = 4 series, 20 unpriced book series drop out when Stats is on Comics) | 1–2 min (gut 2–4 ÷ 2) | 0–1 min (20:11 → 20:11:58) |
+| 2026-11-15 | "gut" explained (English: gut feeling); replies now say "first guess" (rule in CLAUDE.md); Overview count follows the Comics/Books/Both switch shared by all Stats tabs (answer) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:13 → 20:13:42) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
-and did not improve on their own. So: **take the gut estimate and divide it by about 3** for bundles and bigger jobs
-(by 2 for small ones), and say that you did. A whole-tab rebuild (Stats, 2026-11-15) took 6–7 min against an estimate of 10–15 (gut ÷ 3): for rebuilds, divide by about 5.
+and did not improve on their own. So: **take the first guess and divide it by about 3** for bundles and bigger jobs
+(by 2 for small ones), and say that you did. In replies write "first guess", never "gut" (the user reads it as the German word). A whole-tab rebuild (Stats, 2026-11-15) took 6–7 min against an estimate of 10–15 (gut ÷ 3): for rebuilds, divide by about 5.
 
 Where the clock stops: do everything first (code, tests, research, the prices/tables for the reply), then make the
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
