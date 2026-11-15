@@ -88,6 +88,7 @@
 | 2026-11-15 | Chappatte bought for 5 CHF (answer: value stays ~20 CHF, price paid already in the app) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:00 → 21:00:38) |
 | 2026-11-15 | Bamse from the user's Seriekatalogen CSV: yearly ranges (VF, 1973–2026), issue list with doubles, per year by year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:04 → 21:05:12) |
 | 2026-11-15 | Ninja Timmy (book series, Henrik Tamm): 1-: 50 kr from asking prices (1 search); 2 of the user's 3 books lack the series; local (bundle) | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (21:08 → 21:08:46) |
+| 2026-11-15 | Winnetou – Mannen från prärien (Williams 1974, single issue) from the user's Seriekatalogen CSV: 40 kr VF, typed in by the user (no list) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:13 → 21:13:15) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
