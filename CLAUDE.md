@@ -47,6 +47,7 @@
 | 2026-11-15 | Stats rebuild (first measured whole-tab rebuild): 5 tabs, Comics/Books/Both switch, ~15 new stats (growth lines, to do, top 10, best/worst buys, lots, budget, characters, pairs, reprints, pile, average ratings), wasWish flag | 10–15 min (gut 30–45 ÷ 3, unmeasured kind) + 2–3 runs | 6–7 min (14:29 → 14:35:15, incl. 2 runs) |
 | 2026-11-15 | Stats: month labels on the right no longer overlap (Growth, Value over time), lots count as one buy in Best/worst buys (+ lot list) | about 1 min (gut 2–3 ÷ 2) + 1 run | 1–2 min (15:41 → 15:42:50, incl. 1 run) |
 | 2026-11-15 | Stats: free items/lots out of Best/worst buys; "Show them" list of series without prices (Value per series + To do), each opens its price ranges | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 1–2 min (15:46 → 15:47:55, incl. 1 run) |
+| 2026-11-15 | Price ranges with only From or only To: read as "and all later" / "all up to", shown under each row and in the comic's value line, ranking (closed, then From-only latest start, To-only, all) | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 2–3 min (15:52 → 15:54:39, incl. 1 run) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
