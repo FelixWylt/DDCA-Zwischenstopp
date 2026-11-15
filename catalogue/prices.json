@@ -118,8 +118,8 @@
   "id:x-herman-hedning-swedish": {
    "cur": "SEK",
    "date": "2026-11-15",
-   "note": "Herman Hedning (magazine, 1998–), Seriekatalogen.se VF column, sent by the user 2026-11-15. Seriekatalogen counts by year (1/1998 …); converted to running numbers (6/2009 = 86, 7/2010 = 95 as in the user's copies; double issues 2019/1-2 and 2026/3-4 counted as two numbers). Not included: Nullnummer 2021 (30 kr) and the 2019/1-2 variant (35 kr). Latest issue: 204 (3-4/2026).",
-   "text": "1: 100 kr\n2-24: 25 kr\n25-: 20 kr\n48: 25 kr\n56: 25 kr\n64: 25 kr"
+   "note": "Herman Hedning (magazine, 1998–), numbered by year as in Seriekatalogen.se (VF column, sent by the user 2026-11-15). Not included: the 2019/1-2 variant (35 kr). Issues per year: 1998: 2, 1999: 6, 2000-2009: 8, 2010-2013: 9, 2014-2015: 8, 2016-: 6.",
+   "text": "1998/1: 100 kr\n1998-2001: 25 kr\n2002-: 20 kr\n2004/8: 25 kr\n2005/8: 25 kr\n2006/8: 25 kr\n2021/0: 30 kr"
   }
  }
 }

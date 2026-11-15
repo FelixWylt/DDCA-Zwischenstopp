@@ -667,8 +667,9 @@ VIEWS.series = {
 // Series › Tools: price lists Claude has prepared (catalogue/restore-batch.json), added with one tap
 function priceBatchCard() {
   const w = priceBatchWaiting(); if (!w.length) return "";
-  const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition", issueList: "its issue list", latest: "the latest issue" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
-    return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : ""); };
+  const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition", issueList: "its issue list", latest: "the latest issue", numbering: "numbering by year" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
+    const mv = e.renumber ? S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).length : 0;
+    return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : "") + (mv ? "; your " + mv + " " + (mv === 1 ? "copy gets its" : "copies get their") + " year/number" : ""); };
   return `<div class="card stack"><h3>Price lists waiting</h3>
     <p class="small muted" style="margin:0">Price ranges Claude has prepared for your series (from Comicguide, Seriekatalogen or sales). Nothing changes until you tap Add all.</p>
     <ul class="small" style="margin:0;padding-left:18px">${w.map(e => `<li><strong>${esc(seriesById(e.id).name)}</strong>: ${esc(what(e))}</li>`).join("")}</ul>

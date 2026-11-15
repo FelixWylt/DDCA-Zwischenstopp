@@ -1151,17 +1151,27 @@ async function loadCatalogueIndex() {
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && seriesById(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
 function priceBatchRules(e) {
-  const sg = S.priceSugg[e.sugg], res = parsePrices(e.id, sg.text, sg.cur), note = "Claude, " + sg.date;
-  const mk = (r, ed) => ({ id: newId(), s: e.id, from: r.zero ? zeroText(e.id, r.lo) : r.lo == null ? "" : boundText(e.id, r.lo), to: r.zero ? zeroText(e.id, r.hi) : r.hi == null ? "" : boundText(e.id, r.hi, true), price: r.price, cur: r.cur, note, ed: ed || "" });
-  return res.editions.length > 1 ? res.byEdition.flatMap(x => x.ranges.map(r => mk(r, x.label))) : res.ranges.map(r => mk(r));
+  // read the list as the series will be after the patch (Herman Hedning: by year instead of running numbers)
+  const se = seriesById(e.id), was = se && se.numbering, pn = e.patch && e.patch.numbering;
+  if (se && pn) se.numbering = pn;
+  try {
+    const sg = S.priceSugg[e.sugg], res = parsePrices(e.id, sg.text, sg.cur), note = "Claude, " + sg.date;
+    const mk = (r, ed) => ({ id: newId(), s: e.id, from: r.zero ? zeroText(e.id, r.lo) : r.lo == null ? "" : boundText(e.id, r.lo), to: r.zero ? zeroText(e.id, r.hi) : r.hi == null ? "" : boundText(e.id, r.hi, true), price: r.price, cur: r.cur, note, ed: ed || "" });
+    return res.editions.length > 1 ? res.byEdition.flatMap(x => x.ranges.map(r => mk(r, x.label))) : res.ranges.map(r => mk(r));
+  } finally { if (se && pn) se.numbering = was; }
 }
 async function applyPriceBatch() {
   const list = priceBatchWaiting(); let n = 0;
   for (const e of list) {
-    const se = seriesById(e.id), rules = priceBatchRules(e);
+    const se = seriesById(e.id), rules = priceBatchRules(e);   // read before the patch changes the series
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
     S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
-    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    if (e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    // a series switched from running numbers to year/number (Herman Hedning): your copies get their new numbers ("86" -> "2009/06")
+    if (e.renumber && typeof e.renumber === "object") {
+      const moved = S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).map(c => { const p = parseIssue(se, e.renumber[String(c.issueLabel || c.issue)]); return Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
+      if (moved.length) await saveMany(moved);
+    }
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }
   await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);
