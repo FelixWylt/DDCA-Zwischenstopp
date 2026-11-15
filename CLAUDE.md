@@ -58,6 +58,7 @@
 | 2026-11-15 | Swedish Asterix checked in Seriesams Guide (3 searches, 2 pages): 1–4 and 31–38 corrected, full list to paste + prices.json | 1.5–2.5 min (gut 3–5 ÷ 2) + 1 run | 3–4 min (17:41 → 17:44:50, incl. 1 run of ~2 min) |
 | 2026-11-15 | Swedish Asterix from the user's Seriekatalogen table (VF; HC rows 3–6, special 40), full list + prices.json | 1–1.5 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (17:49 → 17:51:29, incl. 1 run of ~2 min) |
 | 2026-11-15 | Swedish Asterix: "inb." rows = hardcover (1, 3–6, 40 as 1. Auflage HC) | under 1 min (gut 1–2 ÷ 2) + 1 run | 2–3 min (17:56 → 17:58:19, incl. 1 run of ~2 min) |
+| 2026-11-15 | 91:an from the user's Seriekatalogen CSV: 18 yearly ranges (VF) + Per year text, prices.json, price check now uses a yearly series for yearly lists | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 3–4 min (18:01 → 18:04:23, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -76,6 +77,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so
   this worked). They are also stored as suggestions in catalogue/prices.json under "id:<series id>" (series INDUCKS
   doesn't have). Edition lines ("12 Asterix (1. Auflage) 8 €") now accept kr and CHF too.
+- 91:an: prices (Seriekatalogen VF) in prices.json "id:x-91-an-swedish"; its issues per year are in that note.
 - "Per year" in Series takes one number or ranges by year ("1978-1983: 12, 1984-: 24"); Gaps, Stats and Next issue use it.
 
 ## How to make price ranges (the user's way)
