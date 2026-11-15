@@ -85,6 +85,7 @@
 | 2026-11-15 | Rule: price lists in bundles (prepare + commit locally, push and check once when the user says publish) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:52 → 20:52:36) |
 | 2026-11-15 | Value estimate Zelda BotW Master Works (Tokyopop HC 2019, German edition of Creating a Champion): about 30 € (2 searches), single book, typed in by the user | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (20:53 → 20:54:20) |
 | 2026-11-15 | Value estimate Chappatte, 100 Karikaturen NZZ am Sonntag (NZZ Libro 2012): about 20 CHF (1 search found nothing; Ricardo asking 29 CHF from the user) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:58 → 20:58:31) |
+| 2026-11-15 | Chappatte bought for 5 CHF (answer: value stays ~20 CHF, price paid already in the app) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:00 → 21:00:38) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
