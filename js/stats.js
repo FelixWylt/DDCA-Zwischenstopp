@@ -191,7 +191,7 @@ VIEWS.stats = {
         ${gl.length > 8 ? `<button class="ghost" id="stAllGroups" type="button">${S.statAllGroups ? "Show fewer" : "Show all " + gl.length + " groups"}</button>` : ""}`);
       // countries and languages
       const sc = scope === "b" ? "b" : scope === "c" ? "c" : "a";
-      const countries = tallyOf(sel, c => [countryOf(c)], 8).map(([n, k]) => [n, k, `country|${n}|${sc}`]), langs = tallyOf(sel, c => [langOfEntry(c)], 8).map(([n, k]) => [n, k, `lang|${n}|${sc}`]);
+      const countries = tallyOf(sel, c => isNovel(c) ? [] : [countryOf(c)], 8).map(([n, k]) => [n, k, `country|${n}|${sc}`]), langs = tallyOf(sel, c => [langOfEntry(c)], 8).map(([n, k]) => [n, k, `lang|${n}|${sc}`]);
       const geo = card("Countries and languages", "", `${pickBars(countries)}<div class="small muted" style="margin-top:6px">Languages</div>${pickBars(langs)}`);
       // completion: biggest or fewest missing
       const fewest = S.statCompl === "few", cl = perSeries.slice().map(x => Object.assign({ miss: x.tot - x.n }, x)).filter(x => !fewest || x.miss > 0)
@@ -277,7 +277,7 @@ VIEWS.stats = {
         ${noSrc ? note(`<button type="button" class="link" data-pick="miss|source|${sc}">${nf(noSrc)} without “Bought from”</button>.`) : ""}`) : "";
       // wishlist budget
       const lvl = l => selW.filter(c => wishLevel(c) === l), cost = xs => wishCost(xs), fits = selW.filter(c => (wishBudget(c) || {}).ok).length;
-      const wrow = (l, xs) => { const k = cost(xs); return xs.length ? `<tr><td>${l}</td><td>${nf(xs.length)}</td><td>${k.n ? fmt2(k.t) : "–"}</td><td class="muted">${k.n < xs.length ? k.n + " priced" : ""}</td></tr>` : ""; };
+      const wrow = (l, xs) => { const k = cost(xs); return xs.length ? `<tr><td>${l}</td><td>${nf(xs.length)}</td><td>${k.n ? fmt2(k.t) : "–"}</td><td class="muted">${k.n < xs.length ? (k.n ? k.n + " priced" : "no prices") : ""}</td></tr>` : ""; };
       const budget = selW.length ? card("Wishlist budget", "CHF, by your price tables", `<div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Items</th><th>Cost</th><th></th></tr></thead><tbody>${wrow("★ Must have", lvl("must"))}${wrow("Want", lvl(""))}${wrow("Dream", lvl("dream"))}</tbody></table></div>
         ${note(`${fits ? nf(fits) + " cost no more than your maximum price. " : ""}<button type="button" class="link" id="goWish">Open the wishlist</button>`)}`) : "";
       return head + sw + spent + `<div class="two">${avgCard}${lots}</div><div class="two">${source}${budget}</div>` + settings;
