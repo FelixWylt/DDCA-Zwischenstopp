@@ -82,6 +82,7 @@
 | 2026-11-15 | Spirous äventyr from the user's Seriekatalogen CSV: Guldmaskinen = the user's no. 5, 350 kr waiting | under 1 min (first guess 1–2 ÷ 2) + 1 run | 2–3 min (20:31 → 20:33:46, incl. 1 run of ~2 min) |
 | 2026-11-15 | Spirous äventyr full list from the user's Seriekatalogen CSV: 0 (Guldmaskinen) + 1–56, 36 ranges (VF) + latest 56 waiting; user's copy to renumber 5 → 0 by hand | about 1 min (first guess 2–3 ÷ 2) + 1 run | 1–2 min (20:36 → 20:38:09, incl. 1 run of ~2 min) |
 | 2026-11-15 | Farbror Joakims liv from the user's Seriekatalogen CSV (1: 480 kr, 2: 360 kr); price check explained | under 1 min (first guess 1–2 ÷ 2) + 1 run | 1–2 min (20:46 → 20:48:23, incl. 1 run of ~2 min) |
+| 2026-11-15 | Rule: price lists in bundles (prepare + commit locally, push and check once when the user says publish) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:52 → 20:52:36) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -115,6 +116,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   is wrongly numbered 5: told them to change it to 0 by hand.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
+  **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
+  locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
+  push everything at once and run ONE price check for the whole bundle. Say in each reply how many lists are unpublished.
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
