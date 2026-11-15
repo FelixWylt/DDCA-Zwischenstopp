@@ -64,9 +64,16 @@
 | 2026-11-15 | 6 points: wishlist copy comics/books/both, one-tap category button, lot list by last change (12 lots), catalogue de/MHDW+DSBDD+SDD, LETP prices, two-copies answer | 6–12 min (+1 min wait) | 1–2 min (11:51 → 11:53:11) |
 | 2026-11-15 | Wishlist category as 3 fixed buttons under the row (no jumping), "Single comics" in groups (auto for 1-issue INDUCKS series, setting in Series), "Add another copy" in the edit form, LETP sales check (1 search, none found) | 4–8 min (+1 min wait) | 2–3 min (12:09 → 12:11:50) |
 | 2026-11-15 | Wishlist category buttons squeezed into a grid cell (CSS fix), separate copies shown once with "2×" + copy picker, Capolavori della Letteratura prices (1 search), single-comic how-to | 4–8 min (+1 min wait) | 0–1 min (12:31 → 12:32:15) |
+| 2026-11-15 | CLAUDE.md: estimate correction (÷3 for bundles, ÷2 small) + clock stops at the last step before the reply | under 1 min (gut 1–2 min ÷ 2) | 0–1 min (12:49 → 12:49:33) |
 
-Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
-a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.
+Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
+of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
+and did not improve on their own. So: **take the gut estimate and divide it by about 3** for bundles and bigger jobs
+(by 2 for small ones), and say that you did. A true rebuild (whole tab) is still unmeasured: say so.
+
+Where the clock stops: do everything first (code, tests, research, the prices/tables for the reply), then make the
+commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
+except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
 ## Other working rules
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
