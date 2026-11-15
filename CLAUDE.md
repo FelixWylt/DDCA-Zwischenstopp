@@ -133,6 +133,7 @@
 | 2026-11-15 | Nellmann/Kühn Parzival (DKV Taschenbuch 2006, ISBN 978-3-618-68007-9, ~35 €) to the wishlist: steps for Add › Book › Wishlist (data on the phone; answer only, from the code) | about 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:57 → 23:58:01) |
 | 2026-11-15/16 | Price of the Nellmann/Kühn hardcover (DKV Bibliothek des Mittelalters 8, 1994): no current price found (1 search); found Reclam 2 vols 22 € (jpc), de Gruyter 1131 kr (Bokus) (answer only) | 1–1.5 min (first guess 2–3 ÷ 2) | 1–2 min (23:59 → 00:00:09) |
 | 2026-11-16 | ISBN of the Nellmann/Kühn hardcover (DKV 1994): DNB lists 978-3-618-66083-5 (868 p., bibliography p. 838–865, so possibly vol. 2 or the set) (1 search, answer only) | about 1 min (first guess 2 ÷ 2) | 1–2 min (00:08 → 00:09:12) |
+| 2026-11-16 | Is the 964-page volume vol. 1? Very likely: 964 + 868 = 1832 ≈ the 1838 pages of the paperback set; vol. 2 (868 p.) has the commentary (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:12 → 00:12:49) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
