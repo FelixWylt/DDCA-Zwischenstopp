@@ -66,7 +66,8 @@ function arrangeSeries(se) {
   if (cc === "ch") return { publisher: DISNEY, group: CH_ALL };   // Swiss (Bollmann's Micky Maus Zeitung) and Austrian editions aren't German ones
   if (cc === "at") return { publisher: DISNEY, group: AT_ALL };
   // a one-volume book (Der Stammbaum der Ducks, Micky Holmes & Donald Watson) is an album, not a magazine
-  if (isSingleSeries(se) && (lang === "German" || lang === "Swedish")) return { publisher: DISNEY, group: lang === "German" ? DE_ALB : SE_ALB };
+  // … unless its name says it is a magazine (Mega Micky Maus Sonderheft, … Extra)
+  if (isSingleSeries(se) && (lang === "German" || lang === "Swedish") && !/(heft|magazin|zeitung|extra|tidning)/.test(n)) return { publisher: DISNEY, group: lang === "German" ? DE_ALB : SE_ALB };
   if (lang === "German") return { publisher: DISNEY, group: /^(lustiges taschenbuch|ltb)\b|\bltb\b/.test(n) ? DE_LTB : /taschenb|^panzerknacker|^donald duck (co|und co)\b/.test(n) || ["de/DD", "de/PK", "de/DDCO"].includes(se.code) ? DE_TB : /\b(edition|sammler|album|alben|hardcover|klassik|bibliothek|collection|bande?)\b/.test(n) ? DE_ALB : DE_MAG };
   if (lang === "Swedish") return { publisher: DISNEY, group: /pocket/.test(n) || n === "farbror joakim" || /^bjornligan\b/.test(n) || /^kalle ankas basta\b/.test(n) ? SE_POC : /^walt disney s (godbitar|klassiker|serier)\b/.test(n) ? SE_MAG : /\b(julbok|basta|godbitar|klassiker|bok|bocker|album|liv|saga|samlade|guldbok)\b/.test(n) ? SE_ALB : SE_MAG };
   if (lang === "Italian") return { publisher: DISNEY, group: IT_ALL };

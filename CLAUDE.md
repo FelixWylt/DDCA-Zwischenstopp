@@ -32,6 +32,7 @@
 | 2026-11-15 | Package 5: price suggestions in catalogue/prices.json (10 Italian series) + "Use these prices" in Series › value, test reads every list; then screenshot check switched to on-demand, changed screens only (user's request) | 3–5 min (gut 10–15 ÷ 3) + 1 run | 4–5 min (≈13:17 after package 4 → 13:22:20, incl. 3 runs) |
 | 2026-11-15 | Package 6: app.js split into 9 files (js/), load-order check with a parser, error check over all screens; log shortened, CLAUDE.md updated | 5–8 min (gut 15–25 ÷ 3, unmeasured kind) + 1 run | 2–3 min (≈13:22 after package 5 → 13:25:29, incl. 1 run) |
 | 2026-11-15 | ISBN match copies title/cover/stories; single volumes sorted into Alben & Sammlerbände (not Hefte); how to wish for a complete copy of an owned issue (answer) | 1.5–2 min (gut 4–6 ÷ 3) | 0–1 min (13:33 → 13:33:34) |
+| 2026-11-15 | Single volumes: magazines by name (Heft, Sonderheft, Magazin, Zeitung, Extra) stay out of Alben & Sammlerbände | under 1 min (gut 1–2 ÷ 2) | 0–1 min (13:38 → 13:38:44) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
