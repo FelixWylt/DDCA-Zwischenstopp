@@ -126,6 +126,7 @@
 | 2026-11-15 | D&D Practically Complete Guide to Dragons (WotC HC 2023): bought 49 CHF = new shop price; used very good ~18–20 $/£ → value raised 15 → 20 € (1 search, answer only; no estimate given beforehand) | – | 0–1 min (23:31 → 23:32:13) |
 | 2026-11-15 | New chat? Yes (this one was already shortened once); notes-only commits pushed so a new chat sees them (answer) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:33 → 23:33:26) |
 | 2026-11-15 | Handover summary for a new chat (text to paste) + handover tips in CLAUDE.md (backup = series ids, pre-push checks, reading errors.txt) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:36 → 23:36:30) |
+| 2026-11-15 | Parzival in Middle High German: editions compared (DKV Nellmann/Kühn, de Gruyter Lachmann/Knecht, Bumke ATB hs. D, Reclam, Bern online) (1 search, answer only) | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (23:39 → 23:40:09) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
