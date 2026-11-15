@@ -103,6 +103,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Herman Hedning & CO (x-herman-hedning-co, running like Seriekatalogen: 3 ranges + latest 35).
   A Song of Ice and Fire (book series: id "book:A Song of Ice and Fire", prices.json "id:book:…"; waiting lists work for
   book series since da-v200, no patch). The user's 5 are Bantam mass market paperbacks (later printings) = 4 € each.
+  Legend (book series "book:Legend", Marie Lu): 1-4: 4 €. The user's Prodigy has no volume number and the Swedish Legend
+  no series yet (told them to set them).
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.

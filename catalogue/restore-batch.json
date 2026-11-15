@@ -2199,6 +2199,13 @@
    "replace": true,
    "minApp": 200,
    "added": "2026-11-15"
+  },
+  {
+   "id": "book:Legend",
+   "sugg": "id:book:Legend",
+   "replace": true,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }
