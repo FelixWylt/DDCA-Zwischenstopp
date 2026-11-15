@@ -72,6 +72,7 @@
 | 2026-11-15 | Herman Hedning Add all added nothing: list loaded fresh but the phone still ran older code (no numbering switch, yearly lines unread). Fix: minApp + APP_BUILD, list offered again; test | 1–2 min (gut 3–5 ÷ 3) + 1 run | 2–3 min (19:02 → 19:05:08, incl. 1 run of ~2 min) |
 | 2026-11-15 | Herman Hedning & CO from the user's Seriekatalogen CSV (running numbers match the user's #19, #24): 3 ranges + latest 35 waiting | under 1 min (gut 1–2 ÷ 2) + 1 run | 4–5 min (19:13 → 19:17:45, incl. 2 runs of ~2 min: the price check read Herman Hedning without its year switch, test fixed) |
 | 2026-11-15 | A Song of Ice and Fire (Bantam) prices: user's 5 are later mass market printings (2 searches); waiting lists now also for book series; test | 1.5–2.5 min (gut 4–7 ÷ 3) + 1 run | 2–3 min (19:24 → 19:27:08, incl. 1 run of ~2 min) |
+| 2026-11-15 | Stories listed twice (Oscar the Ostrich: same code and title twice in one Micky Maus Zeitung) now once; serial parts with their own title stay separate; test | 1–2 min (gut 3–5 ÷ 3) + 1 run | 2–3 min (19:29 → 19:31:31, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -84,7 +85,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v200)
+## Where we left off (2026-11-15, app da-v201)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -143,7 +144,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
   (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
-  series-ltb-copies, group-singles, series-tools (also taps Add all), wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
+  series-ltb-copies, group-singles, series-tools (also taps Add all), stories (same story twice in one comic = once), stats-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
   price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
 - Price suggestions live in `catalogue/prices.json` (per INDUCKS code, or `id:<series id>` for non-Disney series, text as for Paste prices). Add new price research
