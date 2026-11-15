@@ -2256,7 +2256,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return;
       }
       if (hit.ic) {   // compact catalogue format
-        d.title = d.title || hit.t || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
+        const fromCat = d.title && Object.values(file.issues || {}).some(x => x.t && norm(x.t) === norm(d.title));
+        d.title = (!d.title || fromCat ? hit.t : d.title) || d.title || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
         d.inducks = hit.ic; await fillExtras(se); render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
       }
@@ -2297,7 +2298,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
         // a letter is usually a variant cover (546A = 546), but INDUCKS also uses it for other items under one number:
         // De Luxe 34B is a box, not Timecrime 34. Different titles in the catalogue = different comics
-        const ce = catEntry(target), cf = ce && S.catCache[ce.file], ttl = k => cf && cf.issues && cf.issues[k] ? norm(cf.issues[k].t || "") : "";
+        const ce = catEntry(target), cf = ce && (S.catCache[ce.file] || await catalogueFile(ce).catch(() => null)), ttl = k => cf && cf.issues && cf.issues[k] ? norm(cf.issues[k].t || "") : "";
         const otherItem = (a, b) => a !== b && ttl(a) && ttl(b) && ttl(a) !== ttl(b);
         const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label) && !otherItem(x.issueLabel || x.issue, p.label));
         const wishes = same.filter(x => x.status === "wanted"), wish = wishes.find(x => (x.issueLabel || x.issue) === p.label) || wishes[0];
@@ -2403,8 +2404,10 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       grab();
       const keep = ["kind", "bookType", "seriesId", "seriesName", "issue", "issueLabel", "title", "date", "pages", "stories", "coverUrl", "inducks", "duckipedia", "author", "publisher", "isbn", "format", "lang", "genres", "currency"];
       const pre = {}; keep.forEach(k => { if (d[k] !== undefined) pre[k] = d[k]; });
-      S.editing = null; S.draft = blankDraft(Object.assign(pre, { secondCopy: true, notes: "Second copy" }));
-      toast("A second copy: enter its condition, price and seller, then save"); render(); window.scrollTo(0, 0);
+      const nth = S.comics.filter(x => x.status !== "wanted" && copyKey(x) && copyKey(x) === copyKey(Object.assign({ status: "owned" }, d))).length + 1;
+      const word = ["", "First", "Second", "Third", "Fourth", "Fifth"][nth] || nth + "th";
+      S.editing = null; S.draft = blankDraft(Object.assign(pre, { secondCopy: true, notes: word + " copy" }));
+      toast(word + " copy: enter its condition, price and seller, then save"); render(); window.scrollTo(0, 0);
     });
     $("#del") && ($("#del").onclick = () => {
       $("#confirmBox").innerHTML = '<div class="confirm"><span>Delete this ' + (d.kind === "book" ? "book" : "comic") + ' from your archive? This can\'t be undone.</span><button class="danger" id="yesdel">Delete</button><button id="nodel">Keep it</button></div>';
