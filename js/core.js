@@ -1149,7 +1149,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 205;
+const APP_BUILD = 206;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1348,6 +1348,12 @@ function searchText(c) {
   const dk = c.duckipedia && c.duckipedia.issue ? [c.duckipedia.issue.translator, c.duckipedia.issue.editor, c.duckipedia.issue.title].join(" ") : "";
   const se = seriesById(c.seriesId);
   return norm([se ? se.name + " " + se.short : c.seriesName, c.issue, c.title, c.notes, c.special, c.location, c.source, c.author, c.publisher, c.genre, c.isbn, String(c.isbn || "").replace(/\D/g, ""), c.kind === "book" ? "book" : "", st, dk].join(" "));
+}
+// search: words split by spaces; a word with a hyphen stays one phrase ("x-men" = "x men" together, not "x" and "men"
+// anywhere), and phrases and words of 1–2 letters must start a word ("x" no longer matches every "x-…" or "box")
+function searchHit(c, raw) {
+  const t = " " + searchText(c);
+  return String(raw || "").trim().split(/\s+/).map(norm).filter(Boolean).every(w => (w.length <= 2 || w.includes(" ")) ? t.includes(" " + w) : t.includes(w));
 }
 function sortComics(list) {
   const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));

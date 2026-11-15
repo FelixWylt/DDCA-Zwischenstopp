@@ -106,6 +106,7 @@
 | 2026-11-15 | Spider-Man Magazin (x-spider-man-german, Panini 2018–) from the user's Comicguide note: 1-52: 1 €, latest 52; local (bundle) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:58 → 21:58:50) |
 | 2026-11-15 | Publish: 21 local commits pushed (11 price lists, variants, sw.js repair, titleNumbers, da-v205), one check (prices + series-tools): no errors, every list reads | about 1 min (first guess 2 ÷ 2) + 2 min wait | 2–3 min (21:59 → 22:02:01, incl. 1 run of ~2 min) |
 | 2026-11-15 | X-Men (Swedish, 1990/9–1993/12) from the user's Seriekatalogen CSV: 20 kr each, issue list (36), years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:09 → 22:09:21) |
+| 2026-11-15 | Collection search "x-men" found 67: words were matched anywhere ("x" + "men" in Momente…). Now searchHit: hyphenated words = one phrase, 1–2-letter words must start a word (backup: 76 → 2 real hits), da-v206; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (22:12 → 22:13:38) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -118,7 +119,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v205)
+## Where we left off (2026-11-15, app da-v206)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,

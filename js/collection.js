@@ -321,14 +321,14 @@ function drawResults() {
   if (col.pick) {
     const pk = pickInfo(col.pick);
     let list = S.comics.filter(c => pk.test(c));
-    if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
+    if (q) list = list.filter(c => searchHit(c, S.filters.q));
     list = sortComics(list);
     html = crumbs([{ label: "All", col: {} }, { label: "From Stats" }]) + `<p class="muted small" style="margin:0 0 8px">${list.length} ${esc(pk.label)} · ${esc(valueTag(list) || "")} <button class="link" id="pickback" type="button">Back to Stats</button></p>` +
       (list.length ? entriesHtml(list.slice(0, S.shown)) : '<div class="empty"><h3>Nothing left here</h3><p>Everything in this list has been filled in.</p></div>') + more(list.length);
   } else if (srt) {
     let list = pool.filter(c => (!col.p || publisherOf(c) === col.p) && (!col.g || groupOf(c) === col.g) && (!col.s || seriesKeyOf(c) === col.s)
       && (col.a == null || (splitPeople(c.author)[0] || "") === col.a) && (col.gen == null || (col.gen ? String(c.genre || "").split(",").map(x => x.trim()).includes(col.gen) : !c.genre)));
-    if (q) list = list.filter(c => q.split(" ").every(w => searchText(c).includes(w)));
+    if (q) list = list.filter(c => searchHit(c, S.filters.q));
     const withKey = list.filter(c => srt.key(c) != null), without = list.length - withKey.length;
     const ordered = sortComics(withKey).sort((a, b) => { const x = srt.key(a), y = srt.key(b); return x < y ? 1 : x > y ? -1 : 0; });
     const where = col.a != null ? col.a || "Unknown author" : col.gen != null ? col.gen || "No genre" : col.s ? seriesTitle(col.s) : col.g ? col.g : col.p ? col.p : books ? "all books" : "all comics";
@@ -336,7 +336,7 @@ function drawResults() {
       `<p class="muted small" style="margin:0 0 8px">${ordered.length} ${ordered.length === 1 ? "entry" : "entries"} in ${esc(where)}, by ${srt.label}${without ? ` · ${without} without ${srt.label} not shown` : ""} · <button class="link" id="sortoff" type="button">Series order</button></p>` +
       (ordered.length ? entriesHtml(ordered.slice(0, S.shown), false, srt.note) : '<div class="empty"><h3>Nothing to sort here</h3><p>None of these entries has a ' + esc(srt.label) + ' yet.</p></div>') + more(ordered.length);
   } else if (q) {
-    const list = sortComics(pool.filter(c => q.split(" ").every(w => searchText(c).includes(w))));
+    const list = sortComics(pool.filter(c => searchHit(c, S.filters.q)));
     html = `<p class="muted small" style="margin:0 0 8px">${list.length} ${list.length === 1 ? "match" : "matches"} in ${books ? "your books" : "all series"}</p>` +
       (list.length ? entriesHtml(list.slice(0, S.shown)) : '<div class="empty"><h3>Nothing matches</h3><p>Try another search word or change Show.</p></div>') + more(list.length);
   } else if (books && !col.s) {
