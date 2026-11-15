@@ -36,6 +36,7 @@ const comics = [
   c("w3", "ltb", 5, { status: "wanted", wishLevel: "dream" }),
   { id: "b1", kind: "book", bookType: "book", seriesId: "_book", title: "Der Hobbit", author: "J. R. R. Tolkien", status: "wanted", stories: [] },
   { id: "b2", kind: "book", bookType: "book", seriesId: "_book", title: "Momo", author: "Michael Ende", status: "owned", stories: [] },
+  { id: "b3", kind: "book", bookType: "", seriesId: "_book", title: "Ende gut, alles gut!", status: "owned", stories: [] },
   c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86)
 ];
 
@@ -85,7 +86,7 @@ if (want("stats-singles")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.statTab = "overview"; S.statNoVal = true; nav("stats"); }); await page.waitForTimeout(700);
   const btn = page.locator('[data-priceser="book:"]').first();
   if (!(await btn.count())) errors.push("stats singles: no Single books button");
-  else { await btn.click(); await page.waitForTimeout(700); const r = await page.evaluate(() => ({ view: window.__dda.S.view, tab: window.__dda.S.colTab, head: [...document.querySelectorAll("h3.listhead")].some(x => /^Single books/.test(x.textContent.trim())) })); if (r.view !== "collection" || r.tab !== "books" || !r.head) errors.push("stats singles: " + JSON.stringify(r)); await page.screenshot({ path: `${OUT}/08b-stats-singles.png` }); }
+  else { await btn.click(); await page.waitForTimeout(700); const r = await page.evaluate(() => ({ view: window.__dda.S.view, s: (window.__dda.S.col || {}).s, book: /Ende gut/.test(document.body.textContent) })); if (r.view !== "collection" || r.s !== "book:" || !r.book) errors.push("stats singles: " + JSON.stringify(r)); await page.screenshot({ path: `${OUT}/08b-stats-singles.png` }); }
 } catch (e) { errors.push("stats singles: " + e.message); }
 await shot("09-series", () => { nav("series"); });
 await shot("09b-series-tools", () => { S.serTab = "tools"; nav("series"); });

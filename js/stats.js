@@ -357,8 +357,8 @@ VIEWS.stats = {
     document.querySelectorAll("[data-novals]").forEach(b => b.onclick = () => { S.statNoVal = !S.statNoVal; renderKeep(); });
     document.querySelectorAll("[data-priceser]").forEach(b => b.onclick = () => {
       const k = b.dataset.priceser;
-      // single books have no series and no price ranges: open them in Collection › Books, where each gets its own value
-      if (k === "book:") { S.colTab = "books"; S.col = {}; S.bookView = "series"; S.filters.q = ""; nav("collection"); setTimeout(() => { const h = [...document.querySelectorAll("h3.listhead")].find(x => /^Single books/.test(x.textContent.trim())); if (h) h.scrollIntoView({ block: "start" }); }, 80); return; }
+      // single books (comic books without a series) have no price ranges: open their list in Collection, where each gets its own value
+      if (k === "book:") { S.colTab = "comics"; S.col = { p: BOOK_PUB, g: BOOK_GROUP, s: "book:" }; S.filters.q = ""; nav("collection"); return; }
       if (k.startsWith("book:")) { S.serTab = "books"; S.serEditBook = k.slice(5); S.serEditObj = null; }
       else { const se = seriesById(k); if (!se) return; S.serTab = "comics"; S.serEditBook = null; S.serEditObj = se; S.serPath = { u: se.publisher || "No universe yet", g: se.group || OTHER_GROUP }; S.sect = Object.assign({}, S.sect, { [se.id + "|prices"]: true }); }
       nav("series");
