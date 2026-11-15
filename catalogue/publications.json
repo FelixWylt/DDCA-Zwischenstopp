@@ -581,6 +581,24 @@
       "country": "it",
       "code": "it/LETP",
       "title": "Letteratura Disney Panini"
+    },
+    {
+      "series": "Micky Holmes & Donald Watson",
+      "country": "de",
+      "code": "de/MHDW",
+      "title": "Micky Holmes & Donald Watson"
+    },
+    {
+      "series": "Der Stammbaum der Ducks (2019)",
+      "country": "de",
+      "code": "de/DSBDD",
+      "title": "Der Stammbaum der Ducks (2019)"
+    },
+    {
+      "series": "Der Stammbaum der Ducks (1999)",
+      "country": "de",
+      "code": "de/SDD",
+      "title": "Der Stammbaum der Ducks (1999)"
     }
   ]
 }
