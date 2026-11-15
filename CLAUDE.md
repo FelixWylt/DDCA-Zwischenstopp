@@ -116,6 +116,7 @@
 | 2026-11-15 | 8 items: lists Discworld 4 €, The atlas 5 €, Topolibri (it/TLB) 6 €, Doctor Strange Flight of Bones 1-4: 3 € (estimates); typed values D&D dragons guide 15 €, Nibelungen/Parzival (Arena) 4 €, Japanese myths 12 €, Deutsche Kurzgeschichten 3 €, Numazawa 1946 30 CHF (1 search); Earthsea quartet series (answer); local (bundle) | 2–3 min (first guess 8–10 ÷ 3) | 0–1 min (22:43 → 22:43:49) |
 | 2026-11-15 | Earthsea: Quartet and Books of Earthsea are separate editions, not one numbered series; series = the publisher's line on the spine, or none (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:45 → 22:46:08) |
 | 2026-11-15 | Tintin (Swedish, Carlsen 1968–1994) from the user's Seriekatalogen CSV: per printing like Asterix (1. Auflage = VF, 250–4000 kr; höhere Auflagen 50 kr estimate, default), latest 27; why so expensive (answer); local (bundle) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (22:51 → 22:51:34) |
+| 2026-11-15 | Tintin #20 has no printing info: tell first printing by the back-cover title list (only up to no. 20 = 1973 printing; Tintin hos gerillan 23 / later titles = reprint) (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:55 → 22:55:19) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
