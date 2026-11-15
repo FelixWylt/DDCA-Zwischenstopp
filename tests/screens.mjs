@@ -70,6 +70,27 @@ try {
   await page.screenshot({ path: `${OUT}/10-copy-picker.png`, fullPage: false });
 } catch (e) { errors.push("copy picker: " + e.message); }
 
+// every price suggestion must read as price ranges (catalogue/prices.json)
+try {
+  const bad = await page.evaluate(async () => {
+    const { S, parsePrices } = window.__dda; const out = [];
+    const sugg = S.priceSugg || (await (await fetch("catalogue/prices.json")).json()).series;
+    const tl = S.series.find(s => s.id === "tldle");
+    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, res = parsePrices(tl.id, sg.text, sg.cur); if (res.ranges.length !== lines) out.push(code + ": " + res.ranges.length + " of " + lines + " lines read"); }
+    return out;
+  });
+  bad.forEach(b => errors.push("price suggestion " + b));
+} catch (e) { errors.push("price check: " + e.message); }
+// the suggestion in the Series tab (Disney De Luxe)
+try {
+  await page.evaluate(() => window.__dda.nav("series")); await page.waitForTimeout(500);
+  await page.locator('[data-su="Disney"]').first().click(); await page.waitForTimeout(300);
+  await page.locator('[data-sg="Italia"]').first().click(); await page.waitForTimeout(300);
+  await page.locator('[data-sopen]').first().click(); await page.waitForTimeout(500);
+  await page.locator('[data-psugg]').first().scrollIntoViewIfNeeded(); await page.locator('[data-psugg]').first().click(); await page.waitForTimeout(500);
+  await page.screenshot({ path: `${OUT}/11-price-suggestion.png` });
+} catch (e) { errors.push("price suggestion screen: " + e.message); }
+
 fs.writeFileSync(`${OUT}/errors.txt`, errors.length ? errors.join("\n") + "\n" : "no errors\n");
 console.log(errors.length ? errors.join("\n") : "no errors");
 await browser.close();
