@@ -253,7 +253,7 @@ VIEWS.gaps = {
       for (let y = y1; y >= y0; y--) years.push(y);
       // with the INDUCKS catalogue, each year shows only the numbers that came out (KA 1948: 1–4)
       const perFor = y => {
-        if (!cat0 || y > catLast) return per;
+        if (!cat0 || y > catLast) return perYearFor(se, y, mine);
         const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
       };
@@ -315,7 +315,7 @@ VIEWS.gaps = {
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
     const edList = seriesEditions(se.id);
     return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : esc(se.perYear || 52) + " issues a year"}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : (perYearParts(se).parts.length ? "issues a year as set (" + esc(se.perYear) + ")" : esc(perYearOf(se, 0) || 52) + " issues a year")}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),

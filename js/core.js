@@ -174,6 +174,25 @@ function rangeBound(key, v, isTo) {
   }
   return parseInt(t, 10);
 }
+// "Per year" of a yearly series: one number ("52") or by years ("1978-1983: 12, 1984-1988: 24", "1990-: 52");
+// a year not covered by a "from-to: n" part uses the plain number, if any. 0 = not set
+function perYearParts(se) {
+  const parts = []; let plain = 0;
+  String((se && se.perYear) || "").split(/[,;\n]+/).map(x => x.trim()).filter(Boolean).forEach(x => {
+    const m = /^(\d{4})?\s*(?:([-–])\s*(\d{4})?)?\s*[:=]\s*(\d{1,3})$/.exec(x);
+    if (m && (m[1] || m[3])) parts.push({ a: m[1] ? +m[1] : -Infinity, b: m[3] ? +m[3] : m[2] ? Infinity : +m[1], n: +m[4] });
+    else if (/^\d{1,3}$/.test(x)) plain = +x;
+  });
+  return { parts, plain };
+}
+function perYearOf(se, y) { const { parts, plain } = perYearParts(se), p = parts.find(p => y >= p.a && y <= p.b); return p ? p.n : plain; }
+// squares for a year in Gaps: the setting (52 if not set), but never fewer than the highest number you have that year
+function perYearFor(se, y, mine) {
+  const own = Math.max(0, ...(mine || []).map(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); return m && +m[1] === y ? +m[2] : 0; }));
+  return Math.max(perYearOf(se, y) || 52, own);
+}
+// all issues of a yearly series from its first to its last year, by the setting (0 if not set)
+function perYearTotal(se) { let t = 0; for (let y = +se.firstYear || 0; y && y <= (+se.lastYear || 0); y++) t += perYearOf(se, y); return t; }
 // an edition name without its year: "Neuauflage 1997" and "Neuauflage 1998" are the same kind of edition
 function editionKey(e) { return String(e || "").toLowerCase().replace(/\b(1[89]|20)\d{2}\b/g, "").replace(/\s+/g, " ").trim(); }
 // editions (1. Auflage, höhere Auflagen, Neuauflage …): price ranges can be for one edition; each comic can name its edition,
@@ -254,7 +273,7 @@ function valueRulesHtml(key) {
     ${(eds => eds.length ? `<label class="small"><span class="l">Copies without an edition count as</span><select data-vdef="${esc(key)}"><option value="">Automatic</option>${eds.map(e => `<option${editionKey(e) === editionKey(defaultEditionOf(key)) ? " selected" : ""}>${esc(e)}</option>`).join("")}</select></label><datalist id="edlist">${eds.map(e => `<option>${esc(e)}</option>`).join("")}</datalist>` : "")(seriesEditions(key))}
     ${full ? "" : `<button type="button" class="ghost" data-vall="${esc(key)}">Show all ${all.length} ranges</button>`}
     <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Only From = that issue and all later ones; only To = all up to that issue; both empty = all. The narrowest range wins.</span></div>
-    ${(sg => sg ? `<div class="banner small" style="margin:0"><div><strong>Suggested prices</strong> (${esc(sg.cur)}, checked on ${esc(niceDate(sg.date))}${(Date.now() - new Date(sg.date)) / 864e5 > 365 ? ", over a year ago: prices may have changed" : ""}): ${esc(sg.note)}<br><span class="mono">${esc(sg.text.split("\n").slice(0, 4).join(", "))}${sg.text.split("\n").length > 4 ? " …" : ""}</span></div><div class="row" style="gap:8px;margin-top:6px"><button type="button" data-psugg="${esc(key)}">Use these prices</button></div></div>` : "")(se && S.priceSugg && !all.some(r => r.price !== "" && r.price != null) && S.priceSugg[(catEntry(se) || {}).code || se.code])}
+    ${(sg => sg ? `<div class="banner small" style="margin:0"><div><strong>Suggested prices</strong> (${esc(sg.cur)}, checked on ${esc(niceDate(sg.date))}${(Date.now() - new Date(sg.date)) / 864e5 > 365 ? ", over a year ago: prices may have changed" : ""}): ${esc(sg.note)}<br><span class="mono">${esc(sg.text.split("\n").slice(0, 4).join(", "))}${sg.text.split("\n").length > 4 ? " …" : ""}</span></div><div class="row" style="gap:8px;margin-top:6px"><button type="button" data-psugg="${esc(key)}">Use these prices</button></div></div>` : "")(se && !all.some(r => r.price !== "" && r.price != null) && priceSuggFor(se))}
     <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
       <div class="stack" style="margin-top:8px">
         <p class="small muted" style="margin:0">Paste a list copied from Comicguide.de (Zustand 1) or Seriekatalogen.se (the VF column is taken as Z1). Or type ranges, separated by commas: <span class="mono">${yearly ? "1951 800, 1952/1 450, 1952/4-1953/1 150" : "1-25 8, 26-80 5, 81- 3"}</span></p>
@@ -268,6 +287,8 @@ function valueRulesHtml(key) {
 // Seriekatalogen: "1949 2 650 1300 2000 5000 10000" = year, issue, G VG FN VF NM; VF counts as Z1
 // typed: "1-25 8, 26-80 5" or "1952/4-1953/1 150"
 function priceAmount(t) { const n = parseAmt(t); return n === "" ? null : n; }
+// price suggestions (catalogue/prices.json): by INDUCKS code, or "id:<series id>" for series INDUCKS doesn't have (Asterix)
+function priceSuggFor(se) { const P = S.priceSugg || {}; return P[(catEntry(se) || {}).code || se.code] || P["id:" + se.id] || null; }
 function priceCur(t, fallback) { return /€|eur/i.test(t) ? "EUR" : /\bkr\b|sek/i.test(t) ? "SEK" : /chf|fr\./i.test(t) ? "CHF" : fallback; }
 
 function parsePrices(key, text, fallbackCur, edition) {
@@ -296,13 +317,13 @@ function parsePrices(key, text, fallbackCur, edition) {
       items.push({ lo: at(y, a), hi: at(y, b), price: p, cur: m[6] || /€|euro/i.test(line) ? "EUR" : fallbackCur }); return;
     }
     // Comicguide with titles and editions: "1 Der Kolumbusfalter (1. Auflage) Softcover 1000.00 €"
-    const cg = /^(\d{1,4})\s+(?![-–:=])(.*\S)\s+(\d[\d.,]*)\s*(€|EUR|Euro)\s*$/i.exec(line);   // a title, not "– 10: 1000 EUR"
+    const cg = /^(\d{1,4})\s+(?![-–:=])(.*\S)\s+(\d[\d.,]*)\s*(€|EUR|Euro|kr|SEK|CHF|Fr\.)\s*$/i.exec(line);   // a title, not "– 10: 1000 EUR"; kr and CHF too ("16 Asterix (1. Auflage) 80 kr")
     if (cg) {
       kind = kind || "Comicguide";
       if (yearly) { unread.push(line); return; }
       const ed = (/\(([^()]*)\)\s*[A-Za-zÄÖÜäöü\/ .-]{0,24}$/.exec(cg[2]) || [])[1] || "", p = priceAmount(cg[3]);
       if (p == null) { unread.push(line); return; }
-      edRows.push({ n: +cg[1], ed: editionKey(ed), label: ed.replace(/\s*\b(1[89]|20)\d{2}\b/g, "").trim(), price: p }); return;
+      edRows.push({ n: +cg[1], ed: editionKey(ed), label: ed.replace(/\s*\b(1[89]|20)\d{2}\b/g, "").trim(), price: p, cur: priceCur(cg[4], "EUR") }); return;
     }
     // Seriekatalogen: year (or nothing), issue or issue range, then five prices
     // Seriekatalogen: year (or nothing), issue or issue range, an optional title, then five prices G VG FN VF NM ("-" = no price)
@@ -354,11 +375,11 @@ function parsePrices(key, text, fallbackCur, edition) {
     const want = edition != null && cnt[edition] ? edition : (editions.find(e => /höher|spätere|nachdruck|later/.test(e.key)) || editions.slice().sort((a, b) => b.n - a.n)[0]).key;
     chosen = want;
     const byN = {}; edRows.forEach(r => (byN[r.n] = byN[r.n] || []).push(r));
-    Object.keys(byN).forEach(n => { const rs = byN[n], r = rs.find(x => x.ed === want) || rs.find(x => x.ed === ""); if (r) items.push({ lo: +n, hi: +n, price: r.price, cur: "EUR" }); else edMissing++; });
+    Object.keys(byN).forEach(n => { const rs = byN[n], r = rs.find(x => x.ed === want) || rs.find(x => x.ed === ""); if (r) items.push({ lo: +n, hi: +n, price: r.price, cur: r.cur || "EUR" }); else edMissing++; });
   }
   // every edition with its own ranges, to add them all
   const merge = list => { const out = []; list.sort((a, b) => a.lo - b.lo).forEach(x => { const l = out[out.length - 1]; if (l && l.price === x.price && l.cur === x.cur) l.hi = Math.max(l.hi, x.hi); else out.push(Object.assign({}, x)); }); return out; };
-  const byEdition = editions.map(e => ({ key: e.key, label: e.label, n: e.n, ranges: merge(edRows.filter(r => r.ed === e.key).map(r => ({ lo: r.n, hi: r.n, price: r.price, cur: "EUR" }))) }));
+  const byEdition = editions.map(e => ({ key: e.key, label: e.label, n: e.n, ranges: merge(edRows.filter(r => r.ed === e.key).map(r => ({ lo: r.n, hi: r.n, price: r.price, cur: r.cur || "EUR" }))) }));
   // a pasted list: neighbouring issues with the same price become one range; typed ranges stay as typed
   const listed = items.filter(x => !x.typed).sort((a, b) => a.lo - b.lo), ranges = [];
   listed.forEach(x => {
@@ -387,7 +408,7 @@ function boundText(key, v, isTo) {
 function bindPasteBox(root) {
   // a suggested list goes into the paste box and is read like a pasted one: you still see it and confirm
   (root || document).querySelectorAll("[data-psugg]").forEach(b => b.onclick = () => {
-    const key = b.dataset.psugg, se = seriesById(key), sg = se && S.priceSugg && S.priceSugg[(catEntry(se) || {}).code || se.code];
+    const key = b.dataset.psugg, se = seriesById(key), sg = se && priceSuggFor(se);
     const d = [...document.querySelectorAll("details.pastebox")].find(x => x.dataset.pk === key); if (!sg || !d) return;
     d.open = true; d.querySelector("[data-ptext]").value = sg.text; d.querySelector("[data-pcur]").value = sg.cur;
     d.querySelector("[data-pread]").click(); d.scrollIntoView({ block: "start" });

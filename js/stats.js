@@ -122,10 +122,10 @@ VIEWS.stats = {
       const ce = catEntry(s), gridN = s.numbering === "year" ? yearGridTotal(s) : null, catN = gridN || (ce && +ce.issues) || 0;
       if (s.numbering === "year" && ce && gridN == null && !S.catCache[ce.file] && !(S.statCat || {})[ce.file]) { S.statCat = Object.assign({}, S.statCat, { [ce.file]: 1 }); catalogueFile(ce).then(() => { if (S.view === "stats") renderKeep(); }).catch(() => {}); }
       const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book"), zero = zeroSquares(s, ce && S.catCache[ce.file], S.comics.filter(c => c.seriesId === s.id));
-      const tot = s.numbering === "year" ? (catN || Math.max(0, ((+s.lastYear || 0) - (+s.firstYear || 0) + 1) * (+s.perYear || 0))) : Math.max(0, (+s.latest || 0) - Math.max(1, +s.first || 1) + 1) + (zero.has("run") ? 1 : 0);
+      const tot = s.numbering === "year" ? (catN || Math.max(0, perYearTotal(s))) : Math.max(0, (+s.latest || 0) - Math.max(1, +s.first || 1) + 1) + (zero.has("run") ? 1 : 0);
       const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^\d{4}X\d{2,3}$/.test(k)) return !!catN;
         if (splitLabel(ce && S.catCache[ce.file], k)) return true;
-        return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(+s.perYear || 0, 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
+        return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(perYearOf(s, +m[1]), 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
       const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
       return { s, n, tot };
     }).filter(x => x.tot && x.n);

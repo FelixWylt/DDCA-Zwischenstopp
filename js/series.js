@@ -460,7 +460,7 @@ VIEWS.series = {
       <label><span class="l">Single comic</span><select data-k="single"><option value=""${!s.single ? " selected" : ""}>Automatic${isSingleSeries(Object.assign({}, s, { single: "" })) ? " (yes: one volume in INDUCKS)" : ""}</option><option value="yes"${s.single === "yes" ? " selected" : ""}>Yes: list under Single comics</option><option value="no"${s.single === "no" ? " selected" : ""}>No: own folder</option></select></label>
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
-        ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
+        ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" placeholder="52, or 1978-1983: 12, 1984-: 24" value="${esc(s.perYear || "")}"></label>`
         : `<label><span class="l">First issue</span><input data-k="first" type="number" min="1" placeholder="1" value="${esc(s.first || "")}"></label><label><span class="l">Latest issue</span><input data-k="latest" type="number" min="1" value="${esc(s.latest || "")}"></label>`}
       <label><span class="l">Publisher</span><input data-k="pubHouse" value="${esc(s.pubHouse || "")}" placeholder="Egmont Ehapa"></label>
       <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label></div>`, true)
@@ -533,7 +533,8 @@ VIEWS.series = {
       row.querySelectorAll("[data-k]").forEach(inp => {
         const k = inp.dataset.k, v = inp.value.trim();
         if (k === "years") { const m = v.match(/(\d{4})\D+(\d{4})/); if (m) { s.firstYear = +m[1]; s.lastYear = +m[2]; } }
-        else if (k === "latest" || k === "perYear" || k === "first") s[k] = parseInt(v, 10) || "";
+        else if (k === "latest" || k === "first") s[k] = parseInt(v, 10) || "";
+        else if (k === "perYear") s[k] = /^\s*\d+\s*$/.test(v) ? parseInt(v, 10) : v.trim();
         else s[k] = v;
       });
       if (!s.id) { const base = (s.code || s.name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "s" + Date.now(); let id = base, k = 2; while (S.series.some(x => x !== s && x.id === id)) id = base + "-" + k++; s.id = id; }

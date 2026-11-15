@@ -421,7 +421,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     };
     // the next number in a run, keeping series, status, place and date of purchase
     const goNext = (c, p, se) => {
-      const per = se ? (+se.perYear || 52) : 52;
+      const per = se ? (perYearOf(se, p.year) || 52) : 52;
       const dbl = /^(\d{4})-\d{1,3}-(\d{1,3})$/.exec(p.label || "");
       if (dbl) p = Object.assign({}, p, { n: +dbl[2] });   // after 2016-11-12 comes 2016/13
       const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
@@ -612,7 +612,7 @@ function yearGridTotal(se) {
     if (zero.has(String(y))) total++;
     if (!perY[y] && y <= catLast && yearExtras(cat, mine, y).length) { total += yearExtras(cat, mine, y).length; continue; }
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
-    const py = y > catLast ? per : Math.max(perY[y] || 0, ...owned); if (!py) continue;
+    const py = y > catLast ? perYearFor(se, y, mine) : Math.max(perY[y] || 0, ...owned); if (!py) continue;
     if (perYSet[y] && (LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y])) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py - yearStart(perYSet, mine, y) + 1;
     total += yearExtras(cat, mine, y).length;
     Object.values(yearSplits(cat, y)).forEach(l => { total += l.length - 1; });

@@ -91,7 +91,7 @@ if (want("prices")) try {
     const { S, parsePrices } = window.__dda; const out = [];
     const sugg = S.priceSugg || (await (await fetch("catalogue/prices.json")).json()).series;
     const tl = S.series.find(s => s.id === "tldle");
-    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, res = parsePrices((S.series.find(s => s.code === code) || tl).id, sg.text, sg.cur); if (res.ranges.length !== lines) out.push(code + ": " + res.ranges.length + " of " + lines + " lines read"); }
+    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, res = parsePrices((S.series.find(s => s.code === code) || tl).id, sg.text, sg.cur); const read = res.editions.length ? res.editions.reduce((a, e) => a + e.n, 0) : res.ranges.length; if (read !== lines) out.push(code + ": " + read + " of " + lines + " lines read"); }
     return out;
   });
   bad.forEach(b => errors.push("price suggestion " + b));
