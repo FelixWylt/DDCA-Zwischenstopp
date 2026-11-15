@@ -77,6 +77,7 @@
 | 2026-11-15 | Stats › When the stories were made: stories without a date placed by the oldest copy (lighter part of the bar, count in the note); test | about 1 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (19:38 → 19:40:47, incl. 1 run of ~2 min) |
 | 2026-11-15 | Why 48 → 28 series without prices? (answer from the code and the 15:55 backup: Add all = 4 series, 20 unpriced book series drop out when Stats is on Comics) | 1–2 min (gut 2–4 ÷ 2) | 0–1 min (20:11 → 20:11:58) |
 | 2026-11-15 | "gut" explained (English: gut feeling); replies now say "first guess" (rule in CLAUDE.md); Overview count follows the Comics/Books/Both switch shared by all Stats tabs (answer) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:13 → 20:13:42) |
+| 2026-11-15 | Legend (Marie Lu) prices: user's books are used paperbacks (1 search), 1-4: 4 € waiting; Prodigy lacks a volume number, Swedish Legend no series | 1.5–2 min (first guess 4–6 ÷ 3) + 1 run | 1–2 min (20:20 → 20:22:20, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
