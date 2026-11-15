@@ -121,6 +121,7 @@
 | 2026-11-15 | 5 items: lists Topolino Extra (it/TXTR) 7 €, Divertiamoci a stare bene (it/DSB) 1-8: 2 €, Artemis Fowl (Swedish HC) 40 kr; typed values Books of Earthsea 35 €, Maus (Pantheon) 15 € (estimates, no search); local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (23:08 → 23:08:40) |
 | 2026-11-15 | War of the Realms (Panini) from the user's Comicguide table: 1-4 3.50 €, 5 3 €, variant covers 1B–5B 7/6 €; running-number price lines now take a variant letter ("5B: 6 €"), da-v209; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (23:09 → 23:10:35) |
 | 2026-11-15 | Books of Earthsea on Ricardo (CH): new Ex Libris CHF 74.40 (Saga), Gollancz edition CHF 46.90 (Lehmanns) → realistic 25–35 CHF, heavy parcel (1 search, answer only) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:11 → 23:11:35) |
+| 2026-11-15 | Publish: 13 price lists (Scooby Doo ×2, Samlade serier, X:en, Discworld, The atlas, Topolibri, Flight of Bones, Tintin, Topolino Extra, Divertiamoci, Artemis Fowl, War of the Realms), da-v208/209; one check (prices + series-tools + every screen): no errors | about 1 min (first guess 2 ÷ 2) + 2 min wait | 1–2 min (23:16 → 23:18:24, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -170,7 +171,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Tintin Swedish (x-tintin-swedish): per printing, 1. Auflage (Seriekatalogen) + höhere Auflagen 50 kr (default), local. The user's #20 (1973) is a first printing (back cover lists 1–18): told them to set Edition 1. Auflage.
   Topolino Extra (it/TXTR), Divertiamoci a stare bene (it/DSB, latest 8), Artemis Fowl (book series, kr): estimates, local.
   War of the Realms (x-war-of-the-realms, Panini): 1–5 + variants 1B–5B, latest 5, minApp 209, local.
-  All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
+  All lists above were published (last bundle 2026-11-15 about 23:18; nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
   locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
