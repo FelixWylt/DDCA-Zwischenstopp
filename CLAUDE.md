@@ -93,6 +93,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Waiting now: Swedish Asterix (replaces the imported ranges), 91:an (+ years 1956–2026, per year, issue list),
   Herman Hedning (x-herman-hedning-swedish): the user wants it BY YEAR like Seriekatalogen; the batch entry switches
   numbering to year and has "renumber" (running number -> year/nr, e.g. 86 -> 2009/06) for the user's copies.
+  Herman Hedning & CO (x-herman-hedning-co, running like Seriekatalogen: 3 ranges + latest 35).
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.

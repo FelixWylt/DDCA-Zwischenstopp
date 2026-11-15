@@ -2182,6 +2182,16 @@
    },
    "added": "2026-11-15c",
    "minApp": 199
+  },
+  {
+   "id": "x-herman-hedning-co",
+   "sugg": "id:x-herman-hedning-co",
+   "replace": true,
+   "patch": {
+    "latest": 35
+   },
+   "minApp": 196,
+   "added": "2026-11-15"
   }
  ]
 }
