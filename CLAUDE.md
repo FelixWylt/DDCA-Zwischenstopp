@@ -87,6 +87,7 @@
 | 2026-11-15 | Value estimate Chappatte, 100 Karikaturen NZZ am Sonntag (NZZ Libro 2012): about 20 CHF (1 search found nothing; Ricardo asking 29 CHF from the user) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:58 → 20:58:31) |
 | 2026-11-15 | Chappatte bought for 5 CHF (answer: value stays ~20 CHF, price paid already in the app) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:00 → 21:00:38) |
 | 2026-11-15 | Bamse from the user's Seriekatalogen CSV: yearly ranges (VF, 1973–2026), issue list with doubles, per year by year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:04 → 21:05:12) |
+| 2026-11-15 | Ninja Timmy (book series, Henrik Tamm): 1-: 50 kr from asking prices (1 search); 2 of the user's 3 books lack the series; local (bundle) | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (21:08 → 21:08:46) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -119,6 +120,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Spirous äventyr (x-spirous-aventyr): full list 0–56 (0 = Guldmaskinen 1975) + latest 56. The user's Guldmaskinen copy
   is wrongly numbered 5: told them to change it to 0 by hand.
   Bamse (x-bamse-varldens-starkaste-bjorn): yearly 1973–2026, issue list, per year (local, not yet pushed).
+  Ninja Timmy (book series "book:Ninja Timmy"): 1-: 50 kr (local). The user's Sansoria and Vita apan books have no series yet.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit

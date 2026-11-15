@@ -3153,6 +3153,13 @@
    },
    "minApp": 195,
    "added": "2026-11-15"
+  },
+  {
+   "id": "book:Ninja Timmy",
+   "sugg": "id:book:Ninja Timmy",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }
