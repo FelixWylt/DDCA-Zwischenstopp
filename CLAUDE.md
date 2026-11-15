@@ -74,6 +74,7 @@
 | 2026-11-15 | A Song of Ice and Fire (Bantam) prices: user's 5 are later mass market printings (2 searches); waiting lists now also for book series; test | 1.5–2.5 min (gut 4–7 ÷ 3) + 1 run | 2–3 min (19:24 → 19:27:08, incl. 1 run of ~2 min) |
 | 2026-11-15 | Stories listed twice (Oscar the Ostrich: same code and title twice in one Micky Maus Zeitung) now once; serial parts with their own title stay separate; test | 1–2 min (gut 3–5 ÷ 3) + 1 run | 2–3 min (19:29 → 19:31:31, incl. 1 run of ~2 min) |
 | 2026-11-15 | Stats › Stories: "When the stories were made" only read dates starting with the year (missed 30.05.1937, Januar 1966); top characters checked (counts are real, per story); test | 1.5–2 min (gut 4–6 ÷ 3) + 1 run | 2–3 min (19:33 → 19:35:48, incl. 1 run of ~2 min) |
+| 2026-11-15 | Stats › When the stories were made: stories without a date placed by the oldest copy (lighter part of the bar, count in the note); test | about 1 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (19:38 → 19:40:47, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
