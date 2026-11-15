@@ -95,6 +95,7 @@
 | 2026-11-15 | "Swedish kr" meant: the list already is in Swedish kr (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:24 → 21:24:35) |
 | 2026-11-15 | Variants with a capital letter (rule): Bamse 2003/1B, 2019/15B; 91:an 1977/13B; Herman Hedning 2019/1-2B (35 kr, double issues now keep a letter); found and fixed sw.js emptied since 19:25 (da-v204); local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (21:26 → 21:27:47, incl. the sw.js repair) |
 | 2026-11-15 | Variant check of all 26 price lists: all 9 Seriekatalogen CSVs scanned (Variant/Upplaga columns), only the 4 rows already added; web/INDUCKS lists have no listed variants (answer only) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:29 → 21:29:43) |
+| 2026-11-15 | Spider-Man (Swedish, Egmont 1999–2013) from the user's Seriekatalogen CSV: 6 ranges (VF), issue list with variant 1999/1B, years/per year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:32 → 21:32:58) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -130,6 +131,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Ninja Timmy (book series "book:Ninja Timmy"): 1-: 50 kr (local). The user's Sansoria and Vita apan books have no series yet.
   The Stormlight Archive (book series "book:The Stormlight archive"): 1-: 8 € (local).
   Donald Duck & Co Norway (x-donald-duck-co, prices.json "no/DD", in Swedish kr): local. Estimates except 1948/1.
+  Spider-Man Swedish (x-spider-man-swedish): yearly 1999–2013, issue list (variant 1999/1B), local. The user's copy is "2004/?".
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
