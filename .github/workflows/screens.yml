@@ -8,6 +8,10 @@ on:
         description: "Screens to photograph, comma-separated (see tests/screens.mjs); empty = only the JavaScript error check"
         required: false
         default: ""
+      visit:
+        description: "1 = open every screen to catch JavaScript errors (no pictures)"
+        required: false
+        default: ""
 permissions:
   contents: write
 concurrency: { group: screens, cancel-in-progress: true }
@@ -27,7 +31,7 @@ jobs:
         run: |
           python3 -m http.server 8080 >/dev/null 2>&1 &
           sleep 1
-          cp tests/screens.mjs /tmp/pw/ && cd /tmp/pw && OUT=$GITHUB_WORKSPACE/shots SCREENS="${{ inputs.screens }}" node screens.mjs
+          cp tests/screens.mjs /tmp/pw/ && cd /tmp/pw && OUT=$GITHUB_WORKSPACE/shots SCREENS="${{ inputs.screens }}" VISIT="${{ inputs.visit }}" node screens.mjs
       - name: Save to the screens branch
         run: |
           cd shots

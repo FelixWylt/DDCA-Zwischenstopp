@@ -7,7 +7,7 @@ What this is
   storage). Nothing is sent to any server.
 
 Files
-  index.html, styles.css, app.js   the app
+  index.html, styles.css, js/*.js   the app (js/core.js first, js/start.js last; see index.html)
   sw.js                            keeps the app on the phone for offline use
   manifest.webmanifest, icons/     lets Chrome install it like an app
   fonts/, vendor/                  fonts and the CSV reader, stored locally

@@ -51,8 +51,9 @@ await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => window.__dda && window.__dda.S.comics && window.__dda.S.comics.length > 5);
 
 const shot = async (name, fn) => {
-  if (!want(name.replace(/^\d+b?-/, ""))) return;
-  try { await page.evaluate(`(() => { const { S, nav } = window.__dda; (${fn.toString()})(); })()`); await page.waitForTimeout(600); await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); }
+  const look = want(name.replace(/^\d+b?-/, ""));
+  if (!look && !process.env.VISIT) return;   // VISIT=1: open every screen (to catch errors) without taking pictures
+  try { await page.evaluate(`(() => { const { S, nav } = window.__dda; (${fn.toString()})(); })()`); await page.waitForTimeout(600); if (look) await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); }
   catch (e) { errors.push(name + ": " + e.message); }
 };
 await shot("01-collection", () => { S.colTab = "comics"; S.col = {}; nav("collection"); });
