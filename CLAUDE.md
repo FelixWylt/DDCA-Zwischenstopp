@@ -66,6 +66,7 @@
 | 2026-11-15 | Wishlist category buttons squeezed into a grid cell (CSS fix), separate copies shown once with "2×" + copy picker, Capolavori della Letteratura prices (1 search), single-comic how-to | 4–8 min (+1 min wait) | 0–1 min (12:31 → 12:32:15) |
 | 2026-11-15 | CLAUDE.md: estimate correction (÷3 for bundles, ÷2 small) + clock stops at the last step before the reply | under 1 min (gut 1–2 min ÷ 2) | 0–1 min (12:49 → 12:49:33) |
 | 2026-11-15 | Package 1: single volumes in Find by title, 34/34B check loads the catalogue first, INDUCKS title replaced on number change, "Third copy" naming (add-on message already existed) | 2–3 min (gut 6–9 ÷ 3) | 1–2 min (13:05 → 13:06:36, incl. planning the 6 packages) |
+| 2026-11-15 | Package 2: screenshot check on GitHub (Playwright, phone size, sample data, ?test hook, screens branch), 4 runs incl. 2 fixes | 4–7 min (gut 10–20 ÷ 3) + runs | 5–6 min (≈13:07 after package 1 → 13:13:11, incl. 4 runs of ~1.5 min) |
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
@@ -81,3 +82,6 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Only test what changed; don't rerun earlier tests.
 - Raise `APP_VERSION` in sw.js with every change. A push to `main` publishes to GitHub Pages.
 - Network checks: push probe-books.mjs to the `cors-test` branch; the workflow writes probe-result.txt.
+- Screenshot check: every push that changes the app runs `.github/workflows/screens.yml` (tests/screens.mjs: phone size,
+  sample comics, address with `?test`). Results land on the `screens` branch: `shots/*.png` and `errors.txt`.
+  After a UI change, look at the relevant screenshots before reporting it as done (about 1.5 min per run).
