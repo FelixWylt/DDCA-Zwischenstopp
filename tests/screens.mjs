@@ -87,6 +87,7 @@ try {
   await page.locator('[data-su="Disney"]').first().click(); await page.waitForTimeout(300);
   await page.locator('[data-sg="Italia"]').first().click(); await page.waitForTimeout(300);
   await page.locator('[data-sopen]').first().click(); await page.waitForTimeout(500);
+  await page.evaluate(() => document.querySelectorAll("details").forEach(d => { if (d.querySelector("[data-psugg]")) d.open = true; }));
   await page.locator('[data-psugg]').first().scrollIntoViewIfNeeded(); await page.locator('[data-psugg]').first().click(); await page.waitForTimeout(500);
   await page.screenshot({ path: `${OUT}/11-price-suggestion.png` });
 } catch (e) { errors.push("price suggestion screen: " + e.message); }
