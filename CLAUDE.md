@@ -44,13 +44,14 @@
 | 2026-11-15 | Suggest a Stats tab redesign (answer only, from the code, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:09 → 14:09:19) |
 | 2026-11-15 | Suggest new stats for the Stats tab (answer only, from the app's fields, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:13 → 14:13:45) |
 | 2026-11-15 | Stats redesign reviewed with the chosen new stats (answer only) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (14:24 → 14:25:15) |
+| 2026-11-15 | Stats rebuild (first measured whole-tab rebuild): 5 tabs, Comics/Books/Both switch, ~15 new stats (growth lines, to do, top 10, best/worst buys, lots, budget, characters, pairs, reprints, pile, average ratings), wasWish flag | 10–15 min (gut 30–45 ÷ 3, unmeasured kind) + 2–3 runs | 6–7 min (14:29 → 14:35:15, incl. 2 runs) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
 and did not improve on their own. So: **take the gut estimate and divide it by about 3** for bundles and bigger jobs
-(by 2 for small ones), and say that you did. A true rebuild (whole tab) is still unmeasured: say so.
+(by 2 for small ones), and say that you did. A whole-tab rebuild (Stats, 2026-11-15) took about as long as the ÷3 estimate.
 
 Where the clock stops: do everything first (code, tests, research, the prices/tables for the reply), then make the
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
