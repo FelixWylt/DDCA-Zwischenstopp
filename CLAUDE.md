@@ -65,6 +65,7 @@
 | 2026-11-15 | Does the 91:an list include issue numbers? (answer only) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:24 → 18:24:12) |
 | 2026-11-15 | Own issue lists for non-INDUCKS series (91:an from the CSV: doubles, 14½, gaps like 2024/16) in Gaps, via Price lists waiting; test checks the grid | 2–3 min (gut 6–9 ÷ 3) + 1 run | 3–4 min (18:25 → 18:29:07, incl. 1 run of ~2 min) |
 | 2026-11-15 | Fused squares for double issues? (answer only) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:31 → 18:31:17) |
+| 2026-11-15 | Double issues as one wide square in Gaps (all yearly series), counted once in totals and Stats; test checks 91:an 2007 | 2–3 min (gut 6–9 ÷ 3) + 1 run | 5–6 min (18:32 → 18:37:43, incl. 3 runs of ~2 min: one with all screens, one after a test fix) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -77,7 +78,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v194)
+## Where we left off (2026-11-15, app da-v195)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -95,6 +96,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Own issue lists (da-v194): a series INDUCKS doesn't have can carry `issueList` (keys as in the INDUCKS files: "1956/01",
   doubles "2007-09-10" plus their single numbers, extras "1982X14" = 14½). Gaps then shows exactly those numbers
   (gridCat/ownIssueCat in core.js). 91:an's list (1732 keys, from the user's Seriekatalogen CSV) goes in via the batch patch.
+- Double issues (da-v195): in yearly series a double the list knows ("1987-52-53", "2007-09-10") is ONE wide square in Gaps
+  (catDoubles/fusedSquare in add.js); a comic "2007-9-10" or "2007/09" fills it; Gaps totals and Stats count it once.
 - "Per year" in Series takes one number or ranges by year ("1978-1983: 12, 1984-: 24"); Gaps, Stats and Next issue use it.
 
 ## How to make price ranges (the user's way)
