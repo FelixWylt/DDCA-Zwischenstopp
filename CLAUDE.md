@@ -40,6 +40,7 @@
 | 2026-11-15 | Package D: value over time (monthly points, chart in Stats › Value, in the backup), insurance list (.csv and print/PDF in Backup) | 3–4 min (gut 9–12 ÷ 3) + 1 run | 1–2 min (≈13:56 after package C → 13:57:27 commit; its check ran during E) |
 | 2026-11-15 | Package E: fair mode for the wishlist (big rows, search, Must have first), Got it asks price, currency and seller; screenshot test waits for start-up | 2–3 min (gut 6–9 ÷ 3) + 1 run | 2 min (13:57:27 → 13:59:27, incl. 1 run) |
 | 2026-11-15 | Package F: price suggestions de/LTB, de/MM, se/KA, se/KAP (4 searches), "checked on" date with a warning after a year, price check for yearly series | 4–6 min (gut 12–18 ÷ 3) + 1 run | ≈3 min (13:59:27 → 14:01:49, incl. 1 run and logging D–F) |
+| 2026-11-15 | Hide the price suggestion box when a series already has your own ranges | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:07 → 14:07:39) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
