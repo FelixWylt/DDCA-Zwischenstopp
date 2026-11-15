@@ -79,6 +79,7 @@
 | 2026-11-15 | "gut" explained (English: gut feeling); replies now say "first guess" (rule in CLAUDE.md); Overview count follows the Comics/Books/Both switch shared by all Stats tabs (answer) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:13 → 20:13:42) |
 | 2026-11-15 | Legend (Marie Lu) prices: user's books are used paperbacks (1 search), 1-4: 4 € waiting; Prodigy lacks a volume number, Swedish Legend no series | 1.5–2 min (first guess 4–6 ÷ 3) + 1 run | 1–2 min (20:20 → 20:22:20, incl. 1 run of ~2 min) |
 | 2026-11-15 | Marvels mutanter from the user's Seriekatalogen CSV: 5 yearly ranges (VF) + issue list (double 1989/7-8) + years/per year waiting | about 1 min (first guess 2–3 ÷ 2) + 1 run | 2–3 min (20:27 → 20:29:32, incl. 1 run of ~2 min) |
+| 2026-11-15 | Spirous äventyr from the user's Seriekatalogen CSV: Guldmaskinen = the user's no. 5, 350 kr waiting | under 1 min (first guess 1–2 ÷ 2) + 1 run | 2–3 min (20:31 → 20:33:46, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
