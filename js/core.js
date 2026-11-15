@@ -1147,8 +1147,11 @@ async function loadCatalogueIndex() {
   // price lists Claude has collected for your series (Series › Tools › Price lists waiting)
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
-// a waiting list counts as added once its text (by date and length) has been added, so a corrected list shows up again
-const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
+// this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
+const APP_BUILD = 199;
+// a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
+const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
+const batchTooNew = e => +e.minApp > APP_BUILD;
 function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && seriesById(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
 function priceBatchRules(e) {
   // read the list as the series will be after the patch (Herman Hedning: by year instead of running numbers)
@@ -1161,7 +1164,7 @@ function priceBatchRules(e) {
   } finally { if (se && pn) se.numbering = was; }
 }
 async function applyPriceBatch() {
-  const list = priceBatchWaiting(); let n = 0;
+  const list = priceBatchWaiting().filter(e => !batchTooNew(e)); let n = 0;
   for (const e of list) {
     const se = seriesById(e.id), rules = priceBatchRules(e);   // read before the patch changes the series
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);

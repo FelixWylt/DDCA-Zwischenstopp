@@ -672,6 +672,6 @@ function priceBatchCard() {
     return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : "") + (mv ? "; your " + mv + " " + (mv === 1 ? "copy gets its" : "copies get their") + " year/number" : ""); };
   return `<div class="card stack"><h3>Price lists waiting</h3>
     <p class="small muted" style="margin:0">Price ranges Claude has prepared for your series (from Comicguide, Seriekatalogen or sales). Nothing changes until you tap Add all.</p>
-    <ul class="small" style="margin:0;padding-left:18px">${w.map(e => `<li><strong>${esc(seriesById(e.id).name)}</strong>: ${esc(what(e))}</li>`).join("")}</ul>
-    <div class="row"><button type="button" class="primary" id="pbatch"${S.db ? "" : " disabled"}>Add all</button></div></div>`;
+    <ul class="small" style="margin:0;padding-left:18px">${w.map(e => `<li><strong>${esc(seriesById(e.id).name)}</strong>: ${batchTooNew(e) ? "needs the newest app version: close the app completely and open it again, then this list can be added" : esc(what(e))}</li>`).join("")}</ul>
+    <div class="row"><button type="button" class="primary" id="pbatch"${S.db && w.some(e => !batchTooNew(e)) ? "" : " disabled"}>Add all</button></div></div>`;
 }

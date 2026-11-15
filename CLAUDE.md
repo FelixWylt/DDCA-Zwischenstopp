@@ -81,7 +81,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v198)
+## Where we left off (2026-11-15, app da-v199)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -130,7 +130,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - The app code is split by section into `js/*.js` (plain scripts sharing their names; order in index.html: core first,
   start last). Code that runs while a file loads may only use names from earlier files. New files: add them to
   index.html and to the file list in sw.js.
-- Raise `APP_VERSION` in sw.js with every change. A push to `main` publishes to GitHub Pages.
+- Raise `APP_VERSION` in sw.js with every change, and `APP_BUILD` in js/core.js to the same number (da-v199 → 199).
+  A waiting price list that needs new app code gets "minApp": that build (old apps can't apply it properly: the price
+  lists load fresh, the code only with the update). Changing "added" makes a list show up again. A push to `main` publishes to GitHub Pages.
 - Network checks: push probe-books.mjs to the `cors-test` branch; the workflow writes probe-result.txt.
 - Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
