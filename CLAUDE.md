@@ -110,6 +110,7 @@
 | 2026-11-15 | Stats › Overview lag: every Stats tab built the story index, book stats and money totals of all tabs, filtered all comics once per series, and redrew once per INDUCKS file loaded. Now each tab builds only what it shows, comics indexed by series, unowned series skipped, one redraw after all files, da-v207; local (bundle) | 2–3 min (first guess 6–9 ÷ 3) | 1–2 min (22:17 → 22:18:46) |
 | 2026-11-15 | Publish: X-Men list, search fix (da-v206), Stats speed-up (da-v207); one check (prices + every screen opened): no errors | about 1 min (first guess 2 ÷ 2) + 2 min wait | 2–3 min (22:22 → 22:24:31, incl. 1 run of ~2 min) |
 | 2026-11-15 | Scooby Doo – Stort presentalbum from the user's Seriekatalogen CSV: numbered by year (1977: 20 kr, 1978–1985: 10 kr), the user's unnumbered 1977 copy gets 1977; waiting lists may now set "first", da-v208; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:25 → 22:25:33) |
+| 2026-11-15 | Scooby Doo magazine (Swedish, 1973–1983) from the user's Seriekatalogen CSV: 9 ranges (VF, 1975/12 = 4000 kr), issue list with double 1974/11-12, years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:30 → 22:30:37) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -152,6 +153,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   X-Men Swedish (x-x-men-swedish): 1990/9–1993/12, 20 kr, issue list (published 22:2x).
   Scooby Doo – Stort presentalbum (x-scooby-doo-stort-presentalbum): running numbers = years 1977–1985 (patch first/latest, renumber ""→1977), local.
+  Scooby Doo magazine (x-scooby-doo-swedish): yearly 1973–1983, issue list, local. The user's copy is "1979/?".
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
