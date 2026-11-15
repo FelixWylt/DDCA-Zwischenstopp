@@ -120,7 +120,9 @@ if (want("prices")) try {
     const { S, parsePrices } = window.__dda; const out = [];
     const sugg = S.priceSugg || (await (await fetch("catalogue/prices.json")).json()).series;
     const tl = S.series.find(s => s.id === "tldle");
-    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, se = S.series.find(s => s.code === code || "id:" + s.id === code) || (/^\d{4}[\/:\s-]/.test(sg.text) ? S.series.find(s => s.numbering === "year") : tl), res = parsePrices(se.id, sg.text, sg.cur); const read = res.editions.length ? res.editions.reduce((a, e) => a + e.n, 0) : res.ranges.length; if (read !== lines) out.push(code + ": " + read + " of " + lines + " lines read"); }
+    // a list that comes with a numbering switch (Herman Hedning: by year) is read the way Add all reads it
+    const batch = S.priceBatch || (await (await fetch("catalogue/restore-batch.json")).json()).series || [];
+    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, se = S.series.find(s => s.code === code || "id:" + s.id === code) || (/^\d{4}[\/:\s-]/.test(sg.text) ? S.series.find(s => s.numbering === "year") : tl), pn = (batch.find(e => e.sugg === code && e.patch && e.patch.numbering) || {}).patch, was = se.numbering; if (pn) se.numbering = pn.numbering; const res = parsePrices(se.id, sg.text, sg.cur); se.numbering = was; const read = res.editions.length ? res.editions.reduce((a, e) => a + e.n, 0) : res.ranges.length; if (read !== lines) out.push(code + ": " + read + " of " + lines + " lines read"); }
     return out;
   });
   bad.forEach(b => errors.push("price suggestion " + b));
