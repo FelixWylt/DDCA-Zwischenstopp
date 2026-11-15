@@ -3618,6 +3618,16 @@
    },
    "minApp": 195,
    "added": "2026-11-15"
+  },
+  {
+   "id": "x-herman-hedning-samlade-serier-swedish",
+   "sugg": "id:x-herman-hedning-samlade-serier-swedish",
+   "replace": false,
+   "patch": {
+    "latest": "8"
+   },
+   "minApp": 195,
+   "added": "2026-11-15"
   }
  ]
 }
