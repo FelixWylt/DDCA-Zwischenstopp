@@ -45,6 +45,7 @@
 | 2026-11-15 | Suggest new stats for the Stats tab (answer only, from the app's fields, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:13 → 14:13:45) |
 | 2026-11-15 | Stats redesign reviewed with the chosen new stats (answer only) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (14:24 → 14:25:15) |
 | 2026-11-15 | Stats rebuild (first measured whole-tab rebuild): 5 tabs, Comics/Books/Both switch, ~15 new stats (growth lines, to do, top 10, best/worst buys, lots, budget, characters, pairs, reprints, pile, average ratings), wasWish flag | 10–15 min (gut 30–45 ÷ 3, unmeasured kind) + 2–3 runs | 6–7 min (14:29 → 14:35:15, incl. 2 runs) |
+| 2026-11-15 | Stats: month labels on the right no longer overlap (Growth, Value over time), lots count as one buy in Best/worst buys (+ lot list) | about 1 min (gut 2–3 ÷ 2) + 1 run | 1–2 min (15:41 → 15:42:50, incl. 1 run) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
