@@ -14,6 +14,8 @@ const series = [
   { id: "ltb", name: "Lustiges Taschenbuch", short: "LTB", code: "de/LTB", country: "de", publisher: "Disney", group: "Deutschland – Lustiges Taschenbuch", numbering: "running", latest: 600 },
   { id: "tldle", name: "Disney De Luxe", short: "DDL", code: "it/TLDLE", country: "it", publisher: "Disney", group: "Italia", numbering: "running" },
   { id: "mhdw", name: "Micky Holmes & Donald Watson", code: "de/MHDW", country: "de", publisher: "Disney", group: "Deutschland – Alben & Sammlerbände", numbering: "running" },
+  { id: "mm", name: "Micky Maus Magazin", short: "MM", code: "de/MM", country: "de", publisher: "Disney", group: "Deutschland – Micky Maus", numbering: "year", firstYear: 1951 },
+  { id: "ka", name: "Kalle Anka & C:o", short: "KA", code: "se/KA", country: "se", publisher: "Disney", group: "Sverige – Kalle Anka", numbering: "year", firstYear: 1948 },
   { id: "kap", name: "Kalle Ankas Pocket", short: "KAP", code: "se/KAP", country: "se", publisher: "Disney", group: "Sverige – Pocket", numbering: "running" }
 ];
 const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), issueNum: parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
@@ -85,7 +87,7 @@ if (want("prices")) try {
     const { S, parsePrices } = window.__dda; const out = [];
     const sugg = S.priceSugg || (await (await fetch("catalogue/prices.json")).json()).series;
     const tl = S.series.find(s => s.id === "tldle");
-    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, res = parsePrices(tl.id, sg.text, sg.cur); if (res.ranges.length !== lines) out.push(code + ": " + res.ranges.length + " of " + lines + " lines read"); }
+    for (const [code, sg] of Object.entries(sugg)) { const lines = sg.text.split("\n").length, res = parsePrices((S.series.find(s => s.code === code) || tl).id, sg.text, sg.cur); if (res.ranges.length !== lines) out.push(code + ": " + res.ranges.length + " of " + lines + " lines read"); }
     return out;
   });
   bad.forEach(b => errors.push("price suggestion " + b));

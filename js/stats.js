@@ -284,7 +284,7 @@ function historyCard(m) {
   const line = key => pts.map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p[key] || 0).toFixed(1)).join(" ");
   const ticks = [0, max / 2 / 1.1, max / 1.1].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v).toLocaleString("de-CH")}</text><line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join("");
   const lab = k => { const [yy, mm] = k.split("-"); return mm + "/" + yy.slice(2); }, step = Math.ceil(ks.length / 6);
-  const xl = ks.map((k, i) => i % step && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="middle">${lab(k)}</text>`).join("");
+  const xl = ks.map((k, i) => i % step && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="${ks.length > 1 && i === ks.length - 1 ? "end" : "middle"}">${lab(k)}</text>`).join("");
   const dots = key => pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[key] || 0)}" r="3" class="${key}"><title>${lab(ks[i])}: CHF ${(p[key] || 0).toLocaleString("de-CH")}</title></circle>`).join("");
   const first = pts[0], last = pts[pts.length - 1], d = last.v - first.v;
   return `<div class="card stack"><div class="cardhead"><h3>Value over time</h3><span class="muted small">CHF, per month</span></div>

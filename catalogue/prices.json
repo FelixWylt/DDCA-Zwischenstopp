@@ -60,6 +60,30 @@
    "date": "2026-11-15",
    "note": "Used copy at Libraccio at about 55 % of cover price.",
    "text": "1-11: 5.5 €\n12-19: 6.5 €\n20-25: 8 €"
+  },
+  "de/LTB": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Lustiges Taschenbuch, FIRST printing (1. Auflage), top condition. Later printings are worth far less (LTB 1 reprint about 5–15 €). Rough guide from eBay.de sales 2025–26 (LTB 24 1st printing 42–85 €, lots of LTB 101–150 at about 4 € each) and Comicguide (LTB 1 1st printing up to about 1000 €).",
+   "text": "1: 900 €\n2-5: 150 €\n6-10: 100 €\n11-20: 60 €\n21-40: 35 €\n41-60: 20 €\n61-100: 12 €\n101-150: 6 €\n151-300: 4 €\n301-700: 3 €"
+  },
+  "de/MM": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Micky Maus Magazin, originals (not the reprints), top condition. Rough guide: 1951/1 eBay.de 6500 € (2025), Eppli auction start 5500 € (1951/1) and 750 € (1951/2); reprints of 1951/1 only 10–50 €. Later years from eBay.de prices.",
+   "text": "1951/1: 6000 €\n1951/2-1951/4: 900 €\n1952: 300 €\n1953: 200 €\n1954: 150 €\n1955: 100 €\n1956-1957: 60 €\n1958-1960: 35 €\n1961-1965: 20 €\n1966-1970: 12 €\n1971-1979: 7 €\n1980-1989: 4 €\n1990-2030: 2 €"
+  },
+  "se/KA": {
+   "cur": "SEK",
+   "date": "2026-11-15",
+   "note": "Kalle Anka & C:o, originals (not the facsimiles from 1983 and 1998), very fine condition. Rough guide: 1948/1 sold on Tradera for 150 600 kr (2026, record), earlier 105 600 kr; Seriekatalogen VF about 5000 kr for 1949 issues. Ordinary issues from 1970 on: Tradera 20–40 kr.",
+   "text": "1948/1: 150000 kr\n1948/2-1948/12: 30000 kr\n1949: 5000 kr\n1950: 3000 kr\n1951-1952: 1500 kr\n1953-1955: 800 kr\n1956-1959: 400 kr\n1960-1964: 150 kr\n1965-1969: 80 kr\n1970-1979: 40 kr\n1980-1989: 20 kr\n1990-2030: 10 kr"
+  },
+  "se/KAP": {
+   "cur": "SEK",
+   "date": "2026-11-15",
+   "note": "Kalle Ankas Pocket, very fine condition. Rough guide: Seriekatalogen VF 750 kr for nr 1 (1968); Tradera 2025: about 29 kr each for nr 65–340.",
+   "text": "1: 750 kr\n2-5: 300 kr\n6-10: 200 kr\n11-20: 120 kr\n21-40: 80 kr\n41-80: 50 kr\n81-150: 35 kr\n151-300: 30 kr\n301-700: 25 kr"
   }
  }
 }
