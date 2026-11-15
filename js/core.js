@@ -158,6 +158,8 @@ function valueNumber(c) {   // the number a price range is compared with: issue 
   return c.issueNum || parseInt(lab, 10) || (/^0+$/.test(lab.trim()) ? 0 : null);   // issue 0 (Nullnummer) counts too
 }
 // a range's "from" or "to" as a number: "1952/4" or "4/1952" is year 1952 issue 4; a year alone is all of that year
+// how a range reads: only From = that issue and all later ones, only To = everything up to it, both empty = all
+function rangeText(r) { const f = String(r.from || "").trim(), t = String(r.to || "").trim(); return f && t ? (f === t ? f : f + "–" + t) : f ? f + " and all later" : t ? "all up to " + t : "all issues"; }
 function rangeBound(key, v, isTo) {
   const t = String(v == null ? "" : v).trim(); if (!t) return NaN;
   const se = seriesById(key);
@@ -190,7 +192,8 @@ function valueRuleFor(c, asEdition) {
   let rules = [];
   for (const t of tiers) { rules = all.filter(r => editionKey(r.ed) === t && (() => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return (isNaN(a) && isNaN(b)) || (n != null && (isNaN(a) || n >= a) && (isNaN(b) || n <= b)); })()); if (rules.length) break; }
   const fits = rules;
-  const width = r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
+  const width = r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true);
+    return !isNaN(a) && !isNaN(b) ? b - a : !isNaN(a) ? 1e9 - a : !isNaN(b) ? 2e9 + b : 1e12; };
   return fits.sort((x, y) => width(x) - width(y))[0] || null;   // the narrowest range wins
 }
 // extras that came with a copy (lithograph, signature, box, gadget …), each with its own value, in CHF
@@ -247,10 +250,10 @@ function valueRulesHtml(key) {
   const defCur = (rows[0] && rows[0].cur) || (se && seriesLang(se) === "Swedish" ? "SEK" : se && seriesLang(se) === "German" ? "EUR" : "CHF");
   return `<div class="wide valrules"><span class="l">Value per issue (condition Z1)</span>
     ${nm ? `<span class="small muted">Collector prices: ${src}. Copy the price list there and paste it below, or note a few prices and make ranges.</span>` : ""}
-    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vmore aria-label="Edition and note" title="Edition and where the price is from">⋯</button><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="ed" class="vnote${r.ed ? "" : " vhide"}" list="edlist" placeholder="edition (empty = every edition)" value="${esc(r.ed || "")}"><input data-vf="note" class="vnote vhide" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div>`).join("")}
+    ${rows.map(r => `<div class="vrow" data-vid="${esc(r.id)}"><input data-vf="from" ${im} placeholder="${yearly ? "1952/4" : "from"}" value="${esc(r.from || "")}" aria-label="From"><input data-vf="to" ${im} placeholder="${yearly ? "1952/12" : "to"}" value="${esc(r.to || "")}" aria-label="To"><input data-vf="price" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(r.price))}" aria-label="Price"><select data-vf="cur" aria-label="Currency">${cur(r)}</select><button type="button" class="ghost tiny" data-vmore aria-label="Edition and note" title="Edition and where the price is from">⋯</button><button type="button" class="ghost tiny" data-vdel="${esc(r.id)}" aria-label="Remove">✕</button><input data-vf="ed" class="vnote${r.ed ? "" : " vhide"}" list="edlist" placeholder="edition (empty = every edition)" value="${esc(r.ed || "")}"><input data-vf="note" class="vnote vhide" placeholder="where from, e.g. eBay sold, Oct 2026" value="${esc(r.note || "")}"></div><div class="small muted vread" data-vread="${esc(r.id)}">${typeof r.price === "number" ? "= " + esc(rangeText(r)) : ""}</div>`).join("")}
     ${(eds => eds.length ? `<label class="small"><span class="l">Copies without an edition count as</span><select data-vdef="${esc(key)}"><option value="">Automatic</option>${eds.map(e => `<option${editionKey(e) === editionKey(defaultEditionOf(key)) ? " selected" : ""}>${esc(e)}</option>`).join("")}</select></label><datalist id="edlist">${eds.map(e => `<option>${esc(e)}</option>`).join("")}</datalist>` : "")(seriesEditions(key))}
     ${full ? "" : `<button type="button" class="ghost" data-vall="${esc(key)}">Show all ${all.length} ranges</button>`}
-    <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Empty = all. The narrowest range wins.</span></div>
+    <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" data-vadd="${esc(key)}">Add a price range</button><span class="small muted">${key.startsWith("book:") ? "From/to are volume numbers." : yearly ? "From/to are a year (all its issues) or year/issue, e.g. 1952/4." : "From/to are issue numbers."} Only From = that issue and all later ones; only To = all up to that issue; both empty = all. The narrowest range wins.</span></div>
     ${(sg => sg ? `<div class="banner small" style="margin:0"><div><strong>Suggested prices</strong> (${esc(sg.cur)}, checked on ${esc(niceDate(sg.date))}${(Date.now() - new Date(sg.date)) / 864e5 > 365 ? ", over a year ago: prices may have changed" : ""}): ${esc(sg.note)}<br><span class="mono">${esc(sg.text.split("\n").slice(0, 4).join(", "))}${sg.text.split("\n").length > 4 ? " …" : ""}</span></div><div class="row" style="gap:8px;margin-top:6px"><button type="button" data-psugg="${esc(key)}">Use these prices</button></div></div>` : "")(se && S.priceSugg && !all.some(r => r.price !== "" && r.price != null) && S.priceSugg[(catEntry(se) || {}).code || se.code])}
     <details class="pastebox" data-pk="${esc(key)}"><summary class="small"><strong>Paste prices or type several ranges</strong></summary>
       <div class="stack" style="margin-top:8px">
@@ -428,6 +431,7 @@ function bindValueRules(root) {
   (root || document).querySelectorAll(".vrow").forEach(row => row.querySelectorAll("[data-vf]").forEach(inp => inp.onchange = () => {
     const r = (S.valueRules || []).find(x => x.id === row.dataset.vid); if (!r) return;
     const k = inp.dataset.vf; r[k] = k === "price" ? parseAmt(inp.value) : inp.value.trim(); save();
+    const rd = document.querySelector(`[data-vread="${CSS.escape(r.id)}"]`); if (rd) rd.textContent = typeof r.price === "number" ? "= " + rangeText(r) : "";
   }));
   (root || document).querySelectorAll("[data-vadd]").forEach(b => b.onclick = () => { S.valueRules = (S.valueRules || []).concat([{ id: newId(), s: b.dataset.vadd, from: "", to: "", price: "", cur: "CHF", note: "" }]); save(); renderKeep(); });
   (root || document).querySelectorAll("[data-vmore]").forEach(b => b.onclick = () => b.closest(".vrow").classList.toggle("more"));
