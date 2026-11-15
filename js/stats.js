@@ -132,7 +132,8 @@ VIEWS.stats = {
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
     // value per series (also tells which series have no prices)
     const bySer = {}; sel.forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (k) (bySer[k] = bySer[k] || []).push(c); });
-    const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null);
+    const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null).sort((a, b) => b.list.length - a.list.length);
+    const noValList = () => S.statNoVal ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${noVal.map(x => x.k.startsWith("name:") ? `<span class="chipbtn" title="Not in your series list">${esc(seriesTitle(x.k))} ${x.list.length}</span>` : `<button type="button" class="chipbtn" data-priceser="${esc(x.k)}">${esc(seriesTitle(x.k))} ${x.list.length}</button>`).join("")}</div><p class="small muted" style="margin:4px 0 0">Tap a series to open its price ranges. The number is how many you own.</p>` : "";
     const bk = scope !== "c" && novels.length ? bookStats(novels, novelsWanted, true) : null;
     const idx = storyIndex("owned");
 
@@ -159,7 +160,7 @@ VIEWS.stats = {
       if (covTop.length) todo.push(`<div class="todo"><button type="button" class="link" data-pick="miss|cover|${sc}"><b>${nf(sel.filter(c => !c.coverUrl).length)}</b> without a cover</button>: ${covTop.map(([k, n]) => { const c0 = bySer[k] && bySer[k][0]; return c0 ? `<button type="button" class="chipbtn" data-scol='${esc(JSON.stringify({ p: publisherOf(c0), g: groupOf(c0), s: k }))}'>${esc(seriesTitle(k))} ${n}</button>` : ""; }).join(" ")}</div>`);
       const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && catEntry(seriesById(c.seriesId))).length;
       if (noStory) todo.push(`<div class="todo"><b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS) <button type="button" id="goFill">Fill all</button></div>`);
-      if (noVal.length) todo.push(`<div class="todo"><b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet <button type="button" class="link" id="goPrices">Add price ranges in Series</button></div>`);
+      if (noVal.length) todo.push(`<div class="todo"><b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet <button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}</div>`);
       const bdays = daysSince(S.lastBackup);
       if (bdays > 30) todo.push(`<div class="todo">${S.lastBackup ? "Last backup " + nf(bdays) + " days ago" : "No backup yet"} <button type="button" id="goBackup">Make a backup</button></div>`);
       const todoCard = todo.length ? card("To do", "", `<div class="todos">${todo.join("")}</div>`) : card("To do", "", note("Nothing to do: everything is filled in. ✓"));
@@ -240,19 +241,19 @@ VIEWS.stats = {
         const totals = card("Value", "CHF", `<div class="row" style="gap:24px;flex-wrap:wrap"><div><div class="v2">CHF ${fmt2(m.value)}</div><div class="k small muted">value of ${nf(m.valued)} of ${nf(m.n)}</div></div><div><div class="v2">CHF ${fmt2(m.paid)}</div><div class="k small muted">paid for ${nf(m.priced)} of ${nf(m.n)}</div></div>${m.paidValued ? `<div><div class="v2">${d >= 0 ? "+" : "−"} ${fmt2(Math.abs(d))}</div><div class="k small muted">gain, for those with both</div></div>` : ""}</div>`);
         const top = sel.map(c => ({ c, v: chfOf(c) })).filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10);
         const topCard = top.length ? card("Most valuable", "top 10", openList(top.map(({ c, v }) => `<li><button class="link" data-open="${esc(c.id)}">${esc(nameOf(c))}</button><span class="muted"> ${c.grade ? "Z" + esc(c.grade) + " · " : ""}CHF ${fmt2(v)}</span></li>`))) : "";
-        const gains = sel.map(c => ({ c, v: chfOf(c), p: paidOf(c) })).filter(x => x.v != null && x.p != null && !x.c.lotId).map(x => Object.assign(x, { g: x.v - x.p }));
+        const gains = sel.map(c => ({ c, v: chfOf(c), p: paidOf(c) })).filter(x => x.v != null && x.p != null && x.p > 0 && !x.c.lotId).map(x => Object.assign(x, { g: x.v - x.p }));
         // a lot counts as one buy: what you paid for the whole lot against the value of everything in it
         [...new Set(sel.filter(c => c.lotId).map(c => c.lotId))].forEach(id => { const l = lotInfo(id); if (!l) return;
           const ms = l.members.filter(c => c.status !== "wanted"), vals = ms.map(chfOf).filter(v => v != null), p = typeof parseAmt(l.total) === "number" ? toCHF(parseAmt(l.total), l.currency) : ms.reduce((a, c) => a + (paidOf(c) || 0), 0);
-          if (!vals.length || !(p >= 0)) return;
+          if (!vals.length || !(p > 0)) return;
           const v = vals.reduce((a, b) => a + b, 0);
           gains.push({ lot: l, n: ms.length, nv: vals.length, v, p, g: v - p }); });
         const best = gains.slice().sort((a, b) => b.g - a.g).slice(0, 5).filter(x => x.g > 0), worst = gains.slice().sort((a, b) => a.g - b.g).slice(0, 5).filter(x => x.g < 0);
         const gl = x => `<li>${x.lot ? `<button class="link" data-pick="${esc("lot|" + x.lot.id + "|a")}">Lot: ${esc([x.lot.source, niceDate(x.lot.date)].filter(Boolean).join(", ") || "no date")} (${x.n}${x.nv < x.n ? ", " + x.nv + " with a value" : ""})</button>` : `<button class="link" data-open="${esc(x.c.id)}">${esc(nameOf(x.c))}</button>`}<span class="muted"> paid ${fmt2(x.p)}, worth ${fmt2(x.v)}: </span><strong>${x.g >= 0 ? "+" : "−"}${fmt2(Math.abs(x.g))}</strong></li>`;
-        const buys = best.length || worst.length ? card("Best and worst buys", "CHF", `${best.length ? `<div class="small"><strong>Best</strong>${openList(best.map(gl))}</div>` : ""}${worst.length ? `<div class="small"><strong>Worst</strong>${openList(worst.map(gl))}</div>` : ""}${note("Value minus price paid. A lot counts as one buy: the whole lot's price against the value of everything in it. Tap a lot to see what was in it.")}`) : "";
+        const buys = best.length || worst.length ? card("Best and worst buys", "CHF", `${best.length ? `<div class="small"><strong>Best</strong>${openList(best.map(gl))}</div>` : ""}${worst.length ? `<div class="small"><strong>Worst</strong>${openList(worst.map(gl))}</div>` : ""}${note("Value minus price paid; things you got for free are left out. A lot counts as one buy: the whole lot's price against the value of everything in it. Tap a lot to see what was in it.")}`) : "";
         const topSer = serVals.filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10), tmax = topSer.length ? topSer[0].v : 1;
         const serCard = topSer.length || noVal.length ? card("Value per series", "CHF", `${topSer.length ? `<div class="hbars">${topSer.map(x => { const c0 = x.list[0], col = isNovel(c0) ? { p: NOVEL_PUB, g: BOOK_GROUP, s: x.k } : { p: publisherOf(c0), g: groupOf(c0), s: x.k }; return `<button class="hbar" data-scol='${esc(JSON.stringify(col))}' title="${esc(seriesTitle(x.k))}: CHF ${fmt2(x.v)}"><span class="lab">${esc(seriesTitle(x.k))}</span><span class="track"><span class="fill" style="width:${(x.v / tmax * 100).toFixed(1)}%"></span></span><span class="n">${Math.round(x.v).toLocaleString("de-CH")}</span></button>`; }).join("")}</div>` : ""}
-          ${noVal.length ? `<div class="row small" style="gap:8px;align-items:center"><span class="muted">${noVal.length} ${noVal.length === 1 ? "series has" : "series have"} no value yet.</span><button type="button" class="link" id="goPrices">Add price ranges in Series</button></div>` : ""}`) : "";
+          ${noVal.length ? `<div class="row small" style="gap:8px;align-items:center"><span class="muted">${noVal.length} ${noVal.length === 1 ? "series has" : "series have"} no value yet.</span><button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button></div>${noValList()}` : ""}`) : "";
         const curRows = Object.keys(Object.assign({}, m.sums, m.vals)).sort();
         const details = `<details class="card"><summary><strong>How the value is made up</strong> <span class="muted small">per currency, checked / table / estimate</span></summary><div class="stack" style="margin-top:8px">
           ${curRows.length ? `<div class="tablewrap"><table class="moneytab"><thead><tr><th>In</th><th>Value</th><th>≈ CHF</th><th>Paid</th><th>≈ CHF</th></tr></thead><tbody>${curRows.map(k => { const cv = x => x == null ? "–" : k === "CHF" ? "–" : fmt2(toCHF(x, k)); return `<tr><td>${k}</td><td>${m.vals[k] != null ? fmt2(m.vals[k]) : "–"}</td><td>${cv(m.vals[k])}</td><td>${m.sums[k] != null ? fmt2(m.sums[k]) : "–"}</td><td>${cv(m.sums[k])}</td></tr>`; }).join("")}</tbody></table></div>` : ""}
@@ -353,7 +354,14 @@ VIEWS.stats = {
     document.querySelectorAll("[data-readnow]").forEach(b => b.onclick = async () => { const c = S.comics.find(x => x.id === b.dataset.readnow); if (!c) return; try { await saveComic(Object.assign({}, c, { read: true, readDate: todayIso() })); toast("✓ " + (isNovel(c) ? c.title : comicTag(c)) + " marked read"); renderKeep(); } catch (e) { toast(errText(e)); } });
     document.querySelectorAll(".folder[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("[data-scol]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.col = JSON.parse(b.dataset.scol); S.shown = 200; nav("collection"); });
-    $("#goPrices") && ($("#goPrices").onclick = () => nav("series"));
+    document.querySelectorAll("[data-novals]").forEach(b => b.onclick = () => { S.statNoVal = !S.statNoVal; renderKeep(); });
+    document.querySelectorAll("[data-priceser]").forEach(b => b.onclick = () => {
+      const k = b.dataset.priceser;
+      if (k.startsWith("book:")) { S.serTab = "books"; S.serEditBook = k.slice(5); S.serEditObj = null; }
+      else { const se = seriesById(k); if (!se) return; S.serTab = "comics"; S.serEditBook = null; S.serEditObj = se; S.serPath = { u: se.publisher || "No universe yet", g: se.group || OTHER_GROUP }; S.sect = Object.assign({}, S.sect, { [se.id + "|prices"]: true }); }
+      nav("series");
+      setTimeout(() => { const d = document.querySelector('[data-sect$="|prices"]'); if (d) { d.open = true; d.scrollIntoView({ block: "start" }); } }, 80);
+    });
     document.querySelectorAll("[data-bgap]").forEach(b => b.onclick = () => { S.gapSeries = "book:" + b.dataset.bgap; S.gapTab = "gaps"; nav("gaps"); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
     const show = b => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
