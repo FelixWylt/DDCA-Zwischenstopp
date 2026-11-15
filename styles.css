@@ -607,3 +607,9 @@ body.kb .savebar { position: static; border-top: 0; }
 .wishrow { flex-wrap: wrap; }
 .wishrow .wlseg { flex: 1 0 100%; display: flex; margin-top: 6px; }
 .wishrow .wlseg button { flex: 1; min-height: 36px; font-size: 0.82rem; }
+/* wishlist rows: the category buttons take their own full-width line */
+.item.wishrow .wlseg { grid-column: 1 / -1; width: 100%; }
+.wlseg button[aria-pressed="true"] { background: var(--wanted-soft); color: var(--wanted); font-weight: 700; }
+/* several separate copies of one issue */
+.tile { position: relative; }
+.tilecopies { position: absolute; top: 4px; right: 4px; z-index: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; font-size: 0.72rem; font-weight: 700; }

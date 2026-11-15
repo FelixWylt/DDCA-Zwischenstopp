@@ -1616,10 +1616,20 @@ function tileHtml(c) {
     <span class="tnum">${esc([ser, tag].filter(Boolean).join(" ") || c.title || "")}</span>${(c.fav || +c.rating) && c.status !== "wanted" ? `<span class="tfav">${c.fav ? "♥" : ""}${+c.rating ? " " + ratingTxt(c.rating) : ""}</span>` : ""}</button>`;
 }
 // a list of comics as rows or as covers; heads (years) go between them in both views
+// the same issue owned as separate entries (other condition, seller …): one row with "2×"
+const copyKey = c => c.status === "wanted" ? "" : seriesKeyOf(c) + "|" + (c.kind === "book" ? (c.title || "") + "|" + (c.issue || "") : (c.issueLabel || c.issue || "")) ;
 function entriesHtml(list, inSeries, note) {
   const grid = colView() === "grid";
+  const byKey = new Map(); list.forEach(x => { if (typeof x === "string") return; const k = copyKey(x); if (k && !k.endsWith("|")) (byKey.get(k) || byKey.set(k, []).get(k)).push(x); });
+  const done = new Set();
+  list = list.filter(x => { if (typeof x === "string") return true; const k = copyKey(x), g = byKey.get(k); if (!g || g.length < 2) return true; if (done.has(k)) return false; done.add(k); return true; });
+  const multi = c => { const g = byKey.get(copyKey(c)); return g && g.length > 1 ? g : null; };
+  const mark = (html, c) => { const g = multi(c); if (!g) return html; const n = g.reduce((a, x) => a + (x.copies || 1), 0);
+    return html.replace(`data-id="${esc(c.id)}"`, `data-id="${esc(c.id)}" data-copies="${esc(g.map(x => x.id).join(","))}"`)
+      .replace(/<div class="chips">/, `<div class="chips"><span class="chip trade" title="Separate copies">${n}×</span>`)
+      .replace(/(<button class="tile[^>]*>)/, `$1<span class="tilecopies">${n}×</span>`); };
   const one = c => grid ? tileHtml(c) : note ? itemHtml(c, inSeries).replace('<div class="chips">', '<div class="chips">' + (note(c) ? `<span class="chip sortv">${esc(note(c))}</span>` : "")) : itemHtml(c, inSeries);
-  return `<div class="${grid ? "cgrid" : "list"}">` + list.map(x => typeof x === "string" ? x : one(x)).join("") + "</div>";
+  return `<div class="${grid ? "cgrid" : "list"}">` + list.map(x => typeof x === "string" ? x : mark(one(x), x)).join("") + "</div>";
 }
 // Sort other than series order: everything in the place you are, as one list
 const COL_SORTS = {
@@ -1727,7 +1737,18 @@ function drawResults() {
   box.innerHTML = html;
   box.querySelectorAll("[data-col]").forEach(b => b.onclick = () => openCol(JSON.parse(b.dataset.col)));
   const ab = box.querySelector(".serabout"); if (ab) ab.ontoggle = () => { S.aboutOpen = ab.open; };
-  box.querySelectorAll(".item, .tile").forEach(b => b.onclick = () => { S.editing = b.dataset.id; S.draft = null; nav("add"); });
+  box.querySelectorAll(".item, .tile").forEach(b => b.onclick = () => {
+    const ids = (b.dataset.copies || "").split(",").filter(Boolean);
+    if (ids.length < 2) { S.editing = b.dataset.id; S.draft = null; nav("add"); return; }
+    // which copy? each with what tells them apart
+    const rows = ids.map((id, i) => { const c = S.comics.find(x => x.id === id); if (!c) return "";
+      const bits = [c.grade ? "Z" + c.grade : "", typeof c.pricePaid === "number" ? money(c.pricePaid, c.currency) : "", c.source, c.purchaseDate ? niceDate(c.purchaseDate) : "", (c.copies || 1) > 1 ? "×" + c.copies : "", c.notes].filter(Boolean).join(" · ");
+      return `<button class="item" type="button" data-pickcopy="${esc(id)}" style="grid-template-columns:1fr"><div style="min-width:0"><div class="t">Copy ${i + 1}</div><div class="s">${esc(bits || "no details yet")}</div></div></button>`; }).join("");
+    if (!$("#cellpick")) { const pick = document.createElement("div"); pick.id = "cellpick"; box.appendChild(pick); }
+    sheetOpen(`<h3 style="margin:0 0 8px">Which copy?</h3><div class="list">${rows}</div><button class="ghost" type="button" id="copyx" style="margin-top:8px">Cancel</button>`);
+    document.querySelectorAll("[data-pickcopy]").forEach(x => x.onclick = () => { sheetClose(); S.editing = x.dataset.pickcopy; S.draft = null; nav("add"); });
+    $("#copyx").onclick = sheetClose;
+  });
   box.querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { S.bookView = b.dataset.bview; try { localStorage.setItem("da-bookview", S.bookView); } catch (e) {} S.shown = 200; drawResults(); });
   $("#pickback") && ($("#pickback").onclick = () => nav("stats"));
   $("#sortoff") && ($("#sortoff").onclick = () => { S.colSort = "series"; const sel = $("#fsort"); if (sel) sel.value = "series"; drawResults(); });
