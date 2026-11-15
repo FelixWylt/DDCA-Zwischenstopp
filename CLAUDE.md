@@ -118,6 +118,7 @@
 | 2026-11-15 | Tintin (Swedish, Carlsen 1968–1994) from the user's Seriekatalogen CSV: per printing like Asterix (1. Auflage = VF, 250–4000 kr; höhere Auflagen 50 kr estimate, default), latest 27; why so expensive (answer); local (bundle) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (22:51 → 22:51:34) |
 | 2026-11-15 | Tintin #20 has no printing info: tell first printing by the back-cover title list (only up to no. 20 = 1973 printing; Tintin hos gerillan 23 / later titles = reprint) (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:55 → 22:55:19) |
 | 2026-11-15 | Tintin #20 back cover lists Tintin 1–18 (+ Johan, Lotta och Jocko 1–5): no. 19 (1975) missing → first printing 1973, set Edition 1. Auflage (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:57 → 22:57:35) |
+| 2026-11-15 | 5 items: lists Topolino Extra (it/TXTR) 7 €, Divertiamoci a stare bene (it/DSB) 1-8: 2 €, Artemis Fowl (Swedish HC) 40 kr; typed values Books of Earthsea 35 €, Maus (Pantheon) 15 € (estimates, no search); local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (23:08 → 23:08:40) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -165,6 +166,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   X:en (x-x-en-swedish): yearly 1984–1985, 11 issues, local.
   Discworld, The atlas (book series), Topolibri (it/TLB), Doctor Strange: Flight of Bones (1-4): estimates, local.
   Tintin Swedish (x-tintin-swedish): per printing, 1. Auflage (Seriekatalogen) + höhere Auflagen 50 kr (default), local. The user's #20 (1973) is a first printing (back cover lists 1–18): told them to set Edition 1. Auflage.
+  Topolino Extra (it/TXTR), Divertiamoci a stare bene (it/DSB, latest 8), Artemis Fowl (book series, kr): estimates, local.
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
