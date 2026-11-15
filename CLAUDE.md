@@ -68,6 +68,7 @@
 | 2026-11-15 | Package 1: single volumes in Find by title, 34/34B check loads the catalogue first, INDUCKS title replaced on number change, "Third copy" naming (add-on message already existed) | 2–3 min (gut 6–9 ÷ 3) | 1–2 min (13:05 → 13:06:36, incl. planning the 6 packages) |
 | 2026-11-15 | Package 2: screenshot check on GitHub (Playwright, phone size, sample data, ?test hook, screens branch), 4 runs incl. 2 fixes | 4–7 min (gut 10–20 ÷ 3) + runs | 5–6 min (≈13:07 after package 1 → 13:13:11, incl. 4 runs of ~1.5 min) |
 | 2026-11-15 | Package 3: all lots selectable (Newest/Older), rate check with SEK-per-CHF swap, live wishlist counts, no single comics in Gaps picker, all copies' grades on 2× rows, no doubled name on single comics (ISBN reuse already existed) | 3–4 min (gut 8–12 ÷ 3) + 1 run | 1–2 min (≈13:13 after package 2 → 13:15:14, incl. 1 run) |
+| 2026-11-15 | Package 4: identical vs separate copies explained (field + duplicate buttons), one "2×" style, universe/group rule in Series, King Features suggestion | 2–3 min (gut 5–8 ÷ 3) + 1 run | 1–2 min (≈13:15 after package 3 → 13:17:08, incl. 1 run) |
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
