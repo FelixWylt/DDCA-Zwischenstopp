@@ -6,6 +6,8 @@
 const genresOf = c => String(c.genre || "").split(/\s*[,;\/]\s*/).map(x => x.trim()).filter(Boolean);
 function langOfEntry(c) { return c.lang || (c.kind !== "book" ? seriesLang(seriesById(c.seriesId) || {}) : "") || "Not set"; }
 const yearOf = d => +(String(d || "").slice(0, 4)) || 0;
+// a story's first publication comes as "1966", "30.05.1937" or "Januar 1966" (INDUCKS, Duckipedia): the year wherever it is
+const storyYearOf = d => { const m = String(d || "").match(/\b(1[89]\d\d|20\d\d)\b/g); return m ? +m[m.length - 1] : 0; };
 // when it was bought: the purchase date ("2025" alone counts for that year); entries without one aren't guessed
 const boughtOn = c => { const p = isoDate(c.purchaseDate || ""); return /^\d{4}(-\d{2})?/.test(p) ? p : ""; };
 // when it was entered in the app
@@ -295,7 +297,7 @@ VIEWS.stats = {
     if (tab === "stories") {
       if (scope === "b") return head + `<div class="empty"><h3>Stories are counted for comics</h3><p>Switch to Comics or Both above.</p></div>`;
       if (!idx.length) return head + `<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" on a comic.</p></div>`;
-      const decS = {}; let noFirst = 0; idx.forEach(e => { const y = yearOf(e.first); if (y > 1900) { const d = Math.floor(y / 10) * 10; decS[d] = (decS[d] || 0) + 1; } else noFirst++; });
+      const decS = {}; let noFirst = 0; idx.forEach(e => { const y = storyYearOf(e.first); if (y > 1900) { const d = Math.floor(y / 10) * 10; decS[d] = (decS[d] || 0) + 1; } else noFirst++; });
       const dk = Object.keys(decS).map(Number), ds = dk.length ? Array.from({ length: (Math.max(...dk) - Math.min(...dk)) / 10 + 1 }, (_, i) => Math.min(...dk) + i * 10) : [], dm = Math.max(1, ...Object.values(decS));
       const made = ds.length ? card("When the stories were made", "first published", `<div class="cols">${ds.map(d => `<div class="col" title="${d}s: ${decS[d] || 0}"><span class="bar" style="height:${((decS[d] || 0) / dm * 100).toFixed(1)}%"></span><span class="x">${String(d).slice(2)}</span></div>`).join("")}</div>${note(`Per decade of the story's first publication anywhere${noFirst ? " · " + nf(noFirst) + " without a date (Duckipedia details add it)" : ""}.`)}`) : "";
       const tally = role => { const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, 10); };

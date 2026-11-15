@@ -37,7 +37,7 @@ const comics = [
   { id: "b1", kind: "book", bookType: "book", seriesId: "_book", title: "Der Hobbit", author: "J. R. R. Tolkien", status: "wanted", stories: [] },
   { id: "b2", kind: "book", bookType: "book", seriesId: "_book", title: "Momo", author: "Michael Ende", status: "owned", stories: [] },
   { id: "b3", kind: "book", bookType: "", seriesId: "_book", title: "Ende gut, alles gut!", status: "owned", stories: [] },
-  c("mmz14", "mm", "1937/14", { stories: [{ title: "Oscar the Ostrich", code: "YM 029" }, { title: "Oscar the Ostrich", code: "YM 029" }, { title: "Tolle Phantasien", code: "ZS 37-05-30" }] }),
+  c("mmz14", "mm", "1937/14", { stories: [{ title: "Oscar the Ostrich", code: "YM 029", first: "30.05.1937" }, { title: "Oscar the Ostrich", code: "YM 029" }, { title: "Tolle Phantasien", code: "ZS 37-05-30" }] }),
   { id: "b4", kind: "book", bookType: "book", seriesId: "_book", seriesName: "A Song of Ice and Fire", issue: "1", issueLabel: "1", issueNum: 1, issueSort: 1, title: "A Game of Thrones", author: "George R. R. Martin", status: "owned", stories: [] },
   c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86)
 ];
@@ -87,6 +87,10 @@ await shot("08-stats", () => { S.statTab = "overview"; nav("stats"); });
 if (want("stories")) try {
   const n = await page.evaluate(() => window.__dda.storyIndex("owned").filter(e => e.code && /ym029/i.test(e.code.replace(/\s+/g, ""))).length);
   if (n !== 1) errors.push("stories: Oscar the Ostrich listed " + n + " times");
+  // "When the stories were made" reads "30.05.1937": a column for the 1930s
+  await page.evaluate(() => { const { S, nav } = window.__dda; S.statTab = "stories"; S.statScope = "a"; nav("stats"); }); await page.waitForTimeout(700);
+  const has30s = await page.evaluate(() => !!document.querySelector('.col[title^="1930s: 1"]'));
+  if (!has30s) errors.push("stories: no 1930s column in When the stories were made");
 } catch (e) { errors.push("stories: " + e.message); }
 // "Show them" › Single books opens Collection › Books at the single books (not the top of Series › Book series)
 if (want("stats-singles")) try {
