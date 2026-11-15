@@ -60,6 +60,7 @@
 | 2026-11-15 | Swedish Asterix: "inb." rows = hardcover (1, 3–6, 40 as 1. Auflage HC) | under 1 min (gut 1–2 ÷ 2) + 1 run | 2–3 min (17:56 → 17:58:19, incl. 1 run of ~2 min) |
 | 2026-11-15 | 91:an from the user's Seriekatalogen CSV: 18 yearly ranges (VF) + Per year text, prices.json, price check now uses a yearly series for yearly lists | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 3–4 min (18:01 → 18:04:23, incl. 1 run of ~2 min) |
 | 2026-11-15 | Price batch for Restore: Restore reads price-only files (replace a series' ranges, set per year/years), restore-batch.json + build script, notes | 1.5–2 min (gut 4–6 ÷ 3) | 1–2 min (18:05 → 18:06:46) |
+| 2026-11-15 | Restore file vs. Series › Tools button for the price batch (answer only, from the code) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (18:10 → 18:10:35) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
