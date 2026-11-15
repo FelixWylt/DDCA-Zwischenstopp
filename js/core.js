@@ -1149,7 +1149,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 204;
+const APP_BUILD = 205;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1177,6 +1177,13 @@ async function applyPriceBatch() {
     if (e.renumber && typeof e.renumber === "object") {
       const moved = S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).map(c => { const p = parseIssue(se, e.renumber[String(c.issueLabel || c.issue)]); return Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
       if (moved.length) await saveMany(moved);
+    }
+    // book series: number the user's books by title ("titleNumbers": {"Loki": "1"}), only books that have no number yet
+    if (e.titleNumbers && typeof e.titleNumbers === "object") {
+      const keys = Object.keys(e.titleNumbers).map(k => [norm(k), e.titleNumbers[k]]);
+      const mine = S.comics.filter(c => (c.seriesId === e.id || "book:" + String(c.seriesName || "").trim() === e.id) && !String(c.issueLabel || c.issue || "").trim());
+      const numbered = mine.map(c => { const hit = keys.find(([k]) => k && norm(c.title || "").includes(k)); if (!hit) return null; const q = parseIssue(se, String(hit[1])); return Object.assign({}, c, { issue: q.label, issueLabel: q.label, issueNum: q.n, issueSort: q.sort }); }).filter(Boolean);
+      if (numbered.length) await saveMany(numbered);
     }
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }

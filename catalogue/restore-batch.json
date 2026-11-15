@@ -3342,15 +3342,23 @@
    "id": "book:Glastronen",
    "sugg": "id:book:Glastronen",
    "replace": false,
-   "minApp": 200,
-   "added": "2026-11-15"
+   "minApp": 205,
+   "added": "2026-11-15",
+   "titleNumbers": {
+    "Glastronen": "1"
+   }
   },
   {
    "id": "book:Marvel: What if...",
    "sugg": "id:book:Marvel: What if...",
    "replace": false,
-   "minApp": 200,
-   "added": "2026-11-15"
+   "minApp": 205,
+   "added": "2026-11-15",
+   "titleNumbers": {
+    "Loki Was Worthy": "1",
+    "Wanda Maximoff": "2",
+    "Marc Spector": "3"
+   }
   },
   {
    "id": "book:Ragnarök",
@@ -3363,8 +3371,11 @@
    "id": "book:The Wheel of Time",
    "sugg": "id:book:The Wheel of Time",
    "replace": false,
-   "minApp": 200,
-   "added": "2026-11-15"
+   "minApp": 205,
+   "added": "2026-11-15",
+   "titleNumbers": {
+    "The Eye of the World": "1"
+   }
   }
  ]
 }

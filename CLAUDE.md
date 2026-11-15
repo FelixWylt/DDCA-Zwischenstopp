@@ -98,6 +98,7 @@
 | 2026-11-15 | Spider-Man (Swedish, Egmont 1999–2013) from the user's Seriekatalogen CSV: 6 ranges (VF), issue list with variant 1999/1B, years/per year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:32 → 21:32:58) |
 | 2026-11-15 | 4 book series: Glastronen 50 kr, Marvel What if 6 €, Ragnarök 100 kr (1 search, Finn.no), Wheel of Time 6 € (estimates); 3 books need a volume number; local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (21:35 → 21:35:47) |
 | 2026-11-15 | Marvel What If novels: a series, but unnumbered standalone stories; Loki is the 2nd by publication (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:39 → 21:39:43) |
+| 2026-11-15 | What If novels numbered by publication (1 Loki, 2 Wanda, 3 Marc Spector; 1 search corrected my memory); new batch key titleNumbers numbers the user's unnumbered books by title (also Glastronen, Eye of the World = 1), da-v205; local (bundle) | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:41 → 21:42:25) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -110,7 +111,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v204)
+## Where we left off (2026-11-15, app da-v205)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -140,6 +141,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
   locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
   push everything at once and run ONE price check for the whole bundle. Say in each reply how many lists are unpublished.
+  Book series: "titleNumbers": {"title words": "number"} numbers the user's books without a number by title (da-v205).
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
