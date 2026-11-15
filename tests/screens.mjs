@@ -3,7 +3,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs";
 
-const BASE = process.env.BASE || "http://localhost:8080/";
+const BASE = process.env.BASE || "http://localhost:8080/?test";
 const OUT = process.env.OUT || "shots";
 fs.mkdirSync(OUT, { recursive: true });
 
@@ -36,19 +36,19 @@ page.on("pageerror", e => errors.push("page error: " + e.message));
 page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()); });
 
 await page.goto(BASE, { waitUntil: "load" });
-try { await page.waitForFunction(() => typeof S !== "undefined" && S.dbState !== "loading", null, { timeout: 20000 }); }
+try { await page.waitForFunction(() => window.__dda && window.__dda.S.dbState !== "loading", null, { timeout: 20000 }); }
 catch (e) {
-  const state = await page.evaluate(() => typeof S === "undefined" ? "S is undefined" : "dbState=" + S.dbState + " err=" + (S.dbError && (S.dbError.name + " " + S.dbError.message))).catch(x => "evaluate failed: " + x.message);
+  const state = await page.evaluate(() => !window.__dda ? "test hook missing" : "dbState=" + window.__dda.S.dbState + " err=" + (window.__dda.S.dbError && (window.__dda.S.dbError.name + " " + window.__dda.S.dbError.message))).catch(x => "evaluate failed: " + x.message);
   fs.writeFileSync(`${OUT}/errors.txt`, "app not ready: " + state + "\n" + errors.join("\n") + "\n");
   await page.screenshot({ path: `${OUT}/00-not-ready.png`, fullPage: true });
   console.log("app not ready: " + state + "\n" + errors.join("\n")); await browser.close(); process.exit(0);
 }
-await page.evaluate(async ({ series, comics }) => { S.series = series; await saveSeries(); await saveMany(comics); }, { series, comics });
+await page.evaluate(async ({ series, comics }) => { const { S, saveSeries, saveMany } = window.__dda; S.series = series; await saveSeries(); await saveMany(comics); }, { series, comics });
 await page.reload({ waitUntil: "load" });
-await page.waitForFunction(() => typeof S !== "undefined" && S.comics && S.comics.length > 5);
+await page.waitForFunction(() => window.__dda && window.__dda.S.comics && window.__dda.S.comics.length > 5);
 
 const shot = async (name, fn) => {
-  try { await page.evaluate(fn); await page.waitForTimeout(600); await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); }
+  try { await page.evaluate(`(() => { const { S, nav } = window.__dda; (${fn.toString()})(); })()`); await page.waitForTimeout(600); await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); }
   catch (e) { errors.push(name + ": " + e.message); }
 };
 await shot("01-collection", () => { S.colTab = "comics"; S.col = {}; nav("collection"); });
@@ -62,7 +62,7 @@ await shot("08-stats", () => { nav("stats"); });
 await shot("09-series", () => { nav("series"); });
 // the copy picker: tap the LTB 1 row with two copies
 try {
-  await page.evaluate(() => { S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });
+  await page.evaluate(() => { const { S, nav } = window.__dda; S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });
   await page.waitForTimeout(600);
   await page.locator("[data-copies]").first().click();
   await page.waitForTimeout(400);

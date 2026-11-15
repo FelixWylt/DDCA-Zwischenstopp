@@ -4686,4 +4686,6 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
     if (document.visibilityState === "visible" && navigator.onLine) navigator.serviceWorker.getRegistration().then(r => r && r.update()).catch(() => {});
   });
 }
+// only for the screenshot check on GitHub (address ending in ?test): lets it load sample comics and open screens
+if (/[?&]test\b/.test(location.search)) window.__dda = { S, nav, render, saveMany, saveSeries };
 })();
