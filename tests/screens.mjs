@@ -88,6 +88,11 @@ if (want("series-tools")) try {
   if (!r.n || r.first !== 1956 || !/1970-: 26/.test(r.per) || r.card) errors.push("price batch: " + JSON.stringify(r));
   await page.screenshot({ path: `${OUT}/09c-series-tools-added.png`, fullPage: true });
   fs.writeFileSync(`${OUT}/price-batch.txt`, JSON.stringify(r) + "\n");
+  // 91:an's own issue list in Gaps: doubles fill two squares, 1982 has 14½, 2024 has no 16
+  await page.evaluate(() => { const { S } = window.__dda; S.gapSeries = "x-91-an-swedish"; window.__dda.nav("gaps"); }); await page.waitForTimeout(800);
+  const g = await page.evaluate(() => ({ x14: !!document.querySelector('[data-issue="1982X14"]'), n16: !!document.querySelector('[data-issue="2024/16"]'), n17: !!document.querySelector('[data-issue="2024/17"]'), y56: [...document.querySelectorAll(".yearrow")].length }));
+  if (!g.x14 || g.n16 || !g.n17 || g.y56 < 70) errors.push("91:an grid: " + JSON.stringify(g));
+  await page.screenshot({ path: `${OUT}/09d-gaps-91an.png` });
 } catch (e) { errors.push("price batch: " + e.message); }
 // the copy picker: tap the LTB 1 row with two copies
 if (want("copy-picker")) try {

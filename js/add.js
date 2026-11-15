@@ -600,7 +600,7 @@ function yearStart(perYSet, mine, y) {
   return Math.max(1, Math.min(...perYSet[y], ...own));
 }
 function yearGridTotal(se) {
-  const ent = catEntry(se), cat = ent && S.catCache[ent.file]; if (!cat || se.numbering !== "year") return null;
+  const cat = gridCat(se); if (!cat || se.numbering !== "year") return null;
   const mine = S.comics.filter(c => c.seriesId === se.id && !c.facsimile), perY = {}, perYSet = {};
   Object.keys(cat.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
   const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;

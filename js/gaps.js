@@ -210,7 +210,7 @@ VIEWS.gaps = {
     const mine = S.comics.filter(c => c.seriesId === se.id);
     const own = new Map(), want = new Map();
     // a double issue like 2012-13-14 fills both of its numbers
-    const catSq = (e => e && S.catCache[e.file])(catEntry(se));
+    const catSq = gridCat(se);
     const covered = lab => splitLabel(catSq, lab) ? [lab] : issueSquares(lab);   // 1967-02B has its own square
     const inSquare = new Map();   // square -> every comic in it (variants, double issues)
     mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
@@ -236,11 +236,11 @@ VIEWS.gaps = {
       const etxt = eds.length ? `<span class="edb">${esc(eds.join(" "))}</span>` : "";
       return `<button class="cell ${cls}${eds.length ? " hased" : ""}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info + (eds.length ? " · " + all.filter(c => c.edition).map(c => c.edition).join(", ") : ""))}">${esc(txt)}${vtxt}${etxt}</button>`;
     };
-    const ent0 = catEntry(se), cat0 = ent0 && S.catCache[ent0.file], perY = {};
+    const ent0 = catEntry(se), cat0 = gridCat(se), perY = {};
     const perYSet = {};
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
     // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
-    const sparse = y => perYSet[y] && (LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y]);
+    const sparse = y => perYSet[y] && ((cat0 && cat0.own) || LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y]);   // an own list (91:an) shows exactly its numbers
     const yearNums = (y, py) => { if (!sparse(y)) { const st = yearStart(perYSet, mine, y); return Array.from({ length: Math.max(0, py - st + 1) }, (_, i) => i + st); } const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
     const catYears = Object.keys(perY).map(Number), catLast = catYears.length ? Math.max(...catYears) : 0;
     const zero = zeroSquares(se, cat0, mine);
@@ -302,7 +302,7 @@ VIEWS.gaps = {
       notInGrid.push({ c, why });
     });
     // numbers INDUCKS only knows as variants (LTB 546 is 546A or 546B): ask which one
-    const entry = catEntry(se), cat = entry && S.catCache[entry.file];
+    const entry = catEntry(se), cat = gridCat(se);
     if (entry && !cat && !S.catLoading) { S.catLoading = true; catalogueFile(entry).then(() => { S.catLoading = false; if (S.view === "gaps") render(); }).catch(() => { S.catLoading = false; }); }
     if (cat) mine.forEach(c => {
       const lab = c.issueLabel || c.issue || "";
@@ -315,7 +315,7 @@ VIEWS.gaps = {
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
     const edList = seriesEditions(se.id);
     return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
-        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? "with the issues INDUCKS lists for each year" : (perYearParts(se).parts.length ? "issues a year as set (" + esc(se.perYear) + ")" : esc(perYearOf(se, 0) || 52) + " issues a year")}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
+        <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? (cat0.own ? "with the issues in its issue list (Seriekatalogen)" : "with the issues INDUCKS lists for each year") : (perYearParts(se).parts.length ? "issues a year as set (" + esc(se.perYear) + ")" : esc(perYearOf(se, 0) || 52) + " issues a year")}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",
             (k => k ? k + (k === 1 ? " comic needs" : " comics need") + " a variant letter" : "")(notInGrid.filter(x => x.hint).length),

@@ -667,7 +667,7 @@ VIEWS.series = {
 // Series › Tools: price lists Claude has prepared (catalogue/restore-batch.json), added with one tap
 function priceBatchCard() {
   const w = priceBatchWaiting(); if (!w.length) return "";
-  const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
+  const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition", issueList: "its issue list" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
     return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : ""); };
   return `<div class="card stack"><h3>Price lists waiting</h3>
     <p class="small muted" style="margin:0">Price ranges Claude has prepared for your series (from Comicguide, Seriekatalogen or sales). Nothing changes until you tap Add all.</p>

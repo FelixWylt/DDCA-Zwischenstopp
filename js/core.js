@@ -1148,7 +1148,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // a waiting list counts as added once its text (by date and length) has been added, so a corrected list shows up again
-const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (sg.date || "") + "|" + String(sg.text || "").length; };
+const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && seriesById(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
 function priceBatchRules(e) {
   const sg = S.priceSugg[e.sugg], res = parsePrices(e.id, sg.text, sg.cur), note = "Claude, " + sg.date;
@@ -1161,13 +1161,23 @@ async function applyPriceBatch() {
     const se = seriesById(e.id), rules = priceBatchRules(e);
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
     S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
-    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition", "issueList"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }
   await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);
   return { series: list.length, ranges: n };
 }
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
+// the issue list for a series' Gaps grid: the INDUCKS catalogue, or for series INDUCKS doesn't have (91:an) the series'
+// own list (issueList, e.g. from Seriekatalogen): "1956/01", double issues "2007-09-10", extras "1982X14" (14½)
+const ownCats = new Map();
+function ownIssueCat(se) {
+  if (!se || !Array.isArray(se.issueList) || !se.issueList.length) return null;
+  const k = se.issueList.join(","); if (ownCats.has(se.id) && ownCats.get(se.id).k === k) return ownCats.get(se.id).cat;
+  const cat = { code: "", own: true, issues: Object.fromEntries(se.issueList.map(x => [x, { n: x.replace("/", "-"), t: "", s: [] }])) };
+  ownCats.set(se.id, { k, cat }); return cat;
+}
+function gridCat(se) { const e = catEntry(se); return (e && S.catCache[e.file]) || ownIssueCat(se); }
 function catEntry(se) {
   const all = S.catalogue && S.catalogue.series; if (!se || !all) return null;
   const n = norm(se.name), list = Object.values(all);
