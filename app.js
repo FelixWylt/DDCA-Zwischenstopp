@@ -1446,7 +1446,7 @@ function itemHtml(c, inSeries) {
   if (c.status === "wanted") chips.push('<span class="chip wanted">Wishlist</span>');
   else {
     if (c.grade) chips.push('<span class="chip">Z' + esc(c.grade) + '</span>');
-    if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? "×" + c.copies : "Trade") + '</span>');
+    if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? c.copies + "×" : "Trade") + '</span>');
     if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
   }
   if (c.fav && c.status !== "wanted") chips.unshift('<span class="chip fav" title="Favourite">♥</span>');
@@ -1626,7 +1626,7 @@ function entriesHtml(list, inSeries, note) {
   const multi = c => { const g = byKey.get(copyKey(c)); return g && g.length > 1 ? g : null; };
   const mark = (html, c) => { const g = multi(c); if (!g) return html; const n = g.reduce((a, x) => a + (x.copies || 1), 0);
     return html.replace(`data-id="${esc(c.id)}"`, `data-id="${esc(c.id)}" data-copies="${esc(g.map(x => x.id).join(","))}"`)
-      .replace(/<span class="chip">Z[^<]*<\/span>/, "")
+      .replace(/<span class="chip">Z[^<]*<\/span>/, "").replace(/<span class="chip trade">\d+×<\/span>/, "")
       .replace(/<div class="chips">/, `<div class="chips"><span class="chip trade" title="Separate copies">${n}×</span>${(gs => gs.length ? `<span class="chip">${esc(gs.join(" / "))}</span>` : "")(g.map(x => x.grade ? "Z" + x.grade : "").filter(Boolean))}`)
       .replace(/(<button class="tile[^>]*>)/, `$1<span class="tilecopies">${n}×</span>`); };
   const one = c => grid ? tileHtml(c) : note ? itemHtml(c, inSeries).replace('<div class="chips">', '<div class="chips">' + (note(c) ? `<span class="chip sortv">${esc(note(c))}</span>` : "")) : itemHtml(c, inSeries);
@@ -2069,7 +2069,8 @@ ${isBook ? `
       <div class="card stack"><div class="row between"><h3>Your copy</h3><span class="row" style="gap:10px">${heartHtml(d.fav, 'id="f-fav"')}${starsHtml(d.rating, 'id="f-rating"')}</span></div>
         <div class="grid-form">
           <label><span class="l">Condition</span><select id="f-grade">${grades}</select></label>
-          <label><span class="l">Copies</span><input id="f-copies" type="number" min="1" value="${esc(d.copies || 1)}"></label>
+          <label><span class="l">Identical copies</span><input id="f-copies" type="number" min="1" value="${esc(d.copies || 1)}"></label>
+          <p class="small muted wide" style="margin:0">Only for copies that are the same in every way (condition, price, seller). A copy in another condition or from another seller: save it, then use <strong>Add another copy</strong> at the bottom.</p>
           <label><span class="l">Storage location</span><input id="f-location" value="${esc(d.location)}" placeholder="Box 3, shelf B"></label>
           <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
           ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
@@ -2317,7 +2318,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           const box = $("#confirmBox");
           box.innerHTML = have
             ? `<div class="confirm"><span>${exact ? esc(tag) + " is already in your collection" + (c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")") : esc(tag) + " overlaps with " + esc((target.short || target.name) + " " + haveLab) + ", which is already in your collection"}.</span>
-                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : exact ? `<button class="primary" id="dupCopy">Count as one more copy</button><button id="dupSep">Save as separate entry</button>` : `<button class="primary" id="dupSep">Save anyway</button>`}
+                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : exact ? `<button class="primary" id="dupCopy">One more identical copy</button><button id="dupSep">Separate copy (own condition, price, seller)</button>` : `<button class="primary" id="dupSep">Save anyway</button>`}
                 ${next ? `<button id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`
             : `<div class="confirm"><span>${esc(tag)} is already on your wishlist.</span>${next ? `<button class="primary" id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`;
           box.scrollIntoView({ block: "center" });
@@ -4465,6 +4466,7 @@ VIEWS.series = {
       <label class="sr-name"><span class="l">Name</span><input data-k="name" value="${esc(s.name)}"></label>
       <label><span class="l">Universe</span><input data-k="publisher" list="publist" value="${esc(s.publisher || "")}" placeholder="${DISNEY}"></label>
       <label><span class="l">Group</span><input data-k="group" list="grouplist" value="${esc(s.group || "")}" placeholder="${OTHER_GROUP}"></label>
+      <p class="small muted wide" style="margin:0"><strong>Universe</strong> = who owns the characters, not the language of the edition: Swedish Spider-Man is Marvel, Blixt Gordon is King Features (Flash Gordon). <strong>Group</strong> = for Disney the country and format (e.g. Italia, Sverige – Pocket), otherwise the character (Flash Gordon, Spider-Man).</p>
       <label><span class="l">Short</span><input data-k="short" value="${esc(s.short)}"></label>
       <label><span class="l">INDUCKS code</span><input data-k="code" class="mono" value="${esc(s.code)}" placeholder="de/LTB"></label>
       <div class="wide small inducksnote" data-ni="${i}">${inducksNote(s)}</div>
@@ -4485,7 +4487,7 @@ VIEWS.series = {
     const tab = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
     const bookNames = bookSeriesNames();
     const tabs = `<h2 style="margin:0">Series</h2><div class="subtabs" role="tablist" aria-label="Show"><button role="tab" type="button" data-stab="comics" aria-selected="${tab === "comics"}">Comic series <span class="muted">${S.series.length}</span></button><button role="tab" type="button" data-stab="books" aria-selected="${tab === "books"}">Book series <span class="muted">${bookNames.length}</span></button><button role="tab" type="button" data-stab="tools" aria-selected="${tab === "tools"}">Tools</button></div>`;
-    const datalists = `<datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
+    const datalists = `<datalist id="publist">${[...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "King Features", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].sort(pubCompare).map(p => `<option>${esc(p)}</option>`).join("")}</datalist>
         <datalist id="grouplist">${[...new Set(S.series.map(s => s.group).filter(Boolean))].sort().map(g => `<option>${esc(g)}</option>`).join("")}</datalist>`;
     const editIdx = S.serEditObj ? S.series.indexOf(S.serEditObj) : -1;
     if (tab === "comics" && editIdx >= 0) {
