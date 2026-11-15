@@ -53,8 +53,9 @@ const shot = async (name, fn) => {
 };
 await shot("01-collection", () => { S.colTab = "comics"; S.col = {}; nav("collection"); });
 await shot("02-group-ltb", () => { S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch" }; nav("collection"); });
+await shot("02b-series-ltb-copies", () => { S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });
 await shot("03-group-singles", () => { S.col = { p: "Disney", g: "Deutschland – Alben & Sammlerbände" }; nav("collection"); });
-await shot("04-wishlist", () => { S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); });
+await shot("04-wishlist", () => { S.gapTab = "wishlist"; S.wishKind = "comics"; S.wishOpen = { ltb: true }; nav("gaps"); });
 await shot("05-wishlist-books", () => { S.gapTab = "wishlist"; S.wishKind = "books"; nav("gaps"); });
 await shot("06-edit-comic", () => { S.editing = "a3"; S.draft = null; nav("add"); });
 await shot("07-new-comic", () => { S.editing = null; S.draft = null; nav("add"); });
