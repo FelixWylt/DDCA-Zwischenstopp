@@ -52,6 +52,7 @@
 | 2026-11-15 | Price range From/To: normal keyboard for every series (number keyboard for running-number series since 2026-11-07 hid the slash) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:16 → 16:16:26) |
 | 2026-11-15 | Stats To do "Fill all" opens Series › Tools (Refresh all comics), not Backup | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:20 → 16:20:43) |
 | 2026-11-15 | Handover note for a new chat (open task: Asterix price ranges from the user's backup) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:49 → 16:49:57) |
+| 2026-11-15 | Guide "How to make price ranges" in CLAUDE.md (sources, Z1, text format, editions, stable ranges) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (16:53 → 16:54:08) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -70,6 +71,24 @@ except typing the reply itself. Say in the report that the reply writing and Git
   `comics` (seriesId → `series`, issue, edition, date, notes, pricePaid), research sold prices, and give the ranges as text
   for Series › Asterix › Price ranges › Paste prices (and add them to catalogue/prices.json if they're general).
   Treat the backup as private: don't commit it to the repo.
+
+## How to make price ranges (the user's way)
+- **Value = condition Z1** (very good). Other conditions are worked out by the app's condition factors, so never lower
+  a range for worn copies.
+- **Sources, best first:** Comicguide.de (column "Zustand 1"), Seriekatalogen.se (VF column), then real sold prices
+  (eBay "sold", Tradera, Ricardo, Catawiki, auctions such as Little Nemo/Eppli). Asking prices only as a last resort,
+  and say so. The user's own ranges (from Comicguide/Seriekatalogen) win: don't overwrite them.
+- **Text format for Paste prices** (one range per line, currency sign at the end):
+  `1: 900 €` · `2-5: 150 €` · `81-: 3 €` (81 and all later) · `-25: 8 €` (all up to 25).
+  Yearly series: `1951/1: 6000 €` · `1952: 300 €` (whole year) · `1956-1957: 60 €` · `1951/2-1951/4: 900 €`.
+- **Editions / reprints:** when a series has reprints (Asterix, LTB, Micky Maus), give separate ranges per edition
+  ("1. Auflage", "Neuauflage" …) and tell the user to set the comic's Edition field; a range without an edition counts
+  for every edition. Facsimiles count 50 % automatically.
+- **Keep ranges stable:** never change a price without a reason. When merging or re-sending lists, check that
+  every range still has the same price as before, and list any change with its reason.
+- **Give the source and date** with each list (a short note), and for general series also add it to
+  catalogue/prices.json (see below). Fewer, wider ranges are better than many guessed single prices; say where
+  the numbers are only estimates.
 
 ## Other working rules
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
