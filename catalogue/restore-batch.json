@@ -3167,6 +3167,13 @@
    "replace": false,
    "minApp": 200,
    "added": "2026-11-15"
+  },
+  {
+   "id": "x-donald-duck-co",
+   "sugg": "no/DD",
+   "replace": false,
+   "minApp": 195,
+   "added": "2026-11-15"
   }
  ]
 }
