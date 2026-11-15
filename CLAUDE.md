@@ -97,6 +97,7 @@
 | 2026-11-15 | Variant check of all 26 price lists: all 9 Seriekatalogen CSVs scanned (Variant/Upplaga columns), only the 4 rows already added; web/INDUCKS lists have no listed variants (answer only) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:29 → 21:29:43) |
 | 2026-11-15 | Spider-Man (Swedish, Egmont 1999–2013) from the user's Seriekatalogen CSV: 6 ranges (VF), issue list with variant 1999/1B, years/per year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:32 → 21:32:58) |
 | 2026-11-15 | 4 book series: Glastronen 50 kr, Marvel What if 6 €, Ragnarök 100 kr (1 search, Finn.no), Wheel of Time 6 € (estimates); 3 books need a volume number; local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (21:35 → 21:35:47) |
+| 2026-11-15 | Marvel What If novels: a series, but unnumbered standalone stories; Loki is the 2nd by publication (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:39 → 21:39:43) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
