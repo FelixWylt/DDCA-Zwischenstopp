@@ -153,7 +153,7 @@ function bindGot(root) {
       try { localStorage.setItem("ddaGot", JSON.stringify({ cur: cu, src })); } catch (x) {}
       try {
         // the wishlist's maximum price isn't the price paid, so it is replaced by what you enter (or cleared)
-        await saveComic(Object.assign({}, c, { status: "owned", pricePaid: typeof paid === "number" ? paid : "", currency: cu, source: src || c.source || "", purchaseDate: todayIso(), copies: c.copies || 1, wishLevel: "" }));
+        await saveComic(Object.assign({}, c, { status: "owned", wasWish: true, pricePaid: typeof paid === "number" ? paid : "", currency: cu, source: src || c.source || "", purchaseDate: todayIso(), copies: c.copies || 1, wishLevel: "" }));
         toast("✓ " + comicTag(c) + " moved to your collection" + (typeof paid === "number" ? " (" + money(paid, cu) + ")" : "")); renderKeep();
       } catch (x) { toast(errText(x)); }
     };

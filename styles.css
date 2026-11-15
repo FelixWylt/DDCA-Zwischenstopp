@@ -643,3 +643,16 @@ body.kb .savebar { position: static; border-top: 0; }
 .gotform { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-top: 4px; }
 .gotform .wide { grid-column: 1 / -1; }
 .item.wishrow .gotform { grid-column: 1 / -1; }
+.subtabs.five { grid-template-columns: repeat(5, 1fr); }
+.subtabs.five button { padding: 10px 2px; font-size: 0.82rem; }
+.scopesw { align-self: flex-start; margin: 4px 0; }
+.tiles4 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.stile { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: left; padding: 14px; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); color: var(--ink); }
+.stile .meter { width: 100%; }
+.todos { display: grid; gap: 8px; }
+.todo { display: block; text-align: left; padding: 10px 12px; border-radius: 10px; background: var(--wanted-soft); color: var(--ink); border: 0; font-size: .92rem; line-height: 1.5; }
+.todo button:not(.link):not(.chipbtn) { margin-left: 6px; padding: 4px 10px; }
+button.card.highlight { display: grid; gap: 2px; text-align: left; width: 100%; border-left: 5px solid var(--accent); color: var(--ink); }
+.vhist .hit { fill: transparent; cursor: pointer; }
+.vhist path.b { stroke: #2e8b57; } .key.b { background: #2e8b57; }
+@media (min-width: 700px) { .tiles4 { grid-template-columns: repeat(4, 1fr); } }

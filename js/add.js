@@ -376,7 +376,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           const sameNo = (wish.issueLabel || wish.issue) === p.label;
           ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k] && sameNo) c[k] = wish[k]; });
           if (!c.stories.length && (wish.stories || []).length && sameNo) c.stories = wish.stories;
-          c.id = wish.id; c.createdAt = wish.createdAt; moved = true;
+          c.id = wish.id; c.createdAt = wish.createdAt; c.wasWish = true; moved = true;
           alsoGone = wishes.filter(x => x !== wish).map(x => x.id);   // a double issue also clears the other number's wish
         } else if (!S.dupOk && !(S.draft && S.draft.secondCopy) && (have || (wish && c.status === "wanted"))) {
           const box = $("#confirmBox");
