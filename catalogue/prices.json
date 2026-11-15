@@ -252,6 +252,30 @@
    "date": "2026-11-15",
    "note": "X:en (Swedish X-Men, 1984/1–1985/8): Seriekatalogen.se VF column, sent by the user 2026-11-15. No variants.",
    "text": "1984-1985: 35 kr\n1984/1: 50 kr"
+  },
+  "id:book:Discworld": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Discworld (Terry Pratchett), Corgi paperbacks, still in print; used about 3–5 €. Estimate, no search.",
+   "text": "1-: 4 €"
+  },
+  "id:book:The atlas": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "The Atlas (Olivie Blake), Tor paperbacks 2022–, still in print; used about half the cover price. Estimate, no search.",
+   "text": "1-: 5 €"
+  },
+  "it/TLB": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Topolibri (Panini, small hardcovers sold with Topolino, numbered by the Topolino issue). Recent and in print; estimate from the cover price, no search.",
+   "text": "1-: 6 €"
+  },
+  "id:x-doctor-strange-flight-of-bones": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Doctor Strange: Flight of Bones (Marvel 1999, 4-issue mini-series). Common US issues, about 2–4 € in very good condition. Estimate, no search.",
+   "text": "1-4: 3 €"
   }
  }
 }

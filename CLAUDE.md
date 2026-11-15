@@ -113,6 +113,7 @@
 | 2026-11-15 | Scooby Doo magazine (Swedish, 1973–1983) from the user's Seriekatalogen CSV: 9 ranges (VF, 1975/12 = 4000 kr), issue list with double 1974/11-12, years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:30 → 22:30:37) |
 | 2026-11-15 | Herman Hedning Samlade serier from the user's Seriekatalogen CSV: 1-8: 80 kr (the user's 5 = 2003–2004 matches), latest 8; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:33 → 22:33:32) |
 | 2026-11-15 | X:en (Swedish, 1984/1–1985/8) from the user's Seriekatalogen CSV: 35 kr, 1984/1 50 kr, issue list, years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:34 → 22:34:52) |
+| 2026-11-15 | 8 items: lists Discworld 4 €, The atlas 5 €, Topolibri (it/TLB) 6 €, Doctor Strange Flight of Bones 1-4: 3 € (estimates); typed values D&D dragons guide 15 €, Nibelungen/Parzival (Arena) 4 €, Japanese myths 12 €, Deutsche Kurzgeschichten 3 €, Numazawa 1946 30 CHF (1 search); Earthsea quartet series (answer); local (bundle) | 2–3 min (first guess 8–10 ÷ 3) | 0–1 min (22:43 → 22:43:49) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -158,6 +159,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Scooby Doo magazine (x-scooby-doo-swedish): yearly 1973–1983, issue list, local. The user's copy is "1979/?".
   Herman Hedning Samlade serier (x-herman-hedning-samlade-serier-swedish): 1-8: 80 kr, latest 8, local.
   X:en (x-x-en-swedish): yearly 1984–1985, 11 issues, local.
+  Discworld, The atlas (book series), Topolibri (it/TLB), Doctor Strange: Flight of Bones (1-4): estimates, local.
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
