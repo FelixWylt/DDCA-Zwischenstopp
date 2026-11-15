@@ -71,6 +71,7 @@
 | 2026-11-15 | Stats › no prices › "Single books" opened Series › Book series: now Collection › Comic books › Single books (comic books without a series); test | under 1 min (gut 1–2 ÷ 2) + 1 run | 4–5 min (18:56 → 19:00:41, incl. 2 runs of ~2 min: the first test used the wrong kind of book) |
 | 2026-11-15 | Herman Hedning Add all added nothing: list loaded fresh but the phone still ran older code (no numbering switch, yearly lines unread). Fix: minApp + APP_BUILD, list offered again; test | 1–2 min (gut 3–5 ÷ 3) + 1 run | 2–3 min (19:02 → 19:05:08, incl. 1 run of ~2 min) |
 | 2026-11-15 | Herman Hedning & CO from the user's Seriekatalogen CSV (running numbers match the user's #19, #24): 3 ranges + latest 35 waiting | under 1 min (gut 1–2 ÷ 2) + 1 run | 4–5 min (19:13 → 19:17:45, incl. 2 runs of ~2 min: the price check read Herman Hedning without its year switch, test fixed) |
+| 2026-11-15 | A Song of Ice and Fire (Bantam) prices: user's 5 are later mass market printings (2 searches); waiting lists now also for book series; test | 1.5–2.5 min (gut 4–7 ÷ 3) + 1 run | 2–3 min (19:24 → 19:27:08, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -83,7 +84,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v199)
+## Where we left off (2026-11-15, app da-v200)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -95,6 +96,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Herman Hedning (x-herman-hedning-swedish): the user wants it BY YEAR like Seriekatalogen; the batch entry switches
   numbering to year and has "renumber" (running number -> year/nr, e.g. 86 -> 2009/06) for the user's copies.
   Herman Hedning & CO (x-herman-hedning-co, running like Seriekatalogen: 3 ranges + latest 35).
+  A Song of Ice and Fire (book series: id "book:A Song of Ice and Fire", prices.json "id:book:…"; waiting lists work for
+  book series since da-v200, no patch). The user's 5 are Bantam mass market paperbacks (later printings) = 4 € each.
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
