@@ -109,6 +109,7 @@
 | 2026-11-15 | Collection search "x-men" found 67: words were matched anywhere ("x" + "men" in Momente…). Now searchHit: hyphenated words = one phrase, 1–2-letter words must start a word (backup: 76 → 2 real hits), da-v206; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (22:12 → 22:13:38) |
 | 2026-11-15 | Stats › Overview lag: every Stats tab built the story index, book stats and money totals of all tabs, filtered all comics once per series, and redrew once per INDUCKS file loaded. Now each tab builds only what it shows, comics indexed by series, unowned series skipped, one redraw after all files, da-v207; local (bundle) | 2–3 min (first guess 6–9 ÷ 3) | 1–2 min (22:17 → 22:18:46) |
 | 2026-11-15 | Publish: X-Men list, search fix (da-v206), Stats speed-up (da-v207); one check (prices + every screen opened): no errors | about 1 min (first guess 2 ÷ 2) + 2 min wait | 2–3 min (22:22 → 22:24:31, incl. 1 run of ~2 min) |
+| 2026-11-15 | Scooby Doo – Stort presentalbum from the user's Seriekatalogen CSV: numbered by year (1977: 20 kr, 1978–1985: 10 kr), the user's unnumbered 1977 copy gets 1977; waiting lists may now set "first", da-v208; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:25 → 22:25:33) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -121,7 +122,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v207)
+## Where we left off (2026-11-15, app da-v208)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -150,13 +151,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Spider-Man Magazin (x-spider-man-german, Panini): 1-52: 1 € (Comicguide), local.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   X-Men Swedish (x-x-men-swedish): 1990/9–1993/12, 20 kr, issue list (published 22:2x).
+  Scooby Doo – Stort presentalbum (x-scooby-doo-stort-presentalbum): running numbers = years 1977–1985 (patch first/latest, renumber ""→1977), local.
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
   locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
   push everything at once and run ONE price check for the whole bundle. Say in each reply how many lists are unpublished.
   Book series: "titleNumbers": {"title words": "number"} numbers the user's books without a number by title (da-v205).
-  Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
+  Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest, first (da-v208); plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so

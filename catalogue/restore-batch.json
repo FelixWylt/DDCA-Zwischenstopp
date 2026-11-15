@@ -3454,6 +3454,21 @@
    },
    "minApp": 195,
    "added": "2026-11-15"
+  },
+  {
+   "id": "x-scooby-doo-stort-presentalbum",
+   "sugg": "id:x-scooby-doo-stort-presentalbum",
+   "replace": false,
+   "patch": {
+    "numbering": "running",
+    "first": 1977,
+    "latest": "1985"
+   },
+   "renumber": {
+    "": "1977"
+   },
+   "minApp": 208,
+   "added": "2026-11-15"
   }
  ]
 }

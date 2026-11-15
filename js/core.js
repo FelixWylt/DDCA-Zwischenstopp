@@ -1149,7 +1149,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 207;
+const APP_BUILD = 208;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1172,10 +1172,10 @@ async function applyPriceBatch() {
     const se = seriesById(e.id), rules = priceBatchRules(e);   // read before the patch changes the series
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
     S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
-    if (se && e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    if (se && e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest", "first"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
     // a series switched from running numbers to year/number (Herman Hedning): your copies get their new numbers ("86" -> "2009/06")
     if (e.renumber && typeof e.renumber === "object") {
-      const moved = S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).map(c => { const p = parseIssue(se, e.renumber[String(c.issueLabel || c.issue)]); return Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
+      const moved = S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).map(c => { const p = parseIssue(se, e.renumber[String(c.issueLabel || c.issue || "")]); return Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
       if (moved.length) await saveMany(moved);
     }
     // book series: number the user's books by title ("titleNumbers": {"Loki": "1"}), only books that have no number yet
