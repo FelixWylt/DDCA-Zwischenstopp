@@ -1,11 +1,13 @@
 name: Screenshot check
-# After every app change: opens the app at phone size with sample comics and saves screenshots + JavaScript errors
-# to the "screens" branch (shots/), so layout problems are seen before they reach the phone.
+# Started by hand (gh workflow run screens.yml -f screens=...): opens the app at phone size with sample comics,
+# photographs only the screens named and records JavaScript errors, on the "screens" branch (shots/).
 on:
-  push:
-    branches: [main]
-    paths: ["app.js", "styles.css", "index.html", "books.js", "duckipedia.js", "tests/screens.mjs", ".github/workflows/screens.yml"]
   workflow_dispatch:
+    inputs:
+      screens:
+        description: "Screens to photograph, comma-separated (see tests/screens.mjs); empty = only the JavaScript error check"
+        required: false
+        default: ""
 permissions:
   contents: write
 concurrency: { group: screens, cancel-in-progress: true }
@@ -25,7 +27,7 @@ jobs:
         run: |
           python3 -m http.server 8080 >/dev/null 2>&1 &
           sleep 1
-          cp tests/screens.mjs /tmp/pw/ && cd /tmp/pw && OUT=$GITHUB_WORKSPACE/shots node screens.mjs
+          cp tests/screens.mjs /tmp/pw/ && cd /tmp/pw && OUT=$GITHUB_WORKSPACE/shots SCREENS="${{ inputs.screens }}" node screens.mjs
       - name: Save to the screens branch
         run: |
           cd shots

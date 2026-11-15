@@ -5,6 +5,9 @@ import fs from "node:fs";
 
 const BASE = process.env.BASE || "http://localhost:8080/?test";
 const OUT = process.env.OUT || "shots";
+// only the screens asked for (comma list of names, e.g. "wishlist,copy-picker,prices"); empty = only the error check
+const WANT = String(process.env.SCREENS || "").split(",").map(s => s.trim()).filter(Boolean);
+const want = name => WANT.includes(name);
 fs.mkdirSync(OUT, { recursive: true });
 
 const series = [
@@ -48,6 +51,7 @@ await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => window.__dda && window.__dda.S.comics && window.__dda.S.comics.length > 5);
 
 const shot = async (name, fn) => {
+  if (!want(name.replace(/^\d+b?-/, ""))) return;
   try { await page.evaluate(`(() => { const { S, nav } = window.__dda; (${fn.toString()})(); })()`); await page.waitForTimeout(600); await page.screenshot({ path: `${OUT}/${name}.png`, fullPage: true }); }
   catch (e) { errors.push(name + ": " + e.message); }
 };
@@ -62,7 +66,7 @@ await shot("07-new-comic", () => { S.editing = null; S.draft = null; nav("add");
 await shot("08-stats", () => { nav("stats"); });
 await shot("09-series", () => { nav("series"); });
 // the copy picker: tap the LTB 1 row with two copies
-try {
+if (want("copy-picker")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });
   await page.waitForTimeout(600);
   await page.locator("[data-copies]").first().click();
@@ -71,7 +75,7 @@ try {
 } catch (e) { errors.push("copy picker: " + e.message); }
 
 // every price suggestion must read as price ranges (catalogue/prices.json)
-try {
+if (want("prices")) try {
   const bad = await page.evaluate(async () => {
     const { S, parsePrices } = window.__dda; const out = [];
     const sugg = S.priceSugg || (await (await fetch("catalogue/prices.json")).json()).series;
@@ -82,7 +86,7 @@ try {
   bad.forEach(b => errors.push("price suggestion " + b));
 } catch (e) { errors.push("price check: " + e.message); }
 // the suggestion in the Series tab (Disney De Luxe)
-try {
+if (want("price-suggestion")) try {
   await page.evaluate(() => window.__dda.nav("series")); await page.waitForTimeout(500);
   await page.locator('[data-su="Disney"]').first().click(); await page.waitForTimeout(300);
   await page.locator('[data-sg="Italia"]').first().click(); await page.waitForTimeout(300);

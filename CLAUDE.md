@@ -69,6 +69,7 @@
 | 2026-11-15 | Package 2: screenshot check on GitHub (Playwright, phone size, sample data, ?test hook, screens branch), 4 runs incl. 2 fixes | 4–7 min (gut 10–20 ÷ 3) + runs | 5–6 min (≈13:07 after package 1 → 13:13:11, incl. 4 runs of ~1.5 min) |
 | 2026-11-15 | Package 3: all lots selectable (Newest/Older), rate check with SEK-per-CHF swap, live wishlist counts, no single comics in Gaps picker, all copies' grades on 2× rows, no doubled name on single comics (ISBN reuse already existed) | 3–4 min (gut 8–12 ÷ 3) + 1 run | 1–2 min (≈13:13 after package 2 → 13:15:14, incl. 1 run) |
 | 2026-11-15 | Package 4: identical vs separate copies explained (field + duplicate buttons), one "2×" style, universe/group rule in Series, King Features suggestion | 2–3 min (gut 5–8 ÷ 3) + 1 run | 1–2 min (≈13:15 after package 3 → 13:17:08, incl. 1 run) |
+| 2026-11-15 | Package 5: price suggestions in catalogue/prices.json (10 Italian series) + "Use these prices" in Series › value, test reads every list; then screenshot check switched to on-demand, changed screens only (user's request) | 3–5 min (gut 10–15 ÷ 3) + 1 run | 4–5 min (≈13:17 after package 4 → 13:22:20, incl. 3 runs) |
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
@@ -84,6 +85,10 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Only test what changed; don't rerun earlier tests.
 - Raise `APP_VERSION` in sw.js with every change. A push to `main` publishes to GitHub Pages.
 - Network checks: push probe-books.mjs to the `cors-test` branch; the workflow writes probe-result.txt.
-- Screenshot check: every push that changes the app runs `.github/workflows/screens.yml` (tests/screens.mjs: phone size,
-  sample comics, address with `?test`). Results land on the `screens` branch: `shots/*.png` and `errors.txt`.
-  After a UI change, look at the relevant screenshots before reporting it as done (about 1.5 min per run).
+- Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
+  `gh workflow run screens.yml -R FelixWylt/DDCA-Zwischenstopp -f screens=wishlist,copy-picker` (names: collection, group-ltb,
+  series-ltb-copies, group-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
+  price-suggestion; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
+  errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
+- Price suggestions live in `catalogue/prices.json` (per INDUCKS code, text as for Paste prices). Add new price research
+  there too (with date and a short note on the sources), then run the check with `prices`.
