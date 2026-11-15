@@ -80,6 +80,13 @@ await shot("17-stats-spend", () => { S.statTab = "money"; S.statMoney = "spend";
 await shot("18-stats-stories", () => { S.statTab = "stories"; nav("stats"); });
 await shot("19-stats-reading", () => { S.statTab = "reading"; nav("stats"); });
 await shot("08-stats", () => { S.statTab = "overview"; nav("stats"); });
+// "Show them" › Single books opens Collection › Books at the single books (not the top of Series › Book series)
+if (want("stats-singles")) try {
+  await page.evaluate(() => { const { S, nav } = window.__dda; S.statTab = "overview"; S.statNoVal = true; nav("stats"); }); await page.waitForTimeout(700);
+  const btn = page.locator('[data-priceser="book:"]').first();
+  if (!(await btn.count())) errors.push("stats singles: no Single books button");
+  else { await btn.click(); await page.waitForTimeout(700); const r = await page.evaluate(() => ({ view: window.__dda.S.view, tab: window.__dda.S.colTab, head: [...document.querySelectorAll("h3.listhead")].some(x => /^Single books/.test(x.textContent.trim())) })); if (r.view !== "collection" || r.tab !== "books" || !r.head) errors.push("stats singles: " + JSON.stringify(r)); await page.screenshot({ path: `${OUT}/08b-stats-singles.png` }); }
+} catch (e) { errors.push("stats singles: " + e.message); }
 await shot("09-series", () => { nav("series"); });
 await shot("09b-series-tools", () => { S.serTab = "tools"; nav("series"); });
 // "Add all" in Price lists waiting: ranges added, 91:an gets its years and per year, the card goes away

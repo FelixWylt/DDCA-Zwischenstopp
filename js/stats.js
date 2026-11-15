@@ -133,7 +133,7 @@ VIEWS.stats = {
     // value per series (also tells which series have no prices)
     const bySer = {}; sel.forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (k) (bySer[k] = bySer[k] || []).push(c); });
     const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null).sort((a, b) => b.list.length - a.list.length);
-    const noValList = () => S.statNoVal ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${noVal.map(x => x.k.startsWith("name:") ? `<span class="chipbtn" title="Not in your series list">${esc(seriesTitle(x.k))} ${x.list.length}</span>` : `<button type="button" class="chipbtn" data-priceser="${esc(x.k)}">${esc(seriesTitle(x.k))} ${x.list.length}</button>`).join("")}</div><p class="small muted" style="margin:4px 0 0">Tap a series to open its price ranges. The number is how many you own.</p>` : "";
+    const noValList = () => S.statNoVal ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${noVal.map(x => x.k.startsWith("name:") ? `<span class="chipbtn" title="Not in your series list">${esc(seriesTitle(x.k))} ${x.list.length}</span>` : `<button type="button" class="chipbtn" data-priceser="${esc(x.k)}">${esc(seriesTitle(x.k))} ${x.list.length}</button>`).join("")}</div><p class="small muted" style="margin:4px 0 0">Tap a series to open its price ranges (Single books: the list of your books, where each gets its own value). The number is how many you own.</p>` : "";
     const bk = scope !== "c" && novels.length ? bookStats(novels, novelsWanted, true) : null;
     const idx = storyIndex("owned");
 
@@ -357,6 +357,8 @@ VIEWS.stats = {
     document.querySelectorAll("[data-novals]").forEach(b => b.onclick = () => { S.statNoVal = !S.statNoVal; renderKeep(); });
     document.querySelectorAll("[data-priceser]").forEach(b => b.onclick = () => {
       const k = b.dataset.priceser;
+      // single books have no series and no price ranges: open them in Collection › Books, where each gets its own value
+      if (k === "book:") { S.colTab = "books"; S.col = {}; S.bookView = "series"; S.filters.q = ""; nav("collection"); setTimeout(() => { const h = [...document.querySelectorAll("h3.listhead")].find(x => /^Single books/.test(x.textContent.trim())); if (h) h.scrollIntoView({ block: "start" }); }, 80); return; }
       if (k.startsWith("book:")) { S.serTab = "books"; S.serEditBook = k.slice(5); S.serEditObj = null; }
       else { const se = seriesById(k); if (!se) return; S.serTab = "comics"; S.serEditBook = null; S.serEditObj = se; S.serPath = { u: se.publisher || "No universe yet", g: se.group || OTHER_GROUP }; S.sect = Object.assign({}, S.sect, { [se.id + "|prices"]: true }); }
       nav("series");
