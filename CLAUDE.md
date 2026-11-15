@@ -100,6 +100,7 @@
 | 2026-11-15 | Marvel What If novels: a series, but unnumbered standalone stories; Loki is the 2nd by publication (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:39 → 21:39:43) |
 | 2026-11-15 | What If novels numbered by publication (1 Loki, 2 Wanda, 3 Marc Spector; 1 search corrected my memory); new batch key titleNumbers numbers the user's unnumbered books by title (also Glastronen, Eye of the World = 1), da-v205; local (bundle) | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:41 → 21:42:25) |
 | 2026-11-15 | What If 4 Kitty Pryde, 5 Multiverse Was Doomed (user, Penguin site); Ragnarök from the user's Seriekatalogen CSV: 1-3: 100 kr, 4-: 120 kr (replaces the estimate) + titles numbered; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:46 → 21:46:57) |
+| 2026-11-15 | Omaggio Abbonati (it/ABB, 24 gift volumes 1960–1993): 4 ranges, estimates (1 search found no sales); local (bundle) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (21:49 → 21:50:01) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -137,6 +138,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Donald Duck & Co Norway (x-donald-duck-co, prices.json "no/DD", in Swedish kr): local. Estimates except 1948/1.
   Spider-Man Swedish (x-spider-man-swedish): yearly 1999–2013, issue list (variant 1999/1B), local. The user's copy is "2004/?".
   Book series Glastronen, Marvel: What if..., Ragnarök, The Wheel of Time ("book:<name>", all "1-:"), local. Only Ragnarök's copy has a number.
+  Omaggio Abbonati (x-omaggio-abonati, prices.json "it/ABB"): estimates, local.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
