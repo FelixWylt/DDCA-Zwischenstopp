@@ -53,7 +53,7 @@
 | 2026-11-15 | Stats To do "Fill all" opens Series › Tools (Refresh all comics), not Backup | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:20 → 16:20:43) |
 | 2026-11-15 | Handover note for a new chat (open task: Asterix price ranges from the user's backup) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:49 → 16:49:57) |
 | 2026-11-15 | Guide "How to make price ranges" in CLAUDE.md (sources, Z1, text format, editions, stable ranges) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (16:53 → 16:54:08) |
-| 2026-11-15 | Repo connected late; answer on issues per year (91:an, from the code); Asterix ranges redone as Paste-prices lines checked against the app's parser | 2–3 min (gut 6–9 ÷ 3) | 4–5 min (17:26 → 17:28:28) |
+| 2026-11-15 | Repo connected late; answer on issues per year (91:an, from the code); Asterix ranges redone as Paste-prices lines checked against the app's parser | 2–3 min (gut 6–9 ÷ 3) | 2–3 min (17:26 → 17:28:28) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
