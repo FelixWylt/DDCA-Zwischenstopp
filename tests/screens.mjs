@@ -48,7 +48,7 @@ catch (e) {
 }
 await page.evaluate(async ({ series, comics }) => { const { S, saveSeries, saveMany } = window.__dda; S.series = series; await saveSeries(); await saveMany(comics); }, { series, comics });
 await page.reload({ waitUntil: "load" });
-await page.waitForFunction(() => window.__dda && window.__dda.S.comics && window.__dda.S.comics.length > 5);
+await page.waitForFunction(() => window.__dda && window.__dda.S.dbState === "ready" && window.__dda.S.comics.length > 5);
 
 const shot = async (name, fn) => {
   const look = want(name.replace(/^\d+b?-/, ""));
@@ -67,6 +67,7 @@ await shot("07-new-comic", () => { S.recentSeries = ["ltb", "tldle", "kap"]; S.e
 await shot("12-trade", () => { S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
 await shot("13-person", () => { S.st = { tab: "all", who: { role: "writers", name: "Guido Martina" }, status: "all" }; nav("stories"); });
 await shot("14-value", () => { insuranceRows(); insuranceCsv(); S.valueHistory = { "2026-08": { v: 120, p: 100, n: 8 }, "2026-09": { v: 150, p: 110, n: 9 }, "2026-10": { v: 165, p: 115, n: 10 } }; S.statTab = "value"; nav("stats"); });
+await shot("15-fair", () => { S.fair = true; S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); document.querySelector("#fairres [data-got]").click(); });
 await shot("08-stats", () => { nav("stats"); });
 await shot("09-series", () => { nav("series"); });
 // the copy picker: tap the LTB 1 row with two copies

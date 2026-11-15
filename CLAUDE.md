@@ -61,7 +61,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
   (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
   series-ltb-copies, group-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
-  price-suggestion, trade, person, value; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
+  price-suggestion, trade, person, value, fair; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
 - Price suggestions live in `catalogue/prices.json` (per INDUCKS code, text as for Paste prices). Add new price research
   there too (with date and a short note on the sources), then run the check with `prices`.

@@ -57,6 +57,7 @@ function wishlistView() {
   if (S.wishKind === "comics" && !wc.length && wb.length) S.wishKind = "books";
   if (S.wishKind === "books" && !wb.length && wc.length) S.wishKind = "comics";
   const all = S.wishKind === "books" ? wb : wc;
+  if (S.fair === undefined) { try { S.fair = localStorage.getItem("ddaFair") === "1"; } catch (e) { S.fair = false; } }
   const kindChips = wb.length && wc.length ? `<div class="subtabs" role="tablist" aria-label="Wishlist"><button role="tab" type="button" data-wkind="comics" aria-selected="${S.wishKind === "comics"}">Comics <span class="muted">${wc.length}</span></button><button role="tab" type="button" data-wkind="books" aria-selected="${S.wishKind === "books"}">Books <span class="muted">${wb.length}</span></button></div>` : "";
   const fits = all.filter(c => (wishBudget(c) || {}).ok);
   const byLv = lv => all.filter(c => wishLevel(c) === lv), musts = byLv("must"), dreams = byLv("dream");
@@ -66,11 +67,13 @@ function wishlistView() {
     .slice().sort((a, b) => wishRank(a) - wishRank(b));   // Must have first, Dream last (sortComics' order otherwise)
   const real = wishCost(all.filter(c => wishLevel(c) !== "dream")), dream = wishCost(dreams);
   const costLine = real.n || dream.n ? `<p class="small" style="margin:0"><strong>Cost ≈ ${money(real.t, "CHF")}</strong> for Must have and Want${real.n < all.length - dreams.length ? ` (${real.n} of ${all.length - dreams.length} have a price)` : ""}${dreams.length ? ` · Dream ≈ ${money(dream.t, "CHF")}${dream.n < dreams.length ? ` (${dream.n} of ${dreams.length} priced)` : ""}` : ""}</p>` : "";
+  if (S.fair && all.length) return gapTabs() + kindChips + `<div class="fairbar"><input id="fairq" type="search" enterkeyhint="search" value="${esc(S.fairQ || "")}" placeholder="Number or series, e.g. 123 or LTB 123"><button type="button" id="fairoff">Leave fair mode</button></div>
+      <p class="small muted" style="margin:0">Fair mode: big rows, everything on one list, Must have first. “Got it” asks what you paid and where.</p><div id="fairres"></div><datalist id="gotsrc">${gotSources()}</datalist>`;
   const chip = (k, label) => `<button type="button" class="fchip${(S.wishFilter || "all") === k ? " on" : ""}" data-wf="${k}" aria-pressed="${(S.wishFilter || "all") === k}">${label}</button>`;
-  return gapTabs() + kindChips + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${musts.length || dreams.length ? (musts.length ? chip("must", "★ Must have " + musts.length) : "") + (counts.want ? chip("want", "Want " + counts.want) : "") + (dreams.length ? chip("dream", "Dream " + dreams.length) : "") + (dreams.length ? chip("nodream", "Without Dream " + counts.nodream) : "") : ""}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><div class="row" style="gap:6px;flex-wrap:wrap">${wb.length && wc.length ? `<button type="button" data-wcopy="comics">Copy comics</button><button type="button" data-wcopy="books">Copy books</button><button type="button" data-wcopy="">Copy both</button>` : `<button type="button" data-wcopy="">Copy list for comic fair</button>`}</div></div>
+  return gapTabs() + kindChips + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${musts.length || dreams.length ? (musts.length ? chip("must", "★ Must have " + musts.length) : "") + (counts.want ? chip("want", "Want " + counts.want) : "") + (dreams.length ? chip("dream", "Dream " + dreams.length) : "") + (dreams.length ? chip("nodream", "Without Dream " + counts.nodream) : "") : ""}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><div class="row" style="gap:6px;flex-wrap:wrap">${wb.length && wc.length ? `<button type="button" data-wcopy="comics">Copy comics</button><button type="button" data-wcopy="books">Copy books</button><button type="button" data-wcopy="">Copy both</button>` : `<button type="button" data-wcopy="">Copy list for comic fair</button>`}<button type="button" id="fairon" class="primary">Fair mode</button></div></div><datalist id="gotsrc">${gotSources()}</datalist>
       <textarea id="wcopybox" class="mono" rows="6" readonly hidden></textarea>
       ${costLine}
-      <p class="small muted" style="margin:0">${wl.length} ${S.wishKind === "books" ? (wl.length === 1 ? "book" : "books") : (wl.length === 1 ? "issue" : "issues")} ${S.wishFilter === "budget" ? "worth no more than your maximum price (by your price table)" : "wanted"}. Tap “Got it” when you buy one: it moves to your collection with today's date.</p>` + wishlistBySeries(wl)
+      <p class="small muted" style="margin:0">${wl.length} ${S.wishKind === "books" ? (wl.length === 1 ? "book" : "books") : (wl.length === 1 ? "issue" : "issues")} ${S.wishFilter === "budget" ? "worth no more than your maximum price (by your price table)" : "wanted"}. Tap “Got it” when you buy one: enter what you paid and where, and it moves to your collection with today's date. At a comic fair, “Fair mode” shows bigger rows with a search.</p>` + wishlistBySeries(wl)
     : '<div class="empty"><h3>Your wishlist is empty</h3><p>In Gaps, tap a grey number to put it on your wishlist.</p></div>') + '<div id="cellpick"></div>';
 }
 // the wishlist as short text for a comic fair: "LTB: 12, 45, 101–103 (max CHF 8)"
@@ -122,15 +125,57 @@ function bindWishlist() {
       document.querySelectorAll("[data-wf]").forEach(x => { if (lab[x.dataset.wf]) x.textContent = lab[x.dataset.wf]; });
     } catch (x) { toast(errText(x)); }
   });
-  document.querySelectorAll("[data-got]").forEach(b => b.onclick = async e => {
+  bindGot(document);
+  const setFair = on => { S.fair = on; try { localStorage.setItem("ddaFair", on ? "1" : "0"); } catch (e) {} render(); window.scrollTo(0, 0); };
+  $("#fairon") && ($("#fairon").onclick = () => setFair(true));
+  $("#fairoff") && ($("#fairoff").onclick = () => setFair(false));
+  if ($("#fairq")) { $("#fairq").oninput = e => { S.fairQ = e.target.value; drawFair(); }; drawFair(); }
+}
+// ---- "Got it": asks what you paid and where (both may stay empty), then moves the wish to your collection ----
+function gotSources() { const m = {}; S.comics.forEach(c => { const s = String(c.source || "").trim(); if (s) m[s] = (m[s] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([s]) => `<option value="${esc(s)}">`).join(""); }
+function gotPrefs() { try { return JSON.parse(localStorage.getItem("ddaGot") || "{}"); } catch (e) { return {}; } }
+function bindGot(root) {
+  root.querySelectorAll("[data-got]").forEach(b => b.onclick = e => {
     e.stopPropagation();
     const c = S.comics.find(x => x.id === b.dataset.got); if (!c) return;
-    try {
-      // the wishlist's maximum price isn't the price paid, so it is cleared
-      await saveComic(Object.assign({}, c, { status: "owned", pricePaid: "", purchaseDate: todayIso(), copies: c.copies || 1, wishLevel: "" }));
-      toast(comicTag(c) + " moved to your collection"); renderKeep();
-    } catch (x) { toast(errText(x)); }
+    const row = b.closest(".wishrow, .fairrow"), old = row.querySelector(".gotform"); if (old) { old.remove(); return; }
+    const pr = gotPrefs(), cur = pr.cur || c.currency || "CHF";
+    const f = document.createElement("div"); f.className = "gotform";
+    f.innerHTML = `<label><span class="l">Price paid</span><input data-gp inputmode="decimal" placeholder="e.g. 5"></label>
+      <label><span class="l">Currency</span><select data-gc>${CURRENCIES.map(k => `<option${k === cur ? " selected" : ""}>${k}</option>`).join("")}</select></label>
+      <label class="wide"><span class="l">Bought from</span><input data-gs list="gotsrc" value="${esc(pr.src || "")}" placeholder="Stand, shop or seller"></label>
+      <div class="row wide" style="gap:6px"><button type="button" class="primary" data-gsave>Save to collection</button><button type="button" class="ghost" data-gx>Cancel</button></div>`;
+    row.appendChild(f); f.querySelector("[data-gp]").focus();
+    f.querySelector("[data-gx]").onclick = ev => { ev.stopPropagation(); f.remove(); };
+    f.querySelector("[data-gsave]").onclick = async ev => {
+      ev.stopPropagation();
+      const paid = parseAmt(f.querySelector("[data-gp]").value), cu = f.querySelector("[data-gc]").value, src = f.querySelector("[data-gs]").value.trim();
+      try { localStorage.setItem("ddaGot", JSON.stringify({ cur: cu, src })); } catch (x) {}
+      try {
+        // the wishlist's maximum price isn't the price paid, so it is replaced by what you enter (or cleared)
+        await saveComic(Object.assign({}, c, { status: "owned", pricePaid: typeof paid === "number" ? paid : "", currency: cu, source: src || c.source || "", purchaseDate: todayIso(), copies: c.copies || 1, wishLevel: "" }));
+        toast("✓ " + comicTag(c) + " moved to your collection" + (typeof paid === "number" ? " (" + money(paid, cu) + ")" : "")); renderKeep();
+      } catch (x) { toast(errText(x)); }
+    };
   });
+}
+// ---- Fair mode: one flat list with big rows and a search by number or series ----
+function drawFair() {
+  const box = $("#fairres"); if (!box) return;
+  const kind = S.wishKind === "books", words = norm(S.fairQ || "").split(" ").filter(Boolean);
+  const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
+  let list = sortComics(S.comics.filter(c => c.status === "wanted" && isNovel(c) === kind));
+  if (words.length) list = list.filter(c => { const s = seriesById(c.seriesId), lab = norm(String(c.issueLabel || c.issue || "")), t = norm([s && s.short, s && s.name, c.seriesName, c.title, c.author].filter(Boolean).join(" "));
+    return words.every(w => /^\d/.test(w) ? lab === w || lab.startsWith(w) || lab.split(/[^0-9a-z]+/).includes(w) : t.includes(w)); });
+  list = list.slice().sort((a, b) => wishRank(a) - wishRank(b) || ((order[a.seriesId] ?? 999) - (order[b.seriesId] ?? 999)));
+  box.innerHTML = list.length ? '<div class="list">' + list.slice(0, 150).map(c => {
+    const s = seriesById(c.seriesId), bud = wishBudget(c), v = bud ? bud.v : valueOf(c);
+    const sub = [wishLevel(c) === "must" ? "★ Must have" : wishLevel(c) === "dream" ? "Dream" : "", typeof c.pricePaid === "number" ? "Max " + money(c.pricePaid, c.currency) : "", v ? "worth ≈ " + money(v.amount, v.cur) : "", c.notes].filter(Boolean).join(" · ");
+    return `<div class="fairrow${wishLevel(c) === "must" ? " must" : ""}"><div class="fnum"><small>${esc(isNovel(c) ? "Book" : s ? s.short || s.name : c.seriesName)}</small>${esc(c.issueLabel || c.issue || "")}</div>
+      <div class="fmid"><div class="t">${esc(c.title || (s ? s.name : c.seriesName) || "")}</div><div class="s">${esc(sub)}</div></div><button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div>`;
+  }).join("") + "</div>" + (list.length > 150 ? `<p class="small muted">${list.length - 150} more: type a number or series to narrow it down.</p>` : "")
+    : '<div class="empty"><h3>Not on your wishlist</h3><p>Nothing matches. Check the number, or type only the series.</p></div>';
+  bindGot(box);
 }
 function wishItem(c) {
   const s = seriesById(c.seriesId), bk = c.kind === "book", cv = coverOf(c);
