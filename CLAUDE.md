@@ -43,6 +43,7 @@
 | 2026-11-15 | Hide the price suggestion box when a series already has your own ranges | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:07 → 14:07:54, incl. fixing a first edit that didn't apply) |
 | 2026-11-15 | Suggest a Stats tab redesign (answer only, from the code, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:09 → 14:09:19) |
 | 2026-11-15 | Suggest new stats for the Stats tab (answer only, from the app's fields, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (14:13 → 14:13:45) |
+| 2026-11-15 | Stats redesign reviewed with the chosen new stats (answer only) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (14:24 → 14:25:15) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
