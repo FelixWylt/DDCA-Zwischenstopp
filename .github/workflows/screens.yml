@@ -1,0 +1,35 @@
+name: Screenshot check
+# After every app change: opens the app at phone size with sample comics and saves screenshots + JavaScript errors
+# to the "screens" branch (shots/), so layout problems are seen before they reach the phone.
+on:
+  push:
+    branches: [main]
+    paths: ["app.js", "styles.css", "index.html", "books.js", "duckipedia.js", "tests/screens.mjs", ".github/workflows/screens.yml"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency: { group: screens, cancel-in-progress: true }
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Install Playwright (Chromium only)
+        run: |
+          mkdir -p /tmp/pw && cd /tmp/pw && npm init -y >/dev/null && npm i playwright@1 >/dev/null
+          npx playwright install --with-deps chromium
+      - name: Serve the app and take screenshots
+        run: |
+          python3 -m http.server 8080 >/dev/null 2>&1 &
+          sleep 1
+          cp tests/screens.mjs /tmp/pw/ && cd /tmp/pw && OUT=$GITHUB_WORKSPACE/shots node screens.mjs
+      - name: Save to the screens branch
+        run: |
+          cd shots
+          git init -q && git checkout -q -b screens
+          git -c user.name="screens bot" -c user.email="noreply@github.com" add -A
+          git -c user.name="screens bot" -c user.email="noreply@github.com" commit -q -m "Screenshots for ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" screens
