@@ -51,7 +51,7 @@ Keep the log short: at the end of each month, replace that month's rows by one s
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
 and did not improve on their own. So: **take the gut estimate and divide it by about 3** for bundles and bigger jobs
-(by 2 for small ones), and say that you did. A whole-tab rebuild (Stats, 2026-11-15) took about as long as the ÷3 estimate.
+(by 2 for small ones), and say that you did. A whole-tab rebuild (Stats, 2026-11-15) took 6–7 min against an estimate of 10–15 (gut ÷ 3): for rebuilds, divide by about 5.
 
 Where the clock stops: do everything first (code, tests, research, the prices/tables for the reply), then make the
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
