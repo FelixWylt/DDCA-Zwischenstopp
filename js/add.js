@@ -142,6 +142,10 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           ${isBook ? "" : `<label class="check wide"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
           <label class="wide"><span class="l">Special about my copy</span><textarea id="f-special" rows="2" placeholder="Misprint, missing page, signed, first print…">${esc(d.special || "")}</textarea></label>
+          <div class="wide stack" style="gap:6px"><span class="l">Extras that came with it</span>
+            ${(d.extras || []).map((x, i) => `<div class="row extrarow" data-xi="${i}" style="gap:6px;flex-wrap:nowrap"><input data-xf="what" placeholder="Lithograph, signature, box …" value="${esc(x.what || "")}" style="flex:2;min-width:0"><input data-xf="value" class="amt" inputmode="decimal" placeholder="value" value="${esc(amtVal(x.value))}" style="flex:1;min-width:0"><select data-xf="cur">${CURRENCIES.map(k => `<option${(x.cur || "CHF") === k ? " selected" : ""}>${k}</option>`).join("")}</select><button type="button" class="ghost" data-xdel="${i}" aria-label="Remove">✕</button></div>`).join("")}
+            <div class="row" style="gap:8px;align-items:center"><button type="button" class="ghost" id="xadd">Add an extra</button><span class="small muted">Each extra's value is added to the comic's value.</span></div>
+          </div>
         </div></div>`}
       <div class="row">
         <button class="primary" id="save"${S.db ? "" : " disabled"}>${editing ? "Save changes" : "Save to archive"}</button>
@@ -206,9 +210,13 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       d.purchaseDate = isoDate(d.purchaseDate);
       const rd = $("#f-readDate"); if (rd) d.readDate = isoDate(rd.value);
       ["read", "forTrade", "facsimile"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.checked; });
+      document.querySelectorAll(".extrarow").forEach(row => { const x = (d.extras || [])[+row.dataset.xi]; if (!x) return; row.querySelectorAll("[data-xf]").forEach(inp => { x[inp.dataset.xf] = inp.dataset.xf === "value" ? parseAmt(inp.value) : inp.value.trim(); }); });
+      if (d.extras) d.extras = d.extras.filter(x => x.what || typeof x.value === "number");
       document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => s[inp.dataset.sf] = inp.value); });
     };
     $("#cancel") && ($("#cancel").onclick = () => goBack());
+    $("#xadd") && ($("#xadd").onclick = () => { grab(); d.extras = (d.extras || []).concat([{ what: "", value: "", cur: d.currency || "CHF" }]); render(); });
+    document.querySelectorAll("[data-xdel]").forEach(b => b.onclick = () => { grab(); d.extras.splice(+b.dataset.xdel, 1); render(); });
     document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { grab(); d.status = b.dataset.st; render(); });
     document.querySelectorAll("[data-wl]").forEach(b => b.onclick = () => { d.wishLevel = b.dataset.wl; document.querySelectorAll("[data-wl]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
     document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {

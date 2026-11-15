@@ -115,6 +115,7 @@ function itemHtml(c, inSeries) {
   if (c.fav && c.status !== "wanted") chips.unshift('<span class="chip fav" title="Favourite">♥</span>');
   if (+c.rating && c.status !== "wanted") chips.unshift('<span class="chip rate">' + ratingTxt(c.rating) + '</span>');
   if (c.special) chips.push('<span class="chip special" title="' + esc(c.special) + '">Special</span>');
+  if ((c.extras || []).length && c.status !== "wanted") chips.push('<span class="chip special" title="' + esc(c.extras.map(x => x.what).join(", ")) + '">+ ' + esc(c.extras.length === 1 ? c.extras[0].what || "Extra" : c.extras.length + " extras") + '</span>');
   if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
   if (c.kind !== "book" && c.format === "Hardcover") chips.push('<span class="chip">HC</span>');
   if (c.lotId && c.status !== "wanted") chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
@@ -598,7 +599,7 @@ function detailHtml(c) {
       row("Paid", t(money(c.pricePaid, c.currency)) + (lot ? ` <span class="muted">(lot of ${lot.members.length}, ${t(money(lot.total, lot.currency))})</span>` : "")),
       row("Bought", t([niceDate(c.purchaseDate), c.source].filter(Boolean).join(" · "))), row("Read", c.read ? "yes" + (c.readDate ? ", " + t(niceDate(c.readDate)) : "") : "not yet"),
       row("For trade", c.forTrade ? "yes" : ""), row("Value", v ? t(money(v.amount * (c.copies || 1), v.cur)) + ` <span class="muted">(${v.how === "checked" ? "checked price" : v.how === "table" ? "price table" : "own estimate"})</span>` : ""),
-      row("Special", t(c.special)), row("Notes", t(c.notes))];
+      row("Special", t(c.special)), row("Extras", (c.extras || []).length ? c.extras.map(x => esc(x.what || "Extra") + (typeof x.value === "number" ? " (" + esc(money(x.value, x.cur || "CHF")) + ")" : "")).join("<br>") : ""), row("Notes", t(c.notes))];
   const cv = coverOf(c);
   return `<div class="row between"><div><h2 style="margin:0">${t(head)}</h2>${!isBook && c.title ? "" : ""}<p class="lede" style="margin:4px 0 0">${t(isBook ? [c.author, c.date].filter(Boolean).join(" · ") : [c.title, niceDate(c.date)].filter(Boolean).join(" · "))}</p></div>
       <span class="row" style="gap:6px"><button id="vback" type="button">Back</button><button id="vedit" class="primary" type="button">Edit</button></span></div>

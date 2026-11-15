@@ -20,7 +20,7 @@ const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, i
 const comics = [
   c("a1", "ltb", 1, { title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, source: "Ricardo", purchaseDate: "2025-03-01" }),
   c("a2", "ltb", 1, { title: "Der Kolumbusfalter", grade: "3", pricePaid: 12, source: "Flohmarkt", purchaseDate: "2025-06-01", notes: "Second copy" }),
-  c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2" }),
+  c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2", extras: [{ what: "Lithograph (Freccero)", value: 15, cur: "EUR" }] }),
   c("a4", "tldle", "29B", { title: "PK Tube", issueSort: 29 }),
   c("a5", "tldle", 34, { title: "PK Timecrime DD" }),
   c("a6", "mhdw", 1, {}),

@@ -193,7 +193,15 @@ function valueRuleFor(c, asEdition) {
   const width = r => { const a = rangeBound(k, r.from), b = rangeBound(k, r.to, true); return isNaN(a) || isNaN(b) ? 1e9 : b - a; };
   return fits.sort((x, y) => width(x) - width(y))[0] || null;   // the narrowest range wins
 }
+// extras that came with a copy (lithograph, signature, box, gadget …), each with its own value, in CHF
+function extrasCHF(c) { return (c.extras || []).reduce((a, x) => a + (typeof x.value === "number" ? toCHF(x.value, x.cur || "CHF") : 0), 0); }
 function valueOf(c) {
+  const v = baseValueOf(c), x = c.status === "wanted" ? 0 : extrasCHF(c);
+  if (!x) return v;
+  if (!v) return { amount: Math.round(x * 100) / 100, cur: "CHF", how: "estimate", extras: x };
+  return Object.assign({}, v, { amount: Math.round((v.amount + x / (rateOf(v.cur) || 1)) * 100) / 100, extras: x });
+}
+function baseValueOf(c) {
   if (typeof c.valueChecked === "number") return { amount: c.valueChecked, cur: c.valueCur || c.currency || "CHF", how: "checked" };
   const r = valueRuleFor(c);
   if (r) return { amount: Math.round(r.price * gradeFactor(c.grade) * (c.facsimile ? FACSIMILE_FACTOR : 1) * 100) / 100, cur: r.cur || "CHF", how: "table", rule: r };
