@@ -125,6 +125,7 @@
 | 2026-11-15 | List of the 12 values to type in by hand (single books/comics priced today) + open number/edition fixes (answer only, from the log) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:24 → 23:24:14) |
 | 2026-11-15 | D&D Practically Complete Guide to Dragons (WotC HC 2023): bought 49 CHF = new shop price; used very good ~18–20 $/£ → value raised 15 → 20 € (1 search, answer only; no estimate given beforehand) | – | 0–1 min (23:31 → 23:32:13) |
 | 2026-11-15 | New chat? Yes (this one was already shortened once); notes-only commits pushed so a new chat sees them (answer) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:33 → 23:33:26) |
+| 2026-11-15 | Handover summary for a new chat (text to paste) + handover tips in CLAUDE.md (backup = series ids, pre-push checks, reading errors.txt) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:36 → 23:36:30) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -233,5 +234,12 @@ except typing the reply itself. Say in the report that the reply writing and Git
   series-ltb-copies, group-singles, series-tools (also taps Add all), stories (same story twice in one comic = once), stats-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
   price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
+- **Handover tips (2026-11-15):** the user's backup (.json, sent in the chat) is private: never commit it. It is the only
+  source for the user's series ids (non-INDUCKS series "x-<name>-<lang>", book series "book:<name>") and for what they
+  already typed in; ask for a fresh one when needed. The user pastes Seriekatalogen CSVs (use the VF column) and
+  Comicguide tables (Zustand 1). Before a push: `test -s sw.js`, `node --check` on sw.js and js/*.js, json.load of
+  catalogue/prices.json and restore-batch.json. After a check run (~2 min) read the result with
+  `gh api "repos/FelixWylt/DDCA-Zwischenstopp/contents/errors.txt?ref=screens" -H "Accept: application/vnd.github.raw"`
+  (it starts with a "price batch:" test line; real errors follow it). Commits end with the session's attribution lines.
 - Price suggestions live in `catalogue/prices.json` (per INDUCKS code, or `id:<series id>` for non-Disney series, text as for Paste prices). Add new price research
   there too (with date and a short note on the sources), then run the check with `prices`.
