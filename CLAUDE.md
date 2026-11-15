@@ -123,6 +123,7 @@
 | 2026-11-15 | Books of Earthsea on Ricardo (CH): new Ex Libris CHF 74.40 (Saga), Gollancz edition CHF 46.90 (Lehmanns) → realistic 25–35 CHF, heavy parcel (1 search, answer only) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:11 → 23:11:35) |
 | 2026-11-15 | Publish: 13 price lists (Scooby Doo ×2, Samlade serier, X:en, Discworld, The atlas, Topolibri, Flight of Bones, Tintin, Topolino Extra, Divertiamoci, Artemis Fowl, War of the Realms), da-v208/209; one check (prices + series-tools + every screen): no errors | about 1 min (first guess 2 ÷ 2) + 2 min wait | 1–2 min (23:16 → 23:18:24, incl. 1 run of ~2 min) |
 | 2026-11-15 | List of the 12 values to type in by hand (single books/comics priced today) + open number/edition fixes (answer only, from the log) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:24 → 23:24:14) |
+| 2026-11-15 | D&D Practically Complete Guide to Dragons (WotC HC 2023): bought 49 CHF = new shop price; used very good ~18–20 $/£ → value raised 15 → 20 € (1 search, answer only; no estimate given beforehand) | – | 0–1 min (23:31 → 23:32:13) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
