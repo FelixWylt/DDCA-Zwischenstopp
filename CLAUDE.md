@@ -83,6 +83,7 @@
 | 2026-11-15 | Spirous äventyr full list from the user's Seriekatalogen CSV: 0 (Guldmaskinen) + 1–56, 36 ranges (VF) + latest 56 waiting; user's copy to renumber 5 → 0 by hand | about 1 min (first guess 2–3 ÷ 2) + 1 run | 1–2 min (20:36 → 20:38:09, incl. 1 run of ~2 min) |
 | 2026-11-15 | Farbror Joakims liv from the user's Seriekatalogen CSV (1: 480 kr, 2: 360 kr); price check explained | under 1 min (first guess 1–2 ÷ 2) + 1 run | 1–2 min (20:46 → 20:48:23, incl. 1 run of ~2 min) |
 | 2026-11-15 | Rule: price lists in bundles (prepare + commit locally, push and check once when the user says publish) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:52 → 20:52:36) |
+| 2026-11-15 | Value estimate Zelda BotW Master Works (Tokyopop HC 2019, German edition of Creating a Champion): about 30 € (2 searches), single book, typed in by the user | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (20:53 → 20:54:20) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
