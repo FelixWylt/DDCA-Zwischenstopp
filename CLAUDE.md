@@ -92,6 +92,7 @@
 | 2026-11-15 | Stormlight Archive (book series, 1-: 8 € from asking prices) local; Odysséen (LL-förlaget 2012, lättläst, still in print 219 kr): about 80 kr typed in (2 searches) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (21:16 → 21:17:05) |
 | 2026-11-15 | Donald Duck & Co (Norway, no/DD): 11 yearly ranges in € (no NOK in the app), 1948/1 from a Finn.no sale, rest estimated like Kalle Anka (1 search); local (bundle) | 1.5–2 min (first guess 4–6 ÷ 3) | 0–1 min (21:20 → 21:21:29) |
 | 2026-11-15 | Donald Duck & Co Norway converted to Swedish kr (≈11 kr per €, rounded); local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:23 → 21:23:35) |
+| 2026-11-15 | "Swedish kr" meant: the list already is in Swedish kr (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:24 → 21:24:35) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
