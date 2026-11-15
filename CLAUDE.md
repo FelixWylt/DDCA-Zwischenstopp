@@ -55,6 +55,7 @@
 | 2026-11-15 | Guide "How to make price ranges" in CLAUDE.md (sources, Z1, text format, editions, stable ranges) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (16:53 → 16:54:08) |
 | 2026-11-15 | Repo connected late; answer on issues per year (91:an, from the code); Asterix ranges redone as Paste-prices lines checked against the app's parser | 2–3 min (gut 6–9 ÷ 3) | 2–3 min (17:26 → 17:28:28) |
 | 2026-11-15 | Per year by year ranges (Gaps, Stats, Next issue, Series field), kr/CHF in edition lines, Asterix suggestions stored by series id (+ price check adapted to edition lists), JSON-import check (answer) | 3–4 min (gut 8–12 ÷ 3) + 1 run | 4–5 min (17:33 → 17:37:42, incl. 1 run of ~2 min) |
+| 2026-11-15 | Swedish Asterix checked in Seriesams Guide (3 searches, 2 pages): 1–4 and 31–38 corrected, full list to paste + prices.json | 1.5–2.5 min (gut 3–5 ÷ 2) + 1 run | 3–4 min (17:41 → 17:44:50, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -68,6 +69,8 @@ commit with the log line the **last** step before writing the reply, so the meas
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
 ## Where we left off (2026-11-15, app da-v187)
+- Swedish Asterix: Seriesams Guide (seriesam.com/cgi-bin/guide?s=ASTERIX) shows catalogue values online for some issues;
+  seriekatalogen.se itself can't be fetched from here.
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so
   this worked). They are also stored as suggestions in catalogue/prices.json under "id:<series id>" (series INDUCKS
   doesn't have). Edition lines ("12 Asterix (1. Auflage) 8 €") now accept kr and CHF too.
