@@ -62,6 +62,7 @@
 | 2026-11-08 | Blixt Gordon: which universe and group (answer only) | under 1 min | 0–1 min (11:04 → 11:05:02) |
 | 2026-11-08 | Blixt Gordon universe corrected (by rights owner, like Swedish Spider-Man in Marvel; answer only) | under 1 min | 0–1 min (11:06 → 11:06:49) |
 | 2026-11-15 | 6 points: wishlist copy comics/books/both, one-tap category button, lot list by last change (12 lots), catalogue de/MHDW+DSBDD+SDD, LETP prices, two-copies answer | 6–12 min (+1 min wait) | 1–2 min (11:51 → 11:53:11) |
+| 2026-11-15 | Wishlist category as 3 fixed buttons under the row (no jumping), "Single comics" in groups (auto for 1-issue INDUCKS series, setting in Series), "Add another copy" in the edit form, LETP sales check (1 search, none found) | 4–8 min (+1 min wait) | 2–3 min (12:09 → 12:11:50) |
 
 Rough guide from the log: small fix or one field ≈ 1–2 min; a bundle of related changes ≈ 2–4 min;
 a bigger rebuild (whole tab) maybe 5–15 min — not yet measured, so say so.

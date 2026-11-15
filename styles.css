@@ -603,3 +603,7 @@ body.kb .savebar { position: static; border-top: 0; }
 .wlvl-want { color: var(--wanted); border-color: var(--wanted); background: transparent; }
 .wlvl-must { color: var(--wanted); border-color: var(--wanted); background: var(--wanted-soft); }
 .wlvl-dream { color: var(--muted, #888); border-style: dashed; background: transparent; }
+/* wishlist: the category line sits under the entry, away from "Got it" */
+.wishrow { flex-wrap: wrap; }
+.wishrow .wlseg { flex: 1 0 100%; display: flex; margin-top: 6px; }
+.wishrow .wlseg button { flex: 1; min-height: 36px; font-size: 0.82rem; }

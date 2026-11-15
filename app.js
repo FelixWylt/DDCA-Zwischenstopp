@@ -1373,6 +1373,9 @@ function groupOf(c) {
   const se = seriesById(c.seriesId);
   return se ? (se.group || OTHER_GROUP) : OTHER_GROUP;
 }
+// a series of one volume (Der Stammbaum der Ducks, Micky Holmes & Donald Watson): shown under "Single comics".
+// Automatic when INDUCKS lists one issue; Series › "Single comic" can say yes or no
+function isSingleSeries(se) { if (!se) return false; if (se.single === "yes") return true; if (se.single === "no") return false; const e = catEntry(se); return !!(e && e.issues === 1); }
 function seriesKeyOf(c) { return c.kind === "book" ? "book:" + (c.seriesName || "") : (seriesById(c.seriesId) ? c.seriesId : "name:" + (c.seriesName || "")); }
 function seriesTitle(key) {
   if (key.startsWith("book:")) return key.slice(5) || "Single books";
@@ -1691,14 +1694,17 @@ function drawResults() {
     const bySeries = {};
     inGroup.forEach(c => { const k = seriesKeyOf(c); (bySeries[k] = bySeries[k] || []).push(c); });
     const order = Object.fromEntries(S.series.map((s, i) => [s.id, i]));
-    const keys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b), "de", { numeric: true }));
+    const allKeys = Object.keys(bySeries).sort((a, b) => ((order[a] ?? 999) - (order[b] ?? 999)) || seriesTitle(a).localeCompare(seriesTitle(b), "de", { numeric: true }));
+    const singleKeys = allKeys.filter(k => isSingleSeries(seriesById(k))), keys = allKeys.filter(k => !singleKeys.includes(k));
+    const singles = singleKeys.flatMap(k => bySeries[k]).sort((a, b) => seriesTitle(seriesKeyOf(a)).localeCompare(seriesTitle(seriesKeyOf(b)), "de", { numeric: true }));
     const trail = isBookUni(col.p) ? [{ label: "All", col: {} }, { label: col.p }] : [{ label: "All", col: {} }, { label: col.p, col: { p: col.p } }, { label: col.g }];
     html = crumbs(trail) +
       (keys.length ? '<div class="list">' + keys.map(k => {
         const list = bySeries[k], se = seriesById(k), yrs = yearsText(list);
         return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g: col.g, s: k }))}'><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div>
           <div class="s">${esc([countText(list), yrs, valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
-      }).join("") + '</div>' : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this group fits “Show”. Change it above.</p></div>');
+      }).join("") + '</div>' : singles.length ? "" : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this group fits “Show”. Change it above.</p></div>') +
+      (singles.length ? `<h3 class="listhead">Single comics <span class="muted">${singles.length}</span></h3>` + entriesHtml(singles) : "");
   } else {
     const list = sortComics(pool.filter(c => publisherOf(c) === col.p && groupOf(c) === col.g && seriesKeyOf(c) === col.s));
     let lastYear = null; const rows = [];
@@ -2063,6 +2069,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         <button class="primary" id="save"${S.db ? "" : " disabled"}>${editing ? "Save changes" : "Save to archive"}</button>
         ${!editing ? '<button id="saveNext"' + (S.db ? "" : " disabled") + '>' + (isBook ? "Save and add next volume" : "Save and add next issue") + '</button>' : ""}
         ${!editing && !isBook ? '<button class="ghost" id="skipNext" type="button">Skip this number</button>' : ""}
+        ${editing && d.status !== "wanted" ? '<button id="secondCopy" type="button">Add another copy</button>' : ""}
         ${editing ? '<button class="danger" id="del">Delete</button>' : ""}
       </div>
       <div id="confirmBox"></div>`;
@@ -2283,7 +2290,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           if (!c.stories.length && (wish.stories || []).length && sameNo) c.stories = wish.stories;
           c.id = wish.id; c.createdAt = wish.createdAt; moved = true;
           alsoGone = wishes.filter(x => x !== wish).map(x => x.id);   // a double issue also clears the other number's wish
-        } else if (!S.dupOk && (have || (wish && c.status === "wanted"))) {
+        } else if (!S.dupOk && !(S.draft && S.draft.secondCopy) && (have || (wish && c.status === "wanted"))) {
           const box = $("#confirmBox");
           box.innerHTML = have
             ? `<div class="confirm"><span>${exact ? esc(tag) + " is already in your collection" + (c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")") : esc(tag) + " overlaps with " + esc((target.short || target.name) + " " + haveLab) + ", which is already in your collection"}.</span>
@@ -2370,6 +2377,14 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     };
     $("#save").onclick = () => doSave(false);
     $("#saveNext") && ($("#saveNext").onclick = () => doSave(true));
+    // a second copy of the same issue, with its own condition, price, seller and notes (not "one more copy" of the same)
+    $("#secondCopy") && ($("#secondCopy").onclick = () => {
+      grab();
+      const keep = ["kind", "bookType", "seriesId", "seriesName", "issue", "issueLabel", "title", "date", "pages", "stories", "coverUrl", "inducks", "duckipedia", "author", "publisher", "isbn", "format", "lang", "genres", "currency"];
+      const pre = {}; keep.forEach(k => { if (d[k] !== undefined) pre[k] = d[k]; });
+      S.editing = null; S.draft = blankDraft(Object.assign(pre, { secondCopy: true, notes: "Second copy" }));
+      toast("A second copy: enter its condition, price and seller, then save"); render(); window.scrollTo(0, 0);
+    });
     $("#del") && ($("#del").onclick = () => {
       $("#confirmBox").innerHTML = '<div class="confirm"><span>Delete this ' + (d.kind === "book" ? "book" : "comic") + ' from your archive? This can\'t be undone.</span><button class="danger" id="yesdel">Delete</button><button id="nodel">Keep it</button></div>';
       $("#nodel").onclick = () => $("#confirmBox").innerHTML = "";
@@ -2623,11 +2638,14 @@ function bindWishlist() {
   });
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
-  document.querySelectorAll("[data-wlv]").forEach(b => b.onclick = async e => {
+  // the row keeps its place until you leave the list, so you can change several in a row without searching
+  document.querySelectorAll("[data-wlset]").forEach(b => b.onclick = async e => {
     e.stopPropagation();
-    const c = S.comics.find(x => x.id === b.dataset.wlv); if (!c) return;
-    const next = { "": "must", must: "dream", dream: "" }[wishLevel(c)];
-    try { await saveComic(Object.assign({}, c, { wishLevel: next }), true); renderKeep(); } catch (x) { toast(errText(x)); }
+    const c = S.comics.find(x => x.id === b.dataset.wlset); if (!c || wishLevel(c) === b.dataset.lv) return;
+    try {
+      await saveComic(Object.assign({}, c, { wishLevel: b.dataset.lv }), true);
+      b.parentNode.querySelectorAll("[data-wlset]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    } catch (x) { toast(errText(x)); }
   });
   document.querySelectorAll("[data-got]").forEach(b => b.onclick = async e => {
     e.stopPropagation();
@@ -2646,7 +2664,8 @@ function wishItem(c) {
   return `<div class="item wishrow">${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"></div>` : ""}
     <button class="wishmain" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div>
       <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}${bud && bud.ok ? ' <span class="chip budget">Within budget</span>' : ""}</div><div class="s">${esc(sub)}</div></div></button>
-    <div class="stack" style="gap:4px;align-items:stretch"><button class="wlvl wlvl-${wishLevel(c) || "want"}" type="button" data-wlv="${esc(c.id)}" title="Tap to change: Want → Must have → Dream">${wishLevel(c) === "must" ? "★ Must" : wishLevel(c) === "dream" ? "Dream" : "Want"}</button><button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div></div>`;
+    <button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button>
+    <div class="seg small wlseg" role="group" aria-label="How much you want it">${WISH_LEVELS.map(([k, l]) => `<button type="button" data-wlset="${esc(c.id)}" data-lv="${k}" aria-pressed="${wishLevel(c) === k}">${k === "must" ? "★ " + l : l}</button>`).join("")}</div></div>`;
 }
 function wishlistBySeries(wl) {
   const groups = {};
@@ -4416,6 +4435,7 @@ VIEWS.series = {
       <label><span class="l">INDUCKS code</span><input data-k="code" class="mono" value="${esc(s.code)}" placeholder="de/LTB"></label>
       <div class="wide small inducksnote" data-ni="${i}">${inducksNote(s)}</div>
       <label><span class="l">Country</span><input data-k="country" value="${esc(s.country)}" maxlength="3"></label>
+      <label><span class="l">Single comic</span><select data-k="single"><option value=""${!s.single ? " selected" : ""}>Automatic${isSingleSeries(Object.assign({}, s, { single: "" })) ? " (yes: one volume in INDUCKS)" : ""}</option><option value="yes"${s.single === "yes" ? " selected" : ""}>Yes: list under Single comics</option><option value="no"${s.single === "no" ? " selected" : ""}>No: own folder</option></select></label>
       <label><span class="l">Numbering</span><select data-k="numbering"><option value="running"${s.numbering !== "year" ? " selected" : ""}>Running number</option><option value="year"${s.numbering === "year" ? " selected" : ""}>Per year</option></select></label>
       ${s.numbering === "year"
         ? `<label><span class="l">Years</span><input data-k="years" value="${esc(s.firstYear || s.lastYear ? (s.firstYear || "") + "–" + (s.lastYear || "") : "")}" placeholder="1951–2026"></label><label><span class="l">Per year</span><input data-k="perYear" type="number" min="1" placeholder="e.g. 52" value="${esc(s.perYear || "")}"></label>`
