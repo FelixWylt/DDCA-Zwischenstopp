@@ -108,6 +108,7 @@
 | 2026-11-15 | X-Men (Swedish, 1990/9–1993/12) from the user's Seriekatalogen CSV: 20 kr each, issue list (36), years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:09 → 22:09:21) |
 | 2026-11-15 | Collection search "x-men" found 67: words were matched anywhere ("x" + "men" in Momente…). Now searchHit: hyphenated words = one phrase, 1–2-letter words must start a word (backup: 76 → 2 real hits), da-v206; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (22:12 → 22:13:38) |
 | 2026-11-15 | Stats › Overview lag: every Stats tab built the story index, book stats and money totals of all tabs, filtered all comics once per series, and redrew once per INDUCKS file loaded. Now each tab builds only what it shows, comics indexed by series, unowned series skipped, one redraw after all files, da-v207; local (bundle) | 2–3 min (first guess 6–9 ÷ 3) | 1–2 min (22:17 → 22:18:46) |
+| 2026-11-15 | Publish: X-Men list, search fix (da-v206), Stats speed-up (da-v207); one check (prices + every screen opened): no errors | about 1 min (first guess 2 ÷ 2) + 2 min wait | 2–3 min (22:22 → 22:24:31, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -148,7 +149,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Omaggio Abbonati (x-omaggio-abonati, prices.json "it/ABB"): estimates, local.
   Spider-Man Magazin (x-spider-man-german, Panini): 1-52: 1 € (Comicguide), local.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
-  X-Men Swedish (x-x-men-swedish): 1990/9–1993/12, 20 kr, issue list, local (after the 22:00 publish).
+  X-Men Swedish (x-x-men-swedish): 1990/9–1993/12, 20 kr, issue list (published 22:2x).
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
