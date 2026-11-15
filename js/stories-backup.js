@@ -11,6 +11,33 @@ function splitChars(v) {
   return out.map(x => x.replace(/\u0001/g, ",").replace(/\s*\([^)]*\)/g, "").trim()).filter(Boolean);
 }
 const storyCode = v => String(v || "").replace(/\s+/g, " ").trim();
+const codeKey = v => String(v || "").replace(/\s+/g, "").toLowerCase();
+// stories of this comic that are already in another comic you own (same INDUCKS story code): [{ s, comics }]
+function storiesHadElsewhere(d) {
+  const mine = new Map();
+  (d.stories || []).forEach(s => { const k = codeKey(s.code); if (k && !mine.has(k)) mine.set(k, { s, comics: [] }); });
+  if (!mine.size) return [];
+  S.comics.forEach(c => {
+    if (c.id === d.id || c.status === "wanted") return;
+    const seen = new Set();
+    (c.stories || []).forEach(s => { const k = codeKey(s.code), m = mine.get(k); if (m && !seen.has(k)) { seen.add(k); m.comics.push(c); } });
+  });
+  return [...mine.values()].filter(m => m.comics.length);
+}
+// the note above the stories: in the form as plain text, on the comic page with buttons to open those comics
+function hadElsewhereHtml(d, links) {
+  const xs = storiesHadElsewhere(d); if (!xs.length) return "";
+  const n = (d.stories || []).length;
+  const head = xs.length === n ? (n === 1 ? "You already have this story" : "You already have all " + n + " stories") : "You already have " + xs.length + " of these " + n + " stories";
+  const where = c => links ? `<button type="button" class="link" data-hopen="${esc(c.id)}">${esc(comicTag(c))}</button>` : esc(comicTag(c));
+  return `<div class="banner hadst small"><b>${head}</b> in other comics:<ul>${xs.map(m => `<li>${esc(m.s.title || m.s.dTitle || m.s.code)}: ${m.comics.map(where).join(", ")}</li>`).join("")}</ul></div>`;
+}
+// a writer's or artist's name anywhere in the app opens their page under Stories
+document.addEventListener("click", e => {
+  const p = e.target.closest("[data-goperson]"), h = e.target.closest("[data-hopen]");
+  if (p) { e.preventDefault(); S.st = Object.assign(S.st || {}, { tab: "all", who: { role: p.dataset.goperson, name: p.dataset.n }, q: "", shown: 100, status: "all" }); nav("stories"); window.scrollTo(0, 0); }
+  else if (h) { e.preventDefault(); S.editing = h.dataset.hopen; S.draft = null; nav("add"); window.scrollTo(0, 0); }
+});
 // every story once, with the comics it appears in (a reprinted story is one story)
 // story ratings are kept per story (INDUCKS story code, or the title when there is no code), in the config store
 const storyKey = e => e.code ? "c:" + String(e.code).replace(/\s+/g, "").toLowerCase() : "t:" + norm(e.titles[0] || "");
@@ -126,7 +153,18 @@ function drawStories() {
     box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   } else {
     let list = all;
-    if (st.who) list = list.filter(e => e[st.who.role].has(st.who.name));
+    let person = "";
+    if (st.who) {
+      list = list.filter(e => e[st.who.role].has(st.who.name));
+      // their page: how many stories and comics, which years, and the comics themselves
+      const cm = new Map(); list.forEach(e => e.items.forEach(c => cm.set(c.id, c)));
+      const cs = [...cm.values()].sort((a, b) => comicTag(a).localeCompare(comicTag(b), "de", { numeric: true }));
+      const own = cs.filter(c => c.status !== "wanted").length, yrs = list.map(e => +String(e.first || "").slice(0, 4)).filter(y => y > 1900).sort((a, b) => a - b);
+      const role = { writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role];
+      person = `<div class="card stack small personcard"><h3 style="margin:0">${esc(st.who.name)}</h3>
+        <div class="muted">${role} · ${list.length} ${list.length === 1 ? "story" : "stories"} in ${cs.length} ${cs.length === 1 ? "comic" : "comics"}${own < cs.length ? " (" + own + " owned, " + (cs.length - own) + " on the wishlist)" : ""}${yrs.length ? " · first published " + yrs[0] + (yrs[yrs.length - 1] !== yrs[0] ? "–" + yrs[yrs.length - 1] : "") : ""}</div>
+        <details><summary>The comics (${cs.length})</summary><div class="row" style="gap:6px;margin-top:6px">${cs.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}</button>`).join("")}</div></details></div>`;
+    }
     if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
     let html = "";
     if (st.tab === "fav") {
@@ -149,7 +187,7 @@ function drawStories() {
       html = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints && !st.reprinted ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
         (list.length ? '<div class="list">' + list.slice(0, st.shown).map(storyRow).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or tap Owned, Wishlist or Both.</p></div>') + more(list.length);
     }
-    box.innerHTML = html;
+    box.innerHTML = person + html;
     box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     box.querySelectorAll("[data-sfav]").forEach(b => b.onclick = async () => {
       const k = b.dataset.sfav, on = !(S.storyRatings[k] || {}).fav;

@@ -613,3 +613,6 @@ body.kb .savebar { position: static; border-top: 0; }
 /* several separate copies of one issue */
 .tile { position: relative; }
 .tilecopies { position: absolute; top: 4px; right: 4px; z-index: 1; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 1px 6px; font-size: 0.72rem; font-weight: 700; }
+.banner.hadst ul { margin: 6px 0 0; padding-left: 18px; }
+.banner.hadst li { margin: 2px 0; }
+.personcard summary { cursor: pointer; }

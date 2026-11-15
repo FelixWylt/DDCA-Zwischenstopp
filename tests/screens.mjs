@@ -18,9 +18,9 @@ const series = [
 ];
 const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), issueNum: parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
 const comics = [
-  c("a1", "ltb", 1, { title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, source: "Ricardo", purchaseDate: "2025-03-01" }),
+  c("a1", "ltb", 1, { stories: [{ title: "Der Kolumbusfalter", code: "I TL 1-AP", writer: "Guido Martina", artist: "Romano Scarpa", first: "1953-01-01" }], title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, source: "Ricardo", purchaseDate: "2025-03-01" }),
   c("a2", "ltb", 1, { title: "Der Kolumbusfalter", grade: "3", pricePaid: 12, source: "Flohmarkt", purchaseDate: "2025-06-01", notes: "Second copy" }),
-  c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2", extras: [{ what: "Lithograph (Freccero)", value: 15, cur: "EUR" }] }),
+  c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2", stories: [{ title: "Der Kolumbusfalter", code: "I TL 1-AP", writer: "Guido Martina", artist: "Romano Scarpa", first: "1953-01-01" }, { title: "Micky und das Meer", code: "I TL 20-A", writer: "Guido Martina", artist: "Luciano Bottaro", first: "1955-05-01" }], extras: [{ what: "Lithograph (Freccero)", value: 15, cur: "EUR" }] }),
   c("a4", "tldle", "29B", { title: "PK Tube", issueSort: 29 }),
   c("a5", "tldle", 34, { title: "PK Timecrime DD" }),
   c("a6", "mhdw", 1, {}),
@@ -65,6 +65,7 @@ await shot("05-wishlist-books", () => { S.gapTab = "wishlist"; S.wishKind = "boo
 await shot("06-edit-comic", () => { S.editing = "a3"; S.draft = null; nav("add"); });
 await shot("07-new-comic", () => { S.recentSeries = ["ltb", "tldle", "kap"]; S.editing = null; S.draft = null; nav("add"); });
 await shot("12-trade", () => { S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
+await shot("13-person", () => { S.st = { tab: "all", who: { role: "writers", name: "Guido Martina" }, status: "all" }; nav("stories"); });
 await shot("08-stats", () => { nav("stats"); });
 await shot("09-series", () => { nav("series"); });
 // the copy picker: tap the LTB 1 row with two copies

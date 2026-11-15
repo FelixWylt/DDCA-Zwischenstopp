@@ -570,12 +570,13 @@ function duckipediaCard(c) {
     <p class="small muted" style="margin:0">Text (also the story details and plots) from <a href="${esc(dk.url)}" target="_blank" rel="noopener">Duckipedia: ${esc(dk.page)}</a>, under the GNU Free Documentation License 1.2. <a href="${esc(dk.authors)}" target="_blank" rel="noopener">List of authors</a>.</p></div>`;
 }
 // one story with INDUCKS (title, code, writer, artist) and Duckipedia (German title, original, translator, characters, plot) together
-function storyView(s) {
-  const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + s.writer : s.writer && "Writer: " + s.writer, s.artist && s.artist !== s.writer ? "Artist: " + s.artist : "", s.hero].filter(Boolean).join(" · ");
+function storyView(s, links) {
+  const names = (v, role) => links ? splitPeople(v).map(n => `<button type="button" class="link" data-goperson="${role}" data-n="${esc(n)}">${esc(n)}</button>`).join(", ") : esc(v);
+  const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + names(s.writer, "writers") : s.writer && "Writer: " + names(s.writer, "writers"), s.artist && s.artist !== s.writer ? "Artist: " + names(s.artist, "artists") : "", s.hero && esc(s.hero)].filter(Boolean).join(" · ");
   const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
   const other = s.dTitle && norm(s.dTitle) !== norm(s.title) ? s.dTitle : "";
   return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
-    ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${esc(by)}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
+    ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${by}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
     ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
     ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`;
 }
@@ -609,7 +610,7 @@ function detailHtml(c) {
       ${c.status !== "wanted" ? `<div class="row" style="gap:10px;align-items:center">${heartHtml(c.fav, 'id="v-fav"')}${starsHtml(c.rating, 'id="v-rating"')}<span class="small muted">saved straight away</span></div>` : ""}
     </div>
     <div class="card stack"><h3>${c.status === "wanted" ? "On your wishlist" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl></div>
-    ${(c.stories || []).length ? `<div class="card stack"><h3>Stories <span class="muted small">${c.stories.length}</span></h3><div class="stories">${c.stories.map(storyView).join("")}</div></div>` : ""}
+    ${(c.stories || []).length ? `<div class="card stack"><h3>Stories <span class="muted small">${c.stories.length}</span></h3>${hadElsewhereHtml(c, true)}<div class="stories">${c.stories.map(s => storyView(s, true)).join("")}</div></div>` : ""}
     ${c.duckipedia ? duckipediaCard(c) : ""}`;
 }
 function bindDetail(c) {

@@ -30,7 +30,7 @@ VIEWS.add = {
     const curs = CURRENCIES.map(c => `<option${d.currency === c ? " selected" : ""}>${c}</option>`).join("");
     // one view per story with INDUCKS (title, code, writer, artist) and Duckipedia (German title, original, translator, characters, plot) together
     const storyEdit = S.storyEdit || !d.stories.length;
-    const stories = !storyEdit ? d.stories.map(storyView).join("") : d.stories.map((s, i) => `<div class="story" data-i="${i}">
+    const stories = !storyEdit ? d.stories.map(s => storyView(s)).join("") : d.stories.map((s, i) => `<div class="story" data-i="${i}">
         <label class="st-title"><span class="l">Story title</span><input data-sf="title" value="${esc(s.title)}"></label>
         <label><span class="l">Story code</span><input data-sf="code" class="mono" placeholder="I TL 1234-A" value="${esc(s.code)}"></label>
         <label><span class="l">Writer</span><input data-sf="writer" value="${esc(s.writer)}"></label>
@@ -112,7 +112,7 @@ ${isBook ? `
       ${d.duckipedia ? duckipediaCard(d) : ""}
       <div class="card stack">
         <div class="row between"><h3>Stories${d.stories.length ? ` <span class="muted small">${d.stories.length}</span>` : ""}</h3><span class="row" style="gap:6px">${d.stories.length ? `<button id="editstories" class="ghost" type="button">${storyEdit ? "Done" : "Edit stories"}</button>` : ""}<button id="addstory">Add story</button></span></div>
-        ${d.stories.length ? '<div class="stories">' + stories + '</div>' : '<p class="muted small" style="margin:0">No stories listed yet. Add them so you can search by story, writer or artist later.</p>'}
+        ${hadElsewhereHtml(d, false)}${d.stories.length ? '<div class="stories">' + stories + '</div>' : '<p class="muted small" style="margin:0">No stories listed yet. Add them so you can search by story, writer or artist later.</p>'}
         <datalist id="heroes"><option>Donald Duck</option><option>Micky Maus / Topolino</option><option>Dagobert / Zio Paperone / Joakim</option><option>Phantomias / Paperinik</option><option>Daniel Düsentrieb / Archimede</option><option>Goofy / Pippo / Långben</option><option>Gustav Gans / Gastone / Alexander Lukas</option><option>Die Panzerknacker / Bassotti / Björnligan</option><option>Tick, Trick und Track</option></datalist>
       </div>
       ${d.status === "wanted" ? `
@@ -325,7 +325,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         const fromCat = d.title && Object.values(file.issues || {}).some(x => x.t && norm(x.t) === norm(d.title));
         d.title = (!d.title || fromCat ? hit.t : d.title) || d.title || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
         d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "" }));
-        d.inducks = hit.ic; await fillExtras(se); render(); toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories")); return;
+        d.inducks = hit.ic; await fillExtras(se); render(); const had = storiesHadElsewhere(d).length; toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories") + (had ? " · you already have " + had + " of them in other comics" : "")); return;
       }
       d.title = d.title || hit.title || ""; d.date = hit.date || d.date; d.pages = hit.pages || d.pages; d.coverUrl = d.coverUrl || hit.cover || "";
       d.stories = (hit.stories || []).map(s => ({ title: s.title || "", code: s.code || "", writer: s.writer || "", artist: s.artist || "", hero: s.hero || "" }));
