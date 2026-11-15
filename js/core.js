@@ -172,7 +172,9 @@ function rangeBound(key, v, isTo) {
     m = /^(\d{4})$/.exec(t); if (m) return +m[1] * 1000 + (isTo ? 999 : 0);
     return NaN;
   }
-  return parseInt(t, 10);
+  // running numbers: a variant "1B" is 1.02 (as parseIssue sorts it); a plain number's "to" covers its variants too
+  const rv = /^(\d{1,5})\s*([A-Za-z])$/.exec(t); if (rv) return +rv[1] + (rv[2].toUpperCase().charCodeAt(0) - 64) / 100;
+  const n = parseInt(t, 10); return isNaN(n) ? NaN : n + (isTo && /^\d+$/.test(t) ? 0.99 : 0);
 }
 // "Per year" of a yearly series: one number ("52") or by years ("1978-1983: 12, 1984-1988: 24", "1990-: 52");
 // a year not covered by a "from-to: n" part uses the plain number, if any. 0 = not set
@@ -357,7 +359,7 @@ function parsePrices(key, text, fallbackCur, edition) {
     let any = false;
     // "6,5" is a half number, not two ranges
     line.split(/;|,(?!5(?!\d))/).map(x => x.trim()).filter(Boolean).forEach(part => {
-      const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3}(?:½|[.,]5|[A-Z])?)?)" : "(\\d{1,5})";
+      const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3}(?:½|[.,]5|[A-Z])?)?)" : "(\\d{1,5}[A-Za-z]?)";
       const r = new RegExp("^" + B + "?\\s*([-–])?\\s*" + B + "?\\s*[:=→>]?\\s+([\\d.,]+)\\s*(€|eur|kr|sek|chf|fr\\.?)?$", "i").exec(part);
       if (!r || (!r[1] && !r[3])) { skipped.push(part); return; }
       const p = priceAmount(r[4]); if (p == null) { skipped.push(part); return; }
@@ -1149,7 +1151,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 208;
+const APP_BUILD = 209;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

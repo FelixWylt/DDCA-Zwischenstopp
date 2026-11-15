@@ -3721,6 +3721,16 @@
    "replace": false,
    "minApp": 200,
    "added": "2026-11-15"
+  },
+  {
+   "id": "x-war-of-the-realms",
+   "sugg": "id:x-war-of-the-realms",
+   "replace": false,
+   "patch": {
+    "latest": "5"
+   },
+   "minApp": 209,
+   "added": "2026-11-15"
   }
  ]
 }

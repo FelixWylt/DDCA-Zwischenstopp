@@ -119,6 +119,7 @@
 | 2026-11-15 | Tintin #20 has no printing info: tell first printing by the back-cover title list (only up to no. 20 = 1973 printing; Tintin hos gerillan 23 / later titles = reprint) (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:55 → 22:55:19) |
 | 2026-11-15 | Tintin #20 back cover lists Tintin 1–18 (+ Johan, Lotta och Jocko 1–5): no. 19 (1975) missing → first printing 1973, set Edition 1. Auflage (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:57 → 22:57:35) |
 | 2026-11-15 | 5 items: lists Topolino Extra (it/TXTR) 7 €, Divertiamoci a stare bene (it/DSB) 1-8: 2 €, Artemis Fowl (Swedish HC) 40 kr; typed values Books of Earthsea 35 €, Maus (Pantheon) 15 € (estimates, no search); local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (23:08 → 23:08:40) |
+| 2026-11-15 | War of the Realms (Panini) from the user's Comicguide table: 1-4 3.50 €, 5 3 €, variant covers 1B–5B 7/6 €; running-number price lines now take a variant letter ("5B: 6 €"), da-v209; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (23:09 → 23:10:35) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -131,7 +132,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v208)
+## Where we left off (2026-11-15, app da-v209)
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
@@ -167,6 +168,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Discworld, The atlas (book series), Topolibri (it/TLB), Doctor Strange: Flight of Bones (1-4): estimates, local.
   Tintin Swedish (x-tintin-swedish): per printing, 1. Auflage (Seriekatalogen) + höhere Auflagen 50 kr (default), local. The user's #20 (1973) is a first printing (back cover lists 1–18): told them to set Edition 1. Auflage.
   Topolino Extra (it/TXTR), Divertiamoci a stare bene (it/DSB, latest 8), Artemis Fowl (book series, kr): estimates, local.
+  War of the Realms (x-war-of-the-realms, Panini): 1–5 + variants 1B–5B, latest 5, minApp 209, local.
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
@@ -191,6 +193,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **Variants (the user's wish, 2026-11-15):** when Seriekatalogen ("Variant: Ja") or another source lists a variant,
   add it as its own issue with a capital letter: issueList key "2003-01B" (double: "2019-01-02B"), and a price line
   "2003/1B: 35 kr" only when its price differs from the plain issue. The plain issue keeps no letter.
+  Running numbers too since da-v209 ("5B: 6 €"). Write variant lines ONE PER ISSUE: a range "1B-4B" would also cover plain 2–4.
 - **Value = condition Z1** (very good). Other conditions are worked out by the app's condition factors, so never lower
   a range for worn copies.
 - **Sources, best first:** Comicguide.de (column "Zustand 1"), Seriekatalogen.se (VF column), then real sold prices
