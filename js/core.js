@@ -1148,11 +1148,13 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 199;
+const APP_BUILD = 200;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
-function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && seriesById(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
+// a waiting list is for one of your comic series, or for a book series ("book:A Song of Ice and Fire") you have books of
+const batchHas = id => String(id || "").startsWith("book:") ? S.comics.some(c => c.kind === "book" && "book:" + (c.seriesName || "") === id) : !!seriesById(id);
+function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && batchHas(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
 function priceBatchRules(e) {
   // read the list as the series will be after the patch (Herman Hedning: by year instead of running numbers)
   const se = seriesById(e.id), was = se && se.numbering, pn = e.patch && e.patch.numbering;
@@ -1169,7 +1171,7 @@ async function applyPriceBatch() {
     const se = seriesById(e.id), rules = priceBatchRules(e);   // read before the patch changes the series
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
     S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
-    if (e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    if (se && e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
     // a series switched from running numbers to year/number (Herman Hedning): your copies get their new numbers ("86" -> "2009/06")
     if (e.renumber && typeof e.renumber === "object") {
       const moved = S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).map(c => { const p = parseIssue(se, e.renumber[String(c.issueLabel || c.issue)]); return Object.assign({}, c, { issue: p.label, issueLabel: p.label, issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
@@ -1177,7 +1179,7 @@ async function applyPriceBatch() {
     }
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }
-  await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);
+  await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);   // book series have no series entry: their ranges are enough
   return { series: list.length, ranges: n };
 }
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code

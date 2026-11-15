@@ -37,6 +37,7 @@ const comics = [
   { id: "b1", kind: "book", bookType: "book", seriesId: "_book", title: "Der Hobbit", author: "J. R. R. Tolkien", status: "wanted", stories: [] },
   { id: "b2", kind: "book", bookType: "book", seriesId: "_book", title: "Momo", author: "Michael Ende", status: "owned", stories: [] },
   { id: "b3", kind: "book", bookType: "", seriesId: "_book", title: "Ende gut, alles gut!", status: "owned", stories: [] },
+  { id: "b4", kind: "book", bookType: "book", seriesId: "_book", seriesName: "A Song of Ice and Fire", issue: "1", issueLabel: "1", issueNum: 1, issueSort: 1, title: "A Game of Thrones", author: "George R. R. Martin", status: "owned", stories: [] },
   c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86)
 ];
 
@@ -94,8 +95,8 @@ await shot("09b-series-tools", () => { S.serTab = "tools"; nav("series"); });
 if (want("series-tools")) try {
   await page.evaluate(() => { window.__dda.S.serTab = "tools"; window.__dda.nav("series"); }); await page.waitForTimeout(800);
   await page.locator("#pbatch").click(); await page.waitForTimeout(800);
-  const r = await page.evaluate(() => { const { S } = window.__dda, se = S.series.find(s => s.id === "x-91-an-swedish"); const hh = S.series.find(s => s.id === "x-herman-hedning-swedish"); return { hh: hh.numbering, hh86: (S.comics.find(c => c.id === "hh86") || {}).issueLabel, hh1: (S.comics.find(c => c.id === "hh1") || {}).issueLabel, hhr: S.valueRules.filter(r => r.s === "x-herman-hedning-swedish").length, n: S.valueRules.filter(r => r.s === "x-91-an-swedish" || r.s === "x-asterix-swedish").length, eds: [...new Set(S.valueRules.filter(r => r.s === "x-asterix-swedish").map(r => r.ed))].join(","), first: se.firstYear, per: se.perYear, card: !!document.querySelector("#pbatch") }; });
-  if (!r.n || r.first !== 1956 || !/1970-: 26/.test(r.per) || r.card || r.hh !== "year" || r.hh86 !== "2009/06" || r.hh1 !== "1998/01" || r.hhr !== 7) errors.push("price batch: " + JSON.stringify(r));
+  const r = await page.evaluate(() => { const { S } = window.__dda, se = S.series.find(s => s.id === "x-91-an-swedish"); const hh = S.series.find(s => s.id === "x-herman-hedning-swedish"); return { hh: hh.numbering, hh86: (S.comics.find(c => c.id === "hh86") || {}).issueLabel, hh1: (S.comics.find(c => c.id === "hh1") || {}).issueLabel, hhr: S.valueRules.filter(r => r.s === "x-herman-hedning-swedish").length, asoiaf: S.valueRules.filter(r => r.s === "book:A Song of Ice and Fire").map(r => r.from + "-" + r.to + ":" + r.price + ":" + r.ed).join(" "), n: S.valueRules.filter(r => r.s === "x-91-an-swedish" || r.s === "x-asterix-swedish").length, eds: [...new Set(S.valueRules.filter(r => r.s === "x-asterix-swedish").map(r => r.ed))].join(","), first: se.firstYear, per: se.perYear, card: !!document.querySelector("#pbatch") }; });
+  if (!r.n || r.first !== 1956 || !/1970-: 26/.test(r.per) || r.card || r.hh !== "year" || r.hh86 !== "2009/06" || r.hh1 !== "1998/01" || r.hhr !== 7 || !/1-5:4:höhere Auflagen/.test(r.asoiaf) || !/1-1:600:1\. Auflage HC/.test(r.asoiaf)) errors.push("price batch: " + JSON.stringify(r));
   await page.screenshot({ path: `${OUT}/09c-series-tools-added.png`, fullPage: true });
   fs.writeFileSync(`${OUT}/price-batch.txt`, JSON.stringify(r) + "\n");
   // 91:an's own issue list in Gaps: doubles fill two squares, 1982 has 14½, 2024 has no 16

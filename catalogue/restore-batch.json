@@ -2192,6 +2192,13 @@
    },
    "minApp": 196,
    "added": "2026-11-15"
+  },
+  {
+   "id": "book:A Song of Ice and Fire",
+   "sugg": "id:book:A Song of Ice and Fire",
+   "replace": true,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }
