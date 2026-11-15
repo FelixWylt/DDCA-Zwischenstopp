@@ -131,6 +131,7 @@
 | 2026-11-15 | De Gruyter Parzival: yes, Knecht's translation is built in, facing the original (from the earlier search, answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:53 → 23:53:55) |
 | 2026-11-15 | The user's Lechner Parzival: probably a modern German translation (likely an old one such as Simrock), not the original; asked what the title page says (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:56 → 23:56:12) |
 | 2026-11-15 | Nellmann/Kühn Parzival (DKV Taschenbuch 2006, ISBN 978-3-618-68007-9, ~35 €) to the wishlist: steps for Add › Book › Wishlist (data on the phone; answer only, from the code) | about 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:57 → 23:58:01) |
+| 2026-11-15/16 | Price of the Nellmann/Kühn hardcover (DKV Bibliothek des Mittelalters 8, 1994): no current price found (1 search); found Reclam 2 vols 22 € (jpc), de Gruyter 1131 kr (Bokus) (answer only) | 1–1.5 min (first guess 2–3 ÷ 2) | 1–2 min (23:59 → 00:00:09) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
