@@ -744,6 +744,7 @@ async function boot() {
     S.rates = await getConfig("rates") || null;
     S.gradeFactors = await getConfig("gradeFactors") || {};
     S.valueHistory = await getConfig("valueHistory") || {};
+    S.priceBatchDone = await getConfig("priceBatchDone") || [];
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
@@ -1143,6 +1144,28 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/index.json"); if (r.ok) { S.catalogue = await r.json(); render(); } } catch (e) { S.catalogue = null; }
   // price suggestions per INDUCKS series (catalogue/prices.json, kept in the app's repository)
   try { const r = await fetch("catalogue/prices.json"); if (r.ok) S.priceSugg = (await r.json()).series || {}; } catch (e) {}
+  // price lists Claude has collected for your series (Series › Tools › Price lists waiting)
+  try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
+}
+// a waiting list counts as added once its text (by date and length) has been added, so a corrected list shows up again
+const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (sg.date || "") + "|" + String(sg.text || "").length; };
+function priceBatchWaiting() { const done = new Set(S.priceBatchDone || []); return (S.priceBatch || []).filter(e => e && seriesById(e.id) && (S.priceSugg || {})[e.sugg] && !done.has(batchKey(e))); }
+function priceBatchRules(e) {
+  const sg = S.priceSugg[e.sugg], res = parsePrices(e.id, sg.text, sg.cur), note = "Claude, " + sg.date;
+  const mk = (r, ed) => ({ id: newId(), s: e.id, from: r.zero ? zeroText(e.id, r.lo) : r.lo == null ? "" : boundText(e.id, r.lo), to: r.zero ? zeroText(e.id, r.hi) : r.hi == null ? "" : boundText(e.id, r.hi, true), price: r.price, cur: r.cur, note, ed: ed || "" });
+  return res.editions.length > 1 ? res.byEdition.flatMap(x => x.ranges.map(r => mk(r, x.label))) : res.ranges.map(r => mk(r));
+}
+async function applyPriceBatch() {
+  const list = priceBatchWaiting(); let n = 0;
+  for (const e of list) {
+    const se = seriesById(e.id), rules = priceBatchRules(e);
+    if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
+    S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
+    if (e.patch && typeof e.patch === "object") ["perYear", "firstYear", "lastYear", "defaultEdition"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
+    S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
+  }
+  await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);
+  return { series: list.length, ranges: n };
 }
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
 function catEntry(se) {

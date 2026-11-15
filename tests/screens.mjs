@@ -16,7 +16,10 @@ const series = [
   { id: "mhdw", name: "Micky Holmes & Donald Watson", code: "de/MHDW", country: "de", publisher: "Disney", group: "Deutschland – Alben & Sammlerbände", numbering: "running" },
   { id: "mm", name: "Micky Maus Magazin", short: "MM", code: "de/MM", country: "de", publisher: "Disney", group: "Deutschland – Micky Maus", numbering: "year", firstYear: 1951 },
   { id: "ka", name: "Kalle Anka & C:o", short: "KA", code: "se/KA", country: "se", publisher: "Disney", group: "Sverige – Kalle Anka", numbering: "year", firstYear: 1948 },
-  { id: "kap", name: "Kalle Ankas Pocket", short: "KAP", code: "se/KAP", country: "se", publisher: "Disney", group: "Sverige – Pocket", numbering: "running" }
+  { id: "kap", name: "Kalle Ankas Pocket", short: "KAP", code: "se/KAP", country: "se", publisher: "Disney", group: "Sverige – Pocket", numbering: "running" },
+  // series the price lists in catalogue/restore-batch.json are for (Series › Tools › Price lists waiting)
+  { id: "x-91-an-swedish", name: "91:an", publisher: "Swedish comics", group: "91:an", numbering: "year", firstYear: 1978, lastYear: 1988 },
+  { id: "x-asterix-swedish", name: "Asterix (Swedish)", publisher: "Franco-Belgian", group: "Asterix", numbering: "running" }
 ];
 const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), issueNum: parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
 const comics = [
@@ -76,6 +79,16 @@ await shot("18-stats-stories", () => { S.statTab = "stories"; nav("stats"); });
 await shot("19-stats-reading", () => { S.statTab = "reading"; nav("stats"); });
 await shot("08-stats", () => { S.statTab = "overview"; nav("stats"); });
 await shot("09-series", () => { nav("series"); });
+await shot("09b-series-tools", () => { S.serTab = "tools"; nav("series"); });
+// "Add all" in Price lists waiting: ranges added, 91:an gets its years and per year, the card goes away
+if (want("series-tools")) try {
+  await page.evaluate(() => { window.__dda.S.serTab = "tools"; window.__dda.nav("series"); }); await page.waitForTimeout(800);
+  await page.locator("#pbatch").click(); await page.waitForTimeout(800);
+  const r = await page.evaluate(() => { const { S } = window.__dda, se = S.series.find(s => s.id === "x-91-an-swedish"); return { n: S.valueRules.filter(r => r.s === "x-91-an-swedish" || r.s === "x-asterix-swedish").length, eds: [...new Set(S.valueRules.filter(r => r.s === "x-asterix-swedish").map(r => r.ed))].join(","), first: se.firstYear, per: se.perYear, card: !!document.querySelector("#pbatch") }; });
+  if (!r.n || r.first !== 1956 || !/1970-: 26/.test(r.per) || r.card) errors.push("price batch: " + JSON.stringify(r));
+  await page.screenshot({ path: `${OUT}/09c-series-tools-added.png`, fullPage: true });
+  fs.writeFileSync(`${OUT}/price-batch.txt`, JSON.stringify(r) + "\n");
+} catch (e) { errors.push("price batch: " + e.message); }
 // the copy picker: tap the LTB 1 row with two copies
 if (want("copy-picker")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });

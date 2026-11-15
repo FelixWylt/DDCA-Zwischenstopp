@@ -493,6 +493,7 @@ VIEWS.series = {
       <div class="card stack"><h3>Fill all series</h3>
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
+      ${priceBatchCard()}
       ${emptySeriesCard()}
       ${(st => st.length ? `<div class="card stack"><h3>Books that belong to a comic series</h3><p class="small muted" style="margin:0">These are saved as books, but their book series has the name of one of your comic series, so gap grid and stats can't count them as issues.</p>
         <div class="list">${st.map(({ c, se }) => `<div class="small">${esc(c.title || "Untitled")} · book series “${esc(c.seriesName)}” ${esc(c.issue || "")} → <strong>${esc(se.short || se.name)} ${esc(c.issue || "")}</strong></div>`).join("")}</div>
@@ -563,6 +564,7 @@ VIEWS.series = {
     $("#serfind") && ($("#serfind").oninput = e => { S.serFind = e.target.value; $("#serlist").innerHTML = serListHtml(S.serTab === "books" ? "books" : "comics"); bindList(); });
     document.querySelectorAll("[data-sgap]").forEach(b => b.onclick = async () => { await leave(); S.gapSeries = b.dataset.sgap; S.gapTab = "gaps"; nav("gaps"); });
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    $("#pbatch") && ($("#pbatch").onclick = async () => { $("#pbatch").disabled = true; try { const r = await applyPriceBatch(); toast("Added " + r.ranges + " price ranges for " + r.series + " series"); } catch (e) { toast(errText(e)); } render(); });
     bindValueRules();
     document.querySelectorAll("[data-bkfill]").forEach(b => b.onclick = async () => {
       grab(); try { await saveBookSeries(); } catch (e) {}   // keep what was typed
@@ -661,3 +663,14 @@ VIEWS.series = {
     };
   }
 };
+
+// Series › Tools: price lists Claude has prepared (catalogue/restore-batch.json), added with one tap
+function priceBatchCard() {
+  const w = priceBatchWaiting(); if (!w.length) return "";
+  const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
+    return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : ""); };
+  return `<div class="card stack"><h3>Price lists waiting</h3>
+    <p class="small muted" style="margin:0">Price ranges Claude has prepared for your series (from Comicguide, Seriekatalogen or sales). Nothing changes until you tap Add all.</p>
+    <ul class="small" style="margin:0;padding-left:18px">${w.map(e => `<li><strong>${esc(seriesById(e.id).name)}</strong>: ${esc(what(e))}</li>`).join("")}</ul>
+    <div class="row"><button type="button" class="primary" id="pbatch"${S.db ? "" : " disabled"}>Add all</button></div></div>`;
+}
