@@ -990,12 +990,11 @@ function refreshDup(d) {
   const b = document.querySelector("[data-dupopen]"); if (b) b.onclick = () => { S.editing = b.dataset.dupopen; S.draft = null; nav("add"); };
 }
 function lotFields(d) {
-  const lots = recentLots(), cur = d.lotId && d.lotId !== "new" ? lotInfo(d.lotId) : null;
-  if (cur && !lots.some(l => l.id === cur.id)) lots.unshift(cur);
+  const every = allLots(), lots = every.slice(0, 12), older = every.slice(12), cur = d.lotId && d.lotId !== "new" ? lotInfo(d.lotId) : null;
   const others = cur ? cur.members.filter(c => c.id !== d.id) : [];
   const n = (cur ? cur.members.length + (cur.members.some(c => c.id === d.id) ? 0 : 1) : 1);
   const total = parseAmt(d.lotTotal), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s";
-  return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${lots.map(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`).join("")}</select></label>
+  return `<label class="wide"><span class="l">Lot</span><select id="f-lot"><option value="new"${d.lotId === "new" ? " selected" : ""}>A new lot</option>${(o => older.length ? `<optgroup label="Newest">${lots.map(o).join("")}</optgroup><optgroup label="Older lots">${older.map(o).join("")}</optgroup>` : lots.map(o).join(""))(l => `<option value="${esc(l.id)}"${d.lotId === l.id ? " selected" : ""}>${esc(lotLabel(l))}</option>`)}</select></label>
     <label><span class="l">Price for the whole lot</span><input id="f-lotTotal" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.lotTotal))}"></label>
     <div class="wide small lotinfo"><span id="lotper" data-n="${n}">${total === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof total === "number" && total > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(total / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."}</span>
       <div class="muted" style="margin-top:4px">Purchase date and where bought apply to the whole lot: changing them here changes them for all its ${w2}.</div>
@@ -1007,10 +1006,11 @@ function lotInfo(id) {
   const f = m.slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))[0];
   return { id, members: m, total: f.lotTotal, currency: f.lotCurrency || f.currency || "CHF", source: f.source || "", date: f.purchaseDate || "", created: m.reduce((a, c) => { const x = String(c.updatedAt || c.createdAt || ""); return x > a ? x : a; }, "") };
 }
-function recentLots() {
+function allLots() {
   const ids = [...new Set(S.comics.filter(c => c.lotId && c.status !== "wanted").map(c => c.lotId))];
-  return ids.map(lotInfo).filter(Boolean).sort((a, b) => String(b.created).localeCompare(String(a.created))).slice(0, 12);
+  return ids.map(lotInfo).filter(Boolean).sort((a, b) => String(b.created).localeCompare(String(a.created)));
 }
+function recentLots() { return allLots().slice(0, 12); }
 function lotLabel(l) {
   const bk = l.members.filter(c => c.kind === "book").length, n = l.members.length;
   const w = bk === n ? (n === 1 ? " book" : " books") : bk ? (n === 1 ? " item" : " items") : (n === 1 ? " comic" : " comics");   // a lot can mix both
@@ -1626,7 +1626,8 @@ function entriesHtml(list, inSeries, note) {
   const multi = c => { const g = byKey.get(copyKey(c)); return g && g.length > 1 ? g : null; };
   const mark = (html, c) => { const g = multi(c); if (!g) return html; const n = g.reduce((a, x) => a + (x.copies || 1), 0);
     return html.replace(`data-id="${esc(c.id)}"`, `data-id="${esc(c.id)}" data-copies="${esc(g.map(x => x.id).join(","))}"`)
-      .replace(/<div class="chips">/, `<div class="chips"><span class="chip trade" title="Separate copies">${n}×</span>`)
+      .replace(/<span class="chip">Z[^<]*<\/span>/, "")
+      .replace(/<div class="chips">/, `<div class="chips"><span class="chip trade" title="Separate copies">${n}×</span>${(gs => gs.length ? `<span class="chip">${esc(gs.join(" / "))}</span>` : "")(g.map(x => x.grade ? "Z" + x.grade : "").filter(Boolean))}`)
       .replace(/(<button class="tile[^>]*>)/, `$1<span class="tilecopies">${n}×</span>`); };
   const one = c => grid ? tileHtml(c) : note ? itemHtml(c, inSeries).replace('<div class="chips">', '<div class="chips">' + (note(c) ? `<span class="chip sortv">${esc(note(c))}</span>` : "")) : itemHtml(c, inSeries);
   return `<div class="${grid ? "cgrid" : "list"}">` + list.map(x => typeof x === "string" ? x : mark(one(x), x)).join("") + "</div>";
@@ -1767,7 +1768,7 @@ function seriesOptions(selected, label) {
 // ---- series picker: a searchable full-screen list instead of a long drop-down ----
 function pickerItems(opts) {
   const cnt = {}; S.comics.forEach(c => { const k = c.kind === "book" ? "book:" + (c.seriesName || "") : c.seriesId; cnt[k] = (cnt[k] || 0) + 1; });
-  const items = S.series.map(s => ({ key: s.id, label: seriesLabel(s), short: s.short || "", group: (s.publisher || OTHER_PUB) + " · " + (s.group || OTHER_GROUP), uni: s.publisher || OTHER_PUB, code: (catEntry(s) || {}).code || s.code || "", n: cnt[s.id] || 0 }));
+  const items = S.series.filter(s => !(opts.noSingles && isSingleSeries(s))).map(s => ({ key: s.id, label: seriesLabel(s), short: s.short || "", group: (s.publisher || OTHER_PUB) + " · " + (s.group || OTHER_GROUP), uni: s.publisher || OTHER_PUB, code: (catEntry(s) || {}).code || s.code || "", n: cnt[s.id] || 0 }));
   if (opts.books) { const names = {}; (S.bookSeriesExtra || []).forEach(x => { names[x.name] = !!x.novel; }); S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); }); Object.keys(names).forEach(n => items.push({ key: "book:" + n, label: n, short: "", group: names[n] ? "Book series" : "Book series (comic books)", uni: "Book series", code: "", n: cnt["book:" + n] || 0 })); }
   return items;
 }
@@ -1839,7 +1840,7 @@ function gapPicker(cur) {
 }
 function bindGapPicker() {
   const go = k => { if (k) { S.gapSeries = k; rememberSeries(k); render(); } };
-  $("#gsBtn") && ($("#gsBtn").onclick = async () => go(await pickSeries({ current: S.gapSeries, books: true, onlyMine: true, title: "Gap grid for" })));
+  $("#gsBtn") && ($("#gsBtn").onclick = async () => go(await pickSeries({ current: S.gapSeries, books: true, onlyMine: true, noSingles: true, title: "Gap grid for" })));
   const step = dir => { const o = gapOrder(); if (!o.length) return; const i = o.indexOf(S.gapSeries); go(o[(i < 0 ? 0 : i + dir + o.length) % o.length]); };
   $("#gsPrev") && ($("#gsPrev").onclick = () => step(-1));
   $("#gsNext") && ($("#gsNext").onclick = () => step(1));
@@ -2669,6 +2670,9 @@ function bindWishlist() {
     try {
       await saveComic(Object.assign({}, c, { wishLevel: b.dataset.lv }), true);
       b.parentNode.querySelectorAll("[data-wlset]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+      const kind = S.wishKind === "books", all = S.comics.filter(x => x.status === "wanted" && isNovel(x) === kind), lv = l => all.filter(x => wishLevel(x) === l).length;
+      const lab = { all: "All " + all.length, must: "★ Must have " + lv("must"), want: "Want " + lv(""), dream: "Dream " + lv("dream"), nodream: "Without Dream " + (all.length - lv("dream")) };
+      document.querySelectorAll("[data-wf]").forEach(x => { if (lab[x.dataset.wf]) x.textContent = lab[x.dataset.wf]; });
     } catch (x) { toast(errText(x)); }
   });
   document.querySelectorAll("[data-got]").forEach(b => b.onclick = async e => {
@@ -3140,7 +3144,13 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     refreshRates();
-    document.querySelectorAll("[data-rate]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); if (!(v > 0)) return; S.rates = Object.assign({}, S.rates, { [inp.dataset.rate]: v, manual: true, date: S.rates && S.rates.date || todayIso() }); await setConfig("rates", S.rates); renderKeep(); });
+    document.querySelectorAll("[data-rate]").forEach(inp => inp.onchange = async () => { let v = parseFloat(String(inp.value).replace(",", ".")); if (!(v > 0)) return;
+      const k = inp.dataset.rate, usual = (S.rates && !S.rates.manual && S.rates[k]) || RATE_DEFAULT[k];
+      if (usual && (v > usual * 3 || v < usual / 3)) {
+        const inv = 1 / v, fits = inv > usual / 1.5 && inv < usual * 1.5;
+        if (!confirm(`CHF per ${k} is usually about ${usual.toFixed(4)}. You typed ${v}.` + (fits ? ` That looks like ${k} per CHF: use ${inv.toFixed(4)} instead?` : " Keep it anyway?"))) { if (!fits) { inp.value = rateOf(k); return; } }
+        else if (fits) v = +inv.toFixed(5);
+      } S.rates = Object.assign({}, S.rates, { [inp.dataset.rate]: v, manual: true, date: S.rates && S.rates.date || todayIso() }); await setConfig("rates", S.rates); renderKeep(); });
     $("#rateauto") && ($("#rateauto").onclick = async () => { S.rates = Object.assign({}, S.rates, { manual: false }); S.ratesTried = false; await refreshRates(true); toast(S.rates && !S.rates.manual && S.rates.date ? "ECB rates of " + niceDate(S.rates.date) : "Rates couldn't be fetched"); renderKeep(); });
     document.querySelectorAll("[data-gf2]").forEach(inp => inp.onchange = async () => { const v = parseFloat(String(inp.value).replace(",", ".")); S.gradeFactors = Object.assign({}, S.gradeFactors); if (isNaN(v)) delete S.gradeFactors[inp.dataset.gf2]; else S.gradeFactors[inp.dataset.gf2] = v; await setConfig("gradeFactors", S.gradeFactors); renderKeep(); });
     document.querySelectorAll("#app [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
