@@ -89,8 +89,12 @@ if (want("stories")) try {
   if (n !== 1) errors.push("stories: Oscar the Ostrich listed " + n + " times");
   // "When the stories were made" reads "30.05.1937": a column for the 1930s
   await page.evaluate(() => { const { S, nav } = window.__dda; S.statTab = "stories"; S.statScope = "a"; nav("stats"); }); await page.waitForTimeout(700);
-  const has30s = await page.evaluate(() => !!document.querySelector('.col[title^="1930s: 1"]'));
+  const has30s = await page.evaluate(() => !!document.querySelector('.col[title^="1930s: "]'));
   if (!has30s) errors.push("stories: no 1930s column in When the stories were made");
+  // a story without a date is placed by its oldest copy (Tolle Phantasien in the 1937 sample comic: a second 1930s story)
+  const by30 = await page.evaluate(() => (document.querySelector('.col[title^="1930s: "]') || {}).title || "");
+  if (!/1930s: 2 \(1 by your oldest copy\)/.test(by30)) errors.push("stories: oldest-copy year missing: " + by30);
+  await page.screenshot({ path: `${OUT}/18b-stats-stories-years.png` });
 } catch (e) { errors.push("stories: " + e.message); }
 // "Show them" › Single books opens Collection › Books at the single books (not the top of Series › Book series)
 if (want("stats-singles")) try {
