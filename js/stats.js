@@ -114,16 +114,21 @@ VIEWS.stats = {
         if (typeof c.pricePaid === "number") { r.priced++; r.paid += toCHF(c.pricePaid * n, cur); r.sums[cur] = (r.sums[cur] || 0) + c.pricePaid * n; if (v) r.paidValued += toCHF(c.pricePaid * n, cur); }
         if (v) { r.valued++; r.value += toCHF(v.amount * n, v.cur); r.vals[v.cur] = (r.vals[v.cur] || 0) + v.amount * n; } });
       return r; };
-    const allOwned = owned(), mEvery = moneyOf(allOwned), mSel = moneyOf(sel);
+    const allOwned = owned(); let mE = null, mS = null; const mEvery = () => mE || (mE = moneyOf(allOwned)), mSel = () => mS || (mS = moneyOf(sel));
     const chfOf = c => { const v = valueOf(c); return v ? toCHF(v.amount * (c.copies || 1), v.cur) : null; };
     const paidOf = c => typeof c.pricePaid === "number" ? toCHF(c.pricePaid * (c.copies || 1), c.currency) : null;
     const nameOf = c => isNovel(c) ? c.title || "Untitled" : comicTag(c) + (c.title ? ": " + c.title : "");
     const openList = xs => `<ol class="toplist">${xs.join("")}</ol>`;
     // series of comics with a known size (completion), as before
+    const ownBy = new Map(), allBy = new Map(), loads = [];
+    own.forEach(c => { if (c.kind !== "book") (ownBy.get(c.seriesId) || ownBy.set(c.seriesId, []).get(c.seriesId)).push(c); });
+    S.comics.forEach(c => (allBy.get(c.seriesId) || allBy.set(c.seriesId, []).get(c.seriesId)).push(c));
     const perSeries = S.series.map(s => {
+      const mine = ownBy.get(s.id) || [];
+      if (!mine.length) return { s, n: 0, tot: 0 };   // nothing owned: no need to count its grid
       const ce = catEntry(s), gridN = s.numbering === "year" ? yearGridTotal(s) : null, catN = gridN || (ce && +ce.issues) || 0;
-      if (s.numbering === "year" && ce && gridN == null && !S.catCache[ce.file] && !(S.statCat || {})[ce.file]) { S.statCat = Object.assign({}, S.statCat, { [ce.file]: 1 }); catalogueFile(ce).then(() => { if (S.view === "stats") renderKeep(); }).catch(() => {}); }
-      const mine = own.filter(c => c.seriesId === s.id && c.kind !== "book"), zero = zeroSquares(s, ce && S.catCache[ce.file], S.comics.filter(c => c.seriesId === s.id));
+      if (s.numbering === "year" && ce && gridN == null && !S.catCache[ce.file] && !(S.statCat || {})[ce.file]) { S.statCat = Object.assign({}, S.statCat, { [ce.file]: 1 }); loads.push(catalogueFile(ce).catch(() => {})); }
+      const zero = zeroSquares(s, ce && S.catCache[ce.file], allBy.get(s.id) || []);
       const tot = s.numbering === "year" ? (catN || Math.max(0, perYearTotal(s))) : Math.max(0, (+s.latest || 0) - Math.max(1, +s.first || 1) + 1) + (zero.has("run") ? 1 : 0);
       const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^\d{4}X\d{2,3}$/.test(k)) return !!catN;
         if (splitLabel(ce && S.catCache[ce.file], k)) return true;
@@ -131,13 +136,14 @@ VIEWS.stats = {
       const gc = s.numbering === "year" ? gridCat(s) : null, n = new Set(mine.filter(c => !c.facsimile).flatMap(c => { const f = gc && fusedSquare(gc, c.issueLabel || c.issue); return f ? [f] : issueSquares(c.issueLabel || c.issue); }).filter(k => /^\d{4}-\d{2,3}-\d{2,3}$/.test(k) ? !!catN : inGrid(k))).size;   // a double issue counts once
       return { s, n, tot };
     }).filter(x => x.tot && x.n);
+    if (loads.length) Promise.allSettled(loads).then(() => { if (S.view === "stats") renderKeep(); });   // one redraw when all have loaded
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
     // value per series (also tells which series have no prices)
     const bySer = {}; sel.forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (k) (bySer[k] = bySer[k] || []).push(c); });
     const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null).sort((a, b) => b.list.length - a.list.length);
     const noValList = () => S.statNoVal ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${noVal.map(x => x.k.startsWith("name:") ? `<span class="chipbtn" title="Not in your series list">${esc(seriesTitle(x.k))} ${x.list.length}</span>` : `<button type="button" class="chipbtn" data-priceser="${esc(x.k)}">${esc(seriesTitle(x.k))} ${x.list.length}</button>`).join("")}</div><p class="small muted" style="margin:4px 0 0">Tap a series to open its price ranges (Single books: the list of your books, where each gets its own value). The number is how many you own.</p>` : "";
-    const bk = scope !== "c" && novels.length ? bookStats(novels, novelsWanted, true) : null;
-    const idx = storyIndex("owned");
+    const bk = () => scope !== "c" && novels.length ? bookStats(novels, novelsWanted, true) : null;
+    let idx0 = null; const idxGet = () => idx0 || (idx0 = storyIndex("owned"));
 
     // ================= Overview =================
     if (tab === "overview") {
@@ -229,7 +235,7 @@ VIEWS.stats = {
         : tallyOf(sel, c => [c.format || "Not set"], 8).map(([n, k]) => [n, k, `fmt|${n}|${sc}`]);
       const fgCard = card(`<span class="seg small" role="group"><button type="button" data-fg="fmt" aria-pressed="${fg === "fmt"}">Formats</button><button type="button" data-fg="genre" aria-pressed="${fg === "genre"}">Genres</button></span>`, "", fgList.length ? pickBars(fgList) : note("No genres yet. Comics get them from their stories (Duckipedia), books from the book databases."));
       const cond = conditionCard(sel, sc === "a" ? "c" : sc);
-      const books = bk ? `<div class="two">${bk.serCard}${bk.closeCard}</div><div class="two">${bk.authorsCard}${bk.collectCard}</div>` : "";
+      const bkS = bk(), books = bkS ? `<div class="two">${bkS.serCard}${bkS.closeCard}</div><div class="two">${bkS.authorsCard}${bkS.collectCard}</div>` : "";
       return head + growth + `<div class="two">${comp}${geo}</div><div class="two">${completion}${years}</div>` + books + `<div class="two">${dups}${wishCard}</div><div class="two">${fgCard}${cond}</div>`;
     }
 
@@ -239,7 +245,7 @@ VIEWS.stats = {
       const sw = `<div class="subtabs" role="tablist" aria-label="Money"><button role="tab" type="button" data-money="value" aria-selected="${half === "value"}">Value</button><button role="tab" type="button" data-money="spend" aria-selected="${half === "spend"}">Spending</button></div>`;
       const settings = `<details class="card"><summary><strong>Settings for values</strong> <span class="muted small">exchange rates, condition factors</span></summary><div class="stack" style="margin-top:8px">${valueSettingsHtml()}</div></details>`;
       if (half === "value") {
-        const m = mSel, d = m.value - m.paidValued;
+        const m = mSel(), d = m.value - m.paidValued;
         const totals = card("Value", "CHF", `<div class="row" style="gap:24px;flex-wrap:wrap"><div><div class="v2">CHF ${fmt2(m.value)}</div><div class="k small muted">value of ${nf(m.valued)} of ${nf(m.n)}</div></div><div><div class="v2">CHF ${fmt2(m.paid)}</div><div class="k small muted">paid for ${nf(m.priced)} of ${nf(m.n)}</div></div>${m.paidValued ? `<div><div class="v2">${d >= 0 ? "+" : "−"} ${fmt2(Math.abs(d))}</div><div class="k small muted">gain, for those with both</div></div>` : ""}</div>`);
         const top = sel.map(c => ({ c, v: chfOf(c) })).filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10);
         const topCard = top.length ? card("Most valuable", "top 10", openList(top.map(({ c, v }) => `<li><button class="link" data-open="${esc(c.id)}">${esc(nameOf(c))}</button><span class="muted"> ${c.grade ? "Z" + esc(c.grade) + " · " : ""}CHF ${fmt2(v)}</span></li>`))) : "";
@@ -260,7 +266,7 @@ VIEWS.stats = {
         const details = `<details class="card"><summary><strong>How the value is made up</strong> <span class="muted small">per currency, checked / table / estimate</span></summary><div class="stack" style="margin-top:8px">
           ${curRows.length ? `<div class="tablewrap"><table class="moneytab"><thead><tr><th>In</th><th>Value</th><th>≈ CHF</th><th>Paid</th><th>≈ CHF</th></tr></thead><tbody>${curRows.map(k => { const cv = x => x == null ? "–" : k === "CHF" ? "–" : fmt2(toCHF(x, k)); return `<tr><td>${k}</td><td>${m.vals[k] != null ? fmt2(m.vals[k]) : "–"}</td><td>${cv(m.vals[k])}</td><td>${m.sums[k] != null ? fmt2(m.sums[k]) : "–"}</td><td>${cv(m.sums[k])}</td></tr>`; }).join("")}</tbody></table></div>` : ""}
           ${own.length ? valueCard(own, "Comics & comic books") : ""}${novels.length ? valueCard(novels, "Books") : ""}</div></details>`;
-        return head + sw + historyCard(mEvery) + totals + `<div class="two">${topCard}${buys}</div>` + serCard + details + settings;
+        return head + sw + historyCard(mEvery()) + totals + `<div class="two">${topCard}${buys}</div>` + serCard + details + settings;
       }
       // spending
       const sc = scope === "b" ? "b" : scope === "c" ? "c" : "a";
@@ -296,21 +302,21 @@ VIEWS.stats = {
     // ================= Stories =================
     if (tab === "stories") {
       if (scope === "b") return head + `<div class="empty"><h3>Stories are counted for comics</h3><p>Switch to Comics or Both above.</p></div>`;
-      if (!idx.length) return head + `<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" on a comic.</p></div>`;
+      if (!idxGet().length) return head + `<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" on a comic.</p></div>`;
       // the year of first publication; without one, the year of your oldest copy with the story (shown lighter: a reprint can be later)
       const copyYear = c => +c.issueYear || yearOf(c.date) || +((/^(\d{4})/.exec(c.issueLabel || "") || [])[1]) || 0;
       const decS = {}, decC = {}; let noFirst = 0, byCopy = 0;
-      idx.forEach(e => { let y = storyYearOf(e.first), m = decS; if (!(y > 1900)) { const ys = e.items.map(copyYear).filter(v => v > 1900); y = ys.length ? Math.min(...ys) : 0; m = decC; if (y) byCopy++; }
+      idxGet().forEach(e => { let y = storyYearOf(e.first), m = decS; if (!(y > 1900)) { const ys = e.items.map(copyYear).filter(v => v > 1900); y = ys.length ? Math.min(...ys) : 0; m = decC; if (y) byCopy++; }
         if (y > 1900) { const d = Math.floor(y / 10) * 10; m[d] = (m[d] || 0) + 1; } else noFirst++; });
       const tot = d => (decS[d] || 0) + (decC[d] || 0), dk = [...new Set(Object.keys(decS).concat(Object.keys(decC)))].map(Number), ds = dk.length ? Array.from({ length: (Math.max(...dk) - Math.min(...dk)) / 10 + 1 }, (_, i) => Math.min(...dk) + i * 10) : [], dm = Math.max(1, ...ds.map(tot));
       const made = ds.length ? card("When the stories were made", "first published", `<div class="cols">${ds.map(d => `<div class="col" title="${d}s: ${tot(d)}${decC[d] ? " (" + decC[d] + " by your oldest copy)" : ""}"><span class="bar" style="height:${(tot(d) / dm * 100).toFixed(1)}%;${decC[d] ? `background:linear-gradient(to bottom, color-mix(in srgb, var(--accent) 35%, transparent) ${(decC[d] / tot(d) * 100).toFixed(1)}%, var(--accent) ${(decC[d] / tot(d) * 100).toFixed(1)}%)` : ""}"></span><span class="x">${String(d).slice(2)}</span></div>`).join("")}</div>${note(`Per decade of the story's first publication anywhere${byCopy ? " · lighter: " + nf(byCopy) + " without a known date, placed by your oldest copy (a reprint can be later)" : ""}${noFirst ? " · " + nf(noFirst) + " without a date (Duckipedia details add it)" : ""}.`)}`) : "";
-      const tally = role => { const m = {}; idx.forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, 10); };
+      const tally = role => { const m = {}; idxGet().forEach(e => e[role].forEach(n => m[n] = (m[n] || 0) + 1)); return Object.entries(m).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "de", { numeric: true })).slice(0, 10); };
       const who = (role, title) => { const top = tally(role), max = top.length ? top[0][1] : 1; return card(title, "stories", top.length ? '<div class="hbars">' + top.map(([n, c], i) => `<button class="hbar" data-who="${esc(n)}" data-role="${role}" title="${esc(n)}: ${c} stories"><span class="lab"><span class="rank">${i + 1}</span>${esc(n)}</span><span class="track"><span class="fill" style="width:${(c / max * 100).toFixed(1)}%"></span></span><span class="n">${c}</span></button>`).join("") + '</div>' : note("Not known yet for your stories.")); };
-      const pairs = {}; idx.forEach(e => [...e.writers].forEach(w => [...e.artists].forEach(a => { if (w !== a) { const k = w + " & " + a; pairs[k] = (pairs[k] || 0) + 1; } })));
+      const pairs = {}; idxGet().forEach(e => [...e.writers].forEach(w => [...e.artists].forEach(a => { if (w !== a) { const k = w + " & " + a; pairs[k] = (pairs[k] || 0) + 1; } })));
       const pl = Object.entries(pairs).sort((a, b) => b[1] - a[1]).slice(0, 8), pmax = pl.length ? pl[0][1] : 1;
       const pairCard = pl.length ? card("Writer and artist pairs", "stories", `<div class="hbars">${pl.map(([k, n]) => `<div class="hbar" title="${esc(k)}: ${n}"><span class="lab">${esc(k)}</span><span class="track"><span class="fill" style="width:${(n / pmax * 100).toFixed(1)}%"></span></span><span class="n">${n}</span></div>`).join("")}</div>`) : "";
-      const appear = idx.reduce((a, e) => a + e.items.length, 0), rep = idx.filter(e => e.items.length > 1).sort((a, b) => b.items.length - a.items.length);
-      const repCard = card("Reprints", "", `<div class="row" style="gap:24px"><div><div class="v2">${pct(idx.length, appear)} %</div><div class="k small muted">unique: ${nf(idx.length)} stories in ${nf(appear)} appearances</div></div><div><div class="v2">${nf(rep.length)}</div><div class="k small muted">stories you have more than once</div></div></div>
+      const appear = idxGet().reduce((a, e) => a + e.items.length, 0), rep = idxGet().filter(e => e.items.length > 1).sort((a, b) => b.items.length - a.items.length);
+      const repCard = card("Reprints", "", `<div class="row" style="gap:24px"><div><div class="v2">${pct(idxGet().length, appear)} %</div><div class="k small muted">unique: ${nf(idxGet().length)} stories in ${nf(appear)} appearances</div></div><div><div class="v2">${nf(rep.length)}</div><div class="k small muted">stories you have more than once</div></div></div>
         ${rep.length ? openList(rep.slice(0, 8).map(e => `<li><button type="button" class="link" data-stq="${esc(storyTitle(e))}">${esc(storyTitle(e) || "Untitled")}</button><span class="muted"> ×${e.items.length}</span></li>`)) : ""}`);
       return head + `<div class="two">${made}${who("chars", "Top characters")}</div><div class="two">${who("writers", "Top writers")}${who("artists", "Top artists")}</div><div class="two">${pairCard}${repCard}</div>` + note("Each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.");
     }
@@ -321,7 +327,7 @@ VIEWS.stats = {
     const pile = card("Unread pile", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(unread.length)}</div><div class="k small muted">unread ${word}</div></div><div><div class="v2">${pace ? (unread.length / pace >= 24 ? nf(Math.round(unread.length / pace / 12)) + " years" : nf(Math.round(unread.length / pace)) + " months") : "–"}</div><div class="k small muted">to read them all at your pace</div></div><div><div class="v2">${pace >= 10 ? Math.round(pace) : pace.toFixed(1)}</div><div class="k small muted">read per month (last 12 months)</div></div></div>`);
     // average rating per series and per artist
     const rs = {}; sel.filter(c => +c.rating > 0).forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (!k) return; const x = rs[k] = rs[k] || { t: 0, n: 0 }; x.t += +c.rating; x.n++; });
-    const ra = {}; if (scope !== "b") idx.forEach(e => { const r = +storyRate(e).rating; if (r > 0) e.artists.forEach(a => { const x = ra[a] = ra[a] || { t: 0, n: 0 }; x.t += r; x.n++; }); });
+    const ra = {}; if (scope !== "b") idxGet().forEach(e => { const r = +storyRate(e).rating; if (r > 0) e.artists.forEach(a => { const x = ra[a] = ra[a] || { t: 0, n: 0 }; x.t += r; x.n++; }); });
     const avgRows = (o, label) => Object.entries(o).filter(([, x]) => x.n >= 2).map(([k, x]) => [label(k), x.t / x.n, x.n]).sort((a, b) => b[1] - a[1]).slice(0, 6);
     const rS = avgRows(rs, seriesTitle), rA = avgRows(ra, k => k);
     const avgCard = rS.length || rA.length ? card("Average ratings", "with at least 2 rated", `${rS.length ? `<div class="small"><strong>Series</strong>${openList(rS.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} rated</span></li>`))}</div>` : ""}${rA.length ? `<div class="small"><strong>Artists (story ratings)</strong>${openList(rA.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`))}</div>` : ""}`) : "";
