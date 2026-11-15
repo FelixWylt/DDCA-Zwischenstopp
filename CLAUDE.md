@@ -34,6 +34,7 @@
 | 2026-11-15 | ISBN match copies title/cover/stories; single volumes sorted into Alben & Sammlerbände (not Hefte); how to wish for a complete copy of an owned issue (answer) | 1.5–2 min (gut 4–6 ÷ 3) | 0–1 min (13:33 → 13:33:34) |
 | 2026-11-15 | Single volumes: magazines by name (Heft, Sonderheft, Magazin, Zeitung, Extra) stay out of Alben & Sammlerbände | under 1 min (gut 1–2 ÷ 2) | 0–1 min (13:38 → 13:38:44) |
 | 2026-11-15 | Suggest app improvements (answer only, no search) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (13:42 → 13:43:12) |
+| 2026-11-15 | Package A: Send backup in the reminder (rest of backup already existed), trade list to copy, Next-issue buttons in Add | 2–3 min (gut 6–9 ÷ 3) + 1 run | 1–2 min (13:48 → 13:50:20, incl. planning + 1 run) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
