@@ -51,6 +51,7 @@
 | 2026-11-15 | Backup check: all 3 stores and 16 settings compared with the backup; fixes: own exchange rates win on restore, last series added, value history in the compare table | about 2 min (gut 3–5 ÷ 2) | 1–2 min (16:06 → 16:07:27) |
 | 2026-11-15 | Price range From/To: normal keyboard for every series (number keyboard for running-number series since 2026-11-07 hid the slash) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:16 → 16:16:26) |
 | 2026-11-15 | Stats To do "Fill all" opens Series › Tools (Refresh all comics), not Backup | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:20 → 16:20:43) |
+| 2026-11-15 | Handover note for a new chat (open task: Asterix price ranges from the user's backup) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:49 → 16:49:57) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -62,6 +63,13 @@ and did not improve on their own. So: **take the gut estimate and divide it by a
 Where the clock stops: do everything first (code, tests, research, the prices/tables for the reply), then make the
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
+
+## Where we left off (2026-11-15, app da-v186)
+- Open task: Asterix price ranges. Asterix has many reprints, so ranges must be split by printing (Edition field: "1. Auflage",
+  "Neuauflage" …; price ranges can be per edition). The user will attach a backup (.json): read the Asterix entries from
+  `comics` (seriesId → `series`, issue, edition, date, notes, pricePaid), research sold prices, and give the ranges as text
+  for Series › Asterix › Price ranges › Paste prices (and add them to catalogue/prices.json if they're general).
+  Treat the backup as private: don't commit it to the repo.
 
 ## Other working rules
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
