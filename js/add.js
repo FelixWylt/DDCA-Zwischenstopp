@@ -587,6 +587,22 @@ function yearExtras(cat, mine, y) {
 }
 // numbers INDUCKS lists only with letters (Walt Disney's Serier 1967-02A and 1967-02B, no plain 1967/02): different issues,
 // each with its own square. Variants of a number that also exists plainly (1984/19 and 1984-19A) share its square as before.
+// double issues the list has as one issue (Kalle Anka 1987-52-53, 91:an 2007-09-10): one wide square in Gaps
+function catDoubles(cat) {
+  if (!cat || !cat.issues) return {};
+  if (!cat._dbl) { cat._dbl = {}; Object.keys(cat.issues).forEach(k => { const m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(k); if (m && +m[3] > +m[2]) (cat._dbl[+m[1]] = cat._dbl[+m[1]] || {})[+m[2]] = +m[3]; }); }
+  return cat._dbl;
+}
+const fusedKey = (y, a, b) => y + "-" + String(a).padStart(2, "0") + "-" + String(b).padStart(2, "0");
+// a label's fused square, if the list has the double issue it belongs to: "2007-9-10" and "2007/09" both -> "2007-09-10"
+function fusedSquare(cat, lab) {
+  let m = /^(\d{4})-(\d{1,3})-(\d{1,3})$/.exec(lab || "");
+  if (m) { const d = catDoubles(cat)[+m[1]] || {}; return d[+m[2]] === +m[3] ? fusedKey(m[1], m[2], m[3]) : null; }
+  m = /^(\d{4})\/(\d{1,3})$/.exec(lab || ""); if (!m) return null;
+  const d = catDoubles(cat)[+m[1]] || {};
+  for (const a in d) if (+m[2] >= +a && +m[2] <= d[a]) return fusedKey(m[1], a, d[a]);
+  return null;
+}
 function yearSplits(cat, y) {
   const out = {}, iss = (cat && cat.issues) || {};
   Object.keys(iss).forEach(k => { const m = /^(\d{4})-(\d{1,3})([A-Z])$/.exec(k); if (m && +m[1] === y && !iss[m[1] + "/" + m[2].padStart(2, "0")]) (out[+m[2]] = out[+m[2]] || []).push(m[3]); });
@@ -613,7 +629,10 @@ function yearGridTotal(se) {
     if (!perY[y] && y <= catLast && yearExtras(cat, mine, y).length) { total += yearExtras(cat, mine, y).length; continue; }
     const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
     const py = y > catLast ? perYearFor(se, y, mine) : Math.max(perY[y] || 0, ...owned); if (!py) continue;
-    if (perYSet[y] && (LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y])) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; } else total += py - yearStart(perYSet, mine, y) + 1;
+    let has;
+    if (perYSet[y] && (cat.own || LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y])) { const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); total += [...set].filter(n => n > 0).length; has = n => set.has(n); }
+    else { const st = yearStart(perYSet, mine, y); total += py - st + 1; has = n => n >= st && n <= py; }
+    Object.entries(catDoubles(cat)[y] || {}).forEach(([a, b]) => { let inside = 0; for (let n = +a; n <= b; n++) if (has(n)) inside++; total += 1 - inside; });   // one square per double issue
     total += yearExtras(cat, mine, y).length;
     Object.values(yearSplits(cat, y)).forEach(l => { total += l.length - 1; });
   }

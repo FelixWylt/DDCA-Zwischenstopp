@@ -211,7 +211,7 @@ VIEWS.gaps = {
     const own = new Map(), want = new Map();
     // a double issue like 2012-13-14 fills both of its numbers
     const catSq = gridCat(se);
-    const covered = lab => splitLabel(catSq, lab) ? [lab] : issueSquares(lab);   // 1967-02B has its own square
+    const covered = lab => { const f = fusedSquare(catSq, lab); return f ? [f] : splitLabel(catSq, lab) ? [lab] : issueSquares(lab); };   // 1967-02B has its own square; a double issue one wide square
     const inSquare = new Map();   // square -> every comic in it (variants, double issues)
     mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
     // owned and wished at once: the same comic both ways (546A owned with 546B wished is fine)
@@ -261,13 +261,17 @@ VIEWS.gaps = {
       // extras (7½) sit right after their number
       const numsOf = y => { const py = perFor(y), sp = yearSplits(cat0, y);
         let nums = (py ? yearNums(y, py).filter(n => n > 0) : []).flatMap(n => sp[n] ? sp[n].map(L => n + (L.charCodeAt(0) - 64) / 100) : [n]);
-        nums = nums.concat(yearExtras(cat0, mine, y).map(n => n + 0.5)).sort((a, b) => a - b); return zero.has(String(y)) ? [0].concat(nums) : nums; };
+        nums = nums.concat(yearExtras(cat0, mine, y).map(n => n + 0.5));
+        const dbl = catDoubles(cat0)[y] || {};   // a double issue: one wide square (marked as n + 0.9) instead of its numbers
+        if (Object.keys(dbl).length) nums = nums.filter(n => !Object.keys(dbl).some(a => Math.floor(n) >= +a && Math.floor(n) <= dbl[a])).concat(Object.keys(dbl).map(a => +a + 0.9));
+        nums.sort((a, b) => a - b); return zero.has(String(y)) ? [0].concat(nums) : nums; };
       const labOf = (y, n) => { if (Number.isInteger(n)) return y + "/" + String(n).padStart(2, "0"); const b = Math.floor(n), f = Math.round((n - b) * 100);
+        if (f === 90) return fusedKey(y, b, (catDoubles(cat0)[y] || {})[b]);
         return f === 50 ? y + "X" + String(b).padStart(2, "0") : y + "-" + String(b).padStart(2, "0") + String.fromCharCode(64 + f); };
       const txtOf = n => { if (Number.isInteger(n)) return se.code === "se/B" ? n + "B" : n; const b = Math.floor(n), f = Math.round((n - b) * 100); return b + (f === 50 ? "½" : String.fromCharCode(64 + f)); };
       total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
-        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { cells += cell(labOf(y, n), txtOf(n)); });
+        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { const f = Math.round((n - Math.floor(n)) * 100) === 90; cells += f ? cell(labOf(y, n), Math.floor(n) + "-" + (catDoubles(cat0)[y] || {})[Math.floor(n)]).replace('class="cell ', 'class="cell wide ') : cell(labOf(y, n), txtOf(n)); });
         const cnt = nums.filter(n => own.has(labOf(y, n))).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");

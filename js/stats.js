@@ -126,7 +126,7 @@ VIEWS.stats = {
       const inGrid = k => { const m = /^(\d{4})\/(\d{2,3})$/.exec(k); if (m && +m[2] === 0) return zero.has(m[1]); if (/^\d{4}X\d{2,3}$/.test(k)) return !!catN;
         if (splitLabel(ce && S.catCache[ce.file], k)) return true;
         return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(perYearOf(s, +m[1]), 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
-      const n = new Set(mine.filter(c => !c.facsimile).flatMap(c => issueSquares(c.issueLabel || c.issue)).filter(inGrid)).size;
+      const gc = s.numbering === "year" ? gridCat(s) : null, n = new Set(mine.filter(c => !c.facsimile).flatMap(c => { const f = gc && fusedSquare(gc, c.issueLabel || c.issue); return f ? [f] : issueSquares(c.issueLabel || c.issue); }).filter(k => /^\d{4}-\d{2,3}-\d{2,3}$/.test(k) ? !!catN : inGrid(k))).size;   // a double issue counts once
       return { s, n, tot };
     }).filter(x => x.tot && x.n);
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
