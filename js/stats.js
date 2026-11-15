@@ -27,6 +27,7 @@ function pickInfo(pick) {
   const T = {
     lang: [c => langOfEntry(c) === val, `${scopeWord} in ${val}`],
     country: [c => countryOf(c) === val, `${scopeWord} from ${val}`],
+    lot: [c => c.lotId === val, (l => `from the lot ${[l && l.source, l && niceDate(l.date)].filter(Boolean).join(", ")}`)(lotInfo(val))],
     genre: [c => val ? genresOf(c).concat(c.genre ? [] : storyGenres(c) ? storyGenres(c).split(", ") : []).includes(val) : !genresOf(c).length, val ? `${val}` : "no genre"],
     grade: [c => String(c.grade || "").split("-")[0] === val, `condition Z${val}`],
     dec: [c => { const y = yearOf(c.date) || c.issueYear; return y && Math.floor(y / 10) * 10 === +val; }, `published in the ${val}s`],
@@ -73,7 +74,7 @@ function lineChart(ks, lines, pickType) {
   const x = i => ks.length === 1 ? L + (W - L) / 2 : L + i * (W - L - 8) / (ks.length - 1), y = v => H - B - v / max * (H - B - 8);
   const ticks = [0, max / 2 / 1.1, max / 1.1].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v).toLocaleString("de-CH")}</text><line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join("");
   const lab = k => { const [yy, mm] = k.split("-"); return mm + "/" + yy.slice(2); }, step = Math.ceil(ks.length / 6);
-  const xl = ks.map((k, i) => i % step && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="${ks.length > 1 && i === ks.length - 1 ? "end" : "middle"}">${lab(k)}</text>`).join("");
+  const xl = ks.map((k, i) => (i % step || ks.length - 1 - i < step * 0.75) && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="${ks.length > 1 && i === ks.length - 1 ? "end" : "middle"}">${lab(k)}</text>`).join("");
   const path = l => `<path class="${l.cls}" d="${l.vals.map((v, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(v).toFixed(1)).join(" ")}"/>`;
   const w = ks.length > 1 ? (W - L - 8) / (ks.length - 1) : W - L;
   const hits = ks.map((k, i) => `<rect class="hit" x="${(x(i) - w / 2).toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H - B}"${pickType ? ` data-pick="${pickType}|${k}|a"` : ""}><title>${lab(k)}: ${lines.map(l => l.label + " " + l.vals[i].toLocaleString("de-CH")).join(", ")}</title></rect>`).join("");
@@ -240,9 +241,15 @@ VIEWS.stats = {
         const top = sel.map(c => ({ c, v: chfOf(c) })).filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10);
         const topCard = top.length ? card("Most valuable", "top 10", openList(top.map(({ c, v }) => `<li><button class="link" data-open="${esc(c.id)}">${esc(nameOf(c))}</button><span class="muted"> ${c.grade ? "Z" + esc(c.grade) + " · " : ""}CHF ${fmt2(v)}</span></li>`))) : "";
         const gains = sel.map(c => ({ c, v: chfOf(c), p: paidOf(c) })).filter(x => x.v != null && x.p != null && !x.c.lotId).map(x => Object.assign(x, { g: x.v - x.p }));
+        // a lot counts as one buy: what you paid for the whole lot against the value of everything in it
+        [...new Set(sel.filter(c => c.lotId).map(c => c.lotId))].forEach(id => { const l = lotInfo(id); if (!l) return;
+          const ms = l.members.filter(c => c.status !== "wanted"), vals = ms.map(chfOf).filter(v => v != null), p = typeof parseAmt(l.total) === "number" ? toCHF(parseAmt(l.total), l.currency) : ms.reduce((a, c) => a + (paidOf(c) || 0), 0);
+          if (!vals.length || !(p >= 0)) return;
+          const v = vals.reduce((a, b) => a + b, 0);
+          gains.push({ lot: l, n: ms.length, nv: vals.length, v, p, g: v - p }); });
         const best = gains.slice().sort((a, b) => b.g - a.g).slice(0, 5).filter(x => x.g > 0), worst = gains.slice().sort((a, b) => a.g - b.g).slice(0, 5).filter(x => x.g < 0);
-        const gl = x => `<li><button class="link" data-open="${esc(x.c.id)}">${esc(nameOf(x.c))}</button><span class="muted"> paid ${fmt2(x.p)}, worth ${fmt2(x.v)}: </span><strong>${x.g >= 0 ? "+" : "−"}${fmt2(Math.abs(x.g))}</strong></li>`;
-        const buys = best.length || worst.length ? card("Best and worst buys", "CHF", `${best.length ? `<div class="small"><strong>Best</strong>${openList(best.map(gl))}</div>` : ""}${worst.length ? `<div class="small"><strong>Worst</strong>${openList(worst.map(gl))}</div>` : ""}${note("Value minus price paid. Comics from lots are left out, their price is a share of the lot.")}`) : "";
+        const gl = x => `<li>${x.lot ? `<button class="link" data-pick="${esc("lot|" + x.lot.id + "|a")}">Lot: ${esc([x.lot.source, niceDate(x.lot.date)].filter(Boolean).join(", ") || "no date")} (${x.n}${x.nv < x.n ? ", " + x.nv + " with a value" : ""})</button>` : `<button class="link" data-open="${esc(x.c.id)}">${esc(nameOf(x.c))}</button>`}<span class="muted"> paid ${fmt2(x.p)}, worth ${fmt2(x.v)}: </span><strong>${x.g >= 0 ? "+" : "−"}${fmt2(Math.abs(x.g))}</strong></li>`;
+        const buys = best.length || worst.length ? card("Best and worst buys", "CHF", `${best.length ? `<div class="small"><strong>Best</strong>${openList(best.map(gl))}</div>` : ""}${worst.length ? `<div class="small"><strong>Worst</strong>${openList(worst.map(gl))}</div>` : ""}${note("Value minus price paid. A lot counts as one buy: the whole lot's price against the value of everything in it. Tap a lot to see what was in it.")}`) : "";
         const topSer = serVals.filter(x => x.v != null).sort((a, b) => b.v - a.v).slice(0, 10), tmax = topSer.length ? topSer[0].v : 1;
         const serCard = topSer.length || noVal.length ? card("Value per series", "CHF", `${topSer.length ? `<div class="hbars">${topSer.map(x => { const c0 = x.list[0], col = isNovel(c0) ? { p: NOVEL_PUB, g: BOOK_GROUP, s: x.k } : { p: publisherOf(c0), g: groupOf(c0), s: x.k }; return `<button class="hbar" data-scol='${esc(JSON.stringify(col))}' title="${esc(seriesTitle(x.k))}: CHF ${fmt2(x.v)}"><span class="lab">${esc(seriesTitle(x.k))}</span><span class="track"><span class="fill" style="width:${(x.v / tmax * 100).toFixed(1)}%"></span></span><span class="n">${Math.round(x.v).toLocaleString("de-CH")}</span></button>`; }).join("")}</div>` : ""}
           ${noVal.length ? `<div class="row small" style="gap:8px;align-items:center"><span class="muted">${noVal.length} ${noVal.length === 1 ? "series has" : "series have"} no value yet.</span><button type="button" class="link" id="goPrices">Add price ranges in Series</button></div>` : ""}`) : "";
@@ -365,7 +372,7 @@ function historyCard(m) {
   const line = key => pts.map((p, i) => (i ? "L" : "M") + x(i).toFixed(1) + " " + y(p[key] || 0).toFixed(1)).join(" ");
   const ticks = [0, max / 2 / 1.1, max / 1.1].map(v => `<text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${Math.round(v).toLocaleString("de-CH")}</text><line x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}" class="grid"/>`).join("");
   const lab = k => { const [yy, mm] = k.split("-"); return mm + "/" + yy.slice(2); }, step = Math.ceil(ks.length / 6);
-  const xl = ks.map((k, i) => i % step && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="${ks.length > 1 && i === ks.length - 1 ? "end" : "middle"}">${lab(k)}</text>`).join("");
+  const xl = ks.map((k, i) => (i % step || ks.length - 1 - i < step * 0.75) && i !== ks.length - 1 ? "" : `<text x="${x(i)}" y="${H - 6}" text-anchor="${ks.length > 1 && i === ks.length - 1 ? "end" : "middle"}">${lab(k)}</text>`).join("");
   const dots = key => pts.map((p, i) => `<circle cx="${x(i)}" cy="${y(p[key] || 0)}" r="3" class="${key}"><title>${lab(ks[i])}: CHF ${(p[key] || 0).toLocaleString("de-CH")}</title></circle>`).join("");
   const first = pts[0], last = pts[pts.length - 1], d = last.v - first.v;
   return `<div class="card stack"><div class="cardhead"><h3>Value over time</h3><span class="muted small">CHF, per month</span></div>
