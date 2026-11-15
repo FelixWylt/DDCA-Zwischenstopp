@@ -1,5 +1,5 @@
 {
- "built": "2026-11-10T18:40",
+ "built": "2026-11-15T10:53",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -25,7 +25,7 @@
    "code": "de/MM",
    "title": "Micky Maus",
    "file": "inducks-de-MM.json",
-   "issues": 3438
+   "issues": 3440
   },
   "die tollsten geschichten von donald duck sonderheft": {
    "series": "Die tollsten Geschichten von Donald Duck Sonderheft",
@@ -99,7 +99,7 @@
    "code": "it/TL",
    "title": "Topolino (libretto)",
    "file": "inducks-it-TL.json",
-   "issues": 3793
+   "issues": 3797
   },
   "topolino giornale": {
    "series": "Topolino Giornale",
@@ -115,7 +115,7 @@
    "code": "se/KA",
    "title": "Kalle Anka & C:o",
    "file": "inducks-se-KA.json",
-   "issues": 3632
+   "issues": 3634
   },
   "kalle ankas pocket": {
    "series": "Kalle Ankas Pocket",
@@ -197,7 +197,7 @@
    "code": "no/DD",
    "title": "Donald Duck & Co",
    "file": "inducks-no-DD.json",
-   "issues": 4068
+   "issues": 4069
   },
   "micky maus zeitung": {
    "series": "Micky Maus Zeitung",
@@ -442,7 +442,7 @@
    "code": "it/DSBP",
    "title": "Disney Special Books Panini",
    "file": "inducks-it-DSBP.json",
-   "issues": 100
+   "issues": 102
   },
   "panzerknacker co": {
    "series": "Panzerknacker & Co",
@@ -608,6 +608,30 @@
    "title": "Letteratura Disney Panini",
    "file": "inducks-it-LETP.json",
    "issues": 20
+  },
+  "micky holmes donald watson": {
+   "series": "Micky Holmes & Donald Watson",
+   "aliases": [],
+   "code": "de/MHDW",
+   "title": "Micky Holmes & Donald Watson",
+   "file": "inducks-de-MHDW.json",
+   "issues": 1
+  },
+  "der stammbaum der ducks 2019": {
+   "series": "Der Stammbaum der Ducks (2019)",
+   "aliases": [],
+   "code": "de/DSBDD",
+   "title": "Der Stammbaum der Ducks",
+   "file": "inducks-de-DSBDD.json",
+   "issues": 1
+  },
+  "der stammbaum der ducks 1999": {
+   "series": "Der Stammbaum der Ducks (1999)",
+   "aliases": [],
+   "code": "de/SDD",
+   "title": "Der Stammbaum der Ducks",
+   "file": "inducks-de-SDD.json",
+   "issues": 1
   }
  }
 }
