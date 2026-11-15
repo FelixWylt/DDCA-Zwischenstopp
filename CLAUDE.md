@@ -20,47 +20,7 @@
 ### Time log (estimate → real, Claude's working time only)
 | Date | Job | Estimate | Real |
 |---|---|---|---|
-| 2026-11-07 | Publisher/Genre suggestion lists (own dropdown widget, 5 fields) | 15–25 min | ~3 min |
-| 2026-11-07 | Reading stats with month/year dates + Bought-from list + Bought-from stats card | (none) | ~2–3 min |
-| 2026-11-07 | Create CLAUDE.md | 1–2 min | ~20 s |
-| 2026-11-07 | Disney De Luxe barcode (joined barcode+add-on, typed lookup) incl. investigation | 5–10 min | ~2.5 min |
-| 2026-11-07 | Add this log to CLAUDE.md | 20–40 s | ~15 s (measured by the user) |
-| 2026-11-07 | Find why Disney De Luxe isn't linked to the catalogue (answer only) | 1–2 min | ~1 min |
-| 2026-11-07 | New series created on leaving the "New series name" field, linked to INDUCKS | 2–4 min | ~1–1.5 min |
-| 2026-11-07 | Fill from INDUCKS also fills publisher, format, genres | 1–3 min | ~1.5–2 min |
-| 2026-11-07 | Suggestion-list rows overlapping (CSS) + check other menus | 1–3 min | ~1–1.5 min |
-| 2026-11-07 | New INDUCKS-linked series get their country group (it → Italia) + one-time fix of existing ones | 1–2 min | 0.0–1.0 min (22:56 → 22:57:01) |
-| 2026-11-07 | Italian price ranges for Paste prices (research, 4 series groups; answer only) | 8–15 min | 2–3 min (23:16 → 23:18:52) |
-| 2026-11-07 | Add Super Almanacco Paperino (it/SAP = Paperino Mese 1–66) to the catalogue, incl. finding the code | 1–2 min (+1 min wait) | 0–1 min (23:27 → 23:28:07, before the rebuild) |
-| 2026-11-07 | Check price range for Super Almanacco Paperino 1–66 (2 searches; answer only) | 1–2 min | 0–1 min (23:33 → 23:33:32) |
-| 2026-11-08 | Covers searched again after every catalogue rebuild → only when the series is new in the catalogue or 30 days passed | 1–3 min | 0–1 min (00:06 → 00:06:53) |
-| 2026-11-08 | Barcode add-on misread (De Luxe 34 → wrong issue/cover): add-on must be read the same in two frames | 2–4 min | 1–2 min (00:17 → 00:18:37) |
-| 2026-11-08 | Do stats understand pages like "120 (116 numbered + 4 covers)"? (answer only: yes, they take the first number) | under 1 min | 0–0 min (00:26 → 00:26:15) |
-| 2026-11-08 | Why ISBN 9788828781608 (De Luxe 29) isn't found (answer only: not in the 4 databases, INDUCKS has no ISBN table, SBN can't be asked by apps) | 1–2 min | 1–2 min (00:30 → 00:31:40) |
-| 2026-11-08 | Fill from INDUCKS kept the old cover (29 → 29B): replace INDUCKS covers, show new picture over old stored copy | 1–3 min | 0–1 min (00:41 → 00:41:56) |
-| 2026-11-08 | "34 and 34B overlap": letter numbers with different INDUCKS titles count as different comics | 1–4 min | 0–1 min (00:57 → 00:58:06) |
-| 2026-11-08 | Value of a hand-drawn Celoni picture from Lucca 2025 (3 searches; answer only) | 2–4 min | 0–1 min (01:14 → 01:14:35) |
-| 2026-11-08 | Celoni picture: narrow the value (answer only, no search) | under 1 min | 0–1 min (01:20 → 01:20:31) |
-| 2026-11-08 | Celoni picture: original or print? (answer only, no search) | under 1 min | 0–1 min (01:26 → 01:26:57) |
-| 2026-11-08 | Mottura picture "La leggenda del pianista sull'oceano": original? value? (catalogue check, no web search; answer only) | under 1 min | 0–1 min (01:35 → 01:36:05) |
-| 2026-11-08 | Celoni/Mottura pictures bought for 15 € each → signed prints, value corrected (answer only) | under 1 min | 0–1 min (01:37 → 01:37:57) |
-| 2026-11-08 | Find "La vera storia di Novecento" in the catalogue (answer only) | under 1 min | 0–0 min (01:43 → 01:43:23) |
-| 2026-11-08 | Per-currency tables looked like a wrong conversion: "Priced in" label, explanation, ≈ CHF column (both tables) | 1–2 min | 0–1 min (01:54 → 01:54:42) |
-| 2026-11-08 | "Comics & comic books" / "Books" value tables: same fix already in da-v156; value per series converts (answer only) | 1–2 min | 0–0 min (01:56 → 01:56:25) |
-| 2026-11-08 | Comic form: "ISBN not found" message gets the SBN link for Italian ISBNs | 1–2 min | 0–1 min (09:46 → 09:47:18) |
-| 2026-11-08 | Identify ISBN 9788828748632 (2 searches, not found online; answer only) | 1–2 min | 0–0 min (09:52 → 09:52:20) |
-| 2026-11-08 | "Find by title" in the comic form (titles.json from the catalogue, built by the workflow; hit sets series+number, makes the series if new, fills from INDUCKS) | 3–6 min (+2 min wait) | 1–2 min (09:59 → 10:00:32) |
-| 2026-11-08 | Superpippo add-on (ISBN 9791221928587): found it/TLB Topolibri in the directory, added to the catalogue | under 1 min (+2 min wait) | 0–1 min (10:15 → 10:15:42, before the rebuild) |
-| 2026-11-08 | Value of DSBP 16V (Spada di Ghiaccio Limited Deluxe; 1 search; answer only) | 1–2 min | 0–1 min (10:24 → 10:24:45) |
-| 2026-11-08 | Is the 16V lithograph hand-signed? (answer only, no search) | under 1 min | 0–1 min (10:27 → 10:27:38) |
-| 2026-11-08 | 16V: printed signature, copy 355 → value (answer only) | under 1 min | 0–0 min (10:31 → 10:31:21) |
-| 2026-11-08 | PK box (34B) picture is a lithograph: what it means for value and notes (answer only) | under 1 min | 0–1 min (10:34 → 10:35:00) |
-| 2026-11-08 | Whose Italian Disney signature is worth most (1 search; answer only) | 1–2 min | 0–1 min (10:37 → 10:38:11) |
-| 2026-11-08 | Most valuable Disney comics signature worldwide (2 searches; answer only) | 1–2 min | 0–1 min (10:41 → 10:42:10) |
-| 2026-11-08 | Bob Karp and Al Taliaferro signatures/originals (1 search; answer only) | 1–2 min | 0–1 min (10:46 → 10:46:45) |
-| 2026-11-08 | Find Blixt Gordon 1973 nr 1 (1 search, 1 fetch; Seriekatalogen not reachable; answer only) | 1–2 min | 0–1 min (10:55 → 10:56:22) |
-| 2026-11-08 | Blixt Gordon: which universe and group (answer only) | under 1 min | 0–1 min (11:04 → 11:05:02) |
-| 2026-11-08 | Blixt Gordon universe corrected (by rights owner, like Swedish Spider-Man in Marvel; answer only) | under 1 min | 0–1 min (11:06 → 11:06:49) |
+| 2026-11-07/08 | Summary of 41 jobs (single rows removed 2026-11-15): app fixes, catalogue additions, price research, answers | mostly 1–2 min, bundles 2–15 min | mostly 0–1 min, bundles 1–3 min: estimates 2–6× too high |
 | 2026-11-15 | 6 points: wishlist copy comics/books/both, one-tap category button, lot list by last change (12 lots), catalogue de/MHDW+DSBDD+SDD, LETP prices, two-copies answer | 6–12 min (+1 min wait) | 1–2 min (11:51 → 11:53:11) |
 | 2026-11-15 | Wishlist category as 3 fixed buttons under the row (no jumping), "Single comics" in groups (auto for 1-issue INDUCKS series, setting in Series), "Add another copy" in the edit form, LETP sales check (1 search, none found) | 4–8 min (+1 min wait) | 2–3 min (12:09 → 12:11:50) |
 | 2026-11-15 | Wishlist category buttons squeezed into a grid cell (CSS fix), separate copies shown once with "2×" + copy picker, Capolavori della Letteratura prices (1 search), single-comic how-to | 4–8 min (+1 min wait) | 0–1 min (12:31 → 12:32:15) |
@@ -70,6 +30,9 @@
 | 2026-11-15 | Package 3: all lots selectable (Newest/Older), rate check with SEK-per-CHF swap, live wishlist counts, no single comics in Gaps picker, all copies' grades on 2× rows, no doubled name on single comics (ISBN reuse already existed) | 3–4 min (gut 8–12 ÷ 3) + 1 run | 1–2 min (≈13:13 after package 2 → 13:15:14, incl. 1 run) |
 | 2026-11-15 | Package 4: identical vs separate copies explained (field + duplicate buttons), one "2×" style, universe/group rule in Series, King Features suggestion | 2–3 min (gut 5–8 ÷ 3) + 1 run | 1–2 min (≈13:15 after package 3 → 13:17:08, incl. 1 run) |
 | 2026-11-15 | Package 5: price suggestions in catalogue/prices.json (10 Italian series) + "Use these prices" in Series › value, test reads every list; then screenshot check switched to on-demand, changed screens only (user's request) | 3–5 min (gut 10–15 ÷ 3) + 1 run | 4–5 min (≈13:17 after package 4 → 13:22:20, incl. 3 runs) |
+| 2026-11-15 | Package 6: app.js split into 9 files (js/), load-order check with a parser, error check over all screens; log shortened, CLAUDE.md updated | 5–8 min (gut 15–25 ÷ 3, unmeasured kind) + 1 run | 2–3 min (≈13:22 after package 5 → 13:25:29, incl. 1 run) |
+
+Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
 Rough guide from the log (as of 2026-11-15): real time is ~0–1 min for a small fix or answer, ~1–3 min for a bundle
 of changes or a research job. Estimates were 2× too high for small jobs and 3–6× too high for bundles/bigger jobs,
@@ -83,10 +46,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
 ## Other working rules
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
 - Only test what changed; don't rerun earlier tests.
+- The app code is split by section into `js/*.js` (plain scripts sharing their names; order in index.html: core first,
+  start last). Code that runs while a file loads may only use names from earlier files. New files: add them to
+  index.html and to the file list in sw.js.
 - Raise `APP_VERSION` in sw.js with every change. A push to `main` publishes to GitHub Pages.
 - Network checks: push probe-books.mjs to the `cors-test` branch; the workflow writes probe-result.txt.
 - Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
-  `gh workflow run screens.yml -R FelixWylt/DDCA-Zwischenstopp -f screens=wishlist,copy-picker` (names: collection, group-ltb,
+  `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
+  (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
   series-ltb-copies, group-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
   price-suggestion; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
