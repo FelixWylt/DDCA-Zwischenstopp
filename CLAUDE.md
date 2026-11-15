@@ -120,6 +120,7 @@
 | 2026-11-15 | Tintin #20 back cover lists Tintin 1–18 (+ Johan, Lotta och Jocko 1–5): no. 19 (1975) missing → first printing 1973, set Edition 1. Auflage (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:57 → 22:57:35) |
 | 2026-11-15 | 5 items: lists Topolino Extra (it/TXTR) 7 €, Divertiamoci a stare bene (it/DSB) 1-8: 2 €, Artemis Fowl (Swedish HC) 40 kr; typed values Books of Earthsea 35 €, Maus (Pantheon) 15 € (estimates, no search); local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (23:08 → 23:08:40) |
 | 2026-11-15 | War of the Realms (Panini) from the user's Comicguide table: 1-4 3.50 €, 5 3 €, variant covers 1B–5B 7/6 €; running-number price lines now take a variant letter ("5B: 6 €"), da-v209; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (23:09 → 23:10:35) |
+| 2026-11-15 | Books of Earthsea on Ricardo (CH): new Ex Libris CHF 74.40 (Saga), Gollancz edition CHF 46.90 (Lehmanns) → realistic 25–35 CHF, heavy parcel (1 search, answer only) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:11 → 23:11:35) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
