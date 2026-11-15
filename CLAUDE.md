@@ -54,6 +54,7 @@
 | 2026-11-15 | Handover note for a new chat (open task: Asterix price ranges from the user's backup) | under 1 min (gut 1–2 ÷ 2) | 0–1 min (16:49 → 16:49:57) |
 | 2026-11-15 | Guide "How to make price ranges" in CLAUDE.md (sources, Z1, text format, editions, stable ranges) | under 1 min (gut 1–2 ÷ 2) | 1–2 min (16:53 → 16:54:08) |
 | 2026-11-15 | Repo connected late; answer on issues per year (91:an, from the code); Asterix ranges redone as Paste-prices lines checked against the app's parser | 2–3 min (gut 6–9 ÷ 3) | 2–3 min (17:26 → 17:28:28) |
+| 2026-11-15 | Per year by year ranges (Gaps, Stats, Next issue, Series field), kr/CHF in edition lines, Asterix suggestions stored by series id (+ price check adapted to edition lists), JSON-import check (answer) | 3–4 min (gut 8–12 ÷ 3) + 1 run | 6–7 min (17:33 → 17:37:42, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -66,11 +67,11 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v186)
-- Asterix price ranges done (2026-11-15): given to the user as Comicguide-style lines ("12 Asterix (1. Auflage) 8 €"),
-  because typed ranges can't carry an edition and the Comicguide format only reads €. Swedish ranges were therefore given in €.
-  Asterix has no INDUCKS code, so nothing was added to catalogue/prices.json.
-- Year-numbered series without an INDUCKS catalogue (91:an etc.) use one "Per year" number for every year.
+## Where we left off (2026-11-15, app da-v187)
+- Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so
+  this worked). They are also stored as suggestions in catalogue/prices.json under "id:<series id>" (series INDUCKS
+  doesn't have). Edition lines ("12 Asterix (1. Auflage) 8 €") now accept kr and CHF too.
+- "Per year" in Series takes one number or ranges by year ("1978-1983: 12, 1984-: 24"); Gaps, Stats and Next issue use it.
 
 ## How to make price ranges (the user's way)
 - **Value = condition Z1** (very good). Other conditions are worked out by the app's condition factors, so never lower
@@ -104,5 +105,5 @@ except typing the reply itself. Say in the report that the reply writing and Git
   series-ltb-copies, group-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
   price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
-- Price suggestions live in `catalogue/prices.json` (per INDUCKS code, text as for Paste prices). Add new price research
+- Price suggestions live in `catalogue/prices.json` (per INDUCKS code, or `id:<series id>` for non-Disney series, text as for Paste prices). Add new price research
   there too (with date and a short note on the sources), then run the check with `prices`.
