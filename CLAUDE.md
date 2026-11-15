@@ -94,6 +94,7 @@
 | 2026-11-15 | Donald Duck & Co Norway converted to Swedish kr (≈11 kr per €, rounded); local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:23 → 21:23:35) |
 | 2026-11-15 | "Swedish kr" meant: the list already is in Swedish kr (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:24 → 21:24:35) |
 | 2026-11-15 | Variants with a capital letter (rule): Bamse 2003/1B, 2019/15B; 91:an 1977/13B; Herman Hedning 2019/1-2B (35 kr, double issues now keep a letter); found and fixed sw.js emptied since 19:25 (da-v204); local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (21:26 → 21:27:47, incl. the sw.js repair) |
+| 2026-11-15 | Variant check of all 26 price lists: all 9 Seriekatalogen CSVs scanned (Variant/Upplaga columns), only the 4 rows already added; web/INDUCKS lists have no listed variants (answer only) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:29 → 21:29:43) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
