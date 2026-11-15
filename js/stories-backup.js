@@ -381,12 +381,14 @@ VIEWS.backup = {
         let b; try { b = JSON.parse(txt); } catch (x) { b = null; }
         if (!b || !["dagobert-archiv", "entenhausen-archive"].includes(b.app) || !Array.isArray(b.comics)) { box.innerHTML = '<div class="banner warn">This isn\'t a Dagobert Ducks Archiv backup. Choose a file made with Save or Send backup, or paste the complete copied text.</div>'; return; }
         const isClz = /^clz/.test(b.source || ""), ids = new Set(b.comics.map(c => c && c.id));
+        // a price file (made by Claude): no comics, only price ranges, maybe replacing a series' ranges and setting its years/per year
+        const priceOnly = !b.comics.length && Array.isArray(b.valueRules) && b.valueRules.length > 0, replaceFor = new Set(Array.isArray(b.valueRulesReplace) ? b.valueRulesReplace : []);
         const have = new Set(S.comics.map(c => c.id));
         const fresh = isClz ? b.comics.filter(c => c && !have.has(c.id)) : b.comics;
         const known = b.comics.length - fresh.length;
         // only entries from the old in-app CLZ importer qualify; comics from converted files carry clzBatch/seriesGroup
         const oldClz = b.source === "clz-import" ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id) && !c.clzBatch && !c.seriesGroup) : [];
-        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>${isClz ? "" : backupCompare(b)}
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${priceOnly ? "Add " + b.valueRules.length + " price ranges for " + new Set(b.valueRules.map(r => r.s)).size + " series" + (replaceFor.size ? " (the current ranges of " + replaceFor.size + " of them are replaced)" : "") + "? Your comics stay as they are." : isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>${isClz ? "" : backupCompare(b)}
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
           <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; clear(); };
@@ -399,6 +401,8 @@ VIEWS.backup = {
             }
             if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
             if (Array.isArray(b.bookSeriesExtra)) { const have = new Set((S.bookSeriesExtra || []).map(x => x.name)); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat(b.bookSeriesExtra.filter(x => x && x.name && !have.has(x.name))); await setConfig("bookSeriesExtra", S.bookSeriesExtra); }
+            if (replaceFor.size) S.valueRules = (S.valueRules || []).filter(r => !replaceFor.has(r.s));
+            if (b.seriesPatch && typeof b.seriesPatch === "object" && !(Array.isArray(b.series) && b.series.length)) { let ch = false; S.series.forEach(se => { const pa = b.seriesPatch[se.id]; if (pa && typeof pa === "object") { ["perYear", "firstYear", "lastYear", "defaultEdition"].forEach(k => { if (k in pa) se[k] = pa[k]; }); ch = true; } }); if (ch) await saveSeries(); }
             if (Array.isArray(b.valueRules)) { const ids = new Set((S.valueRules || []).map(r => r.id)); S.valueRules = (S.valueRules || []).concat(b.valueRules.filter(r => r && !ids.has(r.id))); await setConfig("valueRules", S.valueRules); }
             if (b.gradeFactors && typeof b.gradeFactors === "object") { S.gradeFactors = Object.assign({}, b.gradeFactors, S.gradeFactors); await setConfig("gradeFactors", S.gradeFactors); }
             if (b.valueHistory && typeof b.valueHistory === "object") { S.valueHistory = Object.assign({}, b.valueHistory, S.valueHistory); await setConfig("valueHistory", S.valueHistory); }
@@ -413,7 +417,7 @@ VIEWS.backup = {
             if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
-            await refreshStorageInfo(); toast((isClz ? "Added " : "Restored ") + n + (n === 1 ? " entry" : " entries")); render();
+            await refreshStorageInfo(); toast(priceOnly ? "Price ranges added" : (isClz ? "Added " : "Restored ") + n + (n === 1 ? " entry" : " entries")); render();
           } catch (x) { box.innerHTML = '<div class="banner warn">' + esc(errText(x)) + '</div>'; }
         };
       }

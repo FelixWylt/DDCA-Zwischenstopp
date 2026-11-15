@@ -59,6 +59,7 @@
 | 2026-11-15 | Swedish Asterix from the user's Seriekatalogen table (VF; HC rows 3–6, special 40), full list + prices.json | 1–1.5 min (gut 2–3 ÷ 2) + 1 run | 2–3 min (17:49 → 17:51:29, incl. 1 run of ~2 min) |
 | 2026-11-15 | Swedish Asterix: "inb." rows = hardcover (1, 3–6, 40 as 1. Auflage HC) | under 1 min (gut 1–2 ÷ 2) + 1 run | 2–3 min (17:56 → 17:58:19, incl. 1 run of ~2 min) |
 | 2026-11-15 | 91:an from the user's Seriekatalogen CSV: 18 yearly ranges (VF) + Per year text, prices.json, price check now uses a yearly series for yearly lists | 1.5–2 min (gut 3–4 ÷ 2) + 1 run | 3–4 min (18:01 → 18:04:23, incl. 1 run of ~2 min) |
+| 2026-11-15 | Price batch for Restore: Restore reads price-only files (replace a series' ranges, set per year/years), restore-batch.json + build script, notes | 1.5–2 min (gut 4–6 ÷ 3) | 1–2 min (18:05 → 18:06:46) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -71,7 +72,14 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v191)
+## Where we left off (2026-11-15, app da-v192)
+- **Price batch for Restore (the user's wish, 2026-11-15):** new price lists are COLLECTED, not sent one by one.
+  For each new list: add it to catalogue/prices.json (as usual) AND an entry to catalogue/restore-batch.json
+  (id = the user's series id from their backup, replace = true if the series already has ranges in the app, patch =
+  series settings such as perYear/firstYear/lastYear/defaultEdition). When the user says they're done, run
+  `python3 scripts/build_restore_batch.py > prices-restore.json`, send that file (Backup › Restore › choose file),
+  then empty the "series" list in restore-batch.json. Restore reads valueRulesReplace and seriesPatch (da-v192).
+  Waiting now: Swedish Asterix (replaces the imported ranges), 91:an (+ years 1956–2026 and per year).
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.
 - Asterix price ranges done (2026-11-15): the user imported them from a .json file Claude made (rules merge by id, so

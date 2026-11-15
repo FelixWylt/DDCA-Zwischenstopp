@@ -1,0 +1,7 @@
+{
+ "about": "Price lists waiting to go into the user's app in one Restore file (Backup › Restore). Each entry names a list in prices.json; replace = remove that series' current ranges first; patch = series settings to set. Build with: python3 scripts/build_restore_batch.py > file.json",
+ "series": [
+  {"id": "x-asterix-swedish", "sugg": "id:x-asterix-swedish", "replace": true, "patch": {"defaultEdition": "höhere Auflagen"}, "added": "2026-11-15"},
+  {"id": "x-91-an-swedish", "sugg": "id:x-91-an-swedish", "replace": true, "patch": {"firstYear": 1956, "lastYear": 2026, "perYear": "1981: 27, 1956: 11, 1957-1959: 12, 1960-1965: 13, 1966: 16, 1967-1969: 20, 1970-: 26"}, "added": "2026-11-15"}
+ ]
+}
