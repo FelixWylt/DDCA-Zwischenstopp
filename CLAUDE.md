@@ -104,6 +104,7 @@
 | 2026-11-15 | Which German Spider-Man is #8 (2019-06, 36 pages, 3.99 €)? Likely Panini's Spider-Man Magazin (2018–), not the 2019 relaunch (1 search, answer only) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:53 → 21:53:28) |
 | 2026-11-15 | German Spider-Man #8 says "Das Magazin zur TV-Serie": Panini's Spider-Man Magazin (2018–) (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:55 → 21:55:44) |
 | 2026-11-15 | Spider-Man Magazin (x-spider-man-german, Panini 2018–) from the user's Comicguide note: 1-52: 1 €, latest 52; local (bundle) | under 1 min (first guess 1 ÷ 2) | 0–1 min (21:58 → 21:58:50) |
+| 2026-11-15 | Publish: 21 local commits pushed (11 price lists, variants, sw.js repair, titleNumbers, da-v205), one check (prices + series-tools): no errors, every list reads | about 1 min (first guess 2 ÷ 2) + 2 min wait | 2–3 min (21:59 → 22:02:01, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -135,7 +136,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Marvel mutanter (x-marvel-mutanter-swedish, yearly 1989–1990, issue list with double 1989/7-8); the user's 2 copies are "1989/?", "1990/?".
   Spirous äventyr (x-spirous-aventyr): full list 0–56 (0 = Guldmaskinen 1975) + latest 56. The user's Guldmaskinen copy
   is wrongly numbered 5: told them to change it to 0 by hand.
-  Bamse (x-bamse-varldens-starkaste-bjorn): yearly 1973–2026, issue list, per year (local, not yet pushed).
+  Bamse (x-bamse-varldens-starkaste-bjorn): yearly 1973–2026, issue list, per year (published 2026-11-15 22:0x).
   Ninja Timmy (book series "book:Ninja Timmy"): 1-: 50 kr (local). The user's Sansoria and Vita apan books have no series yet.
   The Stormlight Archive (book series "book:The Stormlight archive"): 1-: 8 € (local).
   Donald Duck & Co Norway (x-donald-duck-co, prices.json "no/DD", in Swedish kr): local. Estimates except 1948/1.
@@ -144,6 +145,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Omaggio Abbonati (x-omaggio-abonati, prices.json "it/ABB"): estimates, local.
   Spider-Man Magazin (x-spider-man-german, Panini): 1-52: 1 € (Comicguide), local.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
+  All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
   locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
