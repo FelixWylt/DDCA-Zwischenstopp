@@ -329,7 +329,7 @@ VIEWS.stats = {
     document.querySelectorAll("[data-fg]").forEach(b => b.onclick = () => { S.statFG = b.dataset.fg; renderKeep(); });
     document.querySelectorAll(".highlight[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("[data-stq]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || {}, { tab: "all", who: null, q: b.dataset.stq, shown: 100, status: "owned" }); nav("stories"); });
-    $("#goFill") && ($("#goFill").onclick = () => { nav("backup"); setTimeout(() => { const r = $("#rfbox"); r && r.scrollIntoView({ block: "start" }); }, 100); });
+    $("#goFill") && ($("#goFill").onclick = () => { S.serTab = "tools"; S.serEditObj = null; S.serEditBook = null; nav("series"); setTimeout(() => { const r = $("#rfbox"); r && r.scrollIntoView({ block: "start" }); }, 100); });
     $("#goBackup") && ($("#goBackup").onclick = () => nav("backup"));
     $("#goTrade") && ($("#goTrade").onclick = () => { S.filters.q = ""; S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
     $("#goWish") && ($("#goWish").onclick = () => { S.gapTab = "wishlist"; nav("gaps"); });
