@@ -128,6 +128,7 @@
 | 2026-11-15 | Handover summary for a new chat (text to paste) + handover tips in CLAUDE.md (backup = series ids, pre-push checks, reading errors.txt) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:36 → 23:36:30) |
 | 2026-11-15 | Parzival in Middle High German: editions compared (DKV Nellmann/Kühn, de Gruyter Lachmann/Knecht, Bumke ATB hs. D, Reclam, Bern online) (1 search, answer only) | 1–1.5 min (first guess 2–3 ÷ 2) | 0–1 min (23:39 → 23:40:09) |
 | 2026-11-15 | How hard is Parzival's Middle High German? (false friends, Wolfram's style, Swiss German helps, start with book III, Lexer) (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:49 → 23:50:16) |
+| 2026-11-15 | De Gruyter Parzival: yes, Knecht's translation is built in, facing the original (from the earlier search, answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:53 → 23:53:55) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
