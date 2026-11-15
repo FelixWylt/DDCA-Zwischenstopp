@@ -35,10 +35,16 @@ const errors = [];
 page.on("pageerror", e => errors.push("page error: " + e.message));
 page.on("console", m => { if (m.type() === "error") errors.push("console: " + m.text()); });
 
-await page.goto(BASE, { waitUntil: "networkidle" });
-await page.waitForFunction(() => typeof S !== "undefined" && S.db);
+await page.goto(BASE, { waitUntil: "load" });
+try { await page.waitForFunction(() => typeof S !== "undefined" && S.dbState !== "loading", null, { timeout: 20000 }); }
+catch (e) {
+  const state = await page.evaluate(() => typeof S === "undefined" ? "S is undefined" : "dbState=" + S.dbState + " err=" + (S.dbError && (S.dbError.name + " " + S.dbError.message))).catch(x => "evaluate failed: " + x.message);
+  fs.writeFileSync(`${OUT}/errors.txt`, "app not ready: " + state + "\n" + errors.join("\n") + "\n");
+  await page.screenshot({ path: `${OUT}/00-not-ready.png`, fullPage: true });
+  console.log("app not ready: " + state + "\n" + errors.join("\n")); await browser.close(); process.exit(0);
+}
 await page.evaluate(async ({ series, comics }) => { S.series = series; await saveSeries(); await saveMany(comics); }, { series, comics });
-await page.reload({ waitUntil: "networkidle" });
+await page.reload({ waitUntil: "load" });
 await page.waitForFunction(() => typeof S !== "undefined" && S.comics && S.comics.length > 5);
 
 const shot = async (name, fn) => {
