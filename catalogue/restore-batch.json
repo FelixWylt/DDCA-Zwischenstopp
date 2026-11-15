@@ -3337,6 +3337,34 @@
    },
    "minApp": 195,
    "added": "2026-11-15"
+  },
+  {
+   "id": "book:Glastronen",
+   "sugg": "id:book:Glastronen",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
+  },
+  {
+   "id": "book:Marvel: What if...",
+   "sugg": "id:book:Marvel: What if...",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
+  },
+  {
+   "id": "book:Ragnarök",
+   "sugg": "id:book:Ragnarök",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
+  },
+  {
+   "id": "book:The Wheel of Time",
+   "sugg": "id:book:The Wheel of Time",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }

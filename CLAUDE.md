@@ -96,6 +96,7 @@
 | 2026-11-15 | Variants with a capital letter (rule): Bamse 2003/1B, 2019/15B; 91:an 1977/13B; Herman Hedning 2019/1-2B (35 kr, double issues now keep a letter); found and fixed sw.js emptied since 19:25 (da-v204); local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 1–2 min (21:26 → 21:27:47, incl. the sw.js repair) |
 | 2026-11-15 | Variant check of all 26 price lists: all 9 Seriekatalogen CSVs scanned (Variant/Upplaga columns), only the 4 rows already added; web/INDUCKS lists have no listed variants (answer only) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:29 → 21:29:43) |
 | 2026-11-15 | Spider-Man (Swedish, Egmont 1999–2013) from the user's Seriekatalogen CSV: 6 ranges (VF), issue list with variant 1999/1B, years/per year; local (bundle) | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (21:32 → 21:32:58) |
+| 2026-11-15 | 4 book series: Glastronen 50 kr, Marvel What if 6 €, Ragnarök 100 kr (1 search, Finn.no), Wheel of Time 6 € (estimates); 3 books need a volume number; local (bundle) | 1.5–2 min (first guess 5–6 ÷ 3) | 0–1 min (21:35 → 21:35:47) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -132,6 +133,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   The Stormlight Archive (book series "book:The Stormlight archive"): 1-: 8 € (local).
   Donald Duck & Co Norway (x-donald-duck-co, prices.json "no/DD", in Swedish kr): local. Estimates except 1948/1.
   Spider-Man Swedish (x-spider-man-swedish): yearly 1999–2013, issue list (variant 1999/1B), local. The user's copy is "2004/?".
+  Book series Glastronen, Marvel: What if..., Ragnarök, The Wheel of Time ("book:<name>", all "1-:"), local. Only Ragnarök's copy has a number.
   Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit

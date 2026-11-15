@@ -186,6 +186,30 @@
    "date": "2026-11-15",
    "note": "Spider-Man (Egmont, 1999–2013), Seriekatalogen.se VF column, sent by the user 2026-11-15. Variant 1999/1B (\"Ja\" row) 35 kr like 1999/1.",
    "text": "1999-2013: 25 kr\n1999/1: 35 kr\n2004/7: 20 kr\n2005/7: 20 kr\n2006/5-2006/8: 20 kr\n2007/4-2007/10: 20 kr"
+  },
+  "id:book:Glastronen": {
+   "cur": "SEK",
+   "date": "2026-11-15",
+   "note": "Glastronen (Sarah J. Maas, Swedish Throne of Glass, Modernista paperbacks 2017–). Still in print; used copies of such paperbacks go for about 30–60 kr. Estimate, no search.",
+   "text": "1-: 50 kr"
+  },
+  "id:book:Marvel: What if...": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "Marvel: What If... novels (Del Rey/Marvel, 2023–), paperbacks still in print at about 10–12 €; used about half. Estimate, no search.",
+   "text": "1-: 6 €"
+  },
+  "id:book:Ragnarök": {
+   "cur": "SEK",
+   "date": "2026-11-15",
+   "note": "Ragnarök (Odin Helgheim, Egmont, Swedish edition of the Norwegian Nordic manga, hardcover 2021–). Finn.no: books 1–3 in as-new condition offered together for 300 NOK (about 100 kr each), 2025–26. Asking prices, estimate.",
+   "text": "1-: 100 kr"
+  },
+  "id:book:The Wheel of Time": {
+   "cur": "EUR",
+   "date": "2026-11-15",
+   "note": "The Wheel of Time (Robert Jordan), Orbit paperbacks (2021 reissue). Still in print at about 12 €; used about half. Estimate, no search.",
+   "text": "1-: 6 €"
   }
  }
 }
