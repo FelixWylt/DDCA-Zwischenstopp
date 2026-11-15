@@ -112,6 +112,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Marvel mutanter (x-marvel-mutanter-swedish, yearly 1989–1990, issue list with double 1989/7-8); the user's 2 copies are "1989/?", "1990/?".
   Spirous äventyr (x-spirous-aventyr): full list 0–56 (0 = Guldmaskinen 1975) + latest 56. The user's Guldmaskinen copy
   is wrongly numbered 5: told them to change it to 0 by hand.
+  Farbror Joakims liv (comic book series "book:Farbror Joakims liv"): 1: 480 kr, 2: 360 kr.
+  The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   Patch keys: numbering, perYear, firstYear, lastYear, defaultEdition, issueList, latest; plus renumber {old label: new}.
 - Swedish Asterix: from the user's Seriekatalogen list (VF). seriekatalogen.se can't be fetched from here: ask the user to
   paste the series' table (they can). Seriesams Guide online is a fallback with fewer values.

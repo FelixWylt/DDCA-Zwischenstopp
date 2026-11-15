@@ -2251,6 +2251,13 @@
    "patch": {
     "latest": 56
    }
+  },
+  {
+   "id": "book:Farbror Joakims liv",
+   "sugg": "id:book:Farbror Joakims liv",
+   "replace": true,
+   "minApp": 200,
+   "added": "2026-11-15"
   }
  ]
 }
