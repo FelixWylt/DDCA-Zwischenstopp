@@ -115,6 +115,7 @@
 | 2026-11-15 | X:en (Swedish, 1984/1–1985/8) from the user's Seriekatalogen CSV: 35 kr, 1984/1 50 kr, issue list, years/per year; local (bundle) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:34 → 22:34:52) |
 | 2026-11-15 | 8 items: lists Discworld 4 €, The atlas 5 €, Topolibri (it/TLB) 6 €, Doctor Strange Flight of Bones 1-4: 3 € (estimates); typed values D&D dragons guide 15 €, Nibelungen/Parzival (Arena) 4 €, Japanese myths 12 €, Deutsche Kurzgeschichten 3 €, Numazawa 1946 30 CHF (1 search); Earthsea quartet series (answer); local (bundle) | 2–3 min (first guess 8–10 ÷ 3) | 0–1 min (22:43 → 22:43:49) |
 | 2026-11-15 | Earthsea: Quartet and Books of Earthsea are separate editions, not one numbered series; series = the publisher's line on the spine, or none (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:45 → 22:46:08) |
+| 2026-11-15 | Tintin (Swedish, Carlsen 1968–1994) from the user's Seriekatalogen CSV: per printing like Asterix (1. Auflage = VF, 250–4000 kr; höhere Auflagen 50 kr estimate, default), latest 27; why so expensive (answer); local (bundle) | 1–1.5 min (first guess 3–4 ÷ 3) | 0–1 min (22:51 → 22:51:34) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -161,6 +162,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Herman Hedning Samlade serier (x-herman-hedning-samlade-serier-swedish): 1-8: 80 kr, latest 8, local.
   X:en (x-x-en-swedish): yearly 1984–1985, 11 issues, local.
   Discworld, The atlas (book series), Topolibri (it/TLB), Doctor Strange: Flight of Bones (1-4): estimates, local.
+  Tintin Swedish (x-tintin-swedish): per printing, 1. Auflage (Seriekatalogen) + höhere Auflagen 50 kr (default), local. The user's #20 (1973) may be a first printing.
   All lists above were published on 2026-11-15 at about 22:00 (nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit

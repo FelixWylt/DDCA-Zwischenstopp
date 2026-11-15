@@ -3686,6 +3686,17 @@
    "patch": {
     "latest": "4"
    }
+  },
+  {
+   "id": "x-tintin-swedish",
+   "sugg": "id:x-tintin-swedish",
+   "replace": false,
+   "patch": {
+    "defaultEdition": "höhere Auflagen",
+    "latest": "27"
+   },
+   "minApp": 195,
+   "added": "2026-11-15"
   }
  ]
 }
