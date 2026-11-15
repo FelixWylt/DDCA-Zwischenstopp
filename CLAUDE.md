@@ -135,6 +135,7 @@
 | 2026-11-16 | ISBN of the Nellmann/Kühn hardcover (DKV 1994): DNB lists 978-3-618-66083-5 (868 p., bibliography p. 838–865, so possibly vol. 2 or the set) (1 search, answer only) | about 1 min (first guess 2 ÷ 2) | 1–2 min (00:08 → 00:09:12) |
 | 2026-11-16 | Is the 964-page volume vol. 1? Very likely: 964 + 868 = 1832 ≈ the 1838 pages of the paperback set; vol. 2 (868 p.) has the commentary (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:12 → 00:12:49) |
 | 2026-11-16 | Original title: the 1994 hardcover's full title (from the earlier search) + the poem itself has no title in the manuscripts, "Parzival" is the modern name (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:15 → 00:15:26) |
+| 2026-11-16 | Translator of the Nellmann edition: Dieter Kühn (writer, 1935–2015; Ich Wolkenstein, Der Parzival des Wolfram von Eschenbach 1986) (answer only, from memory) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:19 → 00:20:04) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
