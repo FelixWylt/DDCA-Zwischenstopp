@@ -148,6 +148,18 @@ if (want("notowned")) try {
   const pile = await page.evaluate(async () => { const { S, nav } = window.__dda; S.statTab = "reading"; nav("stats"); await new Promise(f => setTimeout(f, 600)); return /to read them all at your pace/.test(document.body.textContent); });
   if (!pile) errors.push("unread pile card missing");
 } catch (e) { errors.push("read, not owned: " + e.message); }
+// library records: a classic catalogued under its work (Ovid via 700 $t), the editor only "Hrsg.", the translator only in the title line
+if (want("books")) try {
+  const r = await page.evaluate(() => {
+    const df = (tag, subs) => `<datafield tag="${tag}" ind1=" " ind2=" ">${subs.map(([c, v]) => `<subfield code="${c}">${v}</subfield>`).join("")}</datafield>`;
+    const rec = fs => `<collection xmlns="http://www.loc.gov/MARC21/slim"><record type="Bibliographic">${fs.join("")}</record></collection>`;
+    const a = Books.parseMarc(rec([df("245", [["a", "Metamorphosen"], ["b", "lateinisch - deutsch"], ["c", "Publius Ovidius Naso. In deutsche Hexameter übertragen von Erich Rösch. Hrsg. und mit einer Einführung von Niklas Holzberg"]]), df("700", [["a", "Ovidius Naso, Publius"], ["t", "Metamorphoses"]]), df("700", [["a", "Holzberg, Niklas"], ["e", "Hrsg."], ["4", "edt"]])]))[0];
+    const b = Books.parseMarc(rec([df("245", [["a", "Gedichte"], ["c", "hrsg. und eingeleitet von Max Muster"]]), df("700", [["a", "Muster, Max"], ["e", "Hrsg."]])]))[0];
+    const c = Books.parseMarc(rec([df("100", [["a", "Homer"]]), df("245", [["a", "Ilias"]]), df("700", [["a", "Rupé, Hans"], ["e", "Übers."]])]))[0];
+    return { aAuth: a.authors.join(","), aTrl: a.translator, bWeak: b.weakAuthors, bAuth: b.authors.join(","), bTrl: b.translator, cTrl: c.translator };
+  });
+  if (r.aAuth !== "Publius Ovidius Naso" || r.aTrl !== "Erich Rösch" || !r.bWeak || r.bAuth !== "Max Muster" || r.bTrl || r.cTrl !== "Hans Rupé") errors.push("book records: " + JSON.stringify(r));
+} catch (e) { errors.push("book records: " + e.message); }
 // the copy picker: tap the LTB 1 row with two copies
 if (want("copy-picker")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });

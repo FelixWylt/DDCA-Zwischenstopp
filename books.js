@@ -98,9 +98,17 @@
       const first = (tag, code) => { for (const f of fields(tag)) { const v = sub(f, code)[0]; if (v) return v; } return ""; };
       const authors = fields("100").map(f => personName(sub(f, "a")[0]));
       const others = fields("700").filter(f => !sub(f, "t").length);
-      const translator = others.filter(f => /bersetz|översätt|translat|trl/i.test(sub(f, "e").concat(sub(f, "4")).join(" "))).map(f => personName(sub(f, "a")[0])).join(", ");
+      // translators: written out ("Übersetzer"), abbreviated ("Übers.", "Übertr.", "Hrsg. und übers.") or as the code trl
+      const isTrl = f => /übers|ubers|übertr|bersetz|översätt|translat|\btrl\b/i.test(sub(f, "e").concat(sub(f, "4")).join(" "));
+      let translator = others.filter(isTrl).map(f => personName(sub(f, "a")[0])).join(", ");
+      // older records only name the translator in the title line: "… / Ovid. Hrsg. und übers. von Niklas Holzberg"
+      if (!translator) { const c = sub(fields("245")[0], "c").join(" "); const m = /(?:übers(?:etzt|\.)?|übertr(?:agen|\.)?|deutsch)\s+(?:und\s+\w+\.?\s+)?von\s+([^;.\]]+?)(?:\s*[;.\]]|$)/i.exec(c); if (m) translator = tidy(m[1]); }
       // an anonymous work (Nibelungenlied, Edda, Beowulf) is catalogued under its title (130), not under an author: its editors aren't its authors
       if (!authors.length && !fields("110").length && fields("130").length) authors.push("Anonymous");
+      // a translated classic can be catalogued under its work ("Ovidius Naso, Publius / Metamorphoses" in 700 with $t): that person is the author, not the editor
+      if (!authors.length) fields("700").filter(f => sub(f, "t").length && sub(f, "a").length).slice(0, 1).forEach(f => authors.push(personName(sub(f, "a")[0])));
+      let weakAuthors = false;   // only an editor found: another database's author wins (see merge)
+      if (!authors.length) weakAuthors = true;
       if (!authors.length) others.filter(f => /(Verfasser|Hrsg|Herausgeber)/i.test(sub(f, "e").join(" "))).forEach(f => authors.push(personName(sub(f, "a")[0])));
       const t245 = fields("245")[0];
       const { title, sub: subtitle } = titleWith(tidy(sub(t245, "a")[0]).replace(/\s*[:\/;=]$/, ""), tidy(sub(t245, "b")[0]).replace(/\s*[:\/;=]$/, ""));
@@ -112,7 +120,7 @@
       const lang = langs.length > 1 ? (langs.find(l => l !== "German" && l !== "Swedish") || langs[0]) : langs[0] || "";
       const binding = bindingOf(fields("020").map(f => sub(f, "q").concat(sub(f, "c")).join(" ")).join(" ") + " " + fields("655").map(f => sub(f, "a")[0]).join(" "), lang === "Swedish");
       return {
-        title, subtitle, authors: authors.filter(Boolean), translator, originalTitle: tidy(orig), format: binding,
+        title, subtitle, authors: authors.filter(Boolean), weakAuthors, translator, originalTitle: tidy(orig), format: binding,
         publisher: tidy(first("264", "b") || first("260", "b")), year: year(first("264", "c") || first("260", "c")),
         pages, lang,
         // a publisher's paperback number (dtv 21412, rororo 23315), an author's collected works ("Das dramatische Werk", Werkausgabe)
@@ -239,7 +247,9 @@
   function merge(list) {
     const out = {};
     list = list.map(r => r && Object.assign({}, r, { authors: cleanPeople(r.authors) }));
-    KEYS.forEach(k => { if (k === "genre") return; for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
+    // an editor standing in for the author: a real author from another database comes first
+    const realAuthors = list.find(r => r && !r.weakAuthors && (r.authors || []).length);
+    KEYS.forEach(k => { if (k === "genre") return; if (k === "authors" && realAuthors) { out.authors = realAuthors.authors; return; } for (const r of list) { const v = r && r[k]; if (Array.isArray(v) ? v.length : v) { out[k] = v; break; } } });
     // genres from all databases together; the shared names make the same genre count once
     out.genre = oneGenre(list.map(r => r && r.genre).filter(Boolean).join(", "));
     if (!out.genre || out.genre === "Novel") {
