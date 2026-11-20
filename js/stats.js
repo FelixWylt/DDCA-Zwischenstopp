@@ -524,7 +524,7 @@ function readingCard(list, word, extra) {
     <div><div class="row between small"><span><strong>${nf(readOwn.length)}</strong> of your ${nf(list.length)} ${w(list.length)} read</span><span class="muted">${pct} %</span></div><div class="meter"><span style="width:${pct}%"></span></div></div>
     <div class="row rstats">
       <div><div class="v2">${nf(inRange.length)}</div><div class="k small muted">read ${all ? "in all" : "in " + year}${extra.length ? ` · ${nf(inRange.length - inRangeN)} owned, ${nf(inRangeN)} not owned` : ""}</div></div>
-      <div><div class="v2">${avg >= 10 ? Math.round(avg) : avg.toFixed(1)}</div><div class="k small muted">per month${all ? " since 2016" : ""}</div></div>
+      <div><div class="v2">${avg >= 10 ? Math.round(avg) : avg.toFixed(avg > 0 && avg < 0.95 ? 2 : 1)}</div><div class="k small muted">per month${all ? " since 2016" : ""}</div></div>
       ${pages ? `<div><div class="v2">${nf(pages)}</div><div class="k small muted">pages</div></div>` : ""}
     </div>
     ${dated.length ? timeBars(per, word + " read", "read", scope) : ""}

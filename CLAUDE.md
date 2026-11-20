@@ -146,6 +146,7 @@
 | 2026-11-20 | 11 points looked at (pages read all time, book countries, story ratings on the comic page, What you collect by universe, decade labels, duplicates, wishes fulfilled, growth, One-pager, sort direction, y-axes): report + plan + questions, no change | – (report first) | 1–2 min (22:58 → 22:59:50) |
 | 2026-11-20 | Answers A–E taken in; looked at genres, book lookup (041 $h original language), Wikidata series fill (P495), book form; second report with the updated plan + answers (stories do have genres), no change | – (report first) | 1–2 min (23:14 → 23:15:32) |
 | 2026-11-20 | Komik = Duckipedia's story genre for comedy/gags (shown as Humour for whole comics); Growth bars OK; Panzerknacker & Co 2 to be marked as a fulfilled wish once (plan only, not started) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:22 → 23:22:36) |
+| 2026-11-20 | da-v213, 11 points: Reading All time counts everything (per month since 2016), book/book-series Country (Wikidata P495/P27, 041 $h, author's country after Refresh all books), story ratings + English genres/dates on the comic page, What you collect by universe (Disney · group), decade labels fit, duplicates by edition/ISBN + Show them, wishes turned owned count (Panzerknacker & Co 2 marked once), Growth monthly bars, One-pager only for stories, ↓/↑ on ranked lists + Stories page, y-axis on bar charts; 1 check run (no errors) | 10–13 min (first guess 30–40 ÷ 3) + 1–2 runs | 9–10 min (23:25 → 23:34:40, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -223,6 +224,12 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **Book lookup roles (da-v212):** books.js parseMarc: no 100 → author from the 700 field with $t (the work); editor-only records
   get weakAuthors and merge() prefers another database's author; translator from $e/$4 (incl. "Übers.") or 245$c
   ("übers./übertragen/deutsch von X"). The DNB (SRU and portal) couldn't be reached from here or by the user on 2026-11-20.
+- **da-v213 (2026-11-20):** Stats bar charts get a scale (`ychart`, `niceMax`, `labStep` in stats.js); ranked lists get a ↓/↑ button (`sortBtn`/`ordered`, S.statAsc);
+  Growth has monthly bars; What you collect = Disney by group ("Disney · …"), other universes one bar; duplicates by series+number+edition (unknown "?" numbers
+  and books without a volume only by ISBN) with a Show them list; a wish turned owned in saveComic gets wasWish (+ wishGotOn without a purchase date);
+  book countries: `bookCountry()` (own Country field › book series country from Wikidata P495/author P27 › 041 $h original language › author's country,
+  cached in config authorCountry, asked after Refresh all books); comic books = edition country. Story genres/dates shown in English (storyGenreEn, dateEn);
+  One-pager only on stories. Reading All time = everything read; per month counted from January 2016 (the user's wish).
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
