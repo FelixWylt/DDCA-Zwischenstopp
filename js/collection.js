@@ -585,9 +585,12 @@ function duckipediaCard(c) {
 function storyView(s, links) {
   const names = (v, role) => links ? splitPeople(v).map(n => `<button type="button" class="link" data-goperson="${role}" data-n="${esc(n)}">${esc(n)}</button>`).join(", ") : esc(v);
   const by = [s.writer && s.writer === s.artist ? "Writer and artist: " + names(s.writer, "writers") : s.writer && "Writer: " + names(s.writer, "writers"), s.artist && s.artist !== s.writer ? "Artist: " + names(s.artist, "artists") : "", s.hero && esc(s.hero)].filter(Boolean).join(" · ");
-  const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, s.genre, s.first && "First published " + s.first, s.firstDe && "First in German: " + s.firstDe, s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
+  const more = [s.original && "Original: " + s.original, s.translator && "Translation: " + s.translator, storyGenreEn(s.genre), s.first && "First published " + dateEn(s.first), s.firstDe && "First in German: " + dateEn(s.firstDe), s.reprintFrom && "Reprinted from " + s.reprintFrom, s.reprintedIn && "Reprinted in " + s.reprintedIn].filter(Boolean).join(" · ");
   const other = s.dTitle && norm(s.dTitle) !== norm(s.title) ? s.dTitle : "";
-  return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
+  // your rating of the story (Stories tab), shown on the comic page
+  const sr = links && typeof storyRate === "function" && (s.code || s.title) ? storyRate({ code: s.code, titles: [s.title || s.dTitle || ""] }) : {};
+  const rate = +sr.rating || sr.fav ? ` <span class="srate">${+sr.rating ? ratingTxt(sr.rating) : ""}${sr.fav ? " ♥" : ""}</span>` : "";
+  return `<div class="dkstory"><div class="t">${esc(s.title || s.dTitle || "Untitled")}${rate}${s.code ? ` <a class="mono muted small" href="https://inducks.org/story.php?c=${encodeURIComponent(s.code)}" target="_blank" rel="noopener">${esc(s.code)}</a>` : ""}</div>
     ${other ? `<div class="s">Duckipedia title: ${esc(other)}</div>` : ""}${by ? `<div class="s">${by}</div>` : ""}${more ? `<div class="s">${esc(more)}</div>` : ""}
     ${s.characters ? `<div class="s">Characters: ${esc(s.characters)}</div>` : ""}
     ${s.plot ? `<details><summary class="small">Plot</summary><p class="small" style="white-space:pre-line">${esc(s.plot)}</p></details>` : ""}</div>`;

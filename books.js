@@ -6,7 +6,10 @@
 
   const LANG = { ger: "German", deu: "German", de: "German", swe: "Swedish", sv: "Swedish", ita: "Italian", it: "Italian",
     eng: "English", en: "English", fre: "French", fra: "French", fr: "French", nor: "Norwegian", nob: "Norwegian", no: "Norwegian", nb: "Norwegian",
-    dan: "Danish", da: "Danish", dut: "Dutch", nld: "Dutch", nl: "Dutch", spa: "Spanish", es: "Spanish" };
+    dan: "Danish", da: "Danish", dut: "Dutch", nld: "Dutch", nl: "Dutch", spa: "Spanish", es: "Spanish",
+    jpn: "Japanese", ja: "Japanese", fin: "Finnish", fi: "Finnish", pol: "Polish", pl: "Polish", rus: "Russian", ru: "Russian", cze: "Czech", ces: "Czech", hun: "Hungarian",
+    gre: "Greek", ell: "Greek", grc: "Ancient Greek", lat: "Latin", ice: "Icelandic", isl: "Icelandic", non: "Old Norse", gmh: "Middle High German", goh: "Old High German", enm: "Middle English", ang: "Old English",
+    chi: "Chinese", zho: "Chinese", kor: "Korean", por: "Portuguese", pt: "Portuguese", tur: "Turkish", heb: "Hebrew", ara: "Arabic", per: "Persian", fas: "Persian" };
   const langName = code => LANG[String(code || "").toLowerCase()] || "";
 
   // ---- ISBN ----
@@ -118,11 +121,13 @@
       const isbn = fields("020").map(f => clean(sub(f, "a")[0])).find(x => x.length === 13) || fields("020").map(f => clean(sub(f, "a")[0]))[0] || "";
       const langs = fields("041").flatMap(f => sub(f, "a")).map(langName).filter(Boolean);
       const lang = langs.length > 1 ? (langs.find(l => l !== "German" && l !== "Swedish") || langs[0]) : langs[0] || "";
+      // 041 $h: the language the work was first written in (a translation names it), for the country the work comes from
+      const origLang = fields("041").flatMap(f => sub(f, "h")).map(langName).filter(Boolean).find(l => l !== lang) || "";
       const binding = bindingOf(fields("020").map(f => sub(f, "q").concat(sub(f, "c")).join(" ")).join(" ") + " " + fields("655").map(f => sub(f, "a")[0]).join(" "), lang === "Swedish");
       return {
         title, subtitle, authors: authors.filter(Boolean), weakAuthors, translator, originalTitle: tidy(orig), format: binding,
         publisher: tidy(first("264", "b") || first("260", "b")), year: year(first("264", "c") || first("260", "c")),
-        pages, lang,
+        pages, lang, origLang,
         // a publisher's paperback number (dtv 21412, rororo 23315), an author's collected works ("Das dramatische Werk", Werkausgabe)
         // or a publisher's line ("Modern classics", "Königs Erläuterungen") isn't a book series
         ...(storySeries(fields, sub) || {}),
@@ -243,7 +248,7 @@
     return out;
   }
   // ---- merge: national libraries first, then Open Library, then Google ----
-  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "format", "lang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
+  const KEYS = ["title", "authors", "translator", "originalTitle", "publisher", "year", "pages", "format", "lang", "origLang", "series", "volume", "rawSeries", "rawVolume", "genre", "cover", "isbn"];
   function merge(list) {
     const out = {};
     list = list.map(r => r && Object.assign({}, r, { authors: cleanPeople(r.authors) }));

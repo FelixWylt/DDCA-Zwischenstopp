@@ -80,16 +80,26 @@ const noComicsGenre = g => String(g || "").split(/\s*,\s*/).filter(x => x && !/^
 // in a comic, "Komödie" or "Gag" is humour, not a stage play
 function storyGenres(c) {
   if (!(window.Books && Books.oneGenre)) return "";
-  const MAP = [[/einseiter|one-pager|onepager|ensidig/i, "One-pager"], [/gagstory|gag|komödie|komik|slapstick|parodie|satire|humoreske|witz|comedy/i, "Humour"], [/kriminal|krimi|detektiv|mystery|agenten|spionage/i, "Crime"],
+  const MAP = [[/einseiter|one-pager|onepager|ensidig/i, ""], [/gagstory|gag|komödie|komik|slapstick|parodie|satire|humoreske|witz|comedy/i, "Humour"], [/kriminal|krimi|detektiv|mystery|agenten|spionage/i, "Crime"],
     [/abenteuer|schatzsuche|expedition|reise|western|piraten|dschungel/i, "Adventure"], [/science-fiction|science fiction|weltraum|zeitreise|zukunft|erfindung|düsentrieb/i, "Science Fiction"],
     [/superheld|phantomias|paperinik|duck avenger/i, "Superheroes"], [/horror|grusel|gespenst|geister/i, "Horror"], [/magie|zauber|hexe|fantasy|märchen|sagen/i, "Fantasy"],
     [/historisch|geschichte der|antike|mittelalter/i, "Historical"], [/sport|fussball|fußball/i, "Sport"], [/liebe|romantik/i, "Romance"]];
   const out = [];
-  (c.stories || []).forEach(s => String(s.genre || "").split(/\s*,\s*/).forEach(g => { if (!g) return; const hit = MAP.find(([re]) => re.test(g)); if (hit && !out.includes(hit[1])) out.push(hit[1]); }));
+  (c.stories || []).forEach(s => String(s.genre || "").split(/\s*,\s*/).forEach(g => { if (!g) return; const hit = MAP.find(([re]) => re.test(g)); if (hit && hit[1] && !out.includes(hit[1])) out.push(hit[1]); }));
   // "Kurzgeschichte", "Rahmengeschichte" describe a story's length or role, not its genre: left out
   const freq = {}; (c.stories || []).forEach(s => String(s.genre || "").split(/\s*,\s*/).forEach(g => { const hit = MAP.find(([re]) => re.test(g)); if (hit) freq[hit[1]] = (freq[hit[1]] || 0) + 1; }));
   return out.sort((a, b) => freq[b] - freq[a]).slice(0, 3).join(", ");
 }
+// a story's own genres (Duckipedia writes them in German) and dates, shown in English
+const STORY_GENRE_EN = [[/^einseiter$/i, "One-pager"], [/^(gagstory|gag)$/i, "Gag story"], [/^(komik|komödie|comedy)$/i, "Comedy"], [/^slapstick$/i, "Slapstick"], [/^parodie$/i, "Parody"], [/^satire$/i, "Satire"],
+  [/^(abenteuer|abenteuergeschichte)$/i, "Adventure"], [/^(krimi|kriminalgeschichte)$/i, "Crime"], [/^detektivgeschichte$/i, "Detective story"], [/^mystery$/i, "Mystery"], [/^(agenten|spionage)/i, "Spy story"],
+  [/^schatzsuche$/i, "Treasure hunt"], [/^(reise|reisegeschichte)$/i, "Travel"], [/^expedition$/i, "Expedition"], [/^western$/i, "Western"], [/^piraten/i, "Pirates"], [/^science.?fiction$/i, "Science fiction"],
+  [/^zeitreise/i, "Time travel"], [/^superheld/i, "Superhero"], [/^(horror|grusel)/i, "Horror"], [/^(fantasy|magie|zauber)/i, "Fantasy"], [/^märchen/i, "Fairy tale"], [/^sagen?$/i, "Legend"],
+  [/^historisch/i, "Historical"], [/^sport/i, "Sport"], [/^(liebe|liebesgeschichte|romantik)/i, "Romance"], [/^kurzgeschichte$/i, "Short story"], [/^rahmengeschichte$/i, "Frame story"],
+  [/^weihnacht/i, "Christmas"], [/^ostern|ostergeschichte/i, "Easter"], [/^literaturadaption|literaturparodie/i, "Literary parody"], [/^fortsetzungsgeschichte$/i, "Serial"], [/^schatzjagd$/i, "Treasure hunt"]];
+const storyGenreEn = g => String(g || "").split(/\s*,\s*/).filter(Boolean).map(x => (STORY_GENRE_EN.find(([re]) => re.test(x)) || [0, x])[1]).filter((x, i, a) => a.indexOf(x) === i).join(", ");
+const MONTHS_DE = { januar: "January", jänner: "January", februar: "February", märz: "March", april: "April", mai: "May", juni: "June", juli: "July", august: "August", september: "September", oktober: "October", november: "November", dezember: "December" };
+const dateEn = d => String(d || "").replace(/\b(januar|jänner|februar|märz|april|mai|juni|juli|august|september|oktober|november|dezember)\b/gi, m => MONTHS_DE[m.toLowerCase()]);
 // books saved in a book series that is really one of your comic series ("Disney Special Books" -> Disney Special Books Panini)
 function strayBooks(seriesId) {
   const out = [];
@@ -737,6 +747,7 @@ async function boot() {
     S.comics.forEach(c => { if (c.barcode && c.seriesId && !S.barcodes[c.barcode]) S.barcodes[c.barcode] = c.seriesId; });   // also after a restore
     S.storyRatings = await getConfig("storyRatings") || {};
     S.bookMeta = await getConfig("bookSeriesInfo") || {};
+    S.authorCountry = await getConfig("authorCountry") || {};
     if (!(await getConfig("ddTestFix"))) {
       const fix = S.comics.filter(c => /^de\/DD\s+0\d$/.test(c.inducks || "") && !/^T/.test(c.issueLabel || "")).map(c => Object.assign({}, c, { inducks: "" }));
       if (fix.length) await saveMany(fix, null, true);
@@ -796,6 +807,18 @@ async function boot() {
       Object.keys(sz).concat(Object.keys(mt)).forEach(k => { if (!used.has(k) && lower.has(k.toLowerCase())) { delete sz[k]; delete mt[k]; ch = true; } });
       if (ch) { S.bookSizes = sz; S.bookMeta = mt; await setConfig("bookSizes", sz); await setConfig("bookSeriesInfo", mt); }
       await setConfig("bookSeriesTidy1", true);
+    }
+    // once: "One-pager" is a story's genre, not a whole comic's or book's; and Panzerknacker & Co 2 (bought from the wishlist before da-v213 counted it)
+    if (!(await getConfig("onePagerOff1"))) {
+      const fix = [];
+      S.comics.forEach(c => { if (!/one-pager/i.test(c.genre || "")) return;
+        let g = String(c.genre).split(/\s*,\s*/).filter(x => x && !/^one-pager$/i.test(x)).join(", ");
+        if (!g && !isNovel(c)) g = storyGenres(c);
+        fix.push(Object.assign({}, c, { genre: g })); });
+      const pk = S.comics.find(c => isOwn(c) && !c.wasWish && /panzerknacker/i.test((seriesById(c.seriesId) || {}).name || c.seriesName || "") && String(c.issueLabel || c.issue) === "2");
+      if (pk) { const f = fix.find(x => x.id === pk.id) || pk, i = fix.indexOf(f); const g = Object.assign({}, f, { wasWish: true }); if (!/^\d{4}/.test(String(g.purchaseDate || ""))) g.purchaseDate = todayIso(); if (i >= 0) fix[i] = g; else fix.push(g); }
+      if (fix.length) await saveMany(fix, null, true);
+      await setConfig("onePagerOff1", true);
     }
     // once: "Comics" removed as a genre of comics and comic books; app-made comic genres redone (One-pager for Einseiter)
     if (!(await getConfig("comicGenre3")) && window.Books && Books.oneGenre) {
@@ -882,6 +905,9 @@ async function reloadFromDb() {
 }
 if (channel) channel.onmessage = () => reloadFromDb();
 async function saveComic(c, quiet) {
+  // a wish that becomes owned (Got it, or "I own it" in its edit form) counts as a fulfilled wish; without a purchase date, in the month it changed
+  const old = c && c.id && S.comics.find(x => x.id === c.id);
+  if (old && old.status === "wanted" && isOwn(c) && !c.wasWish) { c = Object.assign({}, c, { wasWish: true }); if (!/^\d{4}/.test(String(c.purchaseDate || ""))) c.wishGotOn = todayIso(); }
   const body = stamp(c);
   await tx("comics", "readwrite", st => st.put(body));
   remember(body); askPersist(); announce();
@@ -1152,7 +1178,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 212;
+const APP_BUILD = 213;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

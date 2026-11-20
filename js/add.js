@@ -72,9 +72,11 @@ ${isBook ? `
           <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Language</span><select id="f-lang">${[...new Set(["", "German", "Swedish", "Italian", "English", "French", "Norwegian", "Danish", "Dutch", "Spanish", "Other", d.lang || ""])].map(v => `<option value="${v}"${(d.lang || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
+          <label><span class="l">Country</span><input id="f-country" list="countrylist" value="${esc(d.country || "")}" placeholder="${esc(isNovel(d) ? bookCountry(Object.assign({}, d, { country: "" })) || "where it first came out" : bookCountry(Object.assign({}, d, { country: "" })) || "of this edition")}"></label>
+          <datalist id="countrylist">${[...new Set(Object.values(COUNTRY_NAMES).concat(S.comics.map(c => c.country).filter(Boolean)))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
         </div>
-        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "One-pager", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d)).map(c => c.publisher).concat(isNovel(d) ? [] : ["Egmont Ehapa", "Egmont Comic Collection", "Panini", "Giunti", "Mondadori", "Egmont Kärnan", "Fantagraphics"], S.comics.map(c => c.publisher)).filter(Boolean))].map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 ` : `
@@ -105,7 +107,7 @@ ${isBook ? `
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
         </div>
-        <datalist id="genres">${[...new Set(["Humour", "Adventure", "Crime", "Fantasy", "Science Fiction", "Horror", "Mythology", "Fairy Tales", "History", "Superheroes", "One-pager"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
+        <datalist id="genres">${[...new Set(["Humour", "Adventure", "Crime", "Fantasy", "Science Fiction", "Horror", "Mythology", "Fairy Tales", "History", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.seriesId === d.seriesId).map(c => c.publisher).concat(S.comics.map(c => c.publisher)).filter(Boolean))].slice(0, 40).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
 `}
       </div>
@@ -211,7 +213,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       }
     });
     const grab = () => {
-      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "country", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
       // the suggestion list leaves "Fantasy, Adventure, " while typing: no empty genre at the end
       if (d.genre) d.genre = d.genre.split(",").map(x => x.trim()).filter(Boolean).join(", ");
       if (d.kind !== "book") d.date = isoDate(d.date);

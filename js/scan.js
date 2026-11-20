@@ -5,7 +5,7 @@
 function applyBookData(d, r) {
   const set = (k, v) => { if (v) d[k] = v; };
   set("title", r.title); set("author", (r.authors || []).join(", ")); set("publisher", r.publisher); set("date", r.year);
-  set("pages", r.pages); set("lang", r.lang); set("genre", isNovel(d) ? r.genre : noComicsGenre(r.genre)); set("translator", r.translator); set("originalTitle", r.originalTitle);
+  set("pages", r.pages); set("lang", r.lang); set("genre", isNovel(d) ? r.genre : noComicsGenre(r.genre)); set("translator", r.translator); set("originalTitle", r.originalTitle); set("origLang", r.origLang);
   set("coverUrl", r.cover); set("isbn", r.isbn); set("format", r.format);
   if (r.series && !d.seriesName) { d.seriesName = r.series; if (r.volume && !d.issue) d.issue = String(r.volume).replace(/^\D+/, ""); }
 }

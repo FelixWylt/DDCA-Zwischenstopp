@@ -107,7 +107,7 @@ VIEWS.stories = {
     const filters = st.tab === "people"
       ? `<div class="fchips">${[["writers", "Writers"], ["artists", "Artists"], ["chars", "Characters"]].map(([k, l]) => chip(`data-role="${k}"`, st.role === k, l)).join("")}</div>`
       : `<div class="fchips">${inChips}${st.tab === "all" ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") : ""}</div>`;
-    const sortSel = st.tab === "all" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>` : "";
+    const sortSel = st.tab === "all" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
     const head = `<div><h2>Stories</h2><p class="lede hide-phone">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
       <div class="subtabs three" role="tablist" aria-label="Show">${tab("all", "All stories", all.length)}${tab("people", "People")}${tab("fav", "Favourites", nFav)}</div>
       <div class="stack" style="gap:8px">
@@ -127,6 +127,7 @@ VIEWS.stories = {
     // search 0.2 s after the last key, so typing or deleting quickly doesn't redraw the list for every letter
     $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; clearTimeout(st._t); st._t = setTimeout(drawStories, 200); };
     $("#stsort") && ($("#stsort").onchange = e => { st.sort = e.target.value; drawStories(); });
+    $("#stdir") && ($("#stdir").onclick = () => { st.desc = !st.desc; render(); });
     $("#stwhox") && ($("#stwhox").onclick = () => { st.who = null; render(); });
     drawStories();
   }
@@ -143,11 +144,11 @@ function storyRow(e) {
       <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
       ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
       ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
-      ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(niceDate(e.first))}` : ""}</div>` : ""}
+      ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(dateEn(niceDate(e.first)))}` : ""}</div>` : ""}
       ${e.writers.size ? `<div><span class="muted">Writer:</span> ${[...e.writers].map(n => `<button class="link" data-person="writers" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
       ${e.artists.size ? `<div><span class="muted">Artist:</span> ${[...e.artists].map(n => `<button class="link" data-person="artists" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
       ${e.chars.size ? `<div><span class="muted">Characters:</span> ${[...e.chars].map(n => `<button class="link" data-person="chars" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
-      ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(e.genre)}</div>` : ""}
+      ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(storyGenreEn(e.genre))}</div>` : ""}
       ${e.plot ? `<p class="stplot">${esc(e.plot)}${plotSrc}</p>` : ""}
       <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : notOwned(c) ? " · read, not owned" : ""}</button>`).join("")}</div>
     </div></details>`;
@@ -197,6 +198,7 @@ function drawStories() {
       if (st.reprinted) list = list.filter(e => e.items.length > 1);
       if (st.rated) list = list.filter(e => +storyRate(e).rating > 0);
       list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : cmpT);
+      if (st.desc) list.reverse();   // ↑: the order turned round (lowest rating, fewest reprints, Z to A)
       const reprints = list.filter(e => e.items.length > 1).length;
       html = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints && !st.reprinted ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
         (list.length ? '<div class="list">' + list.slice(0, st.shown).map(storyRow).join("") + '</div>' : '<div class="empty"><h3>No stories match</h3><p>Try another search word, or tap Owned, Wishlist or Both.</p></div>') + more(list.length);
@@ -592,6 +594,7 @@ async function refreshBooks() {
   };
   await Promise.all([worker(), worker()]);
   if (r.stop) r.stopped = true;
+  if (!r.stop) { r.country = await fillAuthorCountries().catch(() => 0); }
   r.running = false; r.finished = true; drawRefreshBooks();
-  toast("Books: " + r.changed + " updated");
+  toast("Books: " + r.changed + " updated" + (r.country ? ", " + r.country + " countries found" : ""));
 }

@@ -663,3 +663,14 @@ button.card.highlight { display: grid; gap: 2px; text-align: left; width: 100%; 
 .cols { grid-auto-columns: minmax(0, 56px); justify-content: center; }
 .vread { margin: -1px 0 4px 2px; font-size: .8rem; }
 .vread:empty { display: none; }
+/* da-v213: scale on the left of bar charts, growth bars, sort-direction buttons, story ratings on the comic page */
+.ychart { display: flex; gap: 6px; align-items: stretch; }
+.ychart .cols { flex: 1; min-width: 0; background: linear-gradient(var(--line), var(--line)) 0 0 / 100% 1px no-repeat, linear-gradient(var(--line), var(--line)) 0 50% / 100% 1px no-repeat; }
+.yax { position: relative; width: 2.4em; flex: none; }
+.yax span { position: absolute; right: 0; transform: translateY(-50%); font-size: 0.68rem; line-height: 1; color: var(--muted); font-family: var(--f-mono); white-space: nowrap; }
+.vhist rect.gbar { fill: var(--accent); opacity: 0.22; }
+.key.gbar { background: var(--accent); opacity: 0.35; }
+.sortdir { min-width: 2em; padding: 2px 6px; font-size: 0.85rem; line-height: 1.2; vertical-align: middle; }
+.cardhead h3 .sortdir { margin-left: 4px; }
+.dkstory .srate { font-size: 0.8rem; color: var(--accent); font-weight: 500; white-space: nowrap; }
+.key.gbar { width: 8px; height: 8px; }

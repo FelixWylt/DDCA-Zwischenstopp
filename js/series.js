@@ -274,7 +274,7 @@ function bookSeriesPage(n, sect) {
     ${sect(k, "details", "Details", [m.author, size ? size + " volumes" : "", m.years].filter(Boolean).join(" · "), `<div class="sform">
       <label class="sr-name"><span class="l">Name</span><input data-bk="name" value="${esc(n)}"></label>
       <label><span class="l">Volumes in the series</span><input data-bk="size" type="number" min="1" inputmode="numeric" value="${esc(size)}" placeholder="${Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)) || ""}"></label>
-      ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}
+      ${f("author", "Author")}${f("publisher", "Publisher")}${f("years", "Years", "2010–2012")}${f("genres", "Genres", "Fantasy, Adventure")}${f("country", "Country", "where it first came out")}
       <div class="wide small muted">Renaming changes it on all ${bs.length} ${bs.length === 1 ? "book" : "books"}.</div></div>`, true)}
     ${sect(k, "about", "Description", m.about ? m.about.slice(0, 40) + "…" : "empty", `<div class="sform">
       <label class="wide"><span class="l">About this series</span><textarea data-bk="about" rows="4">${esc(m.about || "")}</textarea></label>
@@ -288,6 +288,32 @@ const WD = "https://www.wikidata.org/w/api.php";
 async function wdGet(params) {
   const r = await fetchWithin(WD + "?" + new URLSearchParams(Object.assign({ format: "json", origin: "*" }, params)), 12000, { headers: { "Api-User-Agent": "DagobertDucksArchiv/1.0 (personal collection app)" } });
   if (!r.ok) throw new Error("Wikidata answered " + r.status); return r.json();
+}
+// country names as the app shows them
+const niceCountry = n => ({ "United States of America": "USA", "United States": "USA", "Kingdom of Sweden": "Sweden", "Federal Republic of Germany": "Germany", "West Germany": "Germany", "German Reich": "Germany", "Kingdom of Italy": "Italy", "Kingdom of Denmark": "Denmark", "Kingdom of Norway": "Norway", "Kingdom of the Netherlands": "Netherlands", "Empire of Japan": "Japan", "Kingdom of Great Britain": "United Kingdom", "United Kingdom of Great Britain and Ireland": "United Kingdom", "England": "United Kingdom", "Scotland": "United Kingdom", "Wales": "United Kingdom" })[n] || n || "";
+// a person's country of citizenship (P27), the latest one listed
+async function wdPersonCountry(qid) {
+  const e = Object.values((await wdGet({ action: "wbgetentities", ids: qid, props: "claims" })).entities || {})[0] || {};
+  const cs = ((e.claims || {}).P27 || []).map(c => (c.mainsnak || {}).datavalue && c.mainsnak.datavalue.value && c.mainsnak.datavalue.value.id).filter(Boolean);
+  const id = cs[cs.length - 1]; if (!id) return "";
+  const l = Object.values((await wdGet({ action: "wbgetentities", ids: id, props: "labels", languages: "en" })).entities || {})[0] || {};
+  return niceCountry(((l.labels || {}).en || {}).value || "");
+}
+// a single book's author: their country, asked once per name and kept on this phone ("authorCountry"; "" = not found)
+async function authorCountryOf(name) {
+  if (S.authorCountry && name in S.authorCountry) return S.authorCountry[name];
+  const j = await wdGet({ action: "wbsearchentities", search: name, language: "en", uselang: "en", limit: "6", type: "item" });
+  const hit = (j.search || []).find(x => /writer|author|novelist|poet|playwright|dramatist|essayist|journalist|cartoonist|illustrator|philosopher|historian|scholar|translator|schriftsteller|författare/i.test(x.description || ""));
+  const c = hit ? await wdPersonCountry(hit.id) : "";
+  S.authorCountry = Object.assign({}, S.authorCountry, { [name]: c }); setConfig("authorCountry", S.authorCountry).catch(() => {});
+  return c;
+}
+// after Refresh all books: the authors of books whose country isn't known yet (one question per author, a short pause between)
+async function fillAuthorCountries(limit) {
+  const names = [...new Set(S.comics.filter(c => isNovel(c) && !bookCountry(c)).map(c => splitPeople(c.author)[0]).filter(n => n && n !== "Anonymous" && !(S.authorCountry && n in S.authorCountry)))].slice(0, limit || 80);
+  let n = 0;
+  for (const a of names) { if (!navigator.onLine) break; try { if (await authorCountryOf(a)) n++; } catch (e) { break; } await sleep(250); }
+  return n;
 }
 async function findSeriesEntity(name, author) {
   const tries = [];
@@ -318,7 +344,7 @@ async function fillBookSeries(name, quick) {
   const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const m = Object.assign({}, bookInfo(name)), got = [];
   // Fill all: a series asked in the last 30 days only gets what your own books tell (no internet); its own Fill button always asks
-  const recent = quick && m.asked && (Date.now() - Date.parse(m.asked)) < 30 * 864e5;
+  const recent = quick && m.asked && (Date.now() - Date.parse(m.asked)) < 30 * 864e5 && (m.country || !m.wikidata);   // a known series without a country is asked again (da-v213)
   const langs = bs.map(c => c.lang).filter(Boolean), lang = langs.sort((a, b) => langs.filter(x => x === b).length - langs.filter(x => x === a).length)[0] || "";
   // the library count runs at the same time as the Wikidata questions
   const libAsk = recent || !(window.Books && Books.seriesVolumes) ? Promise.resolve(0) : Books.seriesVolumes(name, lang).catch(() => 0);
@@ -335,7 +361,7 @@ async function fillBookSeries(name, quick) {
       const e = Object.values((await wdGet({ action: "wbgetentities", ids: id, props: "claims|sitelinks" })).entities || {})[0] || {};
       const cl = p => ((e.claims || {})[p] || []).map(c => (c.mainsnak || {}).datavalue && c.mainsnak.datavalue.value).filter(Boolean);
       const ids = p => cl(p).map(v => v.id).filter(Boolean);
-      const want = [...ids("P50"), ...ids("P123"), ...ids("P136")];
+      const want = [...ids("P50"), ...ids("P123"), ...ids("P136"), ...ids("P495")];
       const labels = {};
       if (want.length) { const j = await wdGet({ action: "wbgetentities", ids: [...new Set(want)].slice(0, 40).join("|"), props: "labels", languages: "en|de|sv" }); Object.values(j.entities || {}).forEach(x => { const l = x.labels || {}; labels[x.id] = (l.en || l.de || l.sv || {}).value || ""; }); }
       const lab = p => ids(p).map(x => labels[x]).filter(Boolean);
@@ -351,6 +377,8 @@ async function fillBookSeries(name, quick) {
       }
       set("author", lab("P50").slice(0, 2).join(", "), "author");
       set("publisher", lab("P123").slice(0, 2).join(", "), "publisher");
+      // the country the work first came out in (P495); without one, the author's country (P27)
+      if (!m.country) { let ctry = niceCountry(lab("P495")[0]); if (!ctry && ids("P50")[0]) ctry = await wdPersonCountry(ids("P50")[0]).catch(() => ""); set("country", ctry, "country"); }
       set("genres", window.Books && Books.oneGenre ? Books.oneGenre(lab("P136").join(", ")) : lab("P136").slice(0, 3).join(", "), "genres");
       const yr = p => cl(p).map(v => +(String(v.time || "").match(/^\+?(\d{4})/) || [])[1]).filter(Boolean);
       const y0 = Math.min(...yr("P580"), ...yr("P577")), y1 = Math.max(...yr("P582"), ...yr("P577"));
