@@ -150,6 +150,7 @@ def with_hero(title, storycode, lang):
     code = sorted(heroes[storycode])[0][1]
     name = char_names.get((code, lang))
     if not name: return title
+    name = name.replace("\\,", ",")   # INDUCKS writes commas in names as "\\," ("Knatte\\, Fnatte och Tjatte")
     return name + title if title.startswith("s ") else name + " " + title   # "s osynliga elakhet" -> "Kalle Ankas osynliga elakhet"
 jobs = {}
 for r in rows("inducks_storyjob", ["storyversioncode", "personcode", "plotwritartink"]):

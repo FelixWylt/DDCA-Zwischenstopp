@@ -213,8 +213,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
-  the story's hero name in the issue's language (tables inducks_herocharacter + inducks_charactername; column names not
-  yet confirmed by a real build: check report.txt for "story heroes"). Comics keep their old titles until Refresh all comics.
+  the story's hero name in the issue's language (tables inducks_herocharacter + inducks_charactername; confirmed by the 2026-11-20 build: 2,275 → 31 short titles left;
+  names written "Knatte\, Fnatte…" in INDUCKS are unescaped). Comics keep their old titles until Refresh all comics.
 
 ## How to make price ranges (the user's way)
 - **Variants (the user's wish, 2026-11-15):** when Seriekatalogen ("Variant: Ja") or another source lists a variant,
