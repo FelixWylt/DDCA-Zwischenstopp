@@ -137,6 +137,7 @@
 | 2026-11-16 | Original title: the 1994 hardcover's full title (from the earlier search) + the poem itself has no title in the manuscripts, "Parzival" is the modern name (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:15 → 00:15:26) |
 | 2026-11-16 | Translator of the Nellmann edition: Dieter Kühn (writer, 1935–2015; Ich Wolkenstein, Der Parzival des Wolfram von Eschenbach 1986) (answer only, from memory) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:19 → 00:20:04) |
 | 2026-11-20 | Rule: tell the user when it's time for a new chat (CLAUDE.md); answer: now is a good moment (long chat, nothing open) | under 1 min (first guess 1 ÷ 2) | 0–1 min (17:57 → 17:57:19) |
+| 2026-11-20 | 11 points, da-v210: faster Refresh all comics/books (skip recent Duckipedia/unknown ISBNs, no needless cover/genre lookups, 2 books at a time), 255 story titles completed + hero names in the catalogue build, Favourites = hearts only (+ Rated chip), 6 new Stories stats, Read-not-owned status (apart in Reading, with total), pages still to read, stories search (0.3 s, cached), book-series read marks + Mark read, all average ratings, cover ratings; report first (rule in CLAUDE.md); 1 check run | 8–12 min (first guess 25–35 ÷ 3) + 1–2 runs | 10–11 min after the go (18:31 → 18:41:42, incl. 1 run of ~2.5 min) + ~5 min looking before the report (18:16 → 18:21) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
