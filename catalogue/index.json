@@ -1,5 +1,5 @@
 {
- "built": "2026-11-15T10:53",
+ "built": "2026-11-20T17:38",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -99,7 +99,7 @@
    "code": "it/TL",
    "title": "Topolino (libretto)",
    "file": "inducks-it-TL.json",
-   "issues": 3797
+   "issues": 3798
   },
   "topolino giornale": {
    "series": "Topolino Giornale",
@@ -123,7 +123,7 @@
    "code": "se/KAP",
    "title": "Kalle Ankas Pocket",
    "file": "inducks-se-KAP.json",
-   "issues": 589
+   "issues": 590
   },
   "kalle anka extra": {
    "series": "Kalle Anka Extra",
@@ -197,7 +197,7 @@
    "code": "no/DD",
    "title": "Donald Duck & Co",
    "file": "inducks-no-DD.json",
-   "issues": 4069
+   "issues": 4071
   },
   "micky maus zeitung": {
    "series": "Micky Maus Zeitung",
@@ -237,7 +237,7 @@
    "code": "se/KAPS",
    "title": "Kalle Ankas Pocket Special",
    "file": "inducks-se-KAPS.json",
-   "issues": 158
+   "issues": 159
   },
   "ankeborgs samlarpocket": {
    "series": "Ankeborgs Samlarpocket",
@@ -426,7 +426,7 @@
    "code": "de/MC",
    "title": "Mammut Comics",
    "file": "inducks-de-MC.json",
-   "issues": 352
+   "issues": 359
   },
   "micky maus taschenbuch": {
    "series": "Micky Maus Taschenbuch",
