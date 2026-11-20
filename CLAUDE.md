@@ -139,6 +139,7 @@
 | 2026-11-20 | Rule: tell the user when it's time for a new chat (CLAUDE.md); answer: now is a good moment (long chat, nothing open) | under 1 min (first guess 1 ÷ 2) | 0–1 min (17:57 → 17:57:19) |
 | 2026-11-20 | 11 points, da-v210: faster Refresh all comics/books (skip recent Duckipedia/unknown ISBNs, no needless cover/genre lookups, 2 books at a time), 255 story titles completed + hero names in the catalogue build, Favourites = hearts only (+ Rated chip), 6 new Stories stats, Read-not-owned status (apart in Reading, with total), pages still to read, stories search (0.3 s, cached), book-series read marks + Mark read, all average ratings, cover ratings; report first (rule in CLAUDE.md); 1 check run | 8–12 min (first guess 25–35 ÷ 3) + 1–2 runs | 10–11 min after the go (18:31 → 18:41:42, incl. 1 run of ~2.5 min) + ~5 min looking before the report (18:16 → 18:21) |
 | 2026-11-20 | Answers: what CLAUDE.md is and what this chat added; 31 short titles left (about 20 really short, the rest correct like "kusin Knase"), editing them by hand is overwritten by Refresh all comics; Egmont is a publisher, not a country; reading-time estimate counts items, not pages; mistake owned: 0.3 s was done without a report (opinion: 0.2 s) | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (18:58 → 18:59:04) |
+| 2026-11-20 | da-v211: story titles corrected by hand survive Refresh/Fill (ownTitle), "Who the stories were made for" (publisher · country), unread pile time by pages when ≥70 % have a page count, stories search 0.2 s; 1 check run | 2–3 min (first guess 6–8 ÷ 3) + 1 run | 4–5 min (19:12 → 19:16:19, incl. 1 run of ~2 min and ~2 min waiting for its result) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -211,6 +212,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   core.js: `isOwn(c)` = owned (collection, value, gaps, insurance, lots), `isMine(c)` = owned or read-not-owned (ratings,
   hearts, read lists), `notOwned(c)`. Stats › Reading counts them apart (with a total); Stories and its stats include them.
   When adding code that asks "not on the wishlist", decide between isOwn and isMine.
+- **Own story titles (da-v211):** a title changed in Edit › Stories gets `ownTitle: true`; keepOwnTitles() keeps it when
+  Refresh all comics or Fill from INDUCKS replace the stories (matched by story code).
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
