@@ -136,6 +136,7 @@
 | 2026-11-16 | Is the 964-page volume vol. 1? Very likely: 964 + 868 = 1832 ≈ the 1838 pages of the paperback set; vol. 2 (868 p.) has the commentary (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:12 → 00:12:49) |
 | 2026-11-16 | Original title: the 1994 hardcover's full title (from the earlier search) + the poem itself has no title in the manuscripts, "Parzival" is the modern name (answer only, no search) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:15 → 00:15:26) |
 | 2026-11-16 | Translator of the Nellmann edition: Dieter Kühn (writer, 1935–2015; Ich Wolkenstein, Der Parzival des Wolfram von Eschenbach 1986) (answer only, from memory) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:19 → 00:20:04) |
+| 2026-11-20 | Rule: tell the user when it's time for a new chat (CLAUDE.md); answer: now is a good moment (long chat, nothing open) | under 1 min (first guess 1 ÷ 2) | 0–1 min (17:57 → 17:57:19) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -228,6 +229,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   the numbers are only estimates.
 
 ## Other working rules
+- **New chat (the user's wish, 2026-11-20):** say on your own when it's time for a new chat: when the chat has grown long
+  (many replies, this file re-sent many times) or answers slow down, and best at a quiet moment (nothing local, nothing waiting).
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
 - Only test what changed; don't rerun earlier tests.
 - The app code is split by section into `js/*.js` (plain scripts sharing their names; order in index.html: core first,
