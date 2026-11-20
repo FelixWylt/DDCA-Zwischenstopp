@@ -41,9 +41,12 @@ function pickInfo(pick) {
     entered: [c => enteredOn(c).startsWith(val), `entered in the app ${val.length === 4 ? "in " + val : niceDate(val + "-01").replace(/^1\.\s*/, "")}`],
     read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`],
     src: [c => String(c.source || "").trim().toLowerCase() === val.toLowerCase(), `bought from ${val}`],
-    readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"]
+    readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"],
+    notowned: [c => notOwned(c), "read, not owned"]
   }[type] || [() => false, "?"];
-  return { test: c => c.status !== "wanted" && inScope(c) && T[0](c), label: T[1], scope };
+  // reading lists also show what you read without owning it
+  const who = ["read", "readnodate", "notowned"].includes(type) ? isMine : isOwn;
+  return { test: c => who(c) && inScope(c) && T[0](c), label: T[1], scope };
 }
 function openPick(pick) { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.colTab = String(pick).endsWith("|b") ? "books" : "comics"; S.col = { pick }; S.shown = 200; nav("collection"); try { history.replaceState({ col: S.col }, "", "#collection"); } catch (e) {} }
 function bindPicks(root) { (root || document).querySelectorAll("[data-pick]").forEach(b => b.onclick = e => { e.stopPropagation(); openPick(b.dataset.pick); }); }
@@ -94,7 +97,7 @@ VIEWS.stats = {
     S.statTab = tab;
     // Comics | Books | Both: filters every tab ("c" comics incl. comic books, "b" books, "a" both)
     const scope = S.statScope || "a", inS = c => scope === "a" ? true : scope === "b" ? isNovel(c) : !isNovel(c);
-    const sel = owned().filter(inS), selW = S.comics.filter(c => c.status === "wanted" && inS(c));
+    const sel = owned().filter(inS), selW = S.comics.filter(c => c.status === "wanted" && inS(c)), selN = S.comics.filter(c => notOwned(c) && inS(c));
     const own = sel.filter(c => !isNovel(c)), novels = sel.filter(isNovel), novelsWanted = selW.filter(isNovel);
     const word = scope === "b" ? "books" : scope === "c" ? "comics" : "entries";
     const nf = n => Number(n).toLocaleString("de-CH"), pct = (a, b) => b ? Math.round(a / b * 100) : 0;
@@ -106,7 +109,7 @@ VIEWS.stats = {
     const head = `<h2 style="margin:0">Stats</h2>
       <div class="subtabs five" role="tablist" aria-label="Show">${T.map(([k, l]) => `<button role="tab" type="button" data-sttab="${k}" aria-selected="${tab === k}">${l}</button>`).join("")}</div>
       <div class="seg small scopesw" role="group" aria-label="Count">${[["c", "Comics"], ["b", "Books"], ["a", "Both"]].map(([k, l]) => `<button type="button" data-sscope="${k}" aria-pressed="${scope === k}">${l}</button>`).join("")}</div>`;
-    if (!sel.length && tab !== "stories") return head + `<div class="empty"><h3>No ${word} yet</h3><p>Switch to ${scope === "b" ? "Comics" : "Books"} or Both above.</p></div>`;
+    if (!sel.length && !(tab === "reading" && selN.length) && tab !== "stories") return head + `<div class="empty"><h3>No ${word} yet</h3><p>Switch to ${scope === "b" ? "Comics" : "Books"} or Both above.</p></div>`;
 
     // money of a list, in CHF
     const moneyOf = list => { const r = { paid: 0, value: 0, paidValued: 0, priced: 0, valued: 0, n: list.length, sums: {}, vals: {} };
@@ -252,7 +255,7 @@ VIEWS.stats = {
         const gains = sel.map(c => ({ c, v: chfOf(c), p: paidOf(c) })).filter(x => x.v != null && x.p != null && x.p > 0 && !x.c.lotId).map(x => Object.assign(x, { g: x.v - x.p }));
         // a lot counts as one buy: what you paid for the whole lot against the value of everything in it
         [...new Set(sel.filter(c => c.lotId).map(c => c.lotId))].forEach(id => { const l = lotInfo(id); if (!l) return;
-          const ms = l.members.filter(c => c.status !== "wanted"), vals = ms.map(chfOf).filter(v => v != null), p = typeof parseAmt(l.total) === "number" ? toCHF(parseAmt(l.total), l.currency) : ms.reduce((a, c) => a + (paidOf(c) || 0), 0);
+          const ms = l.members.filter(c => isOwn(c)), vals = ms.map(chfOf).filter(v => v != null), p = typeof parseAmt(l.total) === "number" ? toCHF(parseAmt(l.total), l.currency) : ms.reduce((a, c) => a + (paidOf(c) || 0), 0);
           if (!vals.length || !(p > 0)) return;
           const v = vals.reduce((a, b) => a + b, 0);
           gains.push({ lot: l, n: ms.length, nv: vals.length, v, p, g: v - p }); });
@@ -318,20 +321,40 @@ VIEWS.stats = {
       const appear = idxGet().reduce((a, e) => a + e.items.length, 0), rep = idxGet().filter(e => e.items.length > 1).sort((a, b) => b.items.length - a.items.length);
       const repCard = card("Reprints", "", `<div class="row" style="gap:24px"><div><div class="v2">${pct(idxGet().length, appear)} %</div><div class="k small muted">unique: ${nf(idxGet().length)} stories in ${nf(appear)} appearances</div></div><div><div class="v2">${nf(rep.length)}</div><div class="k small muted">stories you have more than once</div></div></div>
         ${rep.length ? openList(rep.slice(0, 8).map(e => `<li><button type="button" class="link" data-stq="${esc(storyTitle(e))}">${esc(storyTitle(e) || "Untitled")}</button><span class="muted"> ×${e.items.length}</span></li>`)) : ""}`);
-      return head + `<div class="two">${made}${who("chars", "Top characters")}</div><div class="two">${who("writers", "Top writers")}${who("artists", "Top artists")}</div><div class="two">${pairCard}${repCard}</div>` + note("Each story counts once, even if you have it in several comics or languages. Tap a name to see the stories.");
+      const idx = idxGet(), hb = (rows, max, fmt) => `<div class="hbars">${rows.map(([l, n, t]) => `<div class="hbar" title="${esc(t || l + ": " + n)}"><span class="lab">${esc(l)}</span><span class="track"><span class="fill" style="width:${(n / Math.max(1, max) * 100).toFixed(1)}%"></span></span><span class="n">${fmt ? fmt(n) : nf(n)}</span></div>`).join("")}</div>`;
+      // stories read: a story counts once it's in a comic you marked read (or read without owning it)
+      const readS = idx.filter(e => e.items.some(c => c.read && isMine(c))).length, onlyN = idx.filter(e => e.items.every(c => notOwned(c))).length;
+      const readCard = card("Stories read", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(readS)}</div><div class="k small muted">of ${nf(idx.length)} stories · ${pct(readS, idx.length)} %</div></div><div><div class="v2">${nf(idx.length - readS)}</div><div class="k small muted">still to read</div></div>${onlyN ? `<div><div class="v2">${nf(onlyN)}</div><div class="k small muted">only in things you read without owning</div></div>` : ""}</div><div class="meter"><span style="width:${pct(readS, idx.length)}%"></span></div>`);
+      // your story ratings, by stars
+      const rc = {}; let rN = 0, rT = 0; idx.forEach(e => { const r = +storyRate(e).rating; if (r > 0) { rc[r] = (rc[r] || 0) + 1; rN++; rT += r; } });
+      const steps = [5, 4.5, 4, 3.5, 3, 2.5, 2, 1.5, 1, 0.5].filter(r => rc[r]);
+      const rateCard = card("Your story ratings", rN ? nf(rN) + " rated" : "", rN ? hb(steps.map(r => [ratingTxt(r), rc[r]]), Math.max(...steps.map(r => rc[r]))) + note(`Average ★ ${(rT / rN).toFixed(1).replace(".", ",")} · ${nf(Object.values(S.storyRatings).filter(x => x.fav).length)} ♥ favourites.`) : note("Open a story under Stories and tap the stars."));
+      // where the stories were made, by the INDUCKS story code's prefix
+      const ORIGIN = [[/^I\b/, "Italy"], [/^(D|DD)\b/, "Egmont (Denmark)"], [/^H\b/, "Netherlands"], [/^F\b/, "France"], [/^B\b/, "Brazil"], [/^S\b/, "Sweden"], [/^(W|AR|YD|ZD|YM|ZM|YP|ZP|ZT|YT|US|CB|FC|KJ|QW)\b/, "USA"]];
+      const orig = {}; let noCode = 0; idx.forEach(e => { if (!e.code) { noCode++; return; } const pre = (/^[A-Za-z]+/.exec(e.code) || [""])[0], o = (ORIGIN.find(([re]) => re.test(e.code)) || [0, "Other (" + pre + ")"])[1]; orig[o] = (orig[o] || 0) + 1; });
+      const orows = Object.entries(orig).sort((a, b) => b[1] - a[1]).slice(0, 8);
+      const originCard = orows.length ? card("Where the stories were made", "by story code", hb(orows, orows[0][1]) + note(`From the first letters of the INDUCKS story code (I = Italy, D = Egmont, W = USA …).${noCode ? " " + nf(noCode) + " without a code." : ""}`)) : "";
+      // longest stories (page counts come from INDUCKS with Refresh all comics)
+      const withPg = idx.filter(e => e.pages > 0), longest = withPg.slice().sort((a, b) => b.pages - a.pages).slice(0, 8), pgSum = withPg.reduce((a, e) => a + e.pages, 0);
+      const longCard = card("Longest stories", withPg.length ? "pages" : "", withPg.length ? openList(longest.map(e => `<li><button type="button" class="link" data-stq="${esc(storyTitle(e))}">${esc(storyTitle(e) || "Untitled")}</button><span class="muted"> · ${nf(e.pages)} pages</span></li>`)) + note(`${nf(withPg.length)} stories with a page count: ${nf(Math.round(pgSum))} pages, ${(pgSum / withPg.length).toFixed(1).replace(".", ",")} on average.${withPg.length < idx.length ? " The others get one with Series › Tools › Refresh all comics." : ""}`) : note("Page counts come with Series › Tools › Refresh all comics."));
+      // writers and artists by your story ratings (at least 2 rated stories)
+      const best = role => { const m = {}; idx.forEach(e => { const r = +storyRate(e).rating; if (r > 0) e[role].forEach(n => { const x = m[n] = m[n] || { t: 0, n: 0 }; x.t += r; x.n++; }); }); return Object.entries(m).filter(([, x]) => x.n >= 2).map(([n, x]) => [n, x.t / x.n, x.n]).sort((a, b) => b[1] - a[1] || b[2] - a[2]).slice(0, 8); };
+      const bW = best("writers"), bA = best("artists"), bl = xs => openList(xs.map(([n, a, k]) => `<li><button type="button" class="link" data-goperson="${xs === bW ? "writers" : "artists"}" data-n="${esc(n)}">${esc(n)}</button> <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`));
+      const bestCard = bW.length || bA.length ? card("Best rated creators", "your story ratings, at least 2", `${bW.length ? `<div class="small"><strong>Writers</strong>${bl(bW)}</div>` : ""}${bA.length ? `<div class="small"><strong>Artists</strong>${bl(bA)}</div>` : ""}`) : "";
+      return head + `<div class="two">${readCard}${rateCard}</div><div class="two">${made}${who("chars", "Top characters")}</div><div class="two">${who("writers", "Top writers")}${who("artists", "Top artists")}</div><div class="two">${pairCard}${repCard}</div><div class="two">${originCard}${longCard}</div>${bestCard}` + note("Each story counts once, even if you have it in several comics or languages. Stories from things you read without owning them count too. Tap a name to see the stories.");
     }
 
     // ================= Reading =================
     const unread = sel.filter(c => !c.read && !c.facsimile), yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().slice(0, 10);
     const readYear = sel.filter(c => c.read && /^\d{4}-\d{2}/.test(c.readDate || "") && c.readDate >= yearAgo).length, pace = readYear / 12;
-    const pile = card("Unread pile", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(unread.length)}</div><div class="k small muted">unread ${word}</div></div><div><div class="v2">${pace ? (unread.length / pace >= 24 ? nf(Math.round(unread.length / pace / 12)) + " years" : nf(Math.round(unread.length / pace)) + " months") : "–"}</div><div class="k small muted">to read them all at your pace</div></div><div><div class="v2">${pace >= 10 ? Math.round(pace) : pace.toFixed(1)}</div><div class="k small muted">read per month (last 12 months)</div></div></div>`);
+    const pile = card("Unread pile", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(unread.length)}</div><div class="k small muted">unread ${word}</div></div><div><div class="v2">${pace ? (unread.length / pace >= 24 ? nf(Math.round(unread.length / pace / 12)) + " years" : nf(Math.round(unread.length / pace)) + " months") : "–"}</div><div class="k small muted">to read them all at your pace</div></div><div><div class="v2">${pace >= 10 ? Math.round(pace) : pace.toFixed(1)}</div><div class="k small muted">read per month (last 12 months)</div></div>${(() => { const pg = unread.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0), noPg = unread.filter(c => !parseInt(c.pages, 10)).length; return pg ? `<div><div class="v2">${nf(pg)}</div><div class="k small muted">pages still to read${noPg ? ` (${nf(noPg)} without a page count)` : ""}</div></div>` : ""; })()}</div>`);
     // average rating per series and per artist
     const rs = {}; sel.filter(c => +c.rating > 0).forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (!k) return; const x = rs[k] = rs[k] || { t: 0, n: 0 }; x.t += +c.rating; x.n++; });
     const ra = {}; if (scope !== "b") idxGet().forEach(e => { const r = +storyRate(e).rating; if (r > 0) e.artists.forEach(a => { const x = ra[a] = ra[a] || { t: 0, n: 0 }; x.t += r; x.n++; }); });
-    const avgRows = (o, label) => Object.entries(o).filter(([, x]) => x.n >= 2).map(([k, x]) => [label(k), x.t / x.n, x.n]).sort((a, b) => b[1] - a[1]).slice(0, 6);
-    const rS = avgRows(rs, seriesTitle), rA = avgRows(ra, k => k);
-    const avgCard = rS.length || rA.length ? card("Average ratings", "with at least 2 rated", `${rS.length ? `<div class="small"><strong>Series</strong>${openList(rS.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} rated</span></li>`))}</div>` : ""}${rA.length ? `<div class="small"><strong>Artists (story ratings)</strong>${openList(rA.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`))}</div>` : ""}`) : "";
-    return head + readingCard(sel, word) + `<div class="two">${pile}${avgCard}</div>` + ratedCard(sel, scope === "b" ? "books" : "comics");
+    const avgRows = (o, label, all) => Object.entries(o).filter(([, x]) => x.n >= 2).map(([k, x]) => [label(k), x.t / x.n, x.n]).sort((a, b) => b[1] - a[1]).slice(0, all ? 1e9 : 6);
+    const rS = avgRows(rs, seriesTitle, S.statAllAvg), rA = avgRows(ra, k => k, S.statAllAvg), nAvg = Object.values(rs).filter(x => x.n >= 2).length + Object.values(ra).filter(x => x.n >= 2).length;
+    const avgCard = rS.length || rA.length ? card("Average ratings", "with at least 2 rated", `${rS.length ? `<div class="small"><strong>Series</strong>${openList(rS.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} rated</span></li>`))}</div>` : ""}${rA.length ? `<div class="small"><strong>Artists (story ratings)</strong>${openList(rA.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`))}</div>` : ""}${nAvg > rS.length + rA.length || S.statAllAvg ? `<button class="ghost" id="stAllAvg" type="button">${S.statAllAvg ? "Show fewer" : "Show all " + nAvg}</button>` : ""}`) : "";
+    return head + readingCard(sel, word, selN) + `<div class="two">${pile}${avgCard}</div>` + ratedCard(sel.concat(selN), scope === "b" ? "books" : "comics");
   },
   bind() {
     document.querySelectorAll("[data-sttab]").forEach(b => b.onclick = () => { S.statTab = b.dataset.sttab; render(); window.scrollTo(0, 0); });
@@ -347,6 +370,7 @@ VIEWS.stats = {
     $("#goWish") && ($("#goWish").onclick = () => { S.gapTab = "wishlist"; nav("gaps"); });
     document.querySelectorAll("[data-srcby]").forEach(b => b.onclick = () => { S.statSrcBy = b.dataset.srcby; renderKeep(); });
     $("#stAllSrc") && ($("#stAllSrc").onclick = () => { S.statAllSrc = !S.statAllSrc; renderKeep(); });
+    $("#stAllAvg") && ($("#stAllAvg").onclick = () => { S.statAllAvg = !S.statAllAvg; renderKeep(); });
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { tab: "all", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
@@ -422,10 +446,11 @@ function ratedCard(list, word) {
     ${stories.length ? `<div class="small"><strong>Top rated stories</strong><ol style="margin:4px 0 0;padding-left:20px">${stories.map(e => `<li>${esc((e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1"))} <span class="muted">${ratingTxt(storyRate(e).rating)}${storyRate(e).fav ? " ♥" : ""}</span></li>`).join("")}</ol></div>` : ""}
   </div>`;
 }
-function readingCard(list, word) {
-  if (!list.length) return "";
+function readingCard(list, word, extra) {
+  extra = extra || [];   // read but not owned: in the reading totals and charts, kept apart in the counts; not in the progress or Up next
+  if (!list.length && !extra.length) return "";
   const nf = n => Number(n).toLocaleString("de-CH");
-  const read = list.filter(c => c.read), dated = read.filter(c => /^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || "")), undated = read.length - dated.length;
+  const readOwn = list.filter(c => c.read), read = readOwn.concat(extra), dated = read.filter(c => /^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || "")), undated = read.length - dated.length;
   const scope = word === "books" ? "b" : word === "entries" ? "a" : "c", all = (S.statRange || "year") === "all", now = new Date(), year = String(now.getFullYear());
   const per = {}, perPages = {}; dated.forEach(c => { const k = c.readDate.slice(0, 7); per[k] = (per[k] || 0) + 1; perPages[k] = (perPages[k] || 0) + (parseInt(c.pages, 10) || 0); });
   const inRange = dated.filter(c => all || c.readDate.startsWith(year)), pages = inRange.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
@@ -435,7 +460,8 @@ function readingCard(list, word) {
   // read dates with only a year can't go into a month bar: they count in the totals and in the yearly bars
   const yearOnly = all ? 0 : inRange.filter(c => c.readDate.length === 4).length;
   const avg = inRange.length / Math.max(1, months);
-  const w = n => n === 1 ? word.replace(/ies$/, "y").replace(/s$/, "") : word, pct = list.length ? Math.round(read.length / list.length * 100) : 0;
+  const w = n => n === 1 ? word.replace(/ies$/, "y").replace(/s$/, "") : word, pct = list.length ? Math.round(readOwn.length / list.length * 100) : 0;
+  const inRangeN = inRange.filter(c => notOwned(c)).length;
   const tag = c => c.kind === "book" && isNovel(c) ? (c.title || "Untitled") : comicTag(c);
   const thumb = c => { const cv = coverOf(c); return `<span class="rthumb">${cv ? `<img src="${esc(cv)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`; };
   const last = dated.slice().sort((a, b) => b.readDate.localeCompare(a.readDate)).slice(0, 4);
@@ -443,14 +469,14 @@ function readingCard(list, word) {
   const num = c => (c.issueSort != null ? +c.issueSort : parseFloat(c.issue)) || 0;
   const key = c => isNovel(c) ? (c.seriesName ? "b:" + c.seriesName : "") : c.seriesId;
   const lastRead = {}; read.forEach(c => { const k = key(c); if (!k) return; const d = c.readDate || "0"; if (!lastRead[k] || d > lastRead[k].d) lastRead[k] = { d, n: num(c) }; });
-  const unread = list.filter(c => !c.read && c.status !== "wanted" && !c.facsimile);
+  const unread = list.filter(c => !c.read && isOwn(c) && !c.facsimile);
   const cont = Object.keys(lastRead).sort((a, b) => lastRead[b].d.localeCompare(lastRead[a].d)).map(k => unread.filter(c => key(c) === k && num(c) > lastRead[k].n).sort((a, b) => num(a) - num(b))[0]).filter(Boolean);
   const fresh = unread.filter(c => !cont.includes(c)).sort((a, b) => String(b.purchaseDate || b.createdAt || "").localeCompare(String(a.purchaseDate || a.createdAt || "")));
   const next = cont.concat(fresh).slice(0, 4);
   return `<div class="card stack reading"><div class="cardhead"><h3>Reading</h3>${rangeSwitch()}</div>
-    <div><div class="row between small"><span><strong>${nf(read.length)}</strong> of ${nf(list.length)} ${w(list.length)} read</span><span class="muted">${pct} %</span></div><div class="meter"><span style="width:${pct}%"></span></div></div>
+    <div><div class="row between small"><span><strong>${nf(readOwn.length)}</strong> of your ${nf(list.length)} ${w(list.length)} read</span><span class="muted">${pct} %</span></div><div class="meter"><span style="width:${pct}%"></span></div></div>
     <div class="row rstats">
-      <div><div class="v2">${nf(inRange.length)}</div><div class="k small muted">read ${all ? "in all" : "in " + year}</div></div>
+      <div><div class="v2">${nf(inRange.length)}</div><div class="k small muted">read ${all ? "in all" : "in " + year}${extra.length ? ` · ${nf(inRange.length - inRangeN)} owned, ${nf(inRangeN)} not owned` : ""}</div></div>
       <div><div class="v2">${avg >= 10 ? Math.round(avg) : avg.toFixed(1)}</div><div class="k small muted">per month</div></div>
       ${pages ? `<div><div class="v2">${nf(pages)}</div><div class="k small muted">pages</div></div>` : ""}
     </div>
@@ -458,6 +484,7 @@ function readingCard(list, word) {
     ${pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}
     ${last.length ? `<div class="small muted">Recently read</div><div class="rlist">${last.map(c => `<button class="ritem" data-open="${esc(c.id)}">${thumb(c)}<span class="rt">${esc(tag(c))}</span><span class="rd muted">${esc(niceDate(c.readDate))}</span></button>`).join("")}</div>` : ""}
     ${next.length ? `<div class="small muted">Up next</div><div class="rlist">${next.map(c => `<div class="ritem">${thumb(c)}<button class="link rt" data-open="${esc(c.id)}">${esc(tag(c))}</button><button type="button" class="ghost tiny" data-readnow="${esc(c.id)}" aria-label="Mark ${esc(tag(c))} read today">✓ Read</button></div>`).join("")}</div>` : ""}
+    ${extra.length ? `<p class="small muted" style="margin:0"><button type="button" class="link" data-pick="notowned||${scope}">${nf(extra.length)} read without owning ${extra.length === 1 ? "it" : "them"}</button> (library, e-books …) count in the totals, charts and pages above, not in the progress bar.</p>` : ""}
     <p class="small muted" style="margin:0">${undated ? `<button type="button" class="link" data-pick="readnodate||${scope}">${nf(undated)} marked read without a date</button> count in the progress but not in the charts. ` : ""}${yearOnly ? `${nf(yearOnly)} read in ${year} without a month count in the total but not in the month bars. ` : ""}Tap a bar to see what you read then.</p></div>`;
 }
 // ---- Stats for normal books, kept apart from the comics ----

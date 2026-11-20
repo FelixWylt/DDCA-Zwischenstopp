@@ -205,6 +205,15 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - Double issues (da-v195): in yearly series a double the list knows ("1987-52-53", "2007-09-10") is ONE wide square in Gaps
   (catDoubles/fusedSquare in add.js); a comic "2007-9-10" or "2007/09" fills it; Gaps totals and Stats count it once.
 - "Per year" in Series takes one number or ranges by year ("1978-1983: 12, 1984-: 24"); Gaps, Stats and Next issue use it.
+- **Read, not owned (da-v210):** status "notowned" (third button in Add: I own it / Wishlist / Read, not owned). Helpers in
+  core.js: `isOwn(c)` = owned (collection, value, gaps, insurance, lots), `isMine(c)` = owned or read-not-owned (ratings,
+  hearts, read lists), `notOwned(c)`. Stats › Reading counts them apart (with a total); Stories and its stats include them.
+  When adding code that asks "not on the wishlist", decide between isOwn and isMine.
+- **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
+- **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
+  (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
+  the story's hero name in the issue's language (tables inducks_herocharacter + inducks_charactername; column names not
+  yet confirmed by a real build: check report.txt for "story heroes"). Comics keep their old titles until Refresh all comics.
 
 ## How to make price ranges (the user's way)
 - **Variants (the user's wish, 2026-11-15):** when Seriekatalogen ("Variant: Ja") or another source lists a variant,
@@ -229,6 +238,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   the numbers are only estimates.
 
 ## Other working rules
+- **Report before starting (the user's wish, 2026-11-20):** before changing anything, report what you found and the plan
+  (with the time estimate and any questions), then wait for the user's go. Only answers need no report first.
 - **New chat (the user's wish, 2026-11-20):** say on your own when it's time for a new chat: when the chat has grown long
   (many replies, this file re-sent many times) or answers slow down, and best at a quiet moment (nothing local, nothing waiting).
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).

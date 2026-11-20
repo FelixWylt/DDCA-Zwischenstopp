@@ -116,7 +116,7 @@ async function comicFromCode(d, code, ext) {
   // weekly/monthly titles: the barcode has the number and (German magazines) the price, but no year.
   // INDUCKS knows every issue's number and price, so offer the issues that fit, nearest year first.
   const cents = barcodePrice(code), entry = catEntry(se), file = entry && await catalogueFile(entry);
-  const anchor = (S.barcodeYears || {})[code] || Math.max(0, ...S.comics.filter(c => c.seriesId === se.id && c.status !== "wanted" && c.issueYear).map(c => c.issueYear)) || new Date().getFullYear();
+  const anchor = (S.barcodeYears || {})[code] || Math.max(0, ...S.comics.filter(c => c.seriesId === se.id && isOwn(c) && c.issueYear).map(c => c.issueYear)) || new Date().getFullYear();
   let cands = [], priceUsed = false;
   if (file) {
     cands = Object.keys(file.issues).filter(k => { const m = /^(\d{4})(?:\/(\d{1,3})|-(\d{1,3})-(\d{1,3}))$/.exec(k); return m && (+m[2] === n || +m[3] === n || +m[4] === n); });

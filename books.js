@@ -254,7 +254,7 @@
     if (out.publisher && /\./.test(out.publisher) && full.length) out.publisher = full[0];
     return out;
   }
-  async function lookupIsbn(raw) {
+  async function lookupIsbn(raw, opts) {
     const isbn = normalize(raw);
     if (!isbn) return { error: "invalid" };
     // ask under the ISBN-13; if no database knows it, ask again under the old 10-digit form
@@ -263,7 +263,7 @@
     if (!hits.length && ten) { const res10 = await askIsbn(ten); if (res10.some(x => x.r && x.r.title)) { res = res10; hits = res10.filter(x => x.r && x.r.title); } }
     if (!hits.length) return { isbn, sources: [], offline: res.every(x => x.err), data: null };
     const data = merge(hits.map(x => x.r));
-    if (!data.genre && data.title) data.genre = await genreFromOtherEditions(data, isbn);
+    if (!data.genre && data.title && !(opts && opts.skipGenre)) data.genre = await genreFromOtherEditions(data, isbn);   // 3 more searches: skipped when the book already has a genre
     if (!data.cover) data.cover = "https://covers.openlibrary.org/b/isbn/" + isbn + "-M.jpg?default=false";
     data.isbn = isbn;
     // no database names the language: the ISBN's country group usually does (978-0/1 English, 978-3 German, 978-91 Swedish ...)

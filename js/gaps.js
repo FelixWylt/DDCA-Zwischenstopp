@@ -213,7 +213,7 @@ VIEWS.gaps = {
     const catSq = gridCat(se);
     const covered = lab => { const f = fusedSquare(catSq, lab); return f ? [f] : splitLabel(catSq, lab) ? [lab] : issueSquares(lab); };   // 1967-02B has its own square; a double issue one wide square
     const inSquare = new Map();   // square -> every comic in it (variants, double issues)
-    mine.forEach(c => { if (c.facsimile) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
+    mine.forEach(c => { if (c.facsimile || notOwned(c)) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
     // owned and wished at once: the same comic both ways (546A owned with 546B wished is fine)
     const live = mine.filter(c => !c.facsimile), clash = new Set();
     live.forEach(a => { if (a.status === "wanted") return; live.forEach(b => { if (b.status === "wanted" && sameSlot(a.issueLabel || a.issue, b.issueLabel || b.issue)) { clash.add(a.id); clash.add(b.id); } }); });
@@ -229,10 +229,10 @@ VIEWS.gaps = {
       if (o) ownIn++; else if (w) wantIn++;
       const all = inSquare.get(label) || [];
       const vars = all.filter(c => variantOf(c.issueLabel || c.issue));
-      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" + (wishLevel(w) ? " wl-" + wishLevel(w) : "") : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => c.status !== "wanted") && all.filter(c => c.status !== "wanted").every(c => c.read) ? " read" : "");
-      const vtxt = vars.length && !splitLabel(catSq, label) ? `<sup>${esc([...new Set(vars.filter(c => !o || c.status !== "wanted").map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
+      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" + (wishLevel(w) ? " wl-" + wishLevel(w) : "") : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => isOwn(c)) && all.filter(c => isOwn(c)).every(c => c.read) ? " read" : "");
+      const vtxt = vars.length && !splitLabel(catSq, label) ? `<sup>${esc([...new Set(vars.filter(c => !o || isOwn(c)).map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
       const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
-      const eds = [...new Set(all.filter(c => c.status !== "wanted" && c.edition && editionKey(c.edition) !== editionKey(defEd)).map(c => editionMark(c.edition)))];
+      const eds = [...new Set(all.filter(c => isOwn(c) && c.edition && editionKey(c.edition) !== editionKey(defEd)).map(c => editionMark(c.edition)))];
       const etxt = eds.length ? `<span class="edb">${esc(eds.join(" "))}</span>` : "";
       return `<button class="cell ${cls}${eds.length ? " hased" : ""}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info + (eds.length ? " · " + all.filter(c => c.edition).map(c => c.edition).join(", ") : ""))}">${esc(txt)}${vtxt}${etxt}</button>`;
     };
@@ -254,7 +254,7 @@ VIEWS.gaps = {
       // with the INDUCKS catalogue, each year shows only the numbers that came out (KA 1948: 1–4)
       const perFor = y => {
         if (!cat0 || y > catLast) return perYearFor(se, y, mine);
-        const owned = mine.filter(c => c.status !== "wanted" && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
+        const owned = mine.filter(c => isOwn(c) && (c.issueLabel || "").startsWith(y + "/")).map(c => parseInt((c.issueLabel || "").slice(5), 10) || 0);
         return Math.max(perY[y] || 0, ...owned);   // an owned issue always gets its square
       };
       // the Nullnummer comes first in its year
@@ -342,7 +342,7 @@ VIEWS.gaps = {
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
       if (S.edMode && seriesEditions(S.gapSeries).length) {   // choose the edition of the owned comic(s) in this square
-        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
+        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && isOwn(c));
         if (!mine.length) { toast("Only owned issues have an edition"); return; }
         const se = seriesById(S.gapSeries) || {}, eds = seriesEditions(se.id), def = defaultEditionOf(se.id), c0 = mine[0];
         const price = e => { const r = valueRuleFor(c0, e); return !r ? "no price" : editionKey(r.ed) === editionKey(e) ? money(r.price, r.cur) : "not listed for this issue"; };
@@ -356,7 +356,7 @@ VIEWS.gaps = {
         return;
       }
       if (S.readMode) {   // quick reading log: toggles "read" on the owned comic(s) in this square
-        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && c.status !== "wanted");
+        const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && isOwn(c));
         if (!mine.length) { toast("Only owned issues can be marked as read"); return; }
         const read = !mine.every(c => c.read), se = seriesById(S.gapSeries) || S.series[0] || {};
         try {

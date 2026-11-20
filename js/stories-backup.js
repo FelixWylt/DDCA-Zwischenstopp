@@ -51,7 +51,7 @@ function storyIndex(status) {
   const map = new Map();
   S.comics.forEach(c => {
     if (status === "owned" && c.status === "wanted") return;
-    if (status === "wanted" && c.status !== "wanted") return;
+    if (status === "wanted" && isOwn(c)) return;
     (c.stories || []).forEach((st, i) => {
       if (!st.title && !st.code) return;
       const code = storyCode(st.code);
@@ -70,6 +70,7 @@ function storyIndex(status) {
       splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
       splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => e.chars.add(x));
       ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
+      if (!e.pages && parseFloat(st.pages) > 0) e.pages = parseFloat(st.pages);
       if (st.plot && !e.plotFrom && c.duckipedia) e.plotFrom = c.duckipedia;
       e.items.push(c);
     });
@@ -88,17 +89,18 @@ function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short 
 VIEWS.stories = {
   html() {
     const st = S.st = S.st || {};
-    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, shown: 100 }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
+    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100 }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
     if (["writers", "artists", "chars"].includes(st.mode)) { st.role = st.mode; st.tab = "people"; } delete st.mode;
     if (st.sort === "fav") { st.sort = "rating"; st.tab = "fav"; }
     const all = storyIndex(st.status);
-    const nFav = all.filter(e => { const r = storyRate(e); return r.fav || +r.rating; }).length;
+    const nFav = all.filter(e => storyRate(e).fav).length;
+    st._all = all; st._allFor = st.status;   // the search reuses this list instead of rebuilding it on every key
     const tab = (k, label, n) => `<button role="tab" type="button" data-stab="${k}" aria-selected="${st.tab === k}">${label}${n != null ? ` <span class="muted">${n}</span>` : ""}</button>`;
     const chip = (attr, on, label) => `<button type="button" class="fchip${on ? " on" : ""}" ${attr} aria-pressed="${on}">${label}</button>`;
     const inChips = [["owned", "Owned"], ["wanted", "Wishlist"], ["all", "Both"]].map(([k, l]) => chip(`data-stin="${k}"`, st.status === k, l)).join("");
     const filters = st.tab === "people"
       ? `<div class="fchips">${[["writers", "Writers"], ["artists", "Artists"], ["chars", "Characters"]].map(([k, l]) => chip(`data-role="${k}"`, st.role === k, l)).join("")}</div>`
-      : `<div class="fchips">${inChips}${st.tab === "all" ? chip('data-strep="1"', st.reprinted, "Reprinted") : ""}</div>`;
+      : `<div class="fchips">${inChips}${st.tab === "all" ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") : ""}</div>`;
     const sortSel = st.tab === "all" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label>` : "";
     const head = `<div><h2>Stories</h2><p class="lede hide-phone">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
       <div class="subtabs three" role="tablist" aria-label="Show">${tab("all", "All stories", all.length)}${tab("people", "People")}${tab("fav", "Favourites", nFav)}</div>
@@ -115,7 +117,9 @@ VIEWS.stories = {
     document.querySelectorAll("[data-role]").forEach(b => b.onclick = () => { st.role = b.dataset.role; st.shown = 100; render(); });
     document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
     $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
-    $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; drawStories(); };
+    $("[data-strated]") && ($("[data-strated]").onclick = () => { st.rated = !st.rated; if (st.rated && st.sort === "title") st.sort = "rating"; st.shown = 100; render(); });
+    // search 0.3 s after the last key, so typing or deleting quickly doesn't redraw the list for every letter
+    $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; clearTimeout(st._t); st._t = setTimeout(drawStories, 300); };
     $("#stsort") && ($("#stsort").onchange = e => { st.sort = e.target.value; drawStories(); });
     $("#stwhox") && ($("#stwhox").onclick = () => { st.who = null; render(); });
     drawStories();
@@ -139,13 +143,13 @@ function storyRow(e) {
       ${e.chars.size ? `<div><span class="muted">Characters:</span> ${[...e.chars].map(n => `<button class="link" data-person="chars" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
       ${e.genre ? `<div><span class="muted">Genre:</span> ${esc(e.genre)}</div>` : ""}
       ${e.plot ? `<p class="stplot">${esc(e.plot)}${plotSrc}</p>` : ""}
-      <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : ""}</button>`).join("")}</div>
+      <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : notOwned(c) ? " · read, not owned" : ""}</button>`).join("")}</div>
     </div></details>`;
 }
 function drawStories() {
   const box = $("#stres"); if (!box) return;
   const st = S.st, q = norm(st.q), words = q ? q.split(" ") : [];
-  const all = storyIndex(st.status);
+  const all = st._all && st._allFor === st.status ? st._all : storyIndex(st.status);
   const more = n => n > st.shown ? `<div class="row" style="justify-content:center;margin-top:12px"><button id="stmore">Show more (${n - st.shown} left)</button></div>` : "";
   const cmpT = (a, b) => storyTitle(a).localeCompare(storyTitle(b), "de", { numeric: true });
   if (st.tab === "people") {
@@ -164,29 +168,28 @@ function drawStories() {
       // their page: how many stories and comics, which years, and the comics themselves
       const cm = new Map(); list.forEach(e => e.items.forEach(c => cm.set(c.id, c)));
       const cs = [...cm.values()].sort((a, b) => comicTag(a).localeCompare(comicTag(b), "de", { numeric: true }));
-      const own = cs.filter(c => c.status !== "wanted").length, yrs = list.map(e => +String(e.first || "").slice(0, 4)).filter(y => y > 1900).sort((a, b) => a - b);
+      const own = cs.filter(c => isOwn(c)).length, yrs = list.map(e => +String(e.first || "").slice(0, 4)).filter(y => y > 1900).sort((a, b) => a - b);
       const role = { writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role];
       person = `<div class="card stack small personcard"><h3 style="margin:0">${esc(st.who.name)}</h3>
-        <div class="muted">${role} · ${list.length} ${list.length === 1 ? "story" : "stories"} in ${cs.length} ${cs.length === 1 ? "comic" : "comics"}${own < cs.length ? " (" + own + " owned, " + (cs.length - own) + " on the wishlist)" : ""}${yrs.length ? " · first published " + yrs[0] + (yrs[yrs.length - 1] !== yrs[0] ? "–" + yrs[yrs.length - 1] : "") : ""}</div>
+        <div class="muted">${role} · ${list.length} ${list.length === 1 ? "story" : "stories"} in ${cs.length} ${cs.length === 1 ? "comic" : "comics"}${own < cs.length ? " (" + [own + " owned", cs.filter(c => c.status === "wanted").length + " on the wishlist", cs.filter(notOwned).length + " read, not owned"].filter(x => !/^0 /.test(x)).join(", ") + ")" : ""}${yrs.length ? " · first published " + yrs[0] + (yrs[yrs.length - 1] !== yrs[0] ? "–" + yrs[yrs.length - 1] : "") : ""}</div>
         <details><summary>The comics (${cs.length})</summary><div class="row" style="gap:6px;margin-top:6px">${cs.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}</button>`).join("")}</div></details></div>`;
     }
-    if (words.length) list = list.filter(e => { const t = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" ")); return words.every(w => t.includes(w)); });
+    // each story's search text is made once per list, not on every key
+    if (words.length) list = list.filter(e => { const t = e._q || (e._q = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" "))); return words.every(w => t.includes(w)); });
     let html = "";
     if (st.tab === "fav") {
-      // hearted stories first, then the rest by stars
-      list = list.filter(e => { const r = storyRate(e); return r.fav || +r.rating; });
-      const hearts = list.filter(e => storyRate(e).fav).sort((a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b));
-      const rated = list.filter(e => !storyRate(e).fav), groups = new Map();
-      rated.forEach(e => { const r = +storyRate(e).rating; (groups.get(r) || groups.set(r, []).get(r)).push(e); });
-      const parts = [];
-      if (hearts.length) parts.push([`♥ Favourites`, hearts]);
-      [...groups.keys()].sort((a, b) => b - a).forEach(r => parts.push([ratingTxt(r), groups.get(r).sort(cmpT)]));
+      // only hearted stories, grouped by your stars (rated stories without a heart: All stories › Rated)
+      list = list.filter(e => storyRate(e).fav);
+      const groups = new Map();
+      list.forEach(e => { const r = +storyRate(e).rating || 0; (groups.get(r) || groups.set(r, []).get(r)).push(e); });
+      const parts = [...groups.keys()].sort((a, b) => b - a).map(r => [r ? "♥ " + ratingTxt(r) : "♥ No stars", groups.get(r).sort(cmpT)]);
       let left = st.shown, total = list.length;
-      html = `<p class="muted small" style="margin:8px 0">${hearts.length} ${hearts.length === 1 ? "favourite" : "favourites"} · ${rated.length + hearts.filter(e => +storyRate(e).rating).length} rated</p>` +
+      html = `<p class="muted small" style="margin:8px 0">${total} ${total === 1 ? "favourite" : "favourites"} · stories you rated without a heart: All stories › Rated</p>` +
         (total ? parts.map(([h, xs]) => { if (left <= 0) return ""; const shown = xs.slice(0, left); left -= shown.length; return `<h3 class="listhead">${esc(h)} <span class="muted">${xs.length}</span></h3><div class="list">${shown.map(storyRow).join("")}</div>`; }).join("")
-          : '<div class="empty"><h3>No favourites yet</h3><p>Open a story under All stories and tap the heart or the stars.</p></div>') + more(total);
+          : '<div class="empty"><h3>No favourites yet</h3><p>Open a story under All stories and tap the heart.</p></div>') + more(total);
     } else {
       if (st.reprinted) list = list.filter(e => e.items.length > 1);
+      if (st.rated) list = list.filter(e => +storyRate(e).rating > 0);
       list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : cmpT);
       const reprints = list.filter(e => e.items.length > 1).length;
       html = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints && !st.reprinted ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
@@ -219,7 +222,7 @@ function changedSinceBackup() { const t = S.lastBackup || ""; return S.comics.fi
 function backupCompare(b) {
   const n = x => Array.isArray(x) ? x.length : x && typeof x === "object" ? Object.keys(x).length : 0;
   const rows = [
-    ["Entries", b.comics, S.comics], ["… of them owned", (b.comics || []).filter(c => c && c.status !== "wanted"), S.comics.filter(c => c.status !== "wanted")],
+    ["Entries", b.comics, S.comics], ["… of them owned", (b.comics || []).filter(c => c && isOwn(c)), S.comics.filter(c => isOwn(c))],
     ["… on the wishlist", (b.comics || []).filter(c => c && c.status === "wanted"), S.comics.filter(c => c.status === "wanted")],
     ["Series", b.series, S.series], ["Price ranges", b.valueRules, S.valueRules], ["Own condition factors", b.gradeFactors, S.gradeFactors],
     ["Story ratings", b.storyRatings, S.storyRatings], ["Book series info", b.bookSeriesInfo, S.bookMeta], ["Empty book series", b.bookSeriesExtra, S.bookSeriesExtra],
@@ -278,7 +281,7 @@ function csvFile() {
 // ---- Insurance list: everything you own with condition and value in CHF, as a table or to print / save as PDF ----
 function insuranceRows() {
   const gl = g => (GRADES.find(x => x[0] === g) || [, ""])[1];
-  return sortComics(S.comics.filter(c => c.status !== "wanted")).map(c => {
+  return sortComics(S.comics.filter(c => isOwn(c))).map(c => {
     const se = seriesById(c.seriesId), v = valueOf(c), n = c.copies || 1, each = v ? toCHF(v.amount, v.cur) : null;
     return { what: c.kind === "book" && isNovel(c) ? [c.author, c.title].filter(Boolean).join(": ") : comicTag(c) + (c.title ? " – " + c.title : ""), series: se ? se.name : c.seriesName || "",
       grade: gl(c.grade) || "", copies: n, each, total: each == null ? null : each * n, paid: typeof c.pricePaid === "number" ? fmt2(c.pricePaid * n) + " " + (c.currency || "CHF") : "",
@@ -312,7 +315,7 @@ VIEWS.backup = {
       <div><h2>Backup</h2><p class="lede">Your archive is stored only on this phone and works without internet. Keep a copy on your PC in case the phone is lost, reset or replaced.</p></div>
       ${status}
       <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(105px,1fr))">
-        <div class="card stat"><div class="v">${n.toLocaleString("de-CH")}</div><div class="k">entries on this phone: ${(k => k.owned + " owned · " + k.wanted + " on wishlist")({ owned: S.comics.filter(c => c.status !== "wanted").length, wanted: S.comics.filter(c => c.status === "wanted").length })}</div></div>
+        <div class="card stat"><div class="v">${n.toLocaleString("de-CH")}</div><div class="k">entries on this phone: ${(k => k.owned + " owned · " + k.wanted + " on wishlist")({ owned: S.comics.filter(c => isOwn(c)).length, wanted: S.comics.filter(c => c.status === "wanted").length })}</div></div>
         <div class="card stat"><div class="v" style="font-size:1.15rem">${S.lastBackup ? esc(stampDate(S.lastBackup)) : "Never"}</div><div class="k">last backup</div></div>
         <div class="card stat"><div class="v" style="font-size:1.15rem">${S.persisted ? "Protected" : "Not yet"}</div><div class="k">${S.persisted ? "Android won't clear this data on its own" : "requested on first save"}${mb ? " · " + mb + " used" : ""}</div></div>
       </div>
@@ -481,10 +484,14 @@ async function duckipediaBulk() {
 }
 // ---- Refresh all comics: INDUCKS and Duckipedia details fetched again; their data wins, personal fields stay ----
 const fromSources = u => !u || /inducks\.org|outducks\.org|duckipedia\.org/.test(u);   // a cover you pasted yourself is kept
+// Duckipedia is asked again only when it's worth it: details older than 30 days, or "no page" older than 90 days
+const dkDue = c => !(c.duckipedia && c.duckipedia.fetched && daysSince(c.duckipedia.fetched) < 30) && !(c.duckipediaNone && c.duckipediaNone >= DK_RULES_DATE && daysSince(c.duckipediaNone) < 90);
+// one series file's issues by INDUCKS code, made once instead of searching the whole file for every comic
+const byIc = file => file._byIc || (file._byIc = new Map(Object.values(file.issues || {}).map(x => [x.ic, x])));
 function refreshCard() {
-  const r = S.rf, nDe = S.comics.filter(c => c.kind !== "book" && Duckipedia.candidates(dkSeries(seriesById(c.seriesId)), c).length).length;
+  const r = S.rf, nDe = S.comics.filter(c => c.kind !== "book" && dkDue(c) && Duckipedia.candidates(dkSeries(seriesById(c.seriesId)), c).length).length;
   return `<div class="card stack" id="rfbox"><h3>Refresh all comics</h3>
-    <p class="small muted" style="margin:0">Fetches INDUCKS and Duckipedia details again for every comic: story lists, titles, dates, pages and covers are replaced with the current data. Condition, prices, notes, ratings, read marks and covers you pasted yourself are kept. INDUCKS comes from the catalogue on this phone; Duckipedia needs internet and takes about ${Math.max(1, Math.round(nDe * 2 / 60))} min for your ${nDe} German comics. Worth doing every few months.</p>
+    <p class="small muted" style="margin:0">Fetches INDUCKS and Duckipedia details again for every comic: story lists, titles, dates, pages and covers are replaced with the current data. Condition, prices, notes, ratings, read marks and covers you pasted yourself are kept. INDUCKS comes from the catalogue on this phone; Duckipedia needs internet and takes about ${Math.max(1, Math.round(nDe * 2 / 60))} min for the ${nDe} German comics it asks about (comics checked in the last 30 days, and those without a Duckipedia page checked in the last 90, are skipped). Worth doing every few months.</p>
     ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rfstop">Stop</button></div>`
       : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} comics updated${r.failed ? ", Duckipedia failed for " + r.failed : ""}.</p>` : ""}<div class="row"><button id="rfall"${S.db ? "" : " disabled"}>Refresh all comics</button></div>`}
   </div>`;
@@ -505,19 +512,21 @@ async function refreshAll() {
     // INDUCKS, from the catalogue on this phone
     if (entry) {
       const file = await catalogueFile(entry).catch(() => null), lab = c.issueLabel || c.issue || "";
-      const hit = file && ((c.inducks && Object.values(file.issues || {}).find(x => x.ic === c.inducks)) || (file.issues || {})[lab]);
+      const hit = file && ((c.inducks && byIc(file).get(c.inducks)) || (file.issues || {})[lab]);
       if (hit) {
         if (hit.d) c.date = hit.d; if (hit.t) c.title = hit.t; if (hit.pg) c.pages = hit.pg;
         if (hit.cv && fromSources(c.coverUrl)) c.coverUrl = inducksImg(hit.cv);
         const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
-        if ((hit.s || []).length) c.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "" }));
+        if ((hit.s || []).length) c.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "", pages: x.p || "" }));
         c.inducks = hit.ic;
       }
     }
     // Duckipedia, German comics only
-    if (se && Duckipedia.candidates(dkSeries(se), c).length) {
+    if (se && dkDue(c0) && Duckipedia.candidates(dkSeries(se), c).length) {
       try {
-        const d = await Duckipedia.fetchIssue(dkSeries(se), c);
+        const useCover = fromSources(c.coverUrl) && !(entry && /outducks/.test(c.coverUrl));
+        const d = await Duckipedia.fetchIssue(dkSeries(se), c, { noImage: !useCover });
+        if (!d) c.duckipediaNone = new Date().toISOString().slice(0, 10);
         if (d) {
           c = Duckipedia.merge(c, d); delete c.duckipediaNone;
           if (d.issue.title) c.title = d.issue.title; if (d.issue.pages) c.pages = d.issue.pages;
@@ -535,10 +544,10 @@ async function refreshAll() {
 }
 // ---- Refresh all books: every book with an ISBN looked up again; the databases' data wins, series and volume stay ----
 function refreshBooksCard() {
-  const n = S.comics.filter(c => c.kind === "book" && window.Books && Books.normalize(c.isbn)).length, r = S.rb;
+  const n = S.comics.filter(c => c.kind === "book" && window.Books && Books.normalize(c.isbn) && bookDue(c)).length, r = S.rb;
   if (!n && !r) return "";
   return `<div class="card stack" id="rbbox"><h3>Refresh all books</h3>
-    <p class="small muted" style="margin:0">Looks up your ${n} books with an ISBN in the Deutsche Nationalbibliothek, LIBRIS, Open Library and Google Books again. Title, author, publisher, year, pages, language, translator, genres and cover are replaced with their data; series, volume and everything about your copy stay. Needs internet; takes about ${Math.max(1, Math.round(n * 1.5 / 60))} min.</p>
+    <p class="small muted" style="margin:0">Looks up your ${n} books with an ISBN in the Deutsche Nationalbibliothek, LIBRIS, Open Library and Google Books again (books no database knew in the last 90 days are skipped). Title, author, publisher, year, pages, language, translator, genres and cover are replaced with their data; series, volume and everything about your copy stay. Needs internet; takes about ${Math.max(1, Math.round(n * 0.8 / 60))} min.</p>
     ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rbstop">Stop</button></div>`
       : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} ${r.changed === 1 ? "book" : "books"} updated${r.none ? ", " + r.none + " not found in any database" : ""}.</p>` : ""}<div class="row"><button id="rball"${S.db ? "" : " disabled"}>Refresh all books</button></div>`}
   </div>`;
@@ -548,26 +557,35 @@ function bindRefreshBooks() {
   $("#rball") && ($("#rball").onclick = () => refreshBooks());
   $("#rbstop") && ($("#rbstop").onclick = () => { if (S.rb) S.rb.stop = true; });
 }
+// a book no database knew is asked again after 90 days
+const bookDue = c => !(c.isbnNone && daysSince(c.isbnNone) < 90);
 async function refreshBooks() {
-  const list = S.comics.filter(c => c.kind === "book" && Books.normalize(c.isbn));
+  const list = S.comics.filter(c => c.kind === "book" && Books.normalize(c.isbn) && bookDue(c));
   const r = S.rb = { running: true, total: list.length, done: 0, changed: 0, none: 0 };
   drawRefreshBooks();
-  for (const c0 of list) {
-    if (r.stop) { r.stopped = true; break; }
-    if (!navigator.onLine) { toast("No internet: book refresh stopped"); r.stopped = true; break; }
-    try {
-      const res = await Books.lookupIsbn(Books.normalize(c0.isbn));
-      if (res.data) {
-        const c = Object.assign({}, c0);
-        applyBookData(c, res.data);
-        c.seriesName = c0.seriesName || c.seriesName; c.issue = c0.issue || c.issue;   // your series and volume stay
-        const strip = x => JSON.stringify(Object.assign({}, x, { updatedAt: 0 }));
-        if (strip(c) !== strip(c0)) { await saveComic(c); r.changed++; }
-      } else r.none++;
-    } catch (e) {}
-    r.done++; drawRefreshBooks();
-    await sleep(600);
-  }
+  // two books at a time: each asks four different databases at once, with a short pause between books
+  let i = 0;
+  const worker = async () => {
+    while (i < list.length && !r.stop) {
+      if (!navigator.onLine) { toast("No internet: book refresh stopped"); r.stop = true; break; }
+      const c0 = S.comics.find(x => x.id === list[i].id) || list[i]; i++;
+      try {
+        const res = await Books.lookupIsbn(Books.normalize(c0.isbn), { skipGenre: !!c0.genre });
+        if (res.data) {
+          const c = Object.assign({}, c0); delete c.isbnNone;
+          applyBookData(c, res.data);
+          if (c0.genre && !res.data.genre) c.genre = c0.genre;
+          c.seriesName = c0.seriesName || c.seriesName; c.issue = c0.issue || c.issue;   // your series and volume stay
+          const strip = x => JSON.stringify(Object.assign({}, x, { updatedAt: 0 }));
+          if (strip(c) !== strip(c0)) { await saveComic(c); r.changed++; }
+        } else { r.none++; if (!res.offline) await saveComic(Object.assign({}, c0, { isbnNone: new Date().toISOString().slice(0, 10) }), true); }
+      } catch (e) {}
+      r.done++; drawRefreshBooks();
+      await sleep(400);
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  if (r.stop) r.stopped = true;
   r.running = false; r.finished = true; drawRefreshBooks();
   toast("Books: " + r.changed + " updated");
 }

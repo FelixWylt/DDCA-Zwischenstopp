@@ -25,4 +25,4 @@ if ("serviceWorker" in navigator && location.protocol !== "file:") {
   });
 }
 // only for the screenshot check on GitHub (address ending in ?test): lets it load sample comics and open screens
-if (/[?&]test\b/.test(location.search)) window.__dda = { S, nav, render, saveMany, saveSeries, parsePrices, storyIndex };
+if (/[?&]test\b/.test(location.search)) window.__dda = { S, nav, render, saveMany, saveSeries, parsePrices, storyIndex, owned };

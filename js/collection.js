@@ -4,7 +4,7 @@
 // ---- Collection: groups > series > issues ----
 // "LTB – Lustiges Taschenbuch: 12, 45 (2 spare), 101–103": your duplicates for trade, by series
 function tradeText() {
-  const list = sortComics(S.comics.filter(c => c.status !== "wanted" && !isNovel(c) && (c.forTrade || (c.copies || 1) > 1)));
+  const list = sortComics(S.comics.filter(c => isOwn(c) && !isNovel(c) && (c.forTrade || (c.copies || 1) > 1)));
   const groups = new Map(); list.forEach(c => { const k = seriesKeyOf(c); (groups.get(k) || groups.set(k, []).get(k)).push(c); });
   const lines = [];
   groups.forEach((cs, k) => {
@@ -15,12 +15,13 @@ function tradeText() {
 }
 function statusMatch(c) {
   const f = S.filters.status;
-  if (f === "owned") return c.status !== "wanted";
+  if (f === "owned") return isOwn(c);
   if (f === "wanted") return c.status === "wanted";
-  if (f === "trade") return c.status !== "wanted" && (c.forTrade || (c.copies || 1) > 1);
-  if (f === "unread") return c.status !== "wanted" && !c.read;
-  if (f === "fav") return c.status !== "wanted" && !!c.fav;
-  if (f === "rated") return c.status !== "wanted" && +c.rating > 0;
+  if (f === "trade") return isOwn(c) && (c.forTrade || (c.copies || 1) > 1);
+  if (f === "unread") return isOwn(c) && !c.read;
+  if (f === "fav") return isMine(c) && !!c.fav;
+  if (f === "rated") return isMine(c) && +c.rating > 0;
+  if (f === "notowned") return notOwned(c);
   if (f === "special") return !!c.special;
   return true;
 }
@@ -70,8 +71,8 @@ function yearsText(list) {
   const a = Math.min(...ys), b = Math.max(...ys); return a === b ? String(a) : a + "–" + b;
 }
 function countText(list) {
-  const own = list.filter(c => c.status !== "wanted").length, want = list.length - own;
-  const nov = list.filter(c => c.status !== "wanted" && isNovel(c)).length, com = own - nov;
+  const own = list.filter(c => isOwn(c)).length, want = list.filter(c => c.status === "wanted").length;
+  const nov = list.filter(c => isOwn(c) && isNovel(c)).length, com = own - nov;
   const parts = [];
   if (com) parts.push(com + (com === 1 ? " comic" : " comics"));
   if (nov) parts.push(nov + (nov === 1 ? " book" : " books"));
@@ -112,17 +113,18 @@ function itemHtml(c, inSeries) {
     if (c.forTrade || (c.copies || 1) > 1) chips.push('<span class="chip trade">' + ((c.copies || 1) > 1 ? c.copies + "×" : "Trade") + '</span>');
     if (c.location) chips.push('<span class="chip">' + esc(c.location) + '</span>');
   }
-  if (c.fav && c.status !== "wanted") chips.unshift('<span class="chip fav" title="Favourite">♥</span>');
-  if (+c.rating && c.status !== "wanted") chips.unshift('<span class="chip rate">' + ratingTxt(c.rating) + '</span>');
+  if (c.fav && isMine(c)) chips.unshift('<span class="chip fav" title="Favourite">♥</span>');
+  if (+c.rating && isMine(c)) chips.unshift('<span class="chip rate">' + ratingTxt(c.rating) + '</span>');
   if (c.special) chips.push('<span class="chip special" title="' + esc(c.special) + '">Special</span>');
-  if ((c.extras || []).length && c.status !== "wanted") chips.push('<span class="chip special" title="' + esc(c.extras.map(x => x.what).join(", ")) + '">+ ' + esc(c.extras.length === 1 ? c.extras[0].what || "Extra" : c.extras.length + " extras") + '</span>');
+  if ((c.extras || []).length && isOwn(c)) chips.push('<span class="chip special" title="' + esc(c.extras.map(x => x.what).join(", ")) + '">+ ' + esc(c.extras.length === 1 ? c.extras[0].what || "Extra" : c.extras.length + " extras") + '</span>');
   if (c.facsimile) chips.push('<span class="chip">Facsimile</span>');
   if (c.kind !== "book" && c.format === "Hardcover") chips.push('<span class="chip">HC</span>');
-  if (c.lotId && c.status !== "wanted") chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
+  if (c.lotId && isOwn(c)) chips.push('<span class="chip" title="Bought as part of a lot">Lot</span>');
+  if (notOwned(c)) chips.push('<span class="chip">Read, not owned</span>');
   const numTxt = isBook ? c.issue : showLabel(c.issueLabel || c.issue || "");
   if (isNovel(c)) {   // a book: its cover (or its initial), then title, author and year
     const sub2 = [inSeries ? "" : c.seriesName && c.seriesName + (c.issue ? " " + c.issue : ""), c.author, c.date, c.lang].filter(Boolean).join(" · ");
-    if (c.read && c.status !== "wanted") chips.push('<span class="chip">Read</span>');
+    if (c.read && isOwn(c)) chips.push('<span class="chip">Read</span>');
     return `<button class="item book" data-id="${esc(c.id)}">
       <div class="bookthumb"${coverOf(c) ? ` data-zoom="${esc(c.id)}"` : ""}>${inSeries && c.issue ? `<span class="vol">${esc(c.issue)}</span>` : ""}${coverOf(c) ? `<img src="${esc(coverOf(c))}" alt="" loading="lazy" onerror="this.remove()">` : ""}<span class="ini">${esc((c.title || "?").trim()[0] || "?")}</span></div>
       <div style="min-width:0"><div class="t">${esc(c.title || "Untitled")}</div><div class="s">${esc(sub2)}</div></div>
@@ -165,6 +167,7 @@ VIEWS.collection = {
           <option value="unread"${f.status === "unread" ? " selected" : ""}>Unread</option>
           <option value="fav"${f.status === "fav" ? " selected" : ""}>Favourites</option>
           <option value="rated"${f.status === "rated" ? " selected" : ""}>Rated</option>
+          <option value="notowned"${f.status === "notowned" ? " selected" : ""}>Read, not owned</option>
           <option value="special"${f.status === "special" ? " selected" : ""}>Special copies</option>
           <option value="all"${f.status === "all" ? " selected" : ""}>Everything</option></select></label>
       </div>
@@ -277,11 +280,11 @@ function tileHtml(c) {
   const ser = bk ? (c.seriesName || "") : se ? shortTag(se) : c.seriesName || "";
   return `<button class="tile${c.status === "wanted" ? " wanted" : ""}" data-id="${esc(c.id)}" aria-label="${esc([ser, tag, c.title].filter(Boolean).join(" "))}">
     ${cv ? `<img src="${esc(cv)}" alt="" loading="lazy" onerror="this.remove()">` : `<span class="tph"><b>${esc(ser || (bk ? "Book" : ""))}</b>${esc(bk && !tag ? (c.title || "") : "")}</span>`}
-    <span class="tnum">${esc([ser, tag].filter(Boolean).join(" ") || c.title || "")}</span>${(c.fav || +c.rating) && c.status !== "wanted" ? `<span class="tfav">${c.fav ? "♥" : ""}${+c.rating ? " " + ratingTxt(c.rating) : ""}</span>` : ""}</button>`;
+    <span class="tnum">${esc([ser, tag].filter(Boolean).join(" ") || c.title || "")}</span>${(c.fav || +c.rating) && isMine(c) ? `<span class="tfav">${c.fav ? "♥" : ""}${+c.rating ? " " + ratingTxt(c.rating) : ""}</span>` : ""}</button>`;
 }
 // a list of comics as rows or as covers; heads (years) go between them in both views
 // the same issue owned as separate entries (other condition, seller …): one row with "2×"
-const copyKey = c => c.status === "wanted" ? "" : seriesKeyOf(c) + "|" + (c.kind === "book" ? (c.title || "") + "|" + (c.issue || "") : (c.issueLabel || c.issue || "")) ;
+const copyKey = c => !isOwn(c) ? "" : seriesKeyOf(c) + "|" + (c.kind === "book" ? (c.title || "") + "|" + (c.issue || "") : (c.issueLabel || c.issue || "")) ;
 function entriesHtml(list, inSeries, note) {
   const grid = colView() === "grid";
   const byKey = new Map(); list.forEach(x => { if (typeof x === "string") return; const k = copyKey(x); if (k && !k.endsWith("|")) (byKey.get(k) || byKey.set(k, []).get(k)).push(x); });
@@ -525,34 +528,43 @@ function bookGapsHtml() {
   // whole volumes and in-between ones like 0.5 (a novella before volume 1)
   const vol = c => { const m = /^\s*(\d{1,4}(?:[.,]\d{1,2})?)\s*$/.exec(String(c.issue || "")); return m ? +m[1].replace(",", ".") : null; };
   const own = new Map(), want = new Map();
-  mine.forEach(c => { const v = vol(c); if (v != null) (c.status === "wanted" ? want : own).set(v, c); });
+  mine.forEach(c => { const v = vol(c); if (v != null && !notOwned(c)) (c.status === "wanted" ? want : own).set(v, c); });
   const sizes = S.bookSizes || {}, maxHave = Math.floor(Math.max(0, ...mine.map(c => vol(c) || 0))), size = Math.max(+sizes[name] || 0, maxHave);
   const extraVols = [...new Set([...own.keys(), ...want.keys()].filter(v => !Number.isInteger(v) || v === 0))];
   const squares = [...new Set([...Array(size).keys()].map(i => i + 1).concat(extraVols))].sort((x, y) => x - y);
   let cells = "";
   for (const n of squares) {
     const o = own.get(n), w = want.get(n);
-    cells += `<button class="cell${Number.isInteger(n) ? "" : " half"} ${o && w ? "owned conflict" : o ? "owned" : w && wishLevel(w) ? "wanted wl-" + wishLevel(w) : w ? "wanted" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
+    cells += `<button class="cell${Number.isInteger(n) ? "" : " half"} ${o && w ? "owned conflict" : o ? "owned" : w && wishLevel(w) ? "wanted wl-" + wishLevel(w) : w ? "wanted" : ""}${o && o.read ? " read" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
   }
   const noVol = mine.filter(c => vol(c) == null);
   const ownCount = [...own.keys()].length, wantCount = [...want.keys()].filter(k => !own.has(k)).length;
   const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-  return gapTabs() + gapHead(ownCount, wantCount, squares.length, { read: false, legend: '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
+  return gapTabs() + gapHead(ownCount, wantCount, squares.length, { legend: '<span><i style="background:var(--owned)"></i>✓ Read</span>' + '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
     <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
     ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
     ${seriesAbout(bookAboutObj("book:" + name))}
     <div id="cellpick"></div>
-    ${size ? `<div class="${gridClass(true)}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
+    ${size ? `<div class="${gridClass(false)}" id="gridbox"><div class="cells">${cells}</div></div>` : '<p class="muted small" style="margin:0">Give the volume numbers on your books, or enter how many volumes the series has.</p>'}`;
 }
 function bindBookGaps() {
   const name = S.gapSeries.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const extra = (S.bookSeriesExtra || []).find(x => x.name === name);
   const proto = mine[0] || { bookType: extra && extra.novel ? "book" : "" };
+  const vol = c => { const m = /^\s*(\d{1,4}(?:[.,]\d{1,2})?)\s*$/.exec(String(c.issue || "")); return m ? +m[1].replace(",", ".") : null; };
+  const own = new Map(); mine.forEach(c => { const v = vol(c); if (v != null && isOwn(c)) own.set(v, c); });
   bindGapTabs(); bindGapHead(); bindGapPicker();
   $("#bsizego").onclick = async () => { S.bookSizes = Object.assign({}, S.bookSizes, { [name]: parseInt($("#bsize").value, 10) || "" }); await setConfig("bookSizes", S.bookSizes); toast("Saved"); render(); };
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
   document.querySelectorAll(".cell[data-vol]").forEach(b => b.onclick = () => {
+    if (S.readMode) {   // quick reading log, like for comics: tap an owned volume to mark it read today, tap again to undo
+      const c = own.get(+b.dataset.vol);
+      if (!c) { toast("Only owned volumes can be marked as read"); return; }
+      const read = !c.read;
+      saveComic(Object.assign({}, c, { read, readDate: read ? (c.readDate || todayIso()) : "" })).then(() => { b.classList.toggle("read", read); toast(name + " " + b.dataset.vol + (read ? " marked as read" : ": read mark removed")); }).catch(e => toast(errText(e)));
+      return;
+    }
     if (b.dataset.id) { S.editing = b.dataset.id; S.draft = null; nav("add"); return; }
     const v = b.dataset.vol, base = { kind: "book", bookType: proto.bookType || "", seriesId: "_book", seriesName: name, issue: v, author: proto.author || "", publisher: proto.publisher || "", lang: proto.lang || "" };
     const box = $("#cellpick");
@@ -607,9 +619,10 @@ function detailHtml(c) {
     <div class="card stack detail">
       <div class="detailtop">${cv ? `<img class="cover" data-zoom="${t(c.id)}" src="${t(cv)}" alt="Cover, tap to enlarge" onerror="this.remove()">` : ""}
         <dl class="facts">${facts.join("")}</dl></div>
-      ${c.status !== "wanted" ? `<div class="row" style="gap:10px;align-items:center">${heartHtml(c.fav, 'id="v-fav"')}${starsHtml(c.rating, 'id="v-rating"')}<span class="small muted">saved straight away</span></div>` : ""}
+      ${isMine(c) ? `<div class="row" style="gap:10px;align-items:center">${heartHtml(c.fav, 'id="v-fav"')}${starsHtml(c.rating, 'id="v-rating"')}<span class="small muted">saved straight away</span></div>` : ""}
+      ${cv || c.coverRating ? `<div class="row" style="gap:10px;align-items:center"><span class="small muted">Cover</span>${starsHtml(c.coverRating, 'id="v-cover" aria-label="Cover rating"')}</div>` : ""}
     </div>
-    <div class="card stack"><h3>${c.status === "wanted" ? "On your wishlist" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl></div>
+    <div class="card stack"><h3>${c.status === "wanted" ? "On your wishlist" : notOwned(c) ? "Read, not owned" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl></div>
     ${(c.stories || []).length ? `<div class="card stack"><h3>Stories <span class="muted small">${c.stories.length}</span></h3>${hadElsewhereHtml(c, true)}<div class="stories">${c.stories.map(s => storyView(s, true)).join("")}</div></div>` : ""}
     ${c.duckipedia ? duckipediaCard(c) : ""}`;
 }
@@ -618,5 +631,5 @@ function bindDetail(c) {
   $("#vedit").onclick = () => { S.viewMode = false; renderKeep(); window.scrollTo(0, 0); };
   const save = async patch => { try { const saved = await saveComic(Object.assign({}, S.comics.find(x => x.id === c.id) || c, patch)); S.draft = JSON.parse(JSON.stringify(saved)); } catch (e) { toast(errText(e)); } };
   $("#v-fav") && ($("#v-fav").onclick = e => { const on = !e.currentTarget.classList.contains("on"); e.currentTarget.classList.toggle("on", on); e.currentTarget.textContent = on ? "♥" : "♡"; save({ fav: on }); });
-  bindStars($("#app"), v => save({ rating: v }));
+  bindStars($("#app"), (v, box) => save(box.id === "v-cover" ? { coverRating: v } : { rating: v }));
 }

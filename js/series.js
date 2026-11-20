@@ -235,7 +235,7 @@ function serListHtml(tab) {
   if (tab === "books") {
     const names = bookSeriesNames(), by = {}; S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) (by[c.seriesName] = by[c.seriesName] || []).push(c); });
     const novel = n => (by[n] || []).length ? by[n].some(isNovel) : !!((S.bookSeriesExtra || []).find(x => x.name === n) || {}).novel;
-    const row = n => { const bs = by[n] || [], own = bs.filter(c => c.status !== "wanted").length, want = bs.length - own, m = bookInfo(n), size = (S.bookSizes || {})[n] || "";
+    const row = n => { const bs = by[n] || [], own = bs.filter(c => isOwn(c)).length, want = bs.filter(c => c.status === "wanted").length, m = bookInfo(n), size = (S.bookSizes || {})[n] || "";
       const authors = m.author || [...new Set(bs.map(c => splitPeople(c.author)[0]).filter(Boolean))].slice(0, 2).join(", ");
       return { n, find: norm([n, authors].join(" ")), html: folder(`data-sbook="${esc(n)}"`, n, [authors, want ? want + " wanted" : "", size ? size + " volumes" : ""].filter(Boolean).join(" · "), own) }; };
     const rows = names.map(row).filter(r => words.every(w => r.find.includes(w)));
@@ -266,7 +266,7 @@ function serListHtml(tab) {
   return `<div class="list">${us.map(u => { const l = S.series.filter(s => uOf(s) === u); return folder(`data-su="${esc(u)}"`, u, l.length + " series", l.reduce((a, s) => a + (used[s.id] || 0), 0), "pub"); }).join("")}</div><p class="small muted" style="margin:6px 0 0">The number is how many comics you have entered.</p>`;
 }
 function bookSeriesPage(n, sect) {
-  const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === n), own = bs.filter(c => c.status !== "wanted").length, k = "book:" + n, m = bookInfo(n);
+  const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === n), own = bs.filter(c => isOwn(c)).length, k = "book:" + n, m = bookInfo(n);
   const size = (S.bookSizes || {})[n] || "";
   const f = (key, label, ph) => `<label><span class="l">${label}</span><input data-bk="${key}" value="${esc(m[key] || "")}" placeholder="${esc(ph || "")}"></label>`;
   return `<div class="row between" style="align-items:baseline"><h3 style="margin:0">${esc(n)}</h3><span class="muted small">${own} ${own === 1 ? "book" : "books"}${bs.length > own ? " · " + (bs.length - own) + " wanted" : ""}</span></div>

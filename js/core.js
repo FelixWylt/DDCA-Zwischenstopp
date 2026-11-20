@@ -220,6 +220,7 @@ function valueRuleFor(c, asEdition) {
 // extras that came with a copy (lithograph, signature, box, gadget …), each with its own value, in CHF
 function extrasCHF(c) { return (c.extras || []).reduce((a, x) => a + (typeof x.value === "number" ? toCHF(x.value, x.cur || "CHF") : 0), 0); }
 function valueOf(c) {
+  if (c && c.status === "notowned") return null;   // read without owning it: no value of yours
   const v = baseValueOf(c), x = c.status === "wanted" ? 0 : extrasCHF(c);
   if (!x) return v;
   if (!v) return { amount: Math.round(x * 100) / 100, cur: "CHF", how: "estimate", extras: x };
@@ -776,7 +777,7 @@ async function boot() {
       await setConfig("moneyFix1", true);
     }
     if (!(await getConfig("lotDates1"))) {
-      const lots = {}; S.comics.forEach(c => { if (c.lotId && c.status !== "wanted") (lots[c.lotId] = lots[c.lotId] || []).push(c); });
+      const lots = {}; S.comics.forEach(c => { if (c.lotId && isOwn(c)) (lots[c.lotId] = lots[c.lotId] || []).push(c); });
       const fix = [];
       Object.values(lots).forEach(m => {
         const withDate = m.filter(c => c.purchaseDate).sort((a, b) => String(b.updatedAt || "").localeCompare(String(a.updatedAt || "")));
@@ -1040,7 +1041,7 @@ function dupHtml(d) {
   if (!c) return '<div id="dupnote"></div>';
   const where = c.status === "wanted" ? (d.status === "wanted" ? "is already on your wishlist" : "is on your wishlist: saving moves it to your collection")
     : "is already in your collection" + ((c.copies || 1) > 1 ? " (" + c.copies + " copies)" : "");
-  return `<div id="dupnote" class="banner ${c.status === "wanted" && d.status !== "wanted" ? "" : "warn"}">${esc(c.kind === "book" ? c.title + (c.issue ? " (" + c.issue + ")" : "") : comicTag(c))} ${where}. <button type="button" class="link" data-dupopen="${esc(c.id)}">Open it</button></div>`;
+  return `<div id="dupnote" class="banner ${c.status === "wanted" && isOwn(d) ? "" : "warn"}">${esc(c.kind === "book" ? c.title + (c.issue ? " (" + c.issue + ")" : "") : comicTag(c))} ${where}. <button type="button" class="link" data-dupopen="${esc(c.id)}">Open it</button></div>`;
 }
 function refreshDup(d) {
   const el = $("#dupnote"); if (!el) return;
@@ -1058,14 +1059,14 @@ function lotFields(d) {
       <div class="muted" style="margin-top:4px">Purchase date and where bought apply to the whole lot: changing them here changes them for all its ${w2}.</div>
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
-function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && c.status !== "wanted") : []; }
+function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && isOwn(c)) : []; }
 function lotInfo(id) {
   const m = lotMembers(id); if (!m.length) return null;
   const f = m.slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))[0];
   return { id, members: m, total: f.lotTotal, currency: f.lotCurrency || f.currency || "CHF", source: f.source || "", date: f.purchaseDate || "", created: m.reduce((a, c) => { const x = String(c.updatedAt || c.createdAt || ""); return x > a ? x : a; }, "") };
 }
 function allLots() {
-  const ids = [...new Set(S.comics.filter(c => c.lotId && c.status !== "wanted").map(c => c.lotId))];
+  const ids = [...new Set(S.comics.filter(c => c.lotId && isOwn(c)).map(c => c.lotId))];
   return ids.map(lotInfo).filter(Boolean).sort((a, b) => String(b.created).localeCompare(String(a.created)));
 }
 function recentLots() { return allLots().slice(0, 12); }
@@ -1151,7 +1152,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 209;
+const APP_BUILD = 210;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1315,7 +1316,7 @@ function applyIssueFromCatalogue(c, label, hit) {
   if (!c.coverUrl && hit.cv) out.coverUrl = inducksImg(hit.cv);
   const fromClz = !(c.stories || []).some(x => x.code);
   const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
-  if (fromClz && (hit.s || []).length) out.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "" }));
+  if (fromClz && (hit.s || []).length) out.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "", pages: x.p || "" }));
   out.inducks = hit.ic;
   return out;
 }
@@ -1344,7 +1345,11 @@ function seriesFromCatalogue(se, file, entry) {
 }
 
 // ---------- derived ----------
-function owned() { return S.comics.filter(c => c.status !== "wanted"); }
+// status "owned", "wanted" (wishlist) or "notowned" (read but not owned: library books, free e-books; only for reading stats)
+function isOwn(c) { return !!c && c.status !== "wanted" && c.status !== "notowned"; }
+function isMine(c) { return !!c && c.status !== "wanted"; }   // owned or read without owning: your ratings and read marks count
+const notOwned = c => !!c && c.status === "notowned";
+function owned() { return S.comics.filter(c => isOwn(c)); }
 function searchText(c) {
   const st = (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist, s.hero, s.dTitle, s.original, s.translator, s.characters, s.genre].join(" ")).join(" ");
   const dk = c.duckipedia && c.duckipedia.issue ? [c.duckipedia.issue.translator, c.duckipedia.issue.editor, c.duckipedia.issue.title].join(" ") : "";

@@ -138,7 +138,7 @@
     return r.json();
   }
   // returns parsed details, or null when there is no page for this issue
-  async function fetchIssue(series, comic) {
+  async function fetchIssue(series, comic, opts) {
     const cands = candidates(series, comic); if (!cands.length) return null;
     const q = await api({ action: "query", titles: cands.join("|"), redirects: "1" });
     const pages = (q.query && q.query.pages) || [];
@@ -151,7 +151,7 @@
     const p = await api({ action: "parse", page: found.title, prop: "wikitext", redirects: "1" });
     if (!p.parse) return null;
     const out = parsePage(p.parse.title, p.parse.wikitext || "");
-    if (out.issue.image) out.issue.cover = await imageUrl(out.issue.image).catch(() => "");
+    if (out.issue.image && !(opts && opts.noImage)) out.issue.cover = await imageUrl(out.issue.image).catch(() => "");   // one more request: skipped when the cover won't be used
     return out;
   }
   // a small copy (300 px wide) of a picture on Duckipedia

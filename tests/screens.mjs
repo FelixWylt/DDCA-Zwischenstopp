@@ -39,7 +39,10 @@ const comics = [
   { id: "b3", kind: "book", bookType: "", seriesId: "_book", title: "Ende gut, alles gut!", status: "owned", stories: [] },
   c("mmz14", "mm", "1937/14", { stories: [{ title: "Oscar the Ostrich", code: "YM 029", first: "30.05.1937" }, { title: "Oscar the Ostrich", code: "YM 029" }, { title: "Tolle Phantasien", code: "ZS 37-05-30" }] }),
   { id: "b4", kind: "book", bookType: "book", seriesId: "_book", seriesName: "A Song of Ice and Fire", issue: "1", issueLabel: "1", issueNum: 1, issueSort: 1, title: "A Game of Thrones", author: "George R. R. Martin", status: "owned", stories: [] },
-  c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86)
+  c("hh1", "x-herman-hedning-swedish", 1), c("hh86", "x-herman-hedning-swedish", 86),
+  // read but not owned: a library book and a borrowed comic
+  { id: "nb1", kind: "book", bookType: "book", seriesId: "_book", seriesName: "A Song of Ice and Fire", issue: "2", issueLabel: "2", issueNum: 2, issueSort: 2, title: "A Clash of Kings", status: "notowned", read: true, readDate: "2026-11-01", pages: "700", rating: 4, coverRating: 3, source: "Library", stories: [] },
+  c("nc1", "kap", 46, { status: "notowned", read: true, readDate: "2026-10-12", stories: [{ title: "Farbror Joakim och spartävlingen", code: "I TL  299-A", writer: "Romano Scarpa", artist: "Romano Scarpa", pages: "32" }] })
 ];
 
 const browser = await chromium.launch();
@@ -120,6 +123,26 @@ if (want("series-tools")) try {
   await page.evaluate(() => { const r = [...document.querySelectorAll('.yearrow')].find(x => /^2007/.test(x.textContent.trim())); if (r) r.scrollIntoView(); }); await page.waitForTimeout(300);
   await page.screenshot({ path: `${OUT}/09d-gaps-91an.png` });
 } catch (e) { errors.push("price batch: " + e.message); }
+// read, not owned: kept out of the collection and its value, counted apart in Stats › Reading and in Stories
+if (want("notowned")) try {
+  const r = await page.evaluate(async () => { const { S, nav, owned } = window.__dda;
+    S.statTab = "reading"; S.statScope = "a"; S.statRange = "all"; nav("stats"); await new Promise(f => setTimeout(f, 700));
+    const reading = document.body.textContent;
+    S.statTab = "stories"; nav("stats"); await new Promise(f => setTimeout(f, 700));
+    const stories = document.body.textContent;
+    S.gapTab = "gaps"; S.gapSeries = "book:A Song of Ice and Fire"; nav("gaps"); await new Promise(f => setTimeout(f, 700));
+    return { inOwned: owned().some(c => c.id === "nb1" || c.id === "nc1"), notOwnedLine: /2 read without owning them/.test(reading), split: /owned, 2 not owned/.test(reading), storiesRead: /Stories read/.test(stories), longest: /32 pages/.test(stories),
+      vol2: (document.querySelector('.cell[data-vol="2"]') || {}).className || "none", markRead: !!document.querySelector("#readmode") };
+  });
+  if (r.inOwned || !r.notOwnedLine || !r.split || !r.storiesRead || !r.longest || /owned/.test(r.vol2) || !r.markRead) errors.push("read, not owned: " + JSON.stringify(r));
+  await page.screenshot({ path: `${OUT}/20-book-gaps.png`, fullPage: true });
+  // Mark read in a book series' grid: tap volume 1 (owned) and it gets its read mark
+  await page.evaluate(() => { window.__dda.S.readMode = true; window.__dda.nav("gaps"); }); await page.waitForTimeout(600);
+  await page.locator('.cell[data-vol="1"]').click(); await page.waitForTimeout(600);
+  const rd = await page.evaluate(() => ({ cls: document.querySelector('.cell[data-vol="1"]').className, saved: !!(window.__dda.S.comics.find(c => c.id === "b4") || {}).read }));
+  if (!/\bread\b/.test(rd.cls) || !rd.saved) errors.push("book grid mark read: " + JSON.stringify(rd));
+  await page.evaluate(() => { window.__dda.S.readMode = false; });
+} catch (e) { errors.push("read, not owned: " + e.message); }
 // the copy picker: tap the LTB 1 row with two copies
 if (want("copy-picker")) try {
   await page.evaluate(() => { const { S, nav } = window.__dda; S.col = { p: "Disney", g: "Deutschland – Lustiges Taschenbuch", s: "ltb" }; nav("collection"); });

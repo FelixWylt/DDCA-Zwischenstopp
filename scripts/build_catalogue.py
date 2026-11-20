@@ -132,6 +132,25 @@ storycodes = {v["storycode"] for v in versions.values() if v["storycode"]}
 stories = {}
 for r in rows("inducks_story", ["storycode", "title"]):
     if r["storycode"] in storycodes: stories[r["storycode"]] = r["title"]
+# the story's main hero in each language, for titles printed without it ("och spartävlingen" -> "Farbror Joakim och spartävlingen")
+heroes = {}
+for r in rows("inducks_herocharacter", ["storycode", "charactercode", "number"]):
+    if r.get("storycode") in storycodes and r.get("charactercode"):
+        heroes.setdefault(r["storycode"], []).append((r.get("number") or "9", r["charactercode"]))
+hero_chars = {c for hs in heroes.values() for _, c in hs}
+char_names = {}
+for r in rows("inducks_charactername", ["charactercode", "languagecode", "charactername", "preferred"]):
+    if r.get("charactercode") in hero_chars and r.get("charactername"):
+        k = (r["charactercode"], r.get("languagecode", ""))
+        if k not in char_names or r.get("preferred") == "Y": char_names[k] = r["charactername"]
+log(f"story heroes: {len(heroes):,}, their names: {len(char_names):,}")
+def with_hero(title, storycode, lang):
+    """A title starting in lower case gets the story's first hero in front, in the issue's language."""
+    if not title or not title[0].islower() or storycode not in heroes: return title
+    code = sorted(heroes[storycode])[0][1]
+    name = char_names.get((code, lang))
+    if not name: return title
+    return name + title if title.startswith("s ") else name + " " + title   # "s osynliga elakhet" -> "Kalle Ankas osynliga elakhet"
 jobs = {}
 for r in rows("inducks_storyjob", ["storyversioncode", "personcode", "plotwritartink"]):
     if r["storyversioncode"] in svcs and r["personcode"]:
@@ -170,7 +189,11 @@ for code, t in chosen.items():
             v = versions.get(e["storyversioncode"]) or {}
             if v.get("kind") != "n": continue          # comic stories only
             js = jobs.get(e["storyversioncode"], [])
-            st.append({"c": v.get("storycode", ""), "t": e["title"] or stories.get(v.get("storycode"), ""),
+            title = e["title"] or stories.get(v.get("storycode"), "")
+            if title and title[0].islower() and e["printedhero"]:   # the printed hero line belongs in front ("Stål-Kalle en superhjältes …")
+                title = e["printedhero"] + (title if title.startswith("s ") else " " + title)
+            else: title = with_hero(title, v.get("storycode", ""), pubs[code].get("languagecode", ""))
+            st.append({"c": v.get("storycode", ""), "t": title,
                        "w": names(js, "pw"), "a": names(js, "ai"), "h": e["printedhero"] or "", "p": v.get("entirepages", "")})
         lab = label_for(i["issuenumber"])
         rec = {"ic": ic, "n": i["issuenumber"], "t": i["title"], "d": i["oldestdate"], "pg": i["pages"], "s": st}
