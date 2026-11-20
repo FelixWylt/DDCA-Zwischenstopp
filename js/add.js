@@ -221,7 +221,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       document.querySelectorAll(".extrarow").forEach(row => { const x = (d.extras || [])[+row.dataset.xi]; if (!x) return; row.querySelectorAll("[data-xf]").forEach(inp => { x[inp.dataset.xf] = inp.dataset.xf === "value" ? parseAmt(inp.value) : inp.value.trim(); }); });
       if (d.extras) d.extras = d.extras.filter(x => x.what || typeof x.value === "number");
       if (d.status === "notowned") d.read = true;   // read without owning it: always read
-      document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => s[inp.dataset.sf] = inp.value); });
+      document.querySelectorAll(".story").forEach(row => { const s = d.stories[+row.dataset.i]; row.querySelectorAll("[data-sf]").forEach(inp => { if (inp.dataset.sf === "title" && inp.value.trim() && inp.value !== (s.title || "")) s.ownTitle = true; s[inp.dataset.sf] = inp.value; }); });
     };
     $("#cancel") && ($("#cancel").onclick = () => goBack());
     $("#xadd") && ($("#xadd").onclick = () => { grab(); d.extras = (d.extras || []).concat([{ what: "", value: "", cur: d.currency || "CHF" }]); render(); });
@@ -333,7 +333,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       if (hit.ic) {   // compact catalogue format
         const fromCat = d.title && Object.values(file.issues || {}).some(x => x.t && norm(x.t) === norm(d.title));
         d.title = (!d.title || fromCat ? hit.t : d.title) || d.title || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
-        d.stories = (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "", pages: x.p || "" }));
+        d.stories = keepOwnTitles(d.stories, (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "", pages: x.p || "" })));
         d.inducks = hit.ic; await fillExtras(se); render(); const had = storiesHadElsewhere(d).length; toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories") + (had ? " · you already have " + had + " of them in other comics" : "")); return;
       }
       d.title = d.title || hit.title || ""; d.date = hit.date || d.date; d.pages = hit.pages || d.pages; d.coverUrl = d.coverUrl || hit.cover || "";

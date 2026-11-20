@@ -11,6 +11,12 @@ function splitChars(v) {
   return out.map(x => x.replace(/\u0001/g, ",").replace(/\s*\([^)]*\)/g, "").trim()).filter(Boolean);
 }
 const storyCode = v => String(v || "").replace(/\s+/g, " ").trim();
+// a story title you corrected yourself (Edit › Stories) stays when INDUCKS details are fetched again: matched by story code, else by place
+function keepOwnTitles(old, fresh) {
+  const own = (old || []).filter(s => s.ownTitle && s.title);
+  if (!own.length) return fresh;
+  return fresh.map((s, i) => { const o = own.find(x => x.code && codeKey(x.code) === codeKey(s.code)) || (!s.code && (old || [])[i] && old[i].ownTitle ? old[i] : null); return o ? Object.assign({}, s, { title: o.title, ownTitle: true }) : s; });
+}
 const codeKey = v => String(v || "").replace(/\s+/g, "").toLowerCase();
 // stories of this comic that are already in another comic you own (same INDUCKS story code): [{ s, comics }]
 function storiesHadElsewhere(d) {
@@ -66,7 +72,7 @@ function storyIndex(status) {
       if (map.has(key) && map.get(key).items.includes(c)) return;
       let e = map.get(key);
       if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
-      const title = st.dTitle || st.title; if (title && !e.titles.includes(title)) e.titles.push(title);
+      const title = st.ownTitle ? st.title : st.dTitle || st.title; if (title && !e.titles.includes(title)) e.titles.push(title);
       splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
       splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => e.chars.add(x));
       ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
@@ -118,8 +124,8 @@ VIEWS.stories = {
     document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
     $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
     $("[data-strated]") && ($("[data-strated]").onclick = () => { st.rated = !st.rated; if (st.rated && st.sort === "title") st.sort = "rating"; st.shown = 100; render(); });
-    // search 0.3 s after the last key, so typing or deleting quickly doesn't redraw the list for every letter
-    $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; clearTimeout(st._t); st._t = setTimeout(drawStories, 300); };
+    // search 0.2 s after the last key, so typing or deleting quickly doesn't redraw the list for every letter
+    $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; clearTimeout(st._t); st._t = setTimeout(drawStories, 200); };
     $("#stsort") && ($("#stsort").onchange = e => { st.sort = e.target.value; drawStories(); });
     $("#stwhox") && ($("#stwhox").onclick = () => { st.who = null; render(); });
     drawStories();
@@ -517,7 +523,7 @@ async function refreshAll() {
         if (hit.d) c.date = hit.d; if (hit.t) c.title = hit.t; if (hit.pg) c.pages = hit.pg;
         if (hit.cv && fromSources(c.coverUrl)) c.coverUrl = inducksImg(hit.cv);
         const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
-        if ((hit.s || []).length) c.stories = hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "", pages: x.p || "" }));
+        if ((hit.s || []).length) c.stories = keepOwnTitles(c0.stories, hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "", pages: x.p || "" })));
         c.inducks = hit.ic;
       }
     }

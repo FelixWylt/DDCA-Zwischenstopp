@@ -142,6 +142,11 @@ if (want("notowned")) try {
   const rd = await page.evaluate(() => ({ cls: document.querySelector('.cell[data-vol="1"]').className, saved: !!(window.__dda.S.comics.find(c => c.id === "b4") || {}).read }));
   if (!/\bread\b/.test(rd.cls) || !rd.saved) errors.push("book grid mark read: " + JSON.stringify(rd));
   await page.evaluate(() => { window.__dda.S.readMode = false; });
+  // a story title corrected by hand stays when INDUCKS details come again (Refresh all comics)
+  const kt = await page.evaluate(() => keepOwnTitles([{ title: "Kalle Anka jagar änder", code: "W OS 1-01", ownTitle: true }], [{ title: "jagar änder", code: "W OS  1-01" }, { title: "Other", code: "X 1" }]).map(s => s.title).join(" | "));
+  if (kt !== "Kalle Anka jagar änder | Other") errors.push("own story title: " + kt);
+  const pile = await page.evaluate(async () => { const { S, nav } = window.__dda; S.statTab = "reading"; nav("stats"); await new Promise(f => setTimeout(f, 600)); return /to read them all at your pace/.test(document.body.textContent); });
+  if (!pile) errors.push("unread pile card missing");
 } catch (e) { errors.push("read, not owned: " + e.message); }
 // the copy picker: tap the LTB 1 row with two copies
 if (want("copy-picker")) try {
