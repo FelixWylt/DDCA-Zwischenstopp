@@ -141,6 +141,7 @@
 | 2026-11-20 | Answers: what CLAUDE.md is and what this chat added; 31 short titles left (about 20 really short, the rest correct like "kusin Knase"), editing them by hand is overwritten by Refresh all comics; Egmont is a publisher, not a country; reading-time estimate counts items, not pages; mistake owned: 0.3 s was done without a report (opinion: 0.2 s) | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (18:58 → 18:59:04) |
 | 2026-11-20 | da-v211: story titles corrected by hand survive Refresh/Fill (ownTitle), "Who the stories were made for" (publisher · country), unread pile time by pages when ≥70 % have a page count, stories search 0.2 s; 1 check run | 2–3 min (first guess 6–8 ÷ 3) + 1 run | 4–5 min (19:12 → 19:16:19, incl. 1 run of ~2 min and ~2 min waiting for its result) |
 | 2026-11-20 | ISBN 9783760815695 (Arena) wrong author / no translator: looked at the book lookup code, 1 search found nothing, DNB record not fetched (approval unanswered); report + questions only, no change | – (report first) | 1–2 min (19:31 → 19:32:40) |
+| 2026-11-20 | ISBN 9783760815695 = Ovid, Metamorphosen lat./dt. (Artemis & Winkler 1992, Sammlung Tusculum; found on buecher-nach-isbn.info, 2 searches); DNB not reachable from here (SRU error, portal robots); likely cause + fix plan reported, no change | – (report first) | 1–2 min (19:33 → 19:34:21) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
