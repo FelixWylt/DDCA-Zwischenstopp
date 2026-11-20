@@ -142,6 +142,7 @@
 | 2026-11-20 | da-v211: story titles corrected by hand survive Refresh/Fill (ownTitle), "Who the stories were made for" (publisher · country), unread pile time by pages when ≥70 % have a page count, stories search 0.2 s; 1 check run | 2–3 min (first guess 6–8 ÷ 3) + 1 run | 4–5 min (19:12 → 19:16:19, incl. 1 run of ~2 min and ~2 min waiting for its result) |
 | 2026-11-20 | ISBN 9783760815695 (Arena) wrong author / no translator: looked at the book lookup code, 1 search found nothing, DNB record not fetched (approval unanswered); report + questions only, no change | – (report first) | 1–2 min (19:31 → 19:32:40) |
 | 2026-11-20 | ISBN 9783760815695 = Ovid, Metamorphosen lat./dt. (Artemis & Winkler 1992, Sammlung Tusculum; found on buecher-nach-isbn.info, 2 searches); DNB not reachable from here (SRU error, portal robots); likely cause + fix plan reported, no change | – (report first) | 1–2 min (19:33 → 19:34:21) |
+| 2026-11-20 | da-v212 book lookup: author of a translated classic from its work entry (700 $t: Publius Ovidius Naso), an editor ("Hrsg.") only when no database names an author, translator from "Übers."/"Übertr." roles and from the title line ("übertragen von Erich Rösch"; Holzberg = editor/introduction, not translator); test with 3 made-up records; publish was blocked once without the user's go; 1 check run | 1–1.5 min (first guess 2–3 ÷ 2) + 1 run | 3–4 min (22:20 → 22:23:31, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -216,6 +217,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   When adding code that asks "not on the wishlist", decide between isOwn and isMine.
 - **Own story titles (da-v211):** a title changed in Edit › Stories gets `ownTitle: true`; keepOwnTitles() keeps it when
   Refresh all comics or Fill from INDUCKS replace the stories (matched by story code).
+- **Book lookup roles (da-v212):** books.js parseMarc: no 100 → author from the 700 field with $t (the work); editor-only records
+  get weakAuthors and merge() prefers another database's author; translator from $e/$4 (incl. "Übers.") or 245$c
+  ("übers./übertragen/deutsch von X"). The DNB (SRU and portal) couldn't be reached from here or by the user on 2026-11-20.
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
