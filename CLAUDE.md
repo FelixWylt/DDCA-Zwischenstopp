@@ -143,6 +143,7 @@
 | 2026-11-20 | ISBN 9783760815695 (Arena) wrong author / no translator: looked at the book lookup code, 1 search found nothing, DNB record not fetched (approval unanswered); report + questions only, no change | – (report first) | 1–2 min (19:31 → 19:32:40) |
 | 2026-11-20 | ISBN 9783760815695 = Ovid, Metamorphosen lat./dt. (Artemis & Winkler 1992, Sammlung Tusculum; found on buecher-nach-isbn.info, 2 searches); DNB not reachable from here (SRU error, portal robots); likely cause + fix plan reported, no change | – (report first) | 1–2 min (19:33 → 19:34:21) |
 | 2026-11-20 | da-v212 book lookup: author of a translated classic from its work entry (700 $t: Publius Ovidius Naso), an editor ("Hrsg.") only when no database names an author, translator from "Übers."/"Übertr." roles and from the title line ("übertragen von Erich Rösch"; Holzberg = editor/introduction, not translator); test with 3 made-up records; publish was blocked once without the user's go; 1 check run | 1–1.5 min (first guess 2–3 ÷ 2) + 1 run | 3–4 min (22:20 → 22:23:31, incl. 1 run of ~2 min) |
+| 2026-11-20 | 11 points looked at (pages read all time, book countries, story ratings on the comic page, What you collect by universe, decade labels, duplicates, wishes fulfilled, growth, One-pager, sort direction, y-axes): report + plan + questions, no change | – (report first) | 1–2 min (22:58 → 22:59:50) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
