@@ -260,12 +260,16 @@ VIEWS.stats = {
       const slotKey = c => { const lab = String(c.issueLabel || c.issue || "").trim();
         if (!lab || /\?/.test(lab)) return c.kind === "book" && c.isbn ? "isbn:" + String(c.isbn).replace(/[^0-9X]/gi, "") : "id:" + c.id;
         return (c.kind === "book" ? "b:" + (c.seriesName || "") : c.seriesId || c.seriesName || "") + "|" + lab + "|" + String(c.edition || "").trim().toLowerCase() + "|" + (c.facsimile ? "f" : ""); };
-      const slots = {}; sel.forEach(c => { const k = slotKey(c), x = slots[k] = slots[k] || { n: 0, cs: [] }; x.n += c.copies || 1; x.cs.push(c); });
+      // books with different ISBNs are different items (hardcover and paperback of the same volume); a book without an ISBN joins the one ISBN of its slot, if there is only one
+      const isbnOf = c => c.kind === "book" && c.isbn ? String(c.isbn).replace(/[^0-9X]/gi, "").toUpperCase() : "";
+      const slotIsbns = {}; sel.forEach(c => { const k = slotKey(c), i = isbnOf(c); if (i && !k.startsWith("isbn:")) (slotIsbns[k] = slotIsbns[k] || new Set()).add(i); });
+      const itemKey = c => { const k = slotKey(c); if (k.startsWith("isbn:") || !slotIsbns[k]) return k; const i = isbnOf(c) || (slotIsbns[k].size === 1 ? [...slotIsbns[k]][0] : ""); return k + "|" + i; };
+      const slots = {}; sel.forEach(c => { const k = itemKey(c), x = slots[k] = slots[k] || { n: 0, cs: [] }; x.n += c.copies || 1; x.cs.push(c); });
       const dupL = Object.values(slots).filter(x => x.n > 1).sort((a, b) => b.n - a.n || nameOf(a.cs[0]).localeCompare(nameOf(b.cs[0]), "de", { numeric: true }));
       const extra = dupL.reduce((a, x) => a + x.n - 1, 0), dupSlots = dupL.length, trade = sel.filter(c => c.forTrade).length;
       const dups = extra || trade ? card("Duplicates", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(extra)}</div><div class="k small muted">extra copies of ${nf(dupSlots)} ${dupSlots === 1 ? "item" : "items"}</div></div><div><div class="v2">${nf(trade)}</div><div class="k small muted">marked for trade</div></div></div>
         <div class="row" style="gap:8px;flex-wrap:wrap">${extra ? `<button type="button" class="ghost" id="stDups">${S.statDups ? "Hide the list" : "Show them"}</button>` : ""}${trade ? `<button type="button" id="goTrade">Show the trade list</button>` : ""}</div>
-        ${S.statDups && extra ? openList(dupL.map(x => `<li><button class="link" data-open="${esc(x.cs[0].id)}">${esc(nameOf(x.cs[0]))}</button><span class="muted"> ×${x.n}${x.cs.length > 1 ? " · " + x.cs.length + " separate entries" : ""}</span></li>`)) + note("Copies of the same item: same series, number and edition. A different edition, a variant cover (B) or a facsimile is a different item.") : ""}`) : "";
+        ${S.statDups && extra ? openList(dupL.map(x => `<li><button class="link" data-open="${esc(x.cs[0].id)}">${esc(nameOf(x.cs[0]))}</button><span class="muted"> ×${x.n}${x.cs.length > 1 ? " · " + x.cs.length + " separate entries" : ""}</span></li>`)) + note("Copies of the same item: same series, number and edition. A different edition, a variant cover (B), a facsimile or a book with another ISBN is a different item.") : ""}`) : "";
       // wishes bought, per month this year (counted since version da-v179)
       const gotOn = c => boughtOn(c) || String(c.wishGotOn || "");   // without a purchase date: the day the wish became owned
       const got = {}; sel.filter(c => c.wasWish && gotOn(c).startsWith(yNow)).forEach(c => { const k = gotOn(c).slice(0, 7); if (k.length === 7) got[k] = (got[k] || 0) + 1; });
