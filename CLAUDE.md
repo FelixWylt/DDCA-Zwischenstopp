@@ -164,6 +164,7 @@
 | 2026-11-21 | Story series answers A (sub tab of All stories), B (language filter on All stories + Favourites, country filter on People) taken in; the user's 22:45 backup: all 5,600 story codes are in the catalogue, comic language mostly from the series code (de/, se/, it/, ch/); question on the People country; no change | – (report first) | 0–1 min (22:45 → 22:45:31) |
 | 2026-11-21 | Story series: two language filters (original language of the story + language in the user's comics), C = creator's own country; updated plan, no change | – (report first) | 0–1 min (22:51 → 22:51:25) |
 | 2026-11-21 | Model/effort guideline table in CLAUDE.md (one line per report, no new working out); point 4 = language filter on People › Characters taken into the plan; app job not started | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (23:00 → 23:01:14) |
+| 2026-11-21 | da-v217/218 story series + filters: build writes story-info.json (INDUCKS story series, first printing's language, creators' nationality; tested on made-up ISV tables), Stories › All stories sub chips Stories / Story series, series pages + search, Original / In my comics rows (All stories, Favourites), People › Country and Characters › In my comics; tested locally with the user's backup (no GitHub check run); catalogue rebuild failed: inducks.org unreachable (~13 min waiting), message in the app; merged another chat's notes line | 5–7 min (first guess 15–20 ÷ 3) + rebuild 3–5 min + 1 run | 21–22 min (23:03 → 23:24:41, incl. ~13 min waiting for the failed rebuild) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -176,7 +177,11 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-21, app da-v217)
+## Where we left off (2026-11-21, app da-v218)
+- **Open (2026-11-21, da-v218): catalogue rebuild still needed.** inducks.org timed out from GitHub at 23:10–23:22 (curl 28, 5 tries), so
+  catalogue/story-info.json doesn't exist yet: Story series, Original language and People › Country stay empty until it does
+  (the app says so). Start it again: `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/inducks-catalogue.yml/dispatches -f ref=main`
+  (or it runs by itself on the 3rd of each month), then check report.txt's STORY INFO lines (table columns are logged there).
 - **Open (2026-11-21, handover nr. 10):** nothing waiting locally; the user may send a backup to check the new features (one story per code, Read online entries);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
@@ -303,7 +308,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   | Kind of job | Model | Effort |
   |---|---|---|
   | Answers, explanations, value estimates, notes/CLAUDE.md edits | Opus (Sonnet is enough too) | low or medium |
-  | Price lists from a pasted CSV/table, one small fix | Opus | medium |
+  | Price lists from a pasted CSV/table, one small fix | Opus (Sonnet is enough too) | medium |
   | Bundles of several app changes, a new screen/filter, catalogue build changes | Opus | high |
   | One very tricky bug that already failed once, or a big rebuild of a whole tab | Opus | extra |
   | Only if Opus on extra failed twice on the same problem | Fable | high |

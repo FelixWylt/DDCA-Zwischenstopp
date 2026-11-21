@@ -73,11 +73,11 @@ function sharedTitle(a, b) {
 }
 // story info from the catalogue (catalogue/story-info.json, 2026-11-21): story series (DoubleDuck …), each story's original
 // language and the creators' own country, matched by story code, so comics need no Refresh
-let SINFO = null, sinfoTry = 0;
+let SINFO = null, sinfoTry = 0, sinfoMissing = false;
 function loadStoryInfo() {
   if (SINFO || Date.now() - sinfoTry < 60000) return; sinfoTry = Date.now();
   fetch("catalogue/story-info.json").then(r => r.ok ? r.json() : null).then(j => {
-    if (!j) return;
+    if (!j) { if (!sinfoMissing) { sinfoMissing = true; if (S.view === "stories") render(); } return; }
     const ser = new Map(), lang = new Map();
     Object.entries(j.storySeries || {}).forEach(([k, v]) => ser.set(storyCode(k), v));
     Object.entries(j.lang || {}).forEach(([k, v]) => lang.set(storyCode(k), v));
@@ -273,7 +273,7 @@ function drawStories() {
       list.forEach(e => storySeriesOf(e).forEach(code => { const x = m.get(code) || { code, n: seriesNameOf(code), stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); m.set(code, x); }));
       const ser = [...m.values()].filter(x => { const t = norm([x.n, x.code].concat((SINFO.series[x.code] || {}).a || []).join(" ")); return words.every(w => t.includes(w)); })
         .sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
-      box.innerHTML = !SINFO ? '<p class="muted small" style="margin:8px 0">Loading the story series …</p>'
+      box.innerHTML = !SINFO ? `<p class="muted small" style="margin:8px 0">${sinfoMissing ? "The story series come with the next catalogue update (INDUCKS couldn't be reached)." : "Loading the story series …"}</p>`
         : `<p class="muted small" style="margin:8px 0">${ser.length} story ${ser.length === 1 ? "series" : "series"}</p>` + (ser.length ? '<div class="list">' + ser.slice(0, st.shown).map(x => { const al = ((SINFO.series[x.code] || {}).a || []).slice(0, 3).join(" · "); return `<button class="folder" data-ser="${esc(x.code)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}${al ? " · " + esc(al) : ""}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("") + '</div>' : '<div class="empty"><h3>No story series found</h3><p>Try another name, or tap All in the rows above.</p></div>') + more(ser.length);
       box.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { st.who = { role: "series", name: b.dataset.ser }; st.sub = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
       $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
