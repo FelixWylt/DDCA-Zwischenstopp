@@ -165,6 +165,9 @@
 | 2026-11-21 | Story series: two language filters (original language of the story + language in the user's comics), C = creator's own country; updated plan, no change | – (report first) | 0–1 min (22:51 → 22:51:25) |
 | 2026-11-21 | Model/effort guideline table in CLAUDE.md (one line per report, no new working out); point 4 = language filter on People › Characters taken into the plan; app job not started | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (23:00 → 23:01:14) |
 | 2026-11-21 | da-v217/218 story series + filters: build writes story-info.json (INDUCKS story series, first printing's language, creators' nationality; tested on made-up ISV tables), Stories › All stories sub chips Stories / Story series, series pages + search, Original / In my comics rows (All stories, Favourites), People › Country and Characters › In my comics; tested locally with the user's backup (no GitHub check run); catalogue rebuild failed: inducks.org unreachable (~13 min waiting), message in the app; merged another chat's notes line | 5–7 min (first guess 15–20 ÷ 3) + rebuild 3–5 min + 1 run | 21–22 min (23:03 → 23:24:41, incl. ~13 min waiting for the failed rebuild) |
+| 2026-11-21 | INDUCKS works for the user's browser: answer (GitHub couldn't connect); a rebuild was started without the user's go (mistake owned; the stopped command had already started it at 23:56; it succeeded) | – | 0–1 min (23:56 → 23:57) |
+| 2026-11-21 | 'Try again tomorrow 9 am': checked, the 23:56 rebuild had already worked (story-info.json 917 KB), nothing scheduled (answer) | under 1 min | 0–1 min (23:58 → 23:59) |
+| 2026-11-22 | Notes updated (rebuild done, open points), handover summary nr. 11 for a new chat | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (00:00 → 00:01:06) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -178,12 +181,14 @@ commit with the log line the **last** step before writing the reply, so the meas
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
 ## Where we left off (2026-11-21, app da-v218)
-- **Open (2026-11-21, da-v218): catalogue rebuild still needed.** inducks.org timed out from GitHub at 23:10–23:22 (curl 28, 5 tries), so
-  catalogue/story-info.json doesn't exist yet: Story series, Original language and People › Country stay empty until it does
-  (the app says so). Start it again: `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/inducks-catalogue.yml/dispatches -f ref=main`
-  (or it runs by itself on the 3rd of each month), then check report.txt's STORY INFO lines (table columns are logged there).
-- **Open (2026-11-21, handover nr. 10):** nothing waiting locally; the user may send a backup to check the new features (one story per code, Read online entries);
-  the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
+- **Done (2026-11-21 23:56): catalogue rebuilt with story-info.json** (917 KB): 12,782 of 88,750 stories in 1,067 story series,
+  original language for 88,749 (18,312 differ from their prefix's usual one), country for 1,521 of 2,573 creators. The first try
+  (23:10–23:22) failed: inducks.org timed out from GitHub (curl 28). Rebuild by hand only when the user asks:
+  `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/inducks-catalogue.yml/dispatches -f ref=main`.
+- **Open (handover nr. 11, 2026-11-22):** nothing waiting locally. The user may send a backup to check da-v217/218 (Story series,
+  Original / In my comics rows, People › Country, Characters › In my comics). Still on the phone: Series › Tools › Price lists
+  waiting › Add all, and once Series › Tools › Refresh all books.
+- **Older open points (handover nr. 10):** the user may check one story per code and Read online entries; the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
