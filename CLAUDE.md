@@ -152,6 +152,7 @@
 | 2026-11-21 | da-v214: Duplicates: books with different ISBNs = different items (a book without ISBN joins the slot's only ISBN); tested on the user's backup: 8 extra copies of 7 items; 1 check run (stats-collection, no errors) | about 1 min (first guess 2 ÷ 2) + 1 run | 4–5 min (21:01 → 21:04:01, incl. 1 run of ~2 min) |
 | 2026-11-21 | 10 ideas looked at (pages per month, reading online texts (Fullreads, Royal Road), version in the update popup, multi-chapter stories (M USID 1-1P: 4 chapters, one code; 83 such groups in the backup, no ratings on parts), tap a bar for its number, average ratings card, index for long Stats tabs, redesign): report + plan + questions, no change | – (report first; first guess 6 ÷ 3 = 2 min) | 1–2 min (21:18 → 21:20:02) |
 | 2026-11-21 | Answers A, B (yes), D (yes) taken in; A = adding online reads is tedious → plan: Read online preset, title/author from a pasted link, Words field; Q7 answered (tap = number + Show them link); C still open; not started (user: don't start yet) | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (21:38 → 21:39:06) |
+| 2026-11-21 | C = recommendation; network probe (cors-test): Royal Road search 403 and no CORS header, Fullreads 200 but no CORS header → the app can't read either page, only the link itself; plan A changed (paste the page's copied text instead); not started | about 1.5 min (first guess 3 ÷ 2) + 1 min wait | 2–3 min (21:55 → 21:57:45, incl. 1 probe of ~1.5 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -281,6 +282,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   A waiting price list that needs new app code gets "minApp": that build (old apps can't apply it properly: the price
   lists load fresh, the code only with the update). Changing "added" makes a list show up again. A push to `main` publishes to GitHub Pages.
 - Network checks: push probe-books.mjs to the `cors-test` branch; the workflow writes probe-result.txt.
+  2026-11-21: royalroad.com answers 403 to GitHub's servers and sends no CORS header; fullreads.com no CORS header either: the app can't fetch them.
 - Screenshot check (the user's rule): only for a **visible** change, and only of the screens that changed. Start it by hand:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
   (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
