@@ -147,6 +147,7 @@
 | 2026-11-20 | Answers A–E taken in; looked at genres, book lookup (041 $h original language), Wikidata series fill (P495), book form; second report with the updated plan + answers (stories do have genres), no change | – (report first) | 1–2 min (23:14 → 23:15:32) |
 | 2026-11-20 | Komik = Duckipedia's story genre for comedy/gags (shown as Humour for whole comics); Growth bars OK; Panzerknacker & Co 2 to be marked as a fulfilled wish once (plan only, not started) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:22 → 23:22:36) |
 | 2026-11-20 | da-v213, 11 points: Reading All time counts everything (per month since 2016), book/book-series Country (Wikidata P495/P27, 041 $h, author's country after Refresh all books), story ratings + English genres/dates on the comic page, What you collect by universe (Disney · group), decade labels fit, duplicates by edition/ISBN + Show them, wishes turned owned count (Panzerknacker & Co 2 marked once), Growth monthly bars, One-pager only for stories, ↓/↑ on ranked lists + Stories page, y-axis on bar charts; 1 check run (no errors) | 10–13 min (first guess 30–40 ÷ 3) + 1–2 runs | 9–10 min (23:25 → 23:34:40, incl. 1 run of ~2 min) |
+| 2026-11-21 | Summary + orders for the next chat (text to paste), open points noted in CLAUDE.md | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:37 → 20:37:57) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -159,7 +160,10 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-15, app da-v209)
+## Where we left off (2026-11-21, app da-v213)
+- **Open (2026-11-21):** the user will send a backup so the duplicates count (was 69) can be checked against the da-v213 rule;
+  the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
+  After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
