@@ -155,6 +155,7 @@
 | 2026-11-21 | C = recommendation; network probe (cors-test): Royal Road search 403 and no CORS header, Fullreads 200 but no CORS header → the app can't read either page, only the link itself; plan A changed (paste the page's copied text instead); not started | about 1.5 min (first guess 3 ÷ 2) + 1 min wait | 2–3 min (21:55 → 21:57:45, incl. 1 probe of ~1.5 min) |
 | 2026-11-21 | E = paste works (user sent a Royal Road page copy: title line, 'by Author', ONGOING + tags, 'Vol 1, <title>' lines, PAGES : 2,064, '215 Chapters', fiction link /fiction/112557/), F = one entry per book; parser plan checked against the sample; question G (pages per book); not started | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (22:06 → 22:07:29) |
 | 2026-11-21 | G = pages per book typed by the user; point 11 added to the plan (CLAUDE.md rule: say when a job needs a stronger model or higher effort); not started | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:13 → 22:13:37) |
+| 2026-11-21 | High or extra effort? High is enough for the 8-point bundle (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:15 → 22:15:13) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
