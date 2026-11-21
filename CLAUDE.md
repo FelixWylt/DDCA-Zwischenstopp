@@ -37,7 +37,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (23:10–23:22) failed: inducks.org timed out from GitHub (curl 28). Rebuild by hand only when the user asks:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/inducks-catalogue.yml/dispatches -f ref=main`.
 - **Open (2026-11-22 00:34):** bundle planned, not started (needs effort high): user still to pick from 2a–f (a story note splits
-  own/read-only, b "I bought it" on read-only items, c read mark in Gaps, d "Want to own it", e Source suggestions, f Stories filter);
+  own/read-only, b ONE button "I bought it" (replaces the name "Got it" everywhere: Wishlist, Fair mode, + new on Read-not-owned items; same popup; fulfilled wish only when it came from the wishlist; the user's choice 00:56), c read mark in Gaps, d "Want to own it", e Source suggestions, f Stories filter);
   point 4 = Read online also for comics/comic books (format Webcomic; no webcomic page reader yet, answer A: not yet);
   point 5 = phone: Desktop site works for copying, but pasting the LINK is enough: title (+ series) from the Royal Road link's slug.
   Bug hunt: new chat, Opus extra, 3 parts, report only (order written 2026-11-22 00:37). Do the bundle after it, together with chosen fixes.

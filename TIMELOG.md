@@ -159,4 +159,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Bug-hunt order re-sent with the line: mark each fix high/extra, bundles of at most ~12 points (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:43 → 00:43:24) |
 | 2026-11-22 | 2b explained: 'I bought it' = the same as Got it, only on read-not-owned items (keeps read date/rating, not a fulfilled wish); proposal: call both 'Got it' (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:54 → 00:54:53) |
 | 2026-11-22 | Bug hunt part 1 (Add/Edit, book lookup, Backup/Restore): code read, backup checked (not committed), report with 16 bugs + 6 ideas, no app change | 3–5 min (first guess 10–15 for all 3 parts ÷ 3) | 5–6 min (00:50 → 00:55:34) |
+| 2026-11-22 | 2b decided: 'Got it' renamed 'I bought it' everywhere + on read-not-owned items; noted in the bundle plan (CLAUDE.md), no app change | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:56 → 00:57:08) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
