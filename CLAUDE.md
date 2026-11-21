@@ -168,7 +168,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-21, app da-v214)
+## Where we left off (2026-11-21, app da-v215)
 - **Open (2026-11-21):** duplicates done (da-v214: books with different ISBNs are different items; backup 20:40 → 8 extra copies of 7 items);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
@@ -242,6 +242,13 @@ except typing the reply itself. Say in the report that the reply writing and Git
   book countries: `bookCountry()` (own Country field › book series country from Wikidata P495/author P27 › 041 $h original language › author's country,
   cached in config authorCountry, asked after Refresh all books); comic books = edition country. Story genres/dates shown in English (storyGenreEn, dateEn);
   One-pager only on stories. Reading All time = everything read; per month counted from January 2016 (the user's wish).
+- **da-v215 (2026-11-21):** storyIndex: the same story code twice in one comic = ONE story (chapters of a serial; 86 groups in the
+  user's backup), title = sharedTitle() of the chapter titles (only where the title goes on with a separator/chapter word, else the
+  first title without "Teil 1"), pages added up. Stats: tap a bar (barRead) = number above the chart + Show them; index chips
+  (.statindex) on Collection/Money/Stories/Reading; Reading's Average ratings = series only; pages per month. Update popup reads the
+  new sw.js for its version. Books: Read online button, "Paste from the page" (parseWebPage in add.js: title, by author, RR tags,
+  "Vol N, title" lines -> book series + S.webVols buttons, PAGES, words; a long plain text = a short story, words counted), fields
+  Link and Words (pages = words ÷ 300), formats Web serial / Short story. The user types each book's pages (answer G).
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds
@@ -273,6 +280,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
 ## Other working rules
 - **Report before starting (the user's wish, 2026-11-20):** before changing anything, report what you found and the plan
   (with the time estimate and any questions), then wait for the user's go. Only answers need no report first.
+- **More power (the user's wish, 2026-11-21):** before a job, say when it needs more than the current setting: a higher "effort"
+  setting (usually "high" is enough for big bundles; "extra" only for one very tricky problem) or a stronger model. Say it in the
+  report, before the go, with one line on why.
 - **New chat (the user's wish, 2026-11-20):** say on your own when it's time for a new chat: when the chat has grown long
   (many replies, this file re-sent many times) or answers slow down, and best at a quiet moment (nothing local, nothing waiting).
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).

@@ -49,6 +49,16 @@ function pickInfo(pick) {
   return { test: c => who(c) && inScope(c) && T[0](c), label: T[1], scope };
 }
 function openPick(pick) { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.colTab = String(pick).endsWith("|b") ? "books" : "comics"; S.col = { pick }; S.shown = 200; nav("collection"); try { history.replaceState({ col: S.col }, "", "#collection"); } catch (e) {} }
+// the number of a tapped bar, in a line above its chart, with a link to what's in it
+function barRead(b) {
+  const chart = b.closest(".ychart") || b.closest("svg"); if (!chart) return;
+  let r = chart.previousElementSibling;
+  if (!r || !r.classList.contains("barread")) { r = document.createElement("div"); r.className = "barread small"; chart.parentNode.insertBefore(r, chart); }
+  chart.querySelectorAll(".col.on, rect.hit.on").forEach(x => x.classList.remove("on")); b.classList.add("on");
+  const t = b.getAttribute("title") || ((b.querySelector("title") || {}).textContent) || "";
+  r.innerHTML = `<strong>${esc(t)}</strong>${b.dataset.pick ? ` <button type="button" class="link">Show them</button>` : ""}`;
+  const l = r.querySelector("button"); if (l) l.onclick = e => { e.stopPropagation(); openPick(b.dataset.pick); };
+}
 function bindPicks(root) { (root || document).querySelectorAll("[data-pick]").forEach(b => b.onclick = e => { e.stopPropagation(); openPick(b.dataset.pick); }); }
 // horizontal bars that open their list: [label, count, pick]
 function pickBars(list, cls) {
@@ -399,9 +409,8 @@ VIEWS.stats = {
     const pile = card("Unread pile", "", `<div class="row" style="gap:24px"><div><div class="v2">${nf(unread.length)}</div><div class="k small muted">unread ${word}</div></div><div><div class="v2">${pace ? (left / pace >= 24 ? nf(Math.round(left / pace / 12)) + " years" : nf(Math.round(left / pace)) + " months") : "–"}</div><div class="k small muted">to read them all at your pace${byPages ? " (by pages)" : ""}</div></div><div><div class="v2">${pace >= 10 ? nf(Math.round(pace)) : pace.toFixed(1)}</div><div class="k small muted">${byPages ? "pages" : "read"} per month (last 12 months)</div></div>${(() => { const pg = unread.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0), noPg = unread.filter(c => !parseInt(c.pages, 10)).length; return pg ? `<div><div class="v2">${nf(pg)}</div><div class="k small muted">pages still to read${noPg ? ` (${nf(noPg)} without a page count)` : ""}</div></div>` : ""; })()}</div>`);
     // average rating per series and per artist
     const rs = {}; sel.filter(c => +c.rating > 0).forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (!k) return; const x = rs[k] = rs[k] || { t: 0, n: 0 }; x.t += +c.rating; x.n++; });
-    const ra = {}; if (scope !== "b") idxGet().forEach(e => { const r = +storyRate(e).rating; if (r > 0) e.artists.forEach(a => { const x = ra[a] = ra[a] || { t: 0, n: 0 }; x.t += r; x.n++; }); });
     const avgRows = (o, label, all) => ordered("avg", Object.entries(o).filter(([, x]) => x.n >= 2).map(([k, x]) => [label(k), x.t / x.n, x.n]).sort((a, b) => b[1] - a[1])).slice(0, all ? 1e9 : 6);
-    const rS = avgRows(rs, seriesTitle, S.statAllAvg), rA = avgRows(ra, k => k, S.statAllAvg), nAvg = Object.values(rs).filter(x => x.n >= 2).length + Object.values(ra).filter(x => x.n >= 2).length;
+    const rS = avgRows(rs, seriesTitle, S.statAllAvg), rA = [], nAvg = Object.values(rs).filter(x => x.n >= 2).length;
     const avgCard = rS.length || rA.length ? card("Average ratings " + sortBtn("avg"), "with at least 2 rated", `${rS.length ? `<div class="small"><strong>Series</strong>${openList(rS.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} rated</span></li>`))}</div>` : ""}${rA.length ? `<div class="small"><strong>Artists (story ratings)</strong>${openList(rA.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`))}</div>` : ""}${nAvg > rS.length + rA.length || S.statAllAvg ? `<button class="ghost" id="stAllAvg" type="button">${S.statAllAvg ? "Show fewer" : "Show all " + nAvg}</button>` : ""}`) : "";
     return head + readingCard(sel, word, selN) + `<div class="two">${pile}${avgCard}</div>` + ratedCard(sel.concat(selN), scope === "b" ? "books" : "comics");
   },
@@ -454,8 +463,21 @@ VIEWS.stats = {
     $("#stDups") && ($("#stDups").onclick = () => { S.statDups = !S.statDups; renderKeep(); });
     $("#stAllGroups") && ($("#stAllGroups").onclick = () => { S.statAllGroups = !S.statAllGroups; render(); });
     const show = b => { b.parentNode.querySelectorAll(".col.on").forEach(x => x.classList.remove("on")); b.classList.add("on"); $("#decread").textContent = b.dataset.dec + "s: " + Number(b.dataset.n).toLocaleString("de-CH") + (b.dataset.n === "1" ? " comic" : " comics"); };
-    document.querySelectorAll(".col[data-dec]").forEach(b => { b.onclick = () => show(b); b.onmouseenter = () => show(b); });
+    document.querySelectorAll(".col[data-dec]").forEach(b => { b.onmouseenter = () => show(b); });
     bindPicks(document.getElementById("app"));
+    // a tap on a bar shows its exact number above the chart (a phone has no hover); "Show them" opens what's in it
+    document.querySelectorAll("#app .cols .col, #app svg rect.hit").forEach(b => b.onclick = e => { e.stopPropagation(); barRead(b); if (b.dataset.dec) show(b); });
+    // index: on the long tabs a row of buttons that jump to each card
+    if (["collection", "money", "stories", "reading"].includes(S.statTab)) {
+      const cards = [...document.querySelectorAll("#app .card > .cardhead > h3")].map(h => h.closest(".card"));
+      if (cards.length > 3) {
+        const nav0 = document.createElement("div"); nav0.className = "statindex"; nav0.setAttribute("aria-label", "Jump to");
+        cards.forEach((c, i) => { c.id = "stc" + i; const b = document.createElement("button"); b.type = "button"; b.className = "fchip";
+          b.textContent = c.querySelector("h3").childNodes[0].textContent.trim() || c.querySelector("h3").textContent.trim();
+          b.onclick = () => c.scrollIntoView({ block: "start", behavior: "smooth" }); nav0.appendChild(b); });
+        const first = cards[0].closest(".two") || cards[0]; first.parentNode.insertBefore(nav0, first);
+      }
+    }
   }
 };
 // ---- Value over time: one point per month (the month's latest value), kept on this phone in "valueHistory" ----
@@ -529,7 +551,7 @@ function readingCard(list, word, extra) {
     <div class="row rstats">
       <div><div class="v2">${nf(inRange.length)}</div><div class="k small muted">read ${all ? "in all" : "in " + year}${extra.length ? ` · ${nf(inRange.length - inRangeN)} owned, ${nf(inRangeN)} not owned` : ""}</div></div>
       <div><div class="v2">${avg >= 10 ? Math.round(avg) : avg.toFixed(avg > 0 && avg < 0.95 ? 2 : 1)}</div><div class="k small muted">per month${all ? " since 2016" : ""}</div></div>
-      ${pages ? `<div><div class="v2">${nf(pages)}</div><div class="k small muted">pages</div></div>` : ""}
+      ${pages ? `<div><div class="v2">${nf(pages)}</div><div class="k small muted">pages</div></div><div><div class="v2">${nf(Math.round(pages / Math.max(1, months)))}</div><div class="k small muted">pages per month${all ? " since 2016" : ""}</div></div>` : ""}
     </div>
     ${dated.length ? timeBars(per, word + " read", "read", scope) : ""}
     ${pages ? `<div class="small muted">Pages read</div>${timeBars(perPages, "pages read", "", scope)}` : ""}

@@ -53,6 +53,24 @@ async function setStoryRate(key, patch) {
   if (!cur.fav && !+cur.rating) delete S.storyRatings[key]; else S.storyRatings[key] = cur;
   await setConfig("storyRatings", S.storyRatings);
 }
+// the title two chapters share: "Zio Paperone e il decino dell'infinito - Capitolo 1 - …" + "… - Capitolo 2 - …"
+// -> "Zio Paperone e il decino dell'infinito"; when they share too little, the first title stays
+function sharedTitle(a, b) {
+  a = String(a || ""); b = String(b || ""); if (!a || !b || a === b) return a || b;
+  const dash = s => s.toLowerCase().replace(/[–—]/g, "-");
+  const A = dash(a), Bx = dash(b); let n = 0; while (n < A.length && n < Bx.length && A[n] === Bx[n]) n++;
+  let s = a.slice(0, n); if (n < a.length && n < b.length && /\S/.test(a[n])) s = s.replace(/\S*$/, "");
+  const CH = "teil|part|parte|capitolo|kapitel|chapter|chapitre|episode|episodio|folge|akt|prolog|prologo|erste|zweite|dritte";
+  const tail = new RegExp("(?:[\\s\\-–—:,.;(]+|\\b(?:" + CH + ")\\b\\.?|\\b\\d+\\.?)$", "i");
+  for (let k = 0; k < 8 && tail.test(s); k++) s = s.replace(tail, "");
+  s = s.trim();
+  // good only where the title goes on with a separator or a chapter word ("… - Capitolo 1", "… Teil 2", "…: Erster Akt")
+  const rest = a.slice(s.length), ok = s.length >= 6 && new RegExp("^\\s*(?:[\\-–—:,(.]|(?:" + CH + ")\\b|\\d)", "i").test(rest);
+  if (ok) return s;
+  // otherwise the first title, without its chapter mark ("Die rätselhafte Pyramide - Teil 1" -> "Die rätselhafte Pyramide")
+  const cut = a.replace(new RegExp("\\s*[\\-–—:,]?\\s*\\b(?:" + CH + ")\\s*\\d+\\b.*$", "i"), "").trim();
+  return cut.length >= 6 ? cut : a;
+}
 function storyIndex(status) {
   const map = new Map();
   S.comics.forEach(c => {
@@ -62,21 +80,25 @@ function storyIndex(status) {
       if (!st.title && !st.code) return;
       const code = storyCode(st.code);
       let key = code ? "c:" + code : "x:" + c.id + ":" + i;
-      // parts of a serial can share one code inside a comic: a part with its own title is its own story;
-      // the same title again (Oscar the Ostrich over two weeks of strips in one Micky Maus Zeitung) is the same story, listed once
+      // the same code twice in one comic is one story (the user's wish, 2026-11-21): the chapters of a serial
+      // ("… - Capitolo 1", "Teil 2") or Oscar the Ostrich over two weeks of strips. Its title is the part the chapter
+      // titles share, and the chapters' pages add up.
       if (map.has(key) && map.get(key).items.includes(c)) {
-        const t = norm(st.dTitle || st.title);
-        if (!t || map.get(key).titles.some(x => norm(x) === t)) return;
-        key += "#" + t + "#" + i;
+        const e = map.get(key), t = st.ownTitle ? st.title : st.dTitle || st.title;
+        if (e.curC === c) {
+          if (t && e.curT >= 0 && !e.ownT) e.titles[e.curT] = sharedTitle(e.titles[e.curT], t);
+          if (e.pgFrom === c && parseFloat(st.pages) > 0) e.pages = (e.pages || 0) + parseFloat(st.pages);
+        }
+        return;
       }
-      if (map.has(key) && map.get(key).items.includes(c)) return;
       let e = map.get(key);
       if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
-      const title = st.ownTitle ? st.title : st.dTitle || st.title; if (title && !e.titles.includes(title)) e.titles.push(title);
+      const title = st.ownTitle ? st.title : st.dTitle || st.title; e.curC = c; e.curT = -1; e.ownT = !!st.ownTitle;
+      if (title && !e.titles.includes(title)) { e.titles.push(title); e.curT = e.titles.length - 1; }
       splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
       splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => e.chars.add(x));
       ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
-      if (!e.pages && parseFloat(st.pages) > 0) e.pages = parseFloat(st.pages);
+      if (!e.pages && parseFloat(st.pages) > 0) { e.pages = parseFloat(st.pages); e.pgFrom = c; }
       if (st.plot && !e.plotFrom && c.duckipedia) e.plotFrom = c.duckipedia;
       e.items.push(c);
     });

@@ -10,7 +10,10 @@ boot();
 // offline support: the service worker keeps the app itself on this phone
 if ("serviceWorker" in navigator && location.protocol !== "file:") {
   navigator.serviceWorker.register("sw.js").then(reg => {
-    const offer = w => { const u = $("#update"); u.hidden = false; $("#reload").onclick = () => w.postMessage("activate"); };
+    // the popup says which version it updates to (read from the new sw.js; without a connection only "A new version")
+    const offer = w => { const u = $("#update"); u.hidden = false; $("#reload").onclick = () => w.postMessage("activate");
+      fetch("sw.js", { cache: "no-store" }).then(r => r.text()).then(s => { const m = /APP_VERSION\s*=\s*"([^"]+)"/.exec(s), t = u.firstChild;
+        if (m && t && t.nodeType === 3) t.textContent = `A new version is ready: da-v${APP_BUILD} → ${m[1]}. `; }).catch(() => {}); };
     if (reg.waiting && navigator.serviceWorker.controller) offer(reg.waiting);
     reg.addEventListener("updatefound", () => {
       const w = reg.installing;

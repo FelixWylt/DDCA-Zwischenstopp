@@ -48,6 +48,11 @@ VIEWS.add = {
 ${dupHtml(d)}
 ${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
+        ${isNovel(d) && !editing ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="readonline">Read online</button>
+          <details class="pastebox"><summary class="small">Paste from the page (Royal Road, Fullreads …)</summary>
+            <textarea id="f-paste" rows="4" placeholder="Open the story's page, select everything, copy it and paste it here"></textarea>
+            <button type="button" id="pastego">Fill from the pasted text</button></details></div>` : ""}
+        ${isNovel(d) && S.webVols && d.seriesName === S.webVols.series && S.webVols.vols.length ? `<div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted">Books on the page:</span>${S.webVols.vols.map((v, i) => `<button type="button" class="fchip${d.title === v.title ? " on" : ""}" data-wvol="${i}">${esc(v.n + ": " + v.title)}</button>`).join("")}</div>` : ""}
         <div class="isbnrow">
           <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="13 or old 10 digits"></label>
           <button id="isbnfill" type="button">Fill from book databases</button>
@@ -69,9 +74,11 @@ ${isBook ? `
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12 or 0.5"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
           <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
-          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Web serial", "Short story", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Language</span><select id="f-lang">${[...new Set(["", "German", "Swedish", "Italian", "English", "French", "Norwegian", "Danish", "Dutch", "Spanish", "Other", d.lang || ""])].map(v => `<option value="${v}"${(d.lang || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
+          ${isNovel(d) ? `<label><span class="l">Words</span><input id="f-words" inputmode="numeric" value="${esc(d.words || "")}" placeholder="pages = words ÷ 300"></label>
+          <label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="where you read it, e.g. a Royal Road page"></label>` : ""}
           <label><span class="l">Country</span><input id="f-country" list="countrylist" value="${esc(d.country || "")}" placeholder="${esc(isNovel(d) ? bookCountry(Object.assign({}, d, { country: "" })) || "where it first came out" : bookCountry(Object.assign({}, d, { country: "" })) || "of this edition")}"></label>
           <datalist id="countrylist">${[...new Set(Object.values(COUNTRY_NAMES).concat(S.comics.map(c => c.country).filter(Boolean)))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
@@ -214,6 +221,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "country", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      ["link", "words"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value.trim(); });
+      // words without pages: about 300 words per printed page
+      { const w = parseInt(String(d.words || "").replace(/[^\d]/g, ""), 10); if (w > 0 && !String(d.pages || "").trim()) d.pages = String(Math.max(1, Math.round(w / 300))); }
       // the suggestion list leaves "Fantasy, Adventure, " while typing: no empty genre at the end
       if (d.genre) d.genre = d.genre.split(",").map(x => x.trim()).filter(Boolean).join(", ");
       if (d.kind !== "book") d.date = isoDate(d.date);
@@ -228,6 +238,23 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     $("#cancel") && ($("#cancel").onclick = () => goBack());
     $("#xadd") && ($("#xadd").onclick = () => { grab(); d.extras = (d.extras || []).concat([{ what: "", value: "", cur: d.currency || "CHF" }]); render(); });
     document.querySelectorAll("[data-xdel]").forEach(b => b.onclick = () => { grab(); d.extras.splice(+b.dataset.xdel, 1); render(); });
+    // read online: one tap for Read, not owned + Online + today + Web serial
+    const readOnline = () => { d.status = "notowned"; d.read = true; d.readDate = d.readDate || todayIso(); d.source = d.source || "Online"; if (!d.format) d.format = "Web serial"; };
+    $("#readonline") && ($("#readonline").onclick = () => { grab(); readOnline(); render(); });
+    $("#pastego") && ($("#pastego").onclick = () => {
+      grab(); const p = parseWebPage($("#f-paste").value);
+      if (!p.title) { bookMsg('<div class="banner warn">Nothing found in the pasted text. Copy the whole page, starting with the story\'s title.</div>'); return; }
+      readOnline(); if (p.format) d.format = p.format;
+      if (p.author) d.author = p.author; if (p.genres.length && !d.genre) d.genre = p.genres.join(", "); if (p.link) d.link = p.link; if (p.words) d.words = String(p.words);
+      if (p.vols.length) {
+        const known = S.comics.some(c => c.kind === "book" && isNovel(c) && c.seriesName === p.title);
+        S.webVols = { series: p.title, vols: p.vols }; d.seriesName = p.title; d.newBookSeries = !known; d.title = p.vols[0].title; d.issue = String(p.vols[0].n);
+      } else { d.title = p.title; if (p.pages && !d.pages) d.pages = String(p.pages); }
+      if (p.words && !d.pages) d.pages = String(Math.max(1, Math.round(p.words / 300)));
+      render();
+      bookMsg(`<div class="banner ok">Filled in: ${[d.title && "title", p.author && "author", p.genres.length && "genres", p.link && "link", d.pages && "pages", p.words && "words"].filter(Boolean).join(", ") || "title"}.${p.vols.length ? ` The page lists ${p.vols.length} ${p.vols.length === 1 ? "book" : "books"}: saved as the book series “${esc(p.title)}”, book ${esc(String(p.vols[0].n))}. Type its pages yourself${p.pages ? ` (the page counts ${Number(p.pages).toLocaleString("de-CH")} pages for the whole story)` : ""}, then use Save &amp; next and tap the next book above.` : ""}${p.ongoing ? " Still running on the site." : ""} Check the fields, then save.</div>`);
+    });
+    document.querySelectorAll("[data-wvol]").forEach(b => b.onclick = () => { grab(); const v = S.webVols.vols[+b.dataset.wvol]; d.title = v.title; d.issue = String(v.n); render(); });
     document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { grab(); d.status = b.dataset.st; if (d.status === "notowned") { d.read = true; d.readDate = d.readDate || todayIso(); } render(); });
     document.querySelectorAll("[data-wl]").forEach(b => b.onclick = () => { d.wishLevel = b.dataset.wl; document.querySelectorAll("[data-wl]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
     document.querySelectorAll("[data-kind]").forEach(b => b.onclick = () => {
@@ -469,7 +496,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast("✓ " + (S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : notOwned(c) ? "Saved as read (not owned): " : "Saved to your archive: ") + (c.title || "book") + lotNote);
         if (next) {
           S.editing = null;
-          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
+          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, link: c.link || "", genre: c.genre || "", read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
           render(); $("#f-title") && $("#f-title").focus();
         } else goBack(() => { S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : notOwned(saved) ? "notowned" : "owned"; nav("collection"); });
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }
@@ -648,4 +675,34 @@ function yearGridTotal(se) {
     Object.values(yearSplits(cat, y)).forEach(l => { total += l.length - 1; });
   }
   return total;
+}
+
+// "Paste from the page": what a copied Royal Road (or similar) page says. The app can't load those pages itself
+// (no CORS, Royal Road blocks robots, tested 2026-11-21), so the user copies the page and pastes it.
+function parseWebPage(text) {
+  const raw = String(text || ""), urls = [...raw.matchAll(/https?:\/\/[^\s)\]]+/g)].map(m => m[0]);
+  const tagLinks = [...raw.matchAll(/\[([^\]]+)\]\([^)]*tagsAdd=[^)]*\)/g)].map(m => m[1].trim());
+  const plain = raw.replace(/\[([^\]]*)\]\([^)]*\)/g, "$1").replace(/\u00a0/g, " ");
+  const lines = plain.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const num = s => parseInt(String(s || "").replace(/[^\d]/g, ""), 10) || 0;
+  const r = { title: "", author: "", genres: [], link: "", pages: 0, words: 0, vols: [], format: "", ongoing: false };
+  const skip = /^(home|menu|login|log in|sign in|search|read|fictions?|advertisement|report)$/i;
+  r.title = (lines.find(l => !skip.test(l) && !/^by\s/i.test(l)) || "").replace(/^Read\s+/, "").replace(/\s*\|.*$/, "").trim();
+  const by = /\bby\s+(.+?)(?:\s*\|.*)?$/i.exec(lines.find(l => /^by\s+\S/i.test(l)) || "") || /^.+?\sby\s+([^|]+?)\s*(?:\||$)/i.exec(lines[0] || "");
+  if (by) { r.author = by[1].trim(); if (r.title.toLowerCase().endsWith(" by " + r.author.toLowerCase())) r.title = r.title.slice(0, -(r.author.length + 4)).trim(); }
+  const rr = urls.map(u => /royalroad\.com\/fiction\/(\d+)(?:\/([a-z0-9-]+))?/i.exec(u)).find(Boolean);
+  if (rr) { r.link = "https://www.royalroad.com/fiction/" + rr[1] + (rr[2] ? "/" + rr[2] : ""); r.format = "Web serial"; }
+  else { const u = urls.find(x => !/\/(profile|report|amazon)\//i.test(x)); if (u) r.link = u; }
+  const pg = /\bPAGES\s*:?\s*([\d][\d,.'’]*)/i.exec(plain); if (pg) r.pages = num(pg[1]);
+  const wd = /([\d][\d,.'’]*)\s+words\b/i.exec(plain); if (wd) r.words = num(wd[1]);
+  const st = lines.find(l => /^(Original|Fan Fiction)\s+(ONGOING|COMPLETED|HIATUS|STUB|DROPPED)\b/i.test(l));
+  if (st) { r.ongoing = /ONGOING/i.test(st); r.format = "Web serial";
+    r.genres = tagLinks.length ? tagLinks : st.replace(/^(Original|Fan Fiction)\s+\S+\s*/i, "").split(/\s{2,}|\t/).map(x => x.trim()).filter(Boolean);
+    if (!tagLinks.length && r.genres.length === 1 && r.genres[0].split(" ").length > 3) r.genres = [];   // tags run together in a plain copy: can't tell where one ends
+  }
+  lines.forEach(l => { const m = /^Vol(?:ume)?\.?\s*(\d+)\s*[,:–-]\s*(.+?)(?:\s*,?\s+is available\b.*|\s*[.,]?\s*$)/i.exec(l); if (m && !r.vols.some(v => v.n === +m[1])) r.vols.push({ n: +m[1], title: m[2].trim() }); });
+  r.vols.sort((a, b) => a.n - b.n);
+  // a copied short story (Fullreads …): no page count on the page, so count the words of the text itself
+  if (!r.pages && !r.words && !st) { const w = plain.split(/\s+/).filter(x => /[A-Za-zÀ-ÿ]/.test(x)).length; if (w > 800) { r.words = w; if (!r.format && w < 20000) r.format = "Short story"; } }
+  return r;
 }
