@@ -160,6 +160,7 @@
 | 2026-11-21 | Opus vs Fable (answer only): Fable = the bigger Mythos tier; for DDA work Opus is enough, Fable only for a very hard problem | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:30 → 22:30:59) |
 | 2026-11-21 | Summary + orders for the next chat (text to paste, nr. 10), open points noted in CLAUDE.md | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:32 → 22:32:57) |
 | 2026-11-21 | Haiku and Sonnet (answer only): Sonnet fine for price lists, answers and small fixes; Opus for bundles; Haiku only for quick questions | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:35 → 22:35:11) |
+| 2026-11-21 | Repo connected, CLAUDE.md read (22:33 → ~22:34, answer); story series search (DoubleDuck etc.) looked at: stories carry no series yet, INDUCKS has storysubseries/subseriesname; report + plan + questions, no change | – (report first) | 1–2 min (22:38 → 22:39:43) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
