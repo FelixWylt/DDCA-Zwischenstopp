@@ -1,5 +1,5 @@
 {
- "built": "2026-11-20T17:42",
+ "built": "2026-11-21T22:56",
  "source": "I.N.D.U.C.K.S. (https://inducks.org)",
  "licence": "Data from the Inducks database, used under the Inducks licence (see inducks.org).",
  "series": {
@@ -99,7 +99,7 @@
    "code": "it/TL",
    "title": "Topolino (libretto)",
    "file": "inducks-it-TL.json",
-   "issues": 3798
+   "issues": 3799
   },
   "topolino giornale": {
    "series": "Topolino Giornale",
