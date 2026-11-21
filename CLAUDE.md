@@ -156,6 +156,7 @@
 | 2026-11-21 | E = paste works (user sent a Royal Road page copy: title line, 'by Author', ONGOING + tags, 'Vol 1, <title>' lines, PAGES : 2,064, '215 Chapters', fiction link /fiction/112557/), F = one entry per book; parser plan checked against the sample; question G (pages per book); not started | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (22:06 → 22:07:29) |
 | 2026-11-21 | G = pages per book typed by the user; point 11 added to the plan (CLAUDE.md rule: say when a job needs a stronger model or higher effort); not started | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:13 → 22:13:37) |
 | 2026-11-21 | High or extra effort? High is enough for the 8-point bundle (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:15 → 22:15:13) |
+| 2026-11-21 | da-v215/216, 8 points: pages per month, Read online + Paste from the page (Royal Road: title, author, tags, link, Vol lines -> book series + book buttons, PAGES; short stories: words counted), Link/Words fields, Web serial/Short story, version in the update popup, one story per code in a comic (86 groups, shared title, pages added; tested on the backup), tap a bar = number + Show them, Reading averages = series only, Stats index (one swipe row), rule 'more power' in CLAUDE.md; 2 check runs (no errors) | 8–10 min (first guess 25–30 ÷ 3) + 1–2 runs | 9–10 min (22:15 → 22:24:55, incl. 2 runs of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -169,7 +170,7 @@ commit with the log line the **last** step before writing the reply, so the meas
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
 ## Where we left off (2026-11-21, app da-v216)
-- **Open (2026-11-21):** duplicates done (da-v214: books with different ISBNs are different items; backup 20:40 → 8 extra copies of 7 items);
+- **Open (2026-11-21):** nothing from the 10 ideas left (all in da-v215/216); duplicates done (da-v214);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
