@@ -168,7 +168,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-21, app da-v215)
+## Where we left off (2026-11-21, app da-v216)
 - **Open (2026-11-21):** duplicates done (da-v214: books with different ISBNs are different items; backup 20:40 → 8 extra copies of 7 items);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
@@ -242,7 +242,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   book countries: `bookCountry()` (own Country field › book series country from Wikidata P495/author P27 › 041 $h original language › author's country,
   cached in config authorCountry, asked after Refresh all books); comic books = edition country. Story genres/dates shown in English (storyGenreEn, dateEn);
   One-pager only on stories. Reading All time = everything read; per month counted from January 2016 (the user's wish).
-- **da-v215 (2026-11-21):** storyIndex: the same story code twice in one comic = ONE story (chapters of a serial; 86 groups in the
+- **da-v215/216 (2026-11-21):** storyIndex: the same story code twice in one comic = ONE story (chapters of a serial; 86 groups in the
   user's backup), title = sharedTitle() of the chapter titles (only where the title goes on with a separator/chapter word, else the
   first title without "Teil 1"), pages added up. Stats: tap a bar (barRead) = number above the chart + Show them; index chips
   (.statindex) on Collection/Money/Stories/Reading; Reading's Average ratings = series only; pages per month. Update popup reads the

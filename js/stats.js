@@ -473,7 +473,8 @@ VIEWS.stats = {
       if (cards.length > 3) {
         const nav0 = document.createElement("div"); nav0.className = "statindex"; nav0.setAttribute("aria-label", "Jump to");
         cards.forEach((c, i) => { c.id = "stc" + i; const b = document.createElement("button"); b.type = "button"; b.className = "fchip";
-          b.textContent = c.querySelector("h3").childNodes[0].textContent.trim() || c.querySelector("h3").textContent.trim();
+          const h = c.querySelector("h3").cloneNode(true); h.querySelectorAll("[data-sortdir]").forEach(x => x.remove());
+          b.textContent = h.querySelector(".seg") ? [...h.querySelectorAll(".seg button")].map(x => x.textContent.trim()).join(" & ") : h.textContent.trim();
           b.onclick = () => c.scrollIntoView({ block: "start", behavior: "smooth" }); nav0.appendChild(b); });
         const first = cards[0].closest(".two") || cards[0]; first.parentNode.insertBefore(nav0, first);
       }

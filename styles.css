@@ -680,5 +680,6 @@ button.card.highlight { display: grid; gap: 2px; text-align: left; width: 100%; 
 .barread .link { margin-left: 6px; }
 rect.hit.on { fill: var(--accent); opacity: 0.12; }
 /* index of the cards on long Stats tabs */
-.statindex { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 2px; }
+.statindex { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 4px 0 2px; padding-bottom: 4px; scrollbar-width: none; }
+.statindex .fchip { flex: none; }
 .statindex .fchip { font-size: 0.8rem; }
