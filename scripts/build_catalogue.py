@@ -221,6 +221,74 @@ json.dump(index, open(os.path.join(out_dir, "index.json"), "w", encoding="utf-8"
 dir_out = sorted([[pc, pubs[pc]["title"], n, (y0 if y0 < 9999 else 0), y1, main_publisher(pc), (pubs[pc].get("size") or "").strip()] for pc, (n, y0, y1) in directory.items()], key=lambda x: x[0])
 json.dump({"built": index["built"][:10], "publications": dir_out}, open(os.path.join(out_dir, "directory.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
 log(f"directory.json: {len(dir_out):,} publications ({', '.join(sorted(DIR_COUNTRIES))}), {os.path.getsize(os.path.join(out_dir, 'directory.json'))/1024:,.0f} KB")
+# 5. story info (2026-11-21): story series (DoubleDuck …), the story's original language and the creators' own country
+#    -> story-info.json. The app matches it by story code, so comics need no Refresh. Original languages are stored
+#    only where they differ from the usual one of the code's prefix ("I" -> it), which keeps the file small.
+def rows_all(table):
+    path = os.path.join(isv_dir, table + ".isv")
+    if not os.path.exists(path): log(f"  ! {table}: not in the export"); return
+    with open(path, encoding="utf-8", errors="replace", newline="") as fh:
+        header = fh.readline().rstrip("\r\n").split("^")
+        if header and header[-1] == "": header.pop()
+        log(f"  {table}: {', '.join(header)}")
+        for line in fh: yield dict(zip(header, line.rstrip("\r\n").split("^")))
+def pick(r, *names):
+    for n in names:
+        if r.get(n): return r[n].strip()
+    return ""
+log("\nSTORY INFO")
+sub_of = {}
+for r in rows_all("inducks_storysubseries"):
+    sc, ss = r.get("storycode", ""), pick(r, "subseriescode")
+    if sc in storycodes and ss and ss not in sub_of.get(sc, []): sub_of.setdefault(sc, []).append(ss)
+subs = {}
+for r in rows_all("inducks_subseries"):
+    c = r.get("subseriescode", "")
+    if c: subs[c] = {"n": pick(r, "subseriesname") or c, "a": []}
+used = {c for v in sub_of.values() for c in v}
+subs = {c: v for c, v in subs.items() if c in used}
+for c in used: subs.setdefault(c, {"n": c, "a": []})
+for r in rows_all("inducks_subseriesname"):
+    c, nm = r.get("subseriescode", ""), pick(r, "subseriesname", "name")
+    if c in subs and nm and nm != subs[c]["n"] and nm not in subs[c]["a"]: subs[c]["a"].append(nm)
+log(f"stories in a story series: {len(sub_of):,} of {len(storycodes):,}, series: {len(subs):,}")
+# original language = language of the publication where the story was printed first
+sv_story = {}
+for r in rows("inducks_storyversion", ["storyversioncode", "storycode"]):
+    if r["storycode"] in storycodes: sv_story[r["storyversioncode"]] = r["storycode"]
+appear = {}
+for r in rows("inducks_entry", ["issuecode", "storyversioncode"]):
+    sc = sv_story.get(r["storyversioncode"])
+    if sc: appear.setdefault(sc, set()).add(r["issuecode"])
+need = {i for v in appear.values() for i in v}
+idate = {}
+for r in rows("inducks_issue", ["issuecode", "publicationcode", "oldestdate"]):
+    if r["issuecode"] in need and re.match(r"\d{4}", r["oldestdate"] or ""): idate[r["issuecode"]] = (r["oldestdate"], r["publicationcode"])
+orig = {}
+for sc, ics in appear.items():
+    best = min((idate[i] for i in ics if i in idate), default=None)
+    lang = best and pubs.get(best[1], {}).get("languagecode", "")
+    if lang: orig[sc] = lang
+def prefix(sc):
+    t = sc.split()
+    return t[0] if t else ""
+by_pre = {}
+for sc, lang in orig.items(): d = by_pre.setdefault(prefix(sc), {}); d[lang] = d.get(lang, 0) + 1
+lang_default = {p: max(d, key=d.get) for p, d in by_pre.items()}
+lang_other = {sc: lang for sc, lang in orig.items() if lang_default.get(prefix(sc)) != lang}
+log(f"original languages: {len(orig):,} stories, {len(lang_other):,} differ from their prefix's usual language")
+# the creators' own country, by the name the catalogue files show
+person_country = {}
+for r in rows_all("inducks_person"):
+    pc = r.get("personcode", "")
+    if pc in people_needed:
+        c = pick(r, "nationalitycountrycode", "countrycode")
+        if c and people.get(pc): person_country[people[pc]] = c
+log(f"creators with a country: {len(person_country):,} of {len(people_needed):,}")
+info = {"built": index["built"][:10], "source": index["source"], "series": subs, "storySeries": sub_of,
+        "langDefault": lang_default, "lang": lang_other, "people": person_country}
+json.dump(info, open(os.path.join(out_dir, "story-info.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+log(f"story-info.json: {os.path.getsize(os.path.join(out_dir, 'story-info.json'))/1024:,.0f} KB")
 for lic in glob.glob(os.path.join(isv_dir, "*icen*")) + glob.glob(os.path.join(isv_dir, "..", "*icen*")):
     shutil.copy(lic, os.path.join(out_dir, "INDUCKS-" + os.path.basename(lic)))
     log(f"licence file copied: {os.path.basename(lic)}")

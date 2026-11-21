@@ -176,7 +176,7 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-21, app da-v216)
+## Where we left off (2026-11-21, app da-v217)
 - **Open (2026-11-21, handover nr. 10):** nothing waiting locally; the user may send a backup to check the new features (one story per code, Read online entries);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
@@ -257,6 +257,13 @@ except typing the reply itself. Say in the report that the reply writing and Git
   new sw.js for its version. Books: Read online button, "Paste from the page" (parseWebPage in add.js: title, by author, RR tags,
   "Vol N, title" lines -> book series + S.webVols buttons, PAGES, words; a long plain text = a short story, words counted), fields
   Link and Words (pages = words ÷ 300), formats Web serial / Short story. The user types each book's pages (answer G).
+- **da-v217 (2026-11-21): story series + filters.** build_catalogue.py section 5 writes catalogue/story-info.json: series (subseries code ->
+  name + other-language names), storySeries (story code -> subseries codes), original language = language of the first dated printing
+  (stored only where it differs from langDefault of the code's prefix), people (creator full name -> nationality country code). The app
+  (loadStoryInfo/SINFO in stories-backup.js) matches by story code: Stories › All stories has sub chips Stories | Story series, the search
+  finds series names, story details show Story series (tappable page) + Original language; filter rows "Original" and "In my comics"
+  (comicLangOf: c.lang › seriesLang › country code) on All stories and Favourites; People: Country (writers/artists) or In my comics
+  (characters, e.charLang). Names via Intl.DisplayNames.
 - **Cover ratings (da-v210):** `coverRating` (half stars) on the edit form and the comic page.
 - **Story titles without the hero (2026-11-20):** INDUCKS gives old Swedish titles as "och spartävlingen". scripts/fix_titles.py
   (run after each catalogue build) takes the full title from another printing or the printed hero; build_catalogue.py adds

@@ -683,3 +683,7 @@ rect.hit.on { fill: var(--accent); opacity: 0.12; }
 .statindex { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 4px 0 2px; padding-bottom: 4px; scrollbar-width: none; }
 .statindex .fchip { flex: none; }
 .statindex .fchip { font-size: 0.8rem; }
+/* one swipe row of filter chips (Stories: Original / In my comics / Country), 2026-11-21 */
+.fchips.swipe { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.fchips.swipe::-webkit-scrollbar { display: none; }
+.fchips.swipe > * { flex-shrink: 0; }

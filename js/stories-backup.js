@@ -71,7 +71,50 @@ function sharedTitle(a, b) {
   const cut = a.replace(new RegExp("\\s*[\\-–—:,]?\\s*\\b(?:" + CH + ")\\s*\\d+\\b.*$", "i"), "").trim();
   return cut.length >= 6 ? cut : a;
 }
+// story info from the catalogue (catalogue/story-info.json, 2026-11-21): story series (DoubleDuck …), each story's original
+// language and the creators' own country, matched by story code, so comics need no Refresh
+let SINFO = null, sinfoTry = 0;
+function loadStoryInfo() {
+  if (SINFO || Date.now() - sinfoTry < 60000) return; sinfoTry = Date.now();
+  fetch("catalogue/story-info.json").then(r => r.ok ? r.json() : null).then(j => {
+    if (!j) return;
+    const ser = new Map(), lang = new Map();
+    Object.entries(j.storySeries || {}).forEach(([k, v]) => ser.set(storyCode(k), v));
+    Object.entries(j.lang || {}).forEach(([k, v]) => lang.set(storyCode(k), v));
+    SINFO = { series: j.series || {}, ser, lang, def: j.langDefault || {}, people: j.people || {} };
+    if (S.view === "stories") render();
+  }).catch(() => {});
+}
+const _dn = {};
+function dispName(type, code) {
+  try { return (_dn[type] = _dn[type] || new Intl.DisplayNames(["en"], { type })).of(code) || code; } catch (e) { return code; }
+}
+function langName(code) {
+  code = String(code || "").toLowerCase(); if (!code) return "";
+  return { nb: "Norwegian", nn: "Norwegian", no: "Norwegian", "pt-br": "Portuguese", pt: "Portuguese", "es-ar": "Spanish", "zh-tw": "Chinese", "zh-cn": "Chinese" }[code] || dispName("language", code);
+}
+function countryName(code) {
+  const c = String(code || "").toUpperCase(); if (!c) return "";
+  return { YU: "Yugoslavia", SU: "Soviet Union", CS: "Czechoslovakia", DD: "East Germany" }[c] || dispName("region", c === "UK" ? "GB" : c);
+}
+const storySeriesOf = e => (SINFO && e.code && SINFO.ser.get(e.code)) || [];
+const seriesNameOf = code => ((SINFO && SINFO.series[code]) || {}).n || code;
+function storyOrigLang(e) {
+  if (!SINFO || !e.code) return "";
+  return langName(SINFO.lang.get(e.code) || SINFO.def[e.code.split(" ")[0]] || "");
+}
+const personCountry = name => SINFO && SINFO.people[name] ? countryName(SINFO.people[name]) : "";
+// the language a comic is printed in: its own Language field, else its series' language
+const LANG_BY_CODE = { ch: "German", at: "German", dk: "Danish", nl: "Dutch", fi: "Finnish", fr: "French", br: "Portuguese", es: "Spanish" };
+let _clang = new Map();
+function comicLangOf(c) {
+  if (_clang.has(c.id)) return _clang.get(c.id);
+  const se = c.seriesId && seriesById(c.seriesId);
+  const l = c.lang || (se && seriesLang(se)) || (se && LANG_BY_CODE[String(se.country || (se.code || "").split("/")[0] || "").toLowerCase()]) || "";
+  _clang.set(c.id, l); return l;
+}
 function storyIndex(status) {
+  _clang = new Map();
   const map = new Map();
   S.comics.forEach(c => {
     if (status === "owned" && c.status === "wanted") return;
@@ -92,11 +135,12 @@ function storyIndex(status) {
         return;
       }
       let e = map.get(key);
-      if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
+      if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), charLang: new Map(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
       const title = st.ownTitle ? st.title : st.dTitle || st.title; e.curC = c; e.curT = -1; e.ownT = !!st.ownTitle;
       if (title && !e.titles.includes(title)) { e.titles.push(title); e.curT = e.titles.length - 1; }
       splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
-      splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => e.chars.add(x));
+      const cl = comicLangOf(c);
+      splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => { e.chars.add(x); if (cl) (e.charLang.get(x) || e.charLang.set(x, new Set()).get(x)).add(cl); });
       ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
       if (!e.pages && parseFloat(st.pages) > 0) { e.pages = parseFloat(st.pages); e.pgFrom = c; }
       if (st.plot && !e.plotFrom && c.duckipedia) e.plotFrom = c.duckipedia;
@@ -117,9 +161,10 @@ function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short 
 VIEWS.stories = {
   html() {
     const st = S.st = S.st || {};
-    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100 }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
+    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100, sub: "stories", olang: "", clang: "", pc: "", chl: "" }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
     if (["writers", "artists", "chars"].includes(st.mode)) { st.role = st.mode; st.tab = "people"; } delete st.mode;
     if (st.sort === "fav") { st.sort = "rating"; st.tab = "fav"; }
+    loadStoryInfo();
     const all = storyIndex(st.status);
     const nFav = all.filter(e => storyRate(e).fav).length;
     st._all = all; st._allFor = st.status;   // the search reuses this list instead of rebuilding it on every key
@@ -128,14 +173,34 @@ VIEWS.stories = {
     const inChips = [["owned", "Owned"], ["wanted", "Wishlist"], ["all", "Both"]].map(([k, l]) => chip(`data-stin="${k}"`, st.status === k, l)).join("");
     const filters = st.tab === "people"
       ? `<div class="fchips">${[["writers", "Writers"], ["artists", "Artists"], ["chars", "Characters"]].map(([k, l]) => chip(`data-role="${k}"`, st.role === k, l)).join("")}</div>`
-      : `<div class="fchips">${inChips}${st.tab === "all" ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") : ""}</div>`;
-    const sortSel = st.tab === "all" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
+      : `<div class="fchips">${inChips}${st.tab === "all" && (st.sub !== "series" || st.who) ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") : ""}</div>`;
+    // filter rows (one swipe row each, only values you have): original language + language in your comics on All stories and
+    // Favourites; the creator's own country on Writers/Artists; the language of your comics on Characters
+    const optRow = (label, attr, cur, counts) => {
+      const opts = [...counts].filter(([k]) => k).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+      if (opts.length < 2 && !cur) return "";
+      return `<div class="fchips swipe"><span class="muted small">${label}</span>${chip(`${attr}=""`, !cur, "All")}${opts.map(([k, n]) => chip(`${attr}="${esc(k)}"`, cur === k, `${esc(k)} <span class="muted">${n}</span>`)).join("")}</div>`;
+    };
+    const tally = (m, k) => m.set(k, (m.get(k) || 0) + 1);
+    let fRows = "";
+    if (st.tab === "people") {
+      const m = new Map();
+      if (st.role === "chars") { const seen = new Map(); all.forEach(e => e.charLang.forEach((ls, n) => ls.forEach(l => { const k = l + "|" + n; if (!seen.has(k)) { seen.set(k, 1); tally(m, l); } }))); fRows = optRow("In my comics", "data-chl", st.chl, m); }
+      else { const seen = new Set(); all.forEach(e => e[st.role].forEach(n => { if (!seen.has(n)) { seen.add(n); tally(m, personCountry(n)); } })); fRows = optRow("Country", "data-pc", st.pc, m); }
+    } else {
+      const mo = new Map(), mc = new Map();
+      all.forEach(e => { tally(mo, storyOrigLang(e)); new Set(e.items.map(comicLangOf)).forEach(l => tally(mc, l)); });
+      fRows = optRow("Original", "data-olang", st.olang, mo) + optRow("In my comics", "data-clang", st.clang, mc);
+    }
+    const subChips = st.tab === "all" && !st.who ? `<div class="fchips">${chip('data-stsub="stories"', st.sub !== "series", "Stories")}${chip('data-stsub="series"', st.sub === "series", "Story series")}</div>` : "";
+    const sortSel = st.tab === "all" && st.sub !== "series" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
     const head = `<div><h2>Stories</h2><p class="lede hide-phone">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
       <div class="subtabs three" role="tablist" aria-label="Show">${tab("all", "All stories", all.length)}${tab("people", "People")}${tab("fav", "Favourites", nFav)}</div>
       <div class="stack" style="gap:8px">
-        <label class="q"><span class="l visually-hidden">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.tab === "people" ? "Name" : "Title, code, writer, artist, character"}"></label>
-        <div class="row between" style="gap:8px">${filters}${sortSel}</div>
-        ${st.who && st.tab === "all" ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role])}: ${esc(st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
+        <label class="q"><span class="l visually-hidden">Search</span><input id="stq" type="search" value="${esc(st.q)}" placeholder="${st.tab === "people" ? "Name" : st.sub === "series" && st.tab === "all" ? "Story series, e.g. DoubleDuck" : "Title, code, writer, artist, character, story series"}"></label>
+        ${subChips}
+        <div class="row between" style="gap:8px">${filters}${sortSel}</div>${fRows}
+        ${st.who && st.tab === "all" ? `<div class="row small"><span class="chip">${esc({ writers: "Writer", artists: "Artist", chars: "Character", series: "Story series" }[st.who.role])}: ${esc(st.who.role === "series" ? seriesNameOf(st.who.name) : st.who.name)}</span><button class="ghost" id="stwhox" type="button">Show all stories</button></div>` : ""}
       </div><div id="stres"></div>`;
     return all.length || st.status !== "owned" ? head : head.replace('<div id="stres"></div>', '<div class="empty"><h3>No stories yet</h3><p>Stories come with "Fill from INDUCKS" or Duckipedia details, or you add them on a comic.</p></div>');
   },
@@ -143,6 +208,7 @@ VIEWS.stories = {
     const st = S.st;
     document.querySelectorAll("[data-stab]").forEach(b => b.onclick = () => { if (st.tab === b.dataset.stab) return; st.tab = b.dataset.stab; st.q = ""; st.shown = 100; if (st.tab !== "all") st.who = null; render(); });
     document.querySelectorAll("[data-role]").forEach(b => b.onclick = () => { st.role = b.dataset.role; st.shown = 100; render(); });
+    [["stsub", "sub"], ["olang", "olang"], ["clang", "clang"], ["pc", "pc"], ["chl", "chl"]].forEach(([a, k]) => document.querySelectorAll(`[data-${a}]`).forEach(b => b.onclick = () => { st[k] = b.dataset[a]; st.shown = 100; if (k === "sub") st.q = ""; render(); }));
     document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
     $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
     $("[data-strated]") && ($("[data-strated]").onclick = () => { st.rated = !st.rated; if (st.rated && st.sort === "title") st.sort = "rating"; st.shown = 100; render(); });
@@ -166,6 +232,8 @@ function storyRow(e) {
       <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
       ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
       ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
+      ${storySeriesOf(e).length ? `<div><span class="muted">Story series:</span> ${storySeriesOf(e).map(c => `<button class="link" data-ser="${esc(c)}">${esc(seriesNameOf(c))}</button>`).join(", ")}</div>` : ""}
+      ${storyOrigLang(e) ? `<div><span class="muted">Original language:</span> ${esc(storyOrigLang(e))}</div>` : ""}
       ${e.code ? `<div><span class="muted">Story code:</span> <a class="mono" href="https://inducks.org/story.php?c=${encodeURIComponent(e.code)}" target="_blank" rel="noopener">${esc(e.code)}</a>${e.first ? ` · <span class="muted">first published</span> ${esc(dateEn(niceDate(e.first)))}` : ""}</div>` : ""}
       ${e.writers.size ? `<div><span class="muted">Writer:</span> ${[...e.writers].map(n => `<button class="link" data-person="writers" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
       ${e.artists.size ? `<div><span class="muted">Artist:</span> ${[...e.artists].map(n => `<button class="link" data-person="artists" data-n="${esc(n)}">${esc(n)}</button>`).join(", ")}</div>` : ""}
@@ -183,28 +251,48 @@ function drawStories() {
   const cmpT = (a, b) => storyTitle(a).localeCompare(storyTitle(b), "de", { numeric: true });
   if (st.tab === "people") {
     const role = st.role, counts = new Map();
-    all.forEach(e => e[role].forEach(n => { const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); counts.set(n, x); }));
+    all.forEach(e => e[role].forEach(n => {
+      if (role === "chars" && st.chl && !(e.charLang.get(n) || new Set()).has(st.chl)) return;
+      if (role !== "chars" && st.pc && personCountry(n) !== st.pc) return;
+      const x = counts.get(n) || { n, stories: 0, comics: new Set() }; x.stories++;
+      e.items.forEach(c => { if (role !== "chars" || !st.chl || comicLangOf(c) === st.chl) x.comics.add(c.id); }); counts.set(n, x);
+    }));
     const list = [...counts.values()].filter(x => words.every(w => norm(x.n).includes(w))).sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
     const word = { writers: ["writer", "writers"], artists: ["artist", "artists"], chars: ["character", "characters"] }[role];
     box.innerHTML = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? word[0] : word[1]}</p>` +
-      (list.length ? '<div class="list">' + list.slice(0, st.shown).map(x => `<button class="folder" data-who="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`).join("") + '</div>' : '<div class="empty"><h3>Nobody found</h3><p>Try another name.</p></div>') + more(list.length);
+      (list.length ? '<div class="list">' + list.slice(0, st.shown).map(x => `<button class="folder" data-who="${esc(x.n)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}${role !== "chars" && personCountry(x.n) ? " · " + esc(personCountry(x.n)) : ""}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`).join("") + '</div>' : '<div class="empty"><h3>Nobody found</h3><p>Try another name.</p></div>') + more(list.length);
     box.querySelectorAll("[data-who]").forEach(b => b.onclick = () => { st.who = { role, name: b.dataset.who }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   } else {
     let list = all;
     let person = "";
+    if (st.olang) list = list.filter(e => storyOrigLang(e) === st.olang);
+    if (st.clang) list = list.filter(e => e.items.some(c => comicLangOf(c) === st.clang));
+    if (st.tab === "all" && st.sub === "series" && !st.who) {
+      // Story series: every series your stories belong to, with how many stories and comics
+      const m = new Map();
+      list.forEach(e => storySeriesOf(e).forEach(code => { const x = m.get(code) || { code, n: seriesNameOf(code), stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); m.set(code, x); }));
+      const ser = [...m.values()].filter(x => { const t = norm([x.n, x.code].concat((SINFO.series[x.code] || {}).a || []).join(" ")); return words.every(w => t.includes(w)); })
+        .sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
+      box.innerHTML = !SINFO ? '<p class="muted small" style="margin:8px 0">Loading the story series …</p>'
+        : `<p class="muted small" style="margin:8px 0">${ser.length} story ${ser.length === 1 ? "series" : "series"}</p>` + (ser.length ? '<div class="list">' + ser.slice(0, st.shown).map(x => { const al = ((SINFO.series[x.code] || {}).a || []).slice(0, 3).join(" · "); return `<button class="folder" data-ser="${esc(x.code)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}${al ? " · " + esc(al) : ""}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("") + '</div>' : '<div class="empty"><h3>No story series found</h3><p>Try another name, or tap All in the rows above.</p></div>') + more(ser.length);
+      box.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { st.who = { role: "series", name: b.dataset.ser }; st.sub = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+      $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
+      return;
+    }
     if (st.who) {
-      list = list.filter(e => e[st.who.role].has(st.who.name));
+      list = st.who.role === "series" ? list.filter(e => storySeriesOf(e).includes(st.who.name)) : list.filter(e => e[st.who.role].has(st.who.name));
       // their page: how many stories and comics, which years, and the comics themselves
       const cm = new Map(); list.forEach(e => e.items.forEach(c => cm.set(c.id, c)));
       const cs = [...cm.values()].sort((a, b) => comicTag(a).localeCompare(comicTag(b), "de", { numeric: true }));
       const own = cs.filter(c => isOwn(c)).length, yrs = list.map(e => +String(e.first || "").slice(0, 4)).filter(y => y > 1900).sort((a, b) => a - b);
-      const role = { writers: "Writer", artists: "Artist", chars: "Character" }[st.who.role];
-      person = `<div class="card stack small personcard"><h3 style="margin:0">${esc(st.who.name)}</h3>
+      const role = { writers: "Writer", artists: "Artist", chars: "Character", series: "Story series" }[st.who.role] + (st.who.role !== "chars" && st.who.role !== "series" && personCountry(st.who.name) ? " · " + personCountry(st.who.name) : "");
+      const al = st.who.role === "series" && SINFO ? ((SINFO.series[st.who.name] || {}).a || []).join(" · ") : "";
+      person = `<div class="card stack small personcard"><h3 style="margin:0">${esc(st.who.role === "series" ? seriesNameOf(st.who.name) : st.who.name)}</h3>${al ? `<div class="muted">Also called: ${esc(al)}</div>` : ""}
         <div class="muted">${role} · ${list.length} ${list.length === 1 ? "story" : "stories"} in ${cs.length} ${cs.length === 1 ? "comic" : "comics"}${own < cs.length ? " (" + [own + " owned", cs.filter(c => c.status === "wanted").length + " on the wishlist", cs.filter(notOwned).length + " read, not owned"].filter(x => !/^0 /.test(x)).join(", ") + ")" : ""}${yrs.length ? " · first published " + yrs[0] + (yrs[yrs.length - 1] !== yrs[0] ? "–" + yrs[yrs.length - 1] : "") : ""}</div>
         <details><summary>The comics (${cs.length})</summary><div class="row" style="gap:6px;margin-top:6px">${cs.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}</button>`).join("")}</div></details></div>`;
     }
     // each story's search text is made once per list, not on every key
-    if (words.length) list = list.filter(e => { const t = e._q || (e._q = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" ")].join(" "))); return words.every(w => t.includes(w)); });
+    if (words.length) list = list.filter(e => { const t = e._q || (e._q = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" "), storySeriesOf(e).map(c => [seriesNameOf(c)].concat((SINFO.series[c] || {}).a || []).join(" ")).join(" ")].join(" "))); return words.every(w => t.includes(w)); });
     let html = "";
     if (st.tab === "fav") {
       // only hearted stories, grouped by your stars (rated stories without a heart: All stories › Rated)
@@ -233,6 +321,7 @@ function drawStories() {
       try { await setStoryRate(k, { fav: on }); } catch (e) { toast(errText(e)); }
     });
     bindStars(box, async (v, el) => { try { await setStoryRate(el.dataset.sk, { rating: v }); } catch (e) { toast(errText(e)); } });
+    box.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { st.who = { role: "series", name: b.dataset.ser }; st.tab = "all"; st.sub = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
     box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   }
   $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
