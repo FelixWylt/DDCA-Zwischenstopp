@@ -163,6 +163,7 @@
 | 2026-11-21 | Repo connected, CLAUDE.md read (22:33 → ~22:34, answer); story series search (DoubleDuck etc.) looked at: stories carry no series yet, INDUCKS has storysubseries/subseriesname; report + plan + questions, no change | – (report first) | 1–2 min (22:38 → 22:39:43) |
 | 2026-11-21 | Story series answers A (sub tab of All stories), B (language filter on All stories + Favourites, country filter on People) taken in; the user's 22:45 backup: all 5,600 story codes are in the catalogue, comic language mostly from the series code (de/, se/, it/, ch/); question on the People country; no change | – (report first) | 0–1 min (22:45 → 22:45:31) |
 | 2026-11-21 | Story series: two language filters (original language of the story + language in the user's comics), C = creator's own country; updated plan, no change | – (report first) | 0–1 min (22:51 → 22:51:25) |
+| 2026-11-21 | Model/effort guideline table in CLAUDE.md (one line per report, no new working out); point 4 = language filter on People › Characters taken into the plan; app job not started | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (23:00 → 23:01:14) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -287,9 +288,19 @@ except typing the reply itself. Say in the report that the reply writing and Git
 ## Other working rules
 - **Report before starting (the user's wish, 2026-11-20):** before changing anything, report what you found and the plan
   (with the time estimate and any questions), then wait for the user's go. Only answers need no report first.
-- **More power (the user's wish, 2026-11-21):** before a job, say when it needs more than the current setting: a higher "effort"
+- **More power (the user's wish, 2026-11-21):** (see the guideline table below) before a job, say when it needs more than the current setting: a higher "effort"
   setting (usually "high" is enough for big bundles; "extra" only for one very tricky problem) or a stronger model. Say it in the
   report, before the go, with one line on why.
+- **Model/effort guideline (the user's wish, 2026-11-21):** in every report before a job, add ONE line "Model/effort: …" taken from
+  this table, without working it out anew (saves energy):
+  | Kind of job | Model | Effort |
+  |---|---|---|
+  | Answers, explanations, value estimates, notes/CLAUDE.md edits | Opus (Sonnet is enough too) | low or medium |
+  | Price lists from a pasted CSV/table, one small fix | Opus | medium |
+  | Bundles of several app changes, a new screen/filter, catalogue build changes | Opus | high |
+  | One very tricky bug that already failed once, or a big rebuild of a whole tab | Opus | extra |
+  | Only if Opus on extra failed twice on the same problem | Fable | high |
+  Say it only when the current setting differs from the table ("switch to high for this one"), else just "current setting is fine".
 - **New chat (the user's wish, 2026-11-20):** say on your own when it's time for a new chat: when the chat has grown long
   (many replies, this file re-sent many times) or answers slow down, and best at a quiet moment (nothing local, nothing waiting).
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
