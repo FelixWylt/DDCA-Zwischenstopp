@@ -153,5 +153,6 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Notes updated (rebuild done, open points), handover summary nr. 11 for a new chat | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (00:00 → 00:01:06) |
 
 | 2026-11-22 | 5 points looked at (Fable vs Opus extra for a bug hunt: Opus extra in 3 parts; Read-not-owned ideas a–f incl. bug: "You already have this story" counts read-only comics; way of working; Read online for comics; phone paste): report + plan + questions, no change | – (report first) | 1–2 min (00:09 → ~00:11) |
-| 2026-11-22 | Point 3: time log moved to TIMELOG.md, published price-list notes trimmed (ids are in restore-batch.json), open bundle noted; CLAUDE.md 61 → 19 KB | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (00:34 → 00:35:21) |
+| 2026-11-22 | Point 3: time log moved to TIMELOG.md, published price-list notes trimmed (ids are in restore-batch.json), open bundle noted; CLAUDE.md 61 → 19 KB | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (00:34 → 00:35:21) |
+| 2026-11-22 | Order for the bug-hunt chat (Opus extra, 3 parts, report only; text to paste); log fix 00:34 row, doubled notes line removed | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (00:37 → 00:37:24) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

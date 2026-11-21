@@ -40,7 +40,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   own/read-only, b "I bought it" on read-only items, c read mark in Gaps, d "Want to own it", e Source suggestions, f Stories filter);
   point 4 = Read online also for comics/comic books (format Webcomic; no webcomic page reader yet, answer A: not yet);
   point 5 = phone: Desktop site works for copying, but pasting the LINK is enough: title (+ series) from the Royal Road link's slug.
-  Bug hunt: new chat, Opus extra, 3 parts, report only.
+  Bug hunt: new chat, Opus extra, 3 parts, report only (order written 2026-11-22 00:37). Do the bundle after it, together with chosen fixes.
 - **Open (handover nr. 11, 2026-11-22):** nothing waiting locally. The user may send a backup to check da-v217/218 (Story series,
   Original / In my comics rows, People › Country, Characters › In my comics). Still on the phone: Series › Tools › Price lists
   waiting › Add all, and once Series › Tools › Refresh all books.
@@ -57,7 +57,6 @@ except typing the reply itself. Say in the report that the reply writing and Git
   are in catalogue/restore-batch.json, their prices and source notes in catalogue/prices.json (trimmed from this file 2026-11-22).
   Hand fixes told to the user then: Spirous äventyr Guldmaskinen 5 → 0; Tintin #20 Edition 1. Auflage; Legend: Prodigy needs a volume
   number, Swedish Legend a series; Ninja Timmy: Sansoria and Vita apan need the series; several "year/?" copies need their number.
-  All lists above were published (last bundle 2026-11-15 about 23:18; nothing local left).
   The user asked (2026-11-15) not to repeat the "Waiting now" list in every reply.
   **Publish price lists in bundles (the user's wish, 2026-11-15):** for each series the user sends, prepare it and commit
   locally (with its log line) but do NOT push and do NOT run the price check. When the user says "publish" (or "done"),
