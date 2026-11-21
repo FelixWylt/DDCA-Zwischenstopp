@@ -167,7 +167,7 @@
 | 2026-11-21 | da-v217/218 story series + filters: build writes story-info.json (INDUCKS story series, first printing's language, creators' nationality; tested on made-up ISV tables), Stories › All stories sub chips Stories / Story series, series pages + search, Original / In my comics rows (All stories, Favourites), People › Country and Characters › In my comics; tested locally with the user's backup (no GitHub check run); catalogue rebuild failed: inducks.org unreachable (~13 min waiting), message in the app; merged another chat's notes line | 5–7 min (first guess 15–20 ÷ 3) + rebuild 3–5 min + 1 run | 21–22 min (23:03 → 23:24:41, incl. ~13 min waiting for the failed rebuild) |
 | 2026-11-21 | INDUCKS works for the user's browser: answer (GitHub couldn't connect); a rebuild was started without the user's go (mistake owned; the stopped command had already started it at 23:56; it succeeded) | – | 0–1 min (23:56 → 23:57) |
 | 2026-11-21 | 'Try again tomorrow 9 am': checked, the 23:56 rebuild had already worked (story-info.json 917 KB), nothing scheduled (answer) | under 1 min | 0–1 min (23:58 → 23:59) |
-| 2026-11-22 | Notes updated (rebuild done, open points), handover summary nr. 11 for a new chat | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (00:00 → 00:01:06) |
+| 2026-11-22 | Notes updated (rebuild done, open points), handover summary nr. 11 for a new chat | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (00:00 → 00:01:06) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
