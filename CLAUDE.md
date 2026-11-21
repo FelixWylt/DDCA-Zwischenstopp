@@ -161,6 +161,7 @@
 | 2026-11-21 | Summary + orders for the next chat (text to paste, nr. 10), open points noted in CLAUDE.md | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (22:32 → 22:32:57) |
 | 2026-11-21 | Haiku and Sonnet (answer only): Sonnet fine for price lists, answers and small fixes; Opus for bundles; Haiku only for quick questions | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:35 → 22:35:11) |
 | 2026-11-21 | Repo connected, CLAUDE.md read (22:33 → ~22:34, answer); story series search (DoubleDuck etc.) looked at: stories carry no series yet, INDUCKS has storysubseries/subseriesname; report + plan + questions, no change | – (report first) | 1–2 min (22:38 → 22:39:43) |
+| 2026-11-21 | Story series answers A (sub tab of All stories), B (language filter on All stories + Favourites, country filter on People) taken in; the user's 22:45 backup: all 5,600 story codes are in the catalogue, comic language mostly from the series code (de/, se/, it/, ch/); question on the People country; no change | – (report first) | 0–1 min (22:45 → 22:45:31) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
