@@ -149,6 +149,7 @@
 | 2026-11-20 | da-v213, 11 points: Reading All time counts everything (per month since 2016), book/book-series Country (Wikidata P495/P27, 041 $h, author's country after Refresh all books), story ratings + English genres/dates on the comic page, What you collect by universe (Disney · group), decade labels fit, duplicates by edition/ISBN + Show them, wishes turned owned count (Panzerknacker & Co 2 marked once), Growth monthly bars, One-pager only for stories, ↓/↑ on ranked lists + Stories page, y-axis on bar charts; 1 check run (no errors) | 10–13 min (first guess 30–40 ÷ 3) + 1–2 runs | 9–10 min (23:25 → 23:34:40, incl. 1 run of ~2 min) |
 | 2026-11-21 | Summary + orders for the next chat (text to paste), open points noted in CLAUDE.md | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (20:37 → 20:37:57) |
 | 2026-11-21 | Repo connected, CLAUDE.md read (20:39 → ~20:40); duplicates checked with the user's 20:40 backup and the da-v213 rule: 9 extra copies of 8 items (was 69); 6 are 2×/3× copies on one entry, 2 are two entries (LTB Maus-Edition 7 twice; Magnus Chase 1 = 2016 HC + 2018 paperback, different ISBNs: fix proposed, not started) (answer only) | about 1 min (first guess 2 ÷ 2) | 1–2 min (20:51 → 20:52:09) |
+| 2026-11-21 | da-v214: Duplicates: books with different ISBNs = different items (a book without ISBN joins the slot's only ISBN); tested on the user's backup: 8 extra copies of 7 items; 1 check run (stats-collection, no errors) | about 1 min (first guess 2 ÷ 2) + 1 run | 4–5 min (21:01 → 21:04:01, incl. 1 run of ~2 min) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
@@ -161,8 +162,8 @@ Where the clock stops: do everything first (code, tests, research, the prices/ta
 commit with the log line the **last** step before writing the reply, so the measured time covers the whole job
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
-## Where we left off (2026-11-21, app da-v213)
-- **Open (2026-11-21):** duplicates checked (backup 20:40): 9 extra copies of 8 items. Proposed: books with different ISBNs = different items (Magnus Chase 1 HC/paperback), waiting for the go;
+## Where we left off (2026-11-21, app da-v214)
+- **Open (2026-11-21):** duplicates done (da-v214: books with different ISBNs are different items; backup 20:40 → 8 extra copies of 7 items);
   the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
   After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
