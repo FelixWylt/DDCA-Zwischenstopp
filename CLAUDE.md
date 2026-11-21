@@ -157,6 +157,7 @@
 | 2026-11-21 | G = pages per book typed by the user; point 11 added to the plan (CLAUDE.md rule: say when a job needs a stronger model or higher effort); not started | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:13 → 22:13:37) |
 | 2026-11-21 | High or extra effort? High is enough for the 8-point bundle (answer only) | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:15 → 22:15:13) |
 | 2026-11-21 | da-v215/216, 8 points: pages per month, Read online + Paste from the page (Royal Road: title, author, tags, link, Vol lines -> book series + book buttons, PAGES; short stories: words counted), Link/Words fields, Web serial/Short story, version in the update popup, one story per code in a comic (86 groups, shared title, pages added; tested on the backup), tap a bar = number + Show them, Reading averages = series only, Stats index (one swipe row), rule 'more power' in CLAUDE.md; 2 check runs (no errors) | 8–10 min (first guess 25–30 ÷ 3) + 1–2 runs | 9–10 min (22:15 → 22:24:55, incl. 2 runs of ~2 min) |
+| 2026-11-21 | Opus vs Fable (answer only): Fable = the bigger Mythos tier; for DDA work Opus is enough, Fable only for a very hard problem | under 1 min (first guess 1 ÷ 2) | 0–1 min (22:30 → 22:30:59) |
 
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
 
