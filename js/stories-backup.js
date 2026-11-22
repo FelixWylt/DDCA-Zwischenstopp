@@ -66,7 +66,7 @@ const storyKey = e => e.code ? "c:" + String(e.code).replace(/\s+/g, "").toLower
 const storyRate = e => S.storyRatings[storyKey(e)] || {};
 async function setStoryRate(key, patch) {
   const cur = Object.assign({}, S.storyRatings[key] || {}, patch);
-  if (!cur.fav && !+cur.rating) delete S.storyRatings[key]; else S.storyRatings[key] = cur;
+  if (!cur.fav && !+cur.rating && !+cur.writing && !+cur.art) delete S.storyRatings[key]; else S.storyRatings[key] = cur;
   await setConfig("storyRatings", S.storyRatings);
 }
 // the title two chapters share: "Zio Paperone e il decino dell'infinito - Capitolo 1 - …" + "… - Capitolo 2 - …"
@@ -262,7 +262,9 @@ function storyRow(e) {
   const sr = storyRate(e), sk = storyKey(e), first = e.items.find(c => coverOf(c)), cv = first && coverOf(first);
   return `<details class="storyit"><summary>${cv ? `<span class="sthumb"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('none');this.remove()"></span>` : `<span class="sthumb none"></span>`}<div style="min-width:0;flex:1"><div class="t">${sr.fav ? '<span style="color:#c8102e">♥</span> ' : ""}${esc(storyTitle(e) || "Untitled")}${+sr.rating ? ` <span class="chip rate">${ratingTxt(sr.rating)}</span>` : ""}</div><div class="s">${esc(by || "Creators unknown")}</div></div><span class="chip${e.items.length > 1 ? " trade" : ""}">${e.items.length > 1 ? "×" + e.items.length : esc(comicTag(e.items[0]))}</span></summary>
     <div class="stbody small">
-      <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}${starsHtml(sr.rating, `data-sk="${esc(sk)}"`)}</div>
+      <div class="row" style="gap:10px;align-items:center">${heartHtml(sr.fav, `data-sfav="${esc(sk)}"`)}<span class="muted" style="min-width:56px">Overall</span>${starsHtml(sr.rating, `data-sk="${esc(sk)}" aria-label="Overall rating"`)}</div>
+      <div class="row" style="gap:10px;align-items:center"><span style="display:inline-block;width:32px"></span><span class="muted" style="min-width:56px">Writing</span>${starsHtml(sr.writing, `data-sk="${esc(sk)}" data-sr="writing" aria-label="Writing rating"`)}</div>
+      <div class="row" style="gap:10px;align-items:center"><span style="display:inline-block;width:32px"></span><span class="muted" style="min-width:56px">Art</span>${starsHtml(sr.art, `data-sk="${esc(sk)}" data-sr="art" aria-label="Art rating"`)}</div>
       ${e.titles.length > 1 ? `<div><span class="muted">Also titled:</span> ${e.titles.slice(1).map(esc).join(" · ")}</div>` : ""}
       ${e.original ? `<div><span class="muted">Original title:</span> ${esc(e.original)}</div>` : ""}
       ${storySeriesOf(e).length ? `<div><span class="muted">Story series:</span> ${storySeriesOf(e).map(c => `<button class="link" data-ser="${esc(c)}">${esc(seriesNameOf(c))}</button>`).join(", ")}</div>` : ""}
@@ -344,7 +346,7 @@ function drawStories() {
           : '<div class="empty"><h3>No favourites yet</h3><p>Open a story under All stories and tap the heart.</p></div>') + more(total);
     } else {
       if (st.reprinted) list = list.filter(e => e.items.length > 1);
-      if (st.rated) list = list.filter(e => +storyRate(e).rating > 0);
+      if (st.rated) list = list.filter(e => { const r = storyRate(e); return +r.rating > 0 || +r.writing > 0 || +r.art > 0; });
       if (st.unread) list = list.filter(e => !storyRead(e));
       list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~", "en", { numeric: true }) : cmpT);
       if (st.desc) list.reverse();   // ↑: the order turned round (lowest rating, fewest reprints, Z to A)
@@ -359,7 +361,7 @@ function drawStories() {
       b.classList.toggle("on", on); b.textContent = on ? "♥" : "♡";
       try { await setStoryRate(k, { fav: on }); } catch (e) { toast(errText(e)); }
     });
-    bindStars(box, async (v, el) => { try { await setStoryRate(el.dataset.sk, { rating: v }); } catch (e) { toast(errText(e)); } });
+    bindStars(box, async (v, el) => { try { await setStoryRate(el.dataset.sk, { [el.dataset.sr || "rating"]: v }); } catch (e) { toast(errText(e)); } });
     box.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { st.who = { role: "series", name: b.dataset.ser }; st.tab = "all"; st.sub = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
     box.querySelectorAll("[data-person]").forEach(b => b.onclick = () => { st.who = { role: b.dataset.person, name: b.dataset.n }; st.tab = "all"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
   }
