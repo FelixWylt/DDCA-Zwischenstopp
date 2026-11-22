@@ -185,7 +185,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     refreshDup(d);
     ["issue", "isbn", "title", "author", "seriesName"].forEach(k => { const el = $("#f-" + k); if (el) el.addEventListener("input", () => { d[k] = el.value; refreshDup(d); }); });
     // ticking "Read" notes today's date (it can be changed); unticking clears it
-    $("#f-read") && ($("#f-read").onchange = e => { grab(); d.readDate = e.target.checked ? (d.readDate || todayIso()) : ""; renderKeep(); });
+    $("#f-read") && ($("#f-read").onchange = e => { grab(); if (e.target.checked) { d.readDate = d.readDate || d.readDateWas || todayIso(); delete d.readDateWas; } else { if (d.readDate) d.readDateWas = d.readDate; d.readDate = ""; } renderKeep(); });
     $("#f-inlot") && ($("#f-inlot").onchange = e => {
       grab();
       if (e.target.checked) { const last = recentLots()[0]; d.lotId = "new"; d.lotTotal = d.lotTotal || ""; if (last && daysSince(last.created) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.currency = last.currency; } }

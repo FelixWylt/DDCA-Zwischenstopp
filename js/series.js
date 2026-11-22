@@ -208,7 +208,7 @@ function bindArrangeCard() {
       const pending = arrangePending(), renamed = [];
       pending.forEach(se => Object.assign(se, arrangeSeries(se)));
       if ($("#arrTypo") && $("#arrTypo").checked) S.series.forEach(se => { if (/^Lusties Taschenbuch/i.test(se.name)) { se.name = se.name.replace(/^Lusties/i, "Lustiges"); renamed.push(se); } });
-      if ($("#arrEmpty") && $("#arrEmpty").checked) S.series = S.series.filter(se => S.comics.some(c => c.seriesId === se.id) || DEFAULT_SERIES.some(d => d.id === se.id));
+      if ($("#arrEmpty") && $("#arrEmpty").checked) { S.series = S.series.filter(se => S.comics.some(c => c.seriesId === se.id) || DEFAULT_SERIES.some(d => d.id === se.id)); const ids = new Set(S.series.map(s => s.id)); if ((S.valueRules || []).some(r => !String(r.s).startsWith("book:") && !ids.has(r.s))) { S.valueRules = S.valueRules.filter(r => String(r.s).startsWith("book:") || ids.has(r.s)); await setConfig("valueRules", S.valueRules); } }
       const n = id => S.comics.filter(c => c.seriesId === id).length;
       S.series.sort((a, b) => pubCompare(a.publisher, b.publisher) || groupCompare(a.group, b.group) || n(b.id) - n(a.id) || a.name.localeCompare(b.name, "de", { numeric: true }));
       await saveSeries();
@@ -518,7 +518,7 @@ VIEWS.series = {
     }
     if (tab === "tools") return tabs + `
       <p class="small muted" style="margin:0">Bulk jobs for all your series and comics. The ones that need internet say so.</p>
-      <div class="card stack"><h3>Fill all series</h3>
+      <div class="card stack"><h3>Fill all series</h3>${lastRunText("fillall")}
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
       ${priceBatchCard()}
@@ -627,6 +627,7 @@ VIEWS.series = {
       }
       try { if (changed) await saveSeries(); } catch (e) { warn = errText(e); }
       run.running = false;
+      markRun("fillall");
       run.msg = (run.stop ? "Stopped. " : "Done. ") + changed + (changed === 1 ? " series got" : " series got") + " new details" + (warn ? ". " + warn : ".");
       toast(run.msg); if (S.view === "series") renderKeep();
     });
@@ -674,7 +675,8 @@ VIEWS.series = {
       grab(); const s = S.series[+b.dataset.rm];
       const used = S.comics.filter(c => c.seriesId === s.id).length;
       if (used) { toast(used + " comics are in this series. Move or delete them first."); return; }
-      S.series.splice(+b.dataset.rm, 1); S.serEditObj = null;
+      const gone = S.series.splice(+b.dataset.rm, 1)[0]; S.serEditObj = null;
+      if (gone && (S.valueRules || []).some(r => r.s === gone.id)) { S.valueRules = S.valueRules.filter(r => r.s !== gone.id); setConfig("valueRules", S.valueRules).catch(() => {}); }   // its price ranges go too
       if (s.id) { (async () => { try { await saveSeries(); toast((s.name || "Series") + " removed"); } catch (e) { toast(errText(e)); } })(); }
       render(); window.scrollTo(0, 0);
     });
@@ -698,7 +700,7 @@ function priceBatchCard() {
   const what = e => { const n = priceBatchRules(e).length, p = Object.keys(e.patch || {}).map(k => ({ perYear: "Per year", firstYear: "Years", lastYear: "Years", defaultEdition: "the default edition", issueList: "its issue list", latest: "the latest issue", numbering: "numbering by year" })[k]).filter((x, i, a) => x && a.indexOf(x) === i);
     const mv = e.renumber ? S.comics.filter(c => c.seriesId === e.id && e.renumber[String(c.issueLabel || c.issue || "")]).length : 0;
     return n + " price " + (n === 1 ? "range" : "ranges") + (e.replace ? ", replaces its current ranges" : "") + (p.length ? "; also sets " + p.join(" and ") : "") + (mv ? "; your " + mv + " " + (mv === 1 ? "copy gets its" : "copies get their") + " year/number" : ""); };
-  return `<div class="card stack"><h3>Price lists waiting</h3>
+  return `<div class="card stack"><h3>Price lists waiting</h3>${lastRunText("prices")}
     <p class="small muted" style="margin:0">Price ranges Claude has prepared for your series (from Comicguide, Seriekatalogen or sales). Nothing changes until you tap Add all.</p>
     <ul class="small" style="margin:0;padding-left:18px">${w.map(e => `<li><strong>${esc(seriesById(e.id) ? seriesById(e.id).name : seriesTitle(e.id))}</strong>: ${batchTooNew(e) ? "needs the newest app version: close the app completely and open it again, then this list can be added" : esc(what(e))}</li>`).join("")}</ul>
     <div class="row"><button type="button" class="primary" id="pbatch"${S.db && w.some(e => !batchTooNew(e)) ? "" : " disabled"}>Add all</button></div></div>`;

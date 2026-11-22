@@ -23,6 +23,7 @@ function gapHead(owned, wanted, total, info) {
       <div class="fchips">${chip("all", "All")}${chip("missing", "Missing")}${chip("wanted", "Wishlist")}${info.read === false ? "" : chip("unread", "Unread")}
         ${info.read === false ? "" : `<button type="button" class="fchip readchip${S.readMode ? " on" : ""}" id="readmode" aria-pressed="${!!S.readMode}">✓ Mark read</button>`}
         ${info.editions ? `<button type="button" class="fchip readchip${S.edMode ? " on" : ""}" id="edmode" aria-pressed="${!!S.edMode}">Edition</button>` : ""}
+        <button type="button" class="fchip" id="copymiss" data-name="${esc((s => s ? s.short || s.name : String(info.cur || S.gapSeries || "").replace(/^book:/, ""))(seriesById(info.cur || S.gapSeries)))}">Copy missing numbers</button>
         <details class="ginfo"><summary aria-label="What the colours mean">ⓘ</summary><div class="legend small">${info.legend}</div></details></div>
       ${S.readMode ? '<p class="small muted" style="margin:0">Reading mode: tap an owned issue to mark it read today; tap again to undo.</p>' : ""}
       ${S.edMode && info.editions ? `<p class="small muted" style="margin:0">Edition mode: tap an owned issue to choose its edition. Unmarked squares count as ${esc(info.defEd || "the price table's general prices")}; small letters show other editions (${esc(info.editions.map(e => editionMark(e) + " = " + e).join(", "))}).</p>` : ""}
@@ -32,6 +33,16 @@ function bindGapHead() {
   document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(!$("#readmode")); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
   $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; if (S.readMode) S.edMode = false; renderKeep(); });
   $("#edmode") && ($("#edmode").onclick = () => { S.edMode = !S.edMode; if (S.edMode) S.readMode = false; renderKeep(); });
+  // the squares you don't own, as text: runs of numbers shortened (12–15), yearly series by year (1985: 3, 7–9)
+  $("#copymiss") && ($("#copymiss").onclick = async () => {
+    const labs = [...document.querySelectorAll("#gridbox .cell[data-issue]")].filter(b => !b.classList.contains("owned")).map(b => b.dataset.issue);
+    if (!labs.length) { toast("Nothing missing here"); return; }
+    const byYear = new Map(); labs.forEach(l => { const m = /^(\d{4})\/(\d{1,3})$/.exec(l), y = m ? m[1] : ""; (byYear.get(y) || byYear.set(y, []).get(y)).push(m ? String(+m[2]) : l); });
+    const runs = ns => { const out = []; let a = null, b = null; const flush = () => { if (a != null) out.push(a === b ? String(a) : a + "–" + b); a = b = null; };
+      ns.forEach(x => { if (/^\d+$/.test(x) && a != null && +x === b + 1) { b = +x; return; } flush(); if (/^\d+$/.test(x)) { a = b = +x; } else out.push(x); }); flush(); return out.join(", "); };
+    const txt = "Missing in " + $("#copymiss").dataset.name + " (" + labs.length + "):\n" + [...byYear].map(([y, ns]) => (y ? y + ": " : "") + runs(ns)).join("\n");
+    try { await navigator.clipboard.writeText(txt); toast(labs.length + " missing numbers copied"); } catch (e) { sheetOpen(`<textarea class="mono" rows="8" style="width:100%">${esc(txt)}</textarea><p class="small muted">Press and hold the text, then Copy.</p>`); }
+  });
 }
 const gridClass = noRead => [S.readMode && !noRead ? "readmode" : "", "gf-" + (noRead && S.gapFilter === "unread" ? "all" : S.gapFilter || "all")].join(" ");
 // the choice for a tapped number slides up from the bottom of the screen
@@ -374,7 +385,8 @@ VIEWS.gaps = {
         if (!mine.length) { toast("Only owned issues can be marked as read"); return; }
         const read = !mine.every(c => c.read), se = seriesById(S.gapSeries) || S.series[0] || {};
         try {
-          for (const c of mine) await saveComic(Object.assign({}, c, { read, readDate: read ? (c.readDate || todayIso()) : "" }));
+          // unticking keeps the date aside (readDateWas), so ticking again by mistake brings it back
+          for (const c of mine) { const b2 = Object.assign({}, c, { read, readDate: read ? (c.readDate || c.readDateWas || todayIso()) : "" }); if (read) delete b2.readDateWas; else if (c.readDate) b2.readDateWas = c.readDate; await saveComic(b2); }
           b.classList.toggle("read", read);
           toast((se.short || se.name || "") + " " + b.dataset.issue + (read ? " marked as read" : ": read mark removed"));
         } catch (e) { toast(errText(e)); }

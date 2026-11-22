@@ -602,7 +602,7 @@ function duckipediaBulkCard() {
   if (!window.Duckipedia) return "";
   const dk = S.dk, todo = duckipediaTodo().length, have = S.comics.filter(c => c.duckipedia).length;
   if (!todo && !have && !dk) return "";
-  return `<div class="card stack" id="dkbox"><h3>Duckipedia</h3>
+  return `<div class="card stack" id="dkbox"><h3>Duckipedia</h3>${lastRunText("dk")}
     <p class="small muted" style="margin:0">German comics can get extra details from <a href="https://de.duckipedia.org" target="_blank" rel="noopener">Duckipedia</a>: translator, price, characters, plot and more. They're saved with each comic, so they stay available offline. ${have === 1 ? "1 comic has" : have + " comics have"} them already.${(() => { const sk = [...new Set(S.comics.filter(c => { const se = dkSeries(seriesById(c.seriesId)); return se && ["de/MM", "de/MMM", "de/MC", "ch/MMZ"].includes(se.code); }).map(c => seriesById(c.seriesId).name))]; return sk.length ? " Duckipedia has no pages for single issues of " + sk.join(", ") + ", so those are skipped." : ""; })()}</p>
     ${dk && dk.running ? `<div class="progress"><div style="width:${(dk.done / dk.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${dk.done} of ${dk.total} checked · ${dk.found} with details · ${dk.none} without a Duckipedia page</p><div class="row"><button id="dkstop">Stop</button></div>`
       : dk && dk.finished ? `<p class="small" style="margin:0">Finished: ${dk.found} comics got details, ${dk.none} have no Duckipedia page${dk.failed ? ", " + dk.failed + " could not be fetched" : ""}.</p>` : ""}
@@ -626,7 +626,7 @@ async function duckipediaBulk() {
   }
   S.dk.running = false; S.dk.finished = true;
   refreshDkCard();
-  toast("Duckipedia: " + S.dk.found + " comics got details");
+  await markRun("dk"); toast("Duckipedia: " + S.dk.found + " comics got details");
 }
 // ---- Refresh all comics: INDUCKS and Duckipedia details fetched again; their data wins, personal fields stay ----
 const fromSources = u => !u || /inducks\.org|outducks\.org|duckipedia\.org/.test(u);   // a cover you pasted yourself is kept
@@ -636,7 +636,7 @@ const dkDue = c => !(c.duckipedia && c.duckipedia.fetched && daysSince(c.duckipe
 const byIc = file => file._byIc || (file._byIc = new Map(Object.values(file.issues || {}).map(x => [x.ic, x])));
 function refreshCard() {
   const r = S.rf, nDe = S.comics.filter(c => c.kind !== "book" && dkDue(c) && Duckipedia.candidates(dkSeries(seriesById(c.seriesId)), c).length).length;
-  return `<div class="card stack" id="rfbox"><h3>Refresh all comics</h3>
+  return `<div class="card stack" id="rfbox"><h3>Refresh all comics</h3>${lastRunText("comics")}
     <p class="small muted" style="margin:0">Fetches INDUCKS and Duckipedia details again for every comic: story lists, titles, dates, pages and covers are replaced with the current data. Condition, prices, notes, ratings, read marks and covers you pasted yourself are kept. INDUCKS comes from the catalogue on this phone; Duckipedia needs internet and takes about ${Math.max(1, Math.round(nDe * 2 / 60))} min for the ${nDe} German comics it asks about (comics checked in the last 30 days, and those without a Duckipedia page checked in the last 90, are skipped). Worth doing every few months.</p>
     ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rfstop">Stop</button></div>`
       : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} comics updated${r.failed ? ", Duckipedia failed for " + r.failed : ""}.</p>` : ""}<div class="row"><button id="rfall"${S.db ? "" : " disabled"}>Refresh all comics</button></div>`}
@@ -685,14 +685,14 @@ async function refreshAll() {
     if (strip(c) !== strip(c0)) { try { await saveComic(c); r.changed++; } catch (e) {} }
     r.done++; if (r.done % 5 === 0 || r.done === r.total) drawRefresh();
   }
-  r.running = false; r.finished = true; drawRefresh();
+  r.running = false; r.finished = true; await markRun("comics"); drawRefresh();
   toast("Refresh: " + r.changed + " comics updated");
 }
 // ---- Refresh all books: every book with an ISBN looked up again; the databases' data wins, series and volume stay ----
 function refreshBooksCard() {
   const n = S.comics.filter(c => c.kind === "book" && window.Books && Books.normalize(c.isbn) && bookDue(c)).length, r = S.rb;
   if (!n && !r) return "";
-  return `<div class="card stack" id="rbbox"><h3>Refresh all books</h3>
+  return `<div class="card stack" id="rbbox"><h3>Refresh all books</h3>${lastRunText("books")}
     <p class="small muted" style="margin:0">Looks up your ${n} books with an ISBN in the Deutsche Nationalbibliothek, LIBRIS, Open Library and Google Books again (books no database knew in the last 90 days are skipped). Title, author, publisher, year, pages, language, translator, genres and cover are replaced with their data; series, volume and everything about your copy stay. Needs internet; takes about ${Math.max(1, Math.round(n * 0.8 / 60))} min.</p>
     ${r && r.running ? `<div class="progress"><div style="width:${(r.done / r.total * 100).toFixed(1)}%"></div></div><p class="small" style="margin:0">${r.done} of ${r.total} · ${r.changed} updated</p><div class="row"><button id="rbstop">Stop</button></div>`
       : `${r && r.finished ? `<p class="small" style="margin:0">${r.stopped ? "Stopped" : "Finished"}: ${r.changed} ${r.changed === 1 ? "book" : "books"} updated${r.none ? ", " + r.none + " not found in any database" : ""}.</p>` : ""}<div class="row"><button id="rball"${S.db ? "" : " disabled"}>Refresh all books</button></div>`}

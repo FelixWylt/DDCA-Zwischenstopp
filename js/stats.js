@@ -176,7 +176,10 @@ VIEWS.stats = {
         return s.numbering === "year" ? !!m && +m[2] >= 1 && (catN ? true : +m[1] >= +s.firstYear && +m[1] <= +s.lastYear && +m[2] <= Math.max(perYearOf(s, +m[1]), 1)) : /^\d+$/.test(k) && +k >= Math.max(1, +s.first || 1) && +k <= +s.latest; };
       const gc = s.numbering === "year" ? gridCat(s) : null, n = new Set(mine.filter(c => !c.facsimile).flatMap(c => { const f = gc && fusedSquare(gc, c.issueLabel || c.issue); return f ? [f] : issueSquares(c.issueLabel || c.issue); }).filter(k => /^\d{4}-\d{2,3}-\d{2,3}$/.test(k) ? !!catN : inGrid(k))).size;   // a double issue counts once
       return { s, n, tot };
-    }).filter(x => x.tot && x.n);
+    });
+    // series you own comics of but whose end isn't known (no Latest issue, no years): How complete can't count them
+    const noEnd = perSeries.filter(x => !x.tot && (ownBy.get(x.s.id) || []).length && !(x.s.numbering === "year" && catEntry(x.s))).map(x => x.s);
+    perSeries.splice(0, perSeries.length, ...perSeries.filter(x => x.tot && x.n));
     if (loads.length) Promise.allSettled(loads).then(() => { if (S.view === "stats") renderKeep(); });   // one redraw when all have loaded
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
     // value per series (also tells which series have no prices)
@@ -254,6 +257,7 @@ VIEWS.stats = {
       const completion = scope !== "b" && cl.length ? card("How complete " + sortBtn("compl"), `<span class="seg small" role="group"><button type="button" data-compl="" aria-pressed="${!fewest}">Biggest</button><button type="button" data-compl="few" aria-pressed="${fewest}">Fewest missing</button></span>`,
         `<div class="hbars">${shown.map(({ s, n, tot }) => `<button class="hbar" data-gap="${esc(s.id)}" title="${esc(s.name)}: ${n} of ${tot}"><span class="lab">${esc(seriesLabel(s))}</span><span class="track"><span class="fill owned" style="width:${Math.max(1, Math.min(100, n / tot * 100)).toFixed(1)}%"></span></span><span class="n">${fewest ? nf(tot - n) + "<small>missing</small>" : pct(n, tot) + " %<small>" + nf(n) + " / " + nf(tot) + "</small>"}</span></button>`).join("")}</div>
         ${cl.length > 8 ? `<button class="ghost" id="stAllSeries" type="button">${S.statAllSeries ? "Show fewer" : "Show all " + cl.length + " series"}</button>` : ""}
+        ${noEnd.length ? `<p class="small muted" style="margin:8px 0 0">Not counted: ${noEnd.length} ${noEnd.length === 1 ? "series has" : "series have"} no Latest issue (or years) set yet. Tap one to add it in Series: ${noEnd.map(s => `<button type="button" class="link" data-snoend="${esc(s.id)}">${esc(seriesLabel(s))}</button>`).join(", ")}</p>` : ""}
         ${note(fewest ? "Series with the fewest issues missing. " + (cl[0] ? nf(wishIn(cl[0].s.id).length) + " of " + esc(seriesLabel(cl[0].s)) + "'s missing ones are on your wishlist. " : "") + "Tap a series for its gap grid." : "Biggest first. Tap a series for its gap grid.")}`) : "";
       // when your copies came out: decades, oldest, newest, median
       const ys = sel.map(c => ({ c, y: yearOf(c.date) || c.issueYear || 0 })).filter(x => x.y > 1400).sort((a, b) => a.y - b.y);
@@ -432,6 +436,7 @@ VIEWS.stats = {
     document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { tab: "all", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
+    document.querySelectorAll("[data-snoend]").forEach(b => b.onclick = () => { const s = seriesById(b.dataset.snoend); if (!s) return; S.serTab = "comics"; S.serPath = { u: s.publisher || "No universe yet", g: s.group || OTHER_GROUP }; S.serEditObj = s; S.serEditBook = null; nav("series"); });
     refreshRates();
     document.querySelectorAll("[data-rate]").forEach(inp => inp.onchange = async () => { let v = parseFloat(String(inp.value).replace(",", ".")); if (!(v > 0)) return;
       const k = inp.dataset.rate, usual = (S.rates && !S.rates.manual && S.rates[k]) || RATE_DEFAULT[k];

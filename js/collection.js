@@ -3,13 +3,18 @@
 "use strict";
 // ---- Collection: groups > series > issues ----
 // "LTB – Lustiges Taschenbuch: 12, 45 (2 spare), 101–103": your duplicates for trade, by series
+// the same issue owned as separate entries also counts: all but one of them are spare
+function sepCopies() { const m = new Map(); S.comics.forEach(c => { const k = copyKey(c); if (k && !k.endsWith("|")) m.set(k, (m.get(k) || 0) + 1); }); return m; }
+function isTradeable(c, sep) { return isOwn(c) && (c.forTrade || (c.copies || 1) > 1 || ((sep || sepCopies()).get(copyKey(c)) || 0) > 1); }
 function tradeText() {
-  const list = sortComics(S.comics.filter(c => isOwn(c) && !isNovel(c) && (c.forTrade || (c.copies || 1) > 1)));
+  const sep = sepCopies(), seen = new Set();
+  // separate copies of one issue: one line with the spare count
+  const list = sortComics(S.comics.filter(c => !isNovel(c) && isTradeable(c, sep))).filter(c => { const k = copyKey(c); if (!k || (sep.get(k) || 0) < 2) return true; if (seen.has(k)) return false; seen.add(k); return true; });
   const groups = new Map(); list.forEach(c => { const k = seriesKeyOf(c); (groups.get(k) || groups.set(k, []).get(k)).push(c); });
   const lines = [];
   groups.forEach((cs, k) => {
     const se = seriesById(k), name = se ? (se.short ? se.short + " – " + se.name : se.name) : seriesTitle(k);
-    lines.push(name + ": " + cs.map(c => { const lab = showLabel(c.issueLabel || c.issue || "") || c.title || "?", spare = (c.copies || 1) - (c.forTrade ? 0 : 1); return lab + (spare > 1 ? " (" + spare + " spare)" : "") + (c.grade ? " Z" + c.grade : ""); }).join(", "));
+    lines.push(name + ": " + cs.map(c => { const lab = showLabel(c.issueLabel || c.issue || "") || c.title || "?", sepN = (sep.get(copyKey(c)) || 0) > 1 ? S.comics.filter(x => copyKey(x) === copyKey(c)).reduce((a, x) => a + (x.copies || 1), 0) : (c.copies || 1), spare = sepN - (c.forTrade ? 0 : 1); return lab + (spare > 1 ? " (" + spare + " spare)" : "") + (c.grade ? " Z" + c.grade : ""); }).join(", "));
   });
   return "My duplicates for trade (" + list.length + ")\n" + lines.join("\n");
 }
@@ -17,7 +22,7 @@ function statusMatch(c) {
   const f = S.filters.status;
   if (f === "owned") return isOwn(c);
   if (f === "wanted") return c.status === "wanted";
-  if (f === "trade") return isOwn(c) && (c.forTrade || (c.copies || 1) > 1);
+  if (f === "trade") return isTradeable(c, S._sep || (S._sep = sepCopies(), setTimeout(() => { S._sep = null; }, 0), S._sep));
   if (f === "unread") return isOwn(c) && !c.read;
   if (f === "fav") return isMine(c) && !!c.fav;
   if (f === "rated") return isMine(c) && +c.rating > 0;
@@ -77,6 +82,7 @@ function countText(list) {
   if (com) parts.push(com + (com === 1 ? " comic" : " comics"));
   if (nov) parts.push(nov + (nov === 1 ? " book" : " books"));
   if (want) parts.push(want + " on wishlist");
+  const rno = list.filter(c => notOwned(c)).length; if (rno) parts.push(rno + " read, not owned");
   return parts.join(" · ") || (list.length && list.every(isNovel) ? "0 books" : "0 comics");
 }
 // dates are stored as 2021-05-25 / 2021-05 / 2021 and shown the German way: 25.05.2021 / 05.2021 / 2021
@@ -284,7 +290,7 @@ function tileHtml(c) {
 }
 // a list of comics as rows or as covers; heads (years) go between them in both views
 // the same issue owned as separate entries (other condition, seller …): one row with "2×"
-const copyKey = c => !isOwn(c) ? "" : seriesKeyOf(c) + "|" + (c.kind === "book" ? (c.title || "") + "|" + (c.issue || "") : (c.issueLabel || c.issue || "")) ;
+const copyKey = c => !isOwn(c) || /\?/.test(String(c.issueLabel || c.issue || "")) ? "" : seriesKeyOf(c) + "|" + (c.kind === "book" ? (c.title || "") + "|" + (c.issue || "") : (c.issueLabel || c.issue || "")) ;
 function entriesHtml(list, inSeries, note) {
   const grid = colView() === "grid";
   const byKey = new Map(); list.forEach(x => { if (typeof x === "string") return; const k = copyKey(x); if (k && !k.endsWith("|")) (byKey.get(k) || byKey.set(k, []).get(k)).push(x); });
@@ -608,7 +614,7 @@ function detailHtml(c) {
   const v = valueOf(c), lot = c.lotId ? lotInfo(c.lotId) : null;
   const facts = isBook ? [
       row("Series", t([c.seriesName, c.issue && "vol. " + c.issue].filter(Boolean).join(" "))), row("Author", t(c.author)), row("Translator", t(c.translator)), row("Original title", t(c.originalTitle)),
-      row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Language", t(c.lang)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
+      row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Words", c.words ? t(Number(String(c.words).replace(/[^\d]/g, "")).toLocaleString("de-CH")) : ""), row("Format", t(c.format)), row("Language", t(c.lang)), row("Country", t(typeof bookCountry === "function" ? bookCountry(c) : c.country)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
     : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Edition", t(c.edition)), row("Genres", t(c.genre || storyGenres(c))),
       row("INDUCKS", c.inducks ? `<a href="https://inducks.org/issue.php?c=${encodeURIComponent(c.inducks).replace(/%20/g, "+")}" target="_blank" rel="noopener">${t(c.inducks)}</a>` : ""), row("Facsimile", c.facsimile ? "yes, reprint" : "")];
   const linkRow = c.link ? row("Link", `<a href="${t(c.link)}" target="_blank" rel="noopener">${t(c.link.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60))}</a>`) : "";

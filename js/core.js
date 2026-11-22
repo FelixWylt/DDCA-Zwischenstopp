@@ -165,6 +165,7 @@ function valueNumber(c) {   // the number a price range is compared with: issue 
     const v = /^\d{4}-\d{1,3}([A-Z])$/.exec(lab); if (v) return y * 1000 + n + (v[1].charCodeAt(0) - 64) / 100;   // 1967-02B = 2B
     return y * 1000 + n;
   }
+  const rv = /^\s*(\d{1,5})\s*([A-Za-z])\s*$/.exec(lab); if (rv) return +rv[1] + (rv[2].toUpperCase().charCodeAt(0) - 64) / 100;   // 546A = 546.01, as its ranges read
   return c.issueNum || parseInt(lab, 10) || (/^0+$/.test(lab.trim()) ? 0 : null);   // issue 0 (Nullnummer) counts too
 }
 // a range's "from" or "to" as a number: "1952/4" or "4/1952" is year 1952 issue 4; a year alone is all of that year
@@ -293,7 +294,8 @@ function valueRulesHtml(key) {
         <textarea data-ptext rows="5" placeholder="Paste or type here"></textarea>
         <div class="row" style="gap:8px;align-items:center"><button type="button" data-pread>Read prices</button><label class="small">Currency if none is given <select data-pcur>${CURRENCIES.map(x => `<option${x === defCur ? " selected" : ""}>${x}</option>`).join("")}</select></label></div>
         <div data-pout></div>
-      </div></details></div>`;
+      </div></details>
+    ${(miss => miss.length ? `<p class="small muted" style="margin:0">Your ${key.startsWith("book:") ? "books" : "comics"} without a price range (${miss.length}): ${esc(miss.slice(0, 40).join(", "))}${miss.length > 40 ? " …" : ""}</p>` : "")(all.some(r => typeof r.price === "number") ? sortComics(S.comics.filter(c => isOwn(c) && valueKeyOf(c) === key && typeof c.valueChecked !== "number" && !valueRuleFor(c))).map(c => showLabel(c.issueLabel || c.issue || "") || c.title || "?") : [])}</div>`;
 }
 // ---- reading pasted price lists into price ranges ----
 // Comicguide: "1952: Nr. 4 150.00 €" (Zustand 1; reprints "(1. Nachdruck)" are skipped)
@@ -368,8 +370,8 @@ function parsePrices(key, text, fallbackCur, edition) {
     }
     // typed ranges, several per line
     let any = false;
-    // "6,5" is a half number, not two ranges
-    line.split(/;|,(?!5(?!\d))/).map(x => x.trim()).filter(Boolean).forEach(part => {
+    // ranges are split at ";" or ", " only: "6,5" (a half number) and "8,50 €" (a price) stay whole
+    line.split(/;|,\s+/).map(x => x.trim()).filter(Boolean).forEach(part => {
       const B = yearly ? "(\\d{4}(?:\\s*\\/\\s*\\d{1,3}(?:½|[.,]5|[A-Z])?)?)" : "(\\d{1,5}[A-Za-z]?)";
       const r = new RegExp("^" + B + "?\\s*([-–])?\\s*" + B + "?\\s*[:=→>]?\\s+([\\d.,]+)\\s*(€|eur|kr|sek|chf|fr\\.?)?$", "i").exec(part);
       if (!r || (!r[1] && !r[3])) { skipped.push(part); return; }
@@ -760,6 +762,7 @@ async function boot() {
     S.gradeFactors = await getConfig("gradeFactors") || {};
     S.valueHistory = await getConfig("valueHistory") || {};
     S.priceBatchDone = await getConfig("priceBatchDone") || [];
+    S.lastRuns = await getConfig("lastRuns") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
     // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
@@ -1185,7 +1188,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 222;
+const APP_BUILD = 223;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1202,6 +1205,9 @@ function priceBatchRules(e) {
     return res.editions.length > 1 ? res.byEdition.flatMap(x => x.ranges.map(r => mk(r, x.label))) : res.ranges.map(r => mk(r));
   } finally { if (se && pn) se.numbering = was; }
 }
+// when each bulk job in Series › Tools last ran
+const lastRunText = k => (S.lastRuns || {})[k] ? `<p class="small muted" style="margin:0">Last run: ${esc(stampDate(S.lastRuns[k]))}</p>` : "";
+async function markRun(k) { S.lastRuns = Object.assign({}, S.lastRuns, { [k]: new Date().toISOString() }); try { await setConfig("lastRuns", S.lastRuns); } catch (e) {} }
 async function applyPriceBatch() {
   const list = priceBatchWaiting().filter(e => !batchTooNew(e)); let n = 0;
   for (const e of list) {
@@ -1225,7 +1231,7 @@ async function applyPriceBatch() {
     }
     S.priceBatchDone = (S.priceBatchDone || []).concat(batchKey(e));
   }
-  await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone);   // book series have no series entry: their ranges are enough
+  await setConfig("valueRules", S.valueRules); await saveSeries(); await setConfig("priceBatchDone", S.priceBatchDone); await markRun("prices");   // book series have no series entry: their ranges are enough
   return { series: list.length, ranges: n };
 }
 // the catalogue is keyed by series name (as in the app); a series whose name changed is still found by its INDUCKS code
