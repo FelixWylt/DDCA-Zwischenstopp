@@ -195,4 +195,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Check GCD cover run (6 series, cors-test): 4 sure + 1 unsure of 7 comics, nothing added yet; local | no estimate given (forgotten) | 1–2 min (23:13 → 23:14:05) |
 | 2026-11-22 | Publish the log line of the cover-run check (no app change, no check run) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:15 → 23:15:53) |
 | 2026-11-22 | Covers waiting: +4 (Herman Hedning & Co 19, 24, Tintin 20, Winnetou 1); 47 in all; local | 1–2 min (first guess 3 ÷ 2) | 1–2 min (23:16 → 23:16:42) |
+| 2026-11-22 | Publish covers file (+4, 47 in all); no check run | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:16 → 23:16:52) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
