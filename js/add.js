@@ -107,7 +107,7 @@ ${isBook ? `
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
-          <label><span class="l">Format</span><select id="f-format">${["", "Heft", "Taschenbuch / Pocket", "Softcover", "Hardcover", "Album", "Webcomic", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Format</span><select id="f-format">${["", "Magazine", "Pocket book", "Softcover", "Hardcover", "Album", "Webcomic", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Edition</span><input id="f-edition" list="f-edlist" value="${esc(d.edition || "")}" placeholder="${esc(defaultEditionOf(d.seriesId) ? "counts as " + defaultEditionOf(d.seriesId) : "e.g. 1. Auflage")}"><datalist id="f-edlist">${[...new Set(seriesEditions(d.seriesId).concat(["1. Auflage", "höhere Auflagen", "Neuauflage", "Sonderausgabe"]))].map(x => `<option>${esc(x)}</option>`).join("")}</datalist></label>
           <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="${esc(storyGenres(d) ? "From the stories: " + storyGenres(d) : "e.g. Humour, Adventure (separate with commas)")}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
@@ -358,7 +358,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       const most = k => { const n = {}; mine.forEach(c => { const v = String(c[k] || "").trim(); if (v) n[v] = (n[v] || 0) + 1; }); return Object.keys(n).sort((a, b) => n[b] - n[a])[0] || ""; };
       const dir = se.code && S.inducksDir ? S.inducksDir.find(x => x[0] === se.code) : null;
       if (!String(d.publisher || "").trim()) d.publisher = most("publisher") || (dir && dir[5]) || se.pubHouse || PUBLISHER_FALLBACK[se.code] || "";
-      if (!d.format) d.format = most("format") || (/pocket|taschenbuch/i.test(se.name + " " + (dir ? dir[6] : "") + " " + (se.group || "")) ? "Taschenbuch / Pocket" : "");
+      if (!d.format) d.format = most("format") || (/pocket|taschenbuch/i.test(se.name + " " + (dir ? dir[6] : "") + " " + (se.group || "")) ? "Pocket book" : "");
       if (!String(d.genre || "").trim() && storyGenres(d)) d.genre = storyGenres(d);
     };
     $("#lookup") && ($("#lookup").onclick = async () => {

@@ -116,13 +116,17 @@ async function moveStrays(list) {
   await saveMany(fix, null, true); fix.forEach(remember); announce();
   return fix.length;
 }
-// the usual format of a series' issues, from its group, name or size: LTB and pockets are Taschenbuch / Pocket, magazines are Heft
+// format names in English (the user's wish, 2026-11-22): old German names are renamed on start, on save and on restore
+const FMT_EN = { "Heft": "Magazine", "Taschenbuch / Pocket": "Pocket book" };
+// series sizes from Duckipedia in English: "200 mm (Höhe) × 135 mm (Breite)" -> "200 × 135 mm", "wechselnd pages" -> "varying pages"
+const enSize = s => String(s || "").replace(/(\d+(?:[.,]\d+)?)\s*mm\s*\(H[öo]he\)\s*[×x]\s*(\d+(?:[.,]\d+)?)\s*mm\s*\(Breite\)/gi, "$1 × $2 mm").replace(/\bwechselnd(?:e|er|en)?(?=\s|,|$)/gi, "varying").replace(/\bSeiten\b/g, "pages");
+// the usual format of a series' issues, from its group, name or size: LTB and pockets are Pocket book, magazines are Magazine
 function seriesFormat(se) {
   if (!se) return "";
   const n = norm(se.name), f = norm(se.format), g = se.group || "";
   if (/hardcover|gebunden|inbunden|\bhc\b/.test(n + " " + f)) return "Hardcover";
-  if (g === DE_LTB || g === DE_TB || g === SE_POC || /taschenbuch|\bpocket\b|\bltb\b|^topolino\b/.test(n)) return "Taschenbuch / Pocket";
-  if (g === DE_MAG || g === SE_MAG || /\b(magazin|zeitung|heft|hefte|tidning|tidningen)\b/.test(n) || ["kalle anka c o", "kalle anka co", "micky maus", "micky maus magazin"].includes(n)) return "Heft";
+  if (g === DE_LTB || g === DE_TB || g === SE_POC || /taschenbuch|\bpocket\b|\bltb\b|^topolino\b/.test(n)) return "Pocket book";
+  if (g === DE_MAG || g === SE_MAG || /\b(magazin|zeitung|heft|hefte|tidning|tidningen)\b/.test(n) || ["kalle anka c o", "kalle anka co", "micky maus", "micky maus magazin"].includes(n)) return "Magazine";
   if (/\balbum|alben\b/.test(n)) return "Album";
   return "";
 }
@@ -765,7 +769,7 @@ async function boot() {
     S.lastRuns = await getConfig("lastRuns") || {};
     // once: genres filled in by the book databases before October 2026 were lists or catalogue codes; keep one clean genre
     // (run again in version 51: genres from different databases now share one English name)
-    // once: comics without a format get their series' usual format (Heft, Taschenbuch / Pocket, ...)
+    // once: comics without a format get their series' usual format (Magazine, Pocket book, ...)
     // once: prices kept as text ("12.50", from imports) become numbers, purchase dates "12.10.2026" become 2026-10-12, so every sum and chart counts them
     if (!(await getConfig("otherGroupFix1")) && arrangedInUse()) {
       const n = [];
@@ -848,6 +852,9 @@ async function boot() {
       if (fix.length) await saveMany(fix, null, true);
       await setConfig("comicGenre1", true);
     }
+    // every start: German format names and series sizes become English (also catches an old backup restored earlier)
+    { const fx = S.comics.filter(c => FMT_EN[c.format]).map(c => Object.assign({}, c, { format: FMT_EN[c.format] })); if (fx.length) await saveMany(fx, null, true);
+      if (S.series.some(se => se.format && enSize(se.format) !== se.format)) await saveSeries(); }
     if (!(await getConfig("formatFill1"))) {
       const fix = S.comics.filter(c => c.kind !== "book" && !c.format && seriesFormat(seriesById(c.seriesId))).map(c => Object.assign({}, c, { format: seriesFormat(seriesById(c.seriesId)) }));
       if (fix.length) await saveMany(fix, null, true);
@@ -888,6 +895,7 @@ function stamp(c, keepDates) {
   if (!body.createdAt) body.createdAt = body.updatedAt;
   ["pricePaid", "value", "valueChecked", "lotTotal"].forEach(k => { if (typeof body[k] === "string" && body[k].trim() !== "" && typeof parseAmt(body[k]) === "number") body[k] = parseAmt(body[k]); });
   if (body.purchaseDate) body.purchaseDate = isoDate(body.purchaseDate);
+  if (FMT_EN[body.format]) body.format = FMT_EN[body.format];
   if (body.kind !== "book" && !body.format) { const f = seriesFormat(seriesById(body.seriesId)); if (f) body.format = f; }
   if (body.kind !== "book" && !body.genre) { const g = storyGenres(body); if (g) body.genre = g; }   // genres from the stories when none is set   // the series' usual format when none is chosen
   return body;
@@ -1177,6 +1185,7 @@ async function deleteComic(id) {
   S.comics = S.comics.filter(x => x.id !== id); announce();
 }
 async function saveSeries() {
+  S.series.forEach(se => { if (se.format) se.format = enSize(se.format); });
   await setConfig("series", S.series.filter(s => !s.pending));   // a series typed in Add is saved only with its first comic
   S.seriesSaved = true; announce();
 }
@@ -1188,7 +1197,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 227;
+const APP_BUILD = 228;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
