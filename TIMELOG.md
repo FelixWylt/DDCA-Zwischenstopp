@@ -203,4 +203,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Answer: English Frieren publishers + shipping to Switzerland (Viz only for Europe; Shogakukan Asia = SE Asia; Galaxus.ch has it) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (23:41 → 23:41:31) |
 | 2026-11-22 | Answer: 'Generic' publisher on Frieren sets = no real publisher, likely bootleg | about 1 min (first guess 2 ÷ 2) | 0–1 min (23:42 → 23:42:40) |
 | 2026-11-23 | Check: Farbror Joakims liv grid shows every year 1997–2022 (INDUCKS se/FJL keys are bare years, the year grid reads only 'year/number' keys); report + plan da-v232 | 3–5 min (first guess 8 ÷ 2) | 1–2 min (00:21 → 00:22:27) |
+| 2026-11-23 | da-v232 Gaps: INDUCKS years without a number (Farbror Joakims liv) = one square per listed year; published with 7 log commits, no check run | 3–4 min + 1 min wait (first guess 8 ÷ 2) | 2–3 min (00:25 → 00:26:03) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

@@ -264,6 +264,8 @@ VIEWS.gaps = {
     const ent0 = catEntry(se), cat0 = gridCat(se), perY = {};
     const perYSet = {};
     if (cat0) Object.keys(cat0.issues || {}).forEach(k => { const m = /^(\d{4})\/(\d{1,3})$/.exec(k); if (m) { perY[m[1]] = Math.max(perY[m[1]] || 0, +m[2]); (perYSet[m[1]] = perYSet[m[1]] || new Set()).add(+m[2]); } });
+    // a year INDUCKS lists without a number (Farbror Joakims liv: 1997, 2017, 2019, 2022) is one issue that year, square label = the year
+    const yearOnly = new Set(); if (cat0) Object.keys(cat0.issues || {}).forEach(k => { if (/^(19|20)\d\d$/.test(k) && !perY[k]) { yearOnly.add(+k); perY[k] = 1; (perYSet[k] = new Set()).add(1); } });
     // a year where INDUCKS lists only a few scattered numbers (Mega Micky Maus 2017: only 5/2017) shows just those, plus your own
     const sparse = y => perYSet[y] && ((cat0 && cat0.own) || LISTED_ONLY.has(se.code) || perYSet[y].size * 2 < perY[y]);   // an own list (91:an) shows exactly its numbers
     const yearNums = (y, py) => { if (!sparse(y)) { const st = yearStart(perYSet, mine, y); return Array.from({ length: Math.max(0, py - st + 1) }, (_, i) => i + st); } const set = new Set(perYSet[y]); mine.forEach(c => { const m = /^(\d{4})\/(\d{1,3})$/.exec(c.issueLabel || ""); if (m && +m[1] === y) set.add(+m[2]); }); return [...set].sort((a, b) => a - b); };
@@ -290,13 +292,13 @@ VIEWS.gaps = {
         const dbl = catDoubles(cat0)[y] || {};   // a double issue: one wide square (marked as n + 0.9) instead of its numbers
         if (Object.keys(dbl).length) nums = nums.filter(n => !Object.keys(dbl).some(a => Math.floor(n) >= +a && Math.floor(n) <= dbl[a])).concat(Object.keys(dbl).map(a => +a + 0.9));
         nums.sort((a, b) => a - b); return zero.has(String(y)) ? [0].concat(nums) : nums; };
-      const labOf = (y, n) => { if (Number.isInteger(n)) return y + "/" + String(n).padStart(2, "0"); const b = Math.floor(n), f = Math.round((n - b) * 100);
+      const labOf = (y, n) => { if (Number.isInteger(n)) return yearOnly.has(y) && n === 1 ? String(y) : y + "/" + String(n).padStart(2, "0"); const b = Math.floor(n), f = Math.round((n - b) * 100);
         if (f === 90) return fusedKey(y, b, (catDoubles(cat0)[y] || {})[b]);
         return f === 50 ? y + "X" + String(b).padStart(2, "0") : y + "-" + String(b).padStart(2, "0") + String.fromCharCode(64 + f); };
       const txtOf = n => { if (Number.isInteger(n)) return se.code === "se/B" ? n + "B" : n; const b = Math.floor(n), f = Math.round((n - b) * 100); return b + (f === 50 ? "½" : String.fromCharCode(64 + f)); };
       total = years.reduce((a, y) => a + numsOf(y).length, 0);
       grid = years.map(y => {
-        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { const f = Math.round((n - Math.floor(n)) * 100) === 90; cells += f ? cell(labOf(y, n), Math.floor(n) + "-" + (catDoubles(cat0)[y] || {})[Math.floor(n)]).replace('class="cell ', 'class="cell wide ') : cell(labOf(y, n), txtOf(n)); });
+        const nums = numsOf(y); if (!nums.length) return ""; let cells = ""; nums.forEach(n => { const f = Math.round((n - Math.floor(n)) * 100) === 90; cells += f ? cell(labOf(y, n), Math.floor(n) + "-" + (catDoubles(cat0)[y] || {})[Math.floor(n)]).replace('class="cell ', 'class="cell wide ') : cell(labOf(y, n), yearOnly.has(y) && n === 1 ? y : txtOf(n)); });
         const cnt = nums.filter(n => own.has(labOf(y, n))).length;
         return `<div class="yearrow"><div class="y">${y}<div class="muted small">${cnt} of ${nums.length}</div></div><div class="cells">${cells}</div></div>`;
       }).join("");

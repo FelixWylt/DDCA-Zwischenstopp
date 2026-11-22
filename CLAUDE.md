@@ -211,7 +211,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   branch (input cover-input.json from the backup; output covers-found.json). 2026-11-22: 27 covers; GCD stopped answering after 3 series
   (rate limit?). Slower run (1.6 s): +16 (Lucky Luke 6, Spirou 10); GCD stops after ~5 series per run, so run ~6 series at a time
   (Asterix names last: broad searches). da-v229: Get cover pictures also finds book covers. da-v231: "About this series" always shows
-  when the series has an INDUCKS code (link); comic book series get the code by name from the catalogue index (Farbror Joakims liv = se/FJL).
+  when the series has an INDUCKS code (link); comic book series get the code by name from the catalogue index (Farbror Joakims liv = se/FJL). da-v232: yearly series whose INDUCKS keys are bare years (se/FJL: 1997, 2017, 2019, 2022) get one square per listed year, label = the year (yearOnly in gaps.js); the user's comic is numbered "2017".
   - **Repo access:** the first push-access request in a chat is often refused by the safety check (it wants the user's own words).
     Ask for push access only when the user asks for work on the repo; if refused, say so in one line and ask the user to say "try again".
   - **The backup is per chat:** a file sent in another chat can't be opened here, and project files hold no backup. Ask the user to
