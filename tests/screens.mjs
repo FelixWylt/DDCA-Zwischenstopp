@@ -79,7 +79,7 @@ await shot("06-edit-comic", () => { S.editing = "a3"; S.draft = null; nav("add")
 await shot("07-new-comic", () => { S.recentSeries = ["ltb", "tldle", "kap"]; S.editing = null; S.draft = null; nav("add"); });
 await shot("12-trade", () => { S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
 await shot("13-person", () => { S.st = { tab: "all", who: { role: "writers", name: "Guido Martina" }, status: "all" }; nav("stories"); });
-await shot("13c-story-rating", () => { S.storyRatings = { "c:itl1-ap": { rating: 4, writing: 5, art: 3.5 }, "c:itl20-a": { rating: 3, writing: 4 } }; S.st = { tab: "all", status: "all" }; nav("stories"); const d = document.querySelector("details.storyit"); if (d) d.open = true; });
+await shot("13b-story-rating", () => { S.storyRatings = { "c:itl1-ap": { rating: 4, writing: 5, art: 3.5 }, "c:itl20-a": { rating: 3, writing: 4 } }; S.st = { tab: "all", status: "all" }; nav("stories"); const d = document.querySelector("details.storyit"); if (d) d.open = true; });
 await shot("14-value", () => { insuranceRows(); insuranceCsv(); S.statNoVal = true; S.valueHistory = { "2026-08": { v: 120, p: 100, n: 8 }, "2026-09": { v: 150, p: 110, n: 9 }, "2026-10": { v: 165, p: 115, n: 10 } }; S.statTab = "value"; nav("stats"); });
 await shot("15-fair", () => { S.fair = true; S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); document.querySelector("#fairres [data-got]").click(); });
 await shot("16-stats-collection", () => { S.statTab = "collection"; S.statScope = "a"; S.statRange = "all"; nav("stats"); });
