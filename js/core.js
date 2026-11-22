@@ -1065,7 +1065,8 @@ function findDup(d) {
 function dupHtml(d) {
   const c = findDup(d);
   if (!c) return '<div id="dupnote"></div>';
-  const where = c.status === "wanted" ? (d.status === "wanted" ? "is already on your wishlist" : "is on your wishlist: saving moves it to your collection")
+  const where = c.status === "wanted" ? (isOwn(d) ? "is on your wishlist: saving moves it to your collection" : "is already on your wishlist")
+    : notOwned(c) ? "is already saved: you read it (not owned)"
     : "is already in your collection" + ((c.copies || 1) > 1 ? " (" + c.copies + " copies)" : "");
   return `<div id="dupnote" class="banner ${c.status === "wanted" && isOwn(d) ? "" : "warn"}">${esc(c.kind === "book" ? c.title + (c.issue ? " (" + c.issue + ")" : "") : comicTag(c))} ${where}. <button type="button" class="link" data-dupopen="${esc(c.id)}">Open it</button></div>`;
 }
@@ -1167,7 +1168,7 @@ async function deleteComic(id) {
   S.comics = S.comics.filter(x => x.id !== id); announce();
 }
 async function saveSeries() {
-  await setConfig("series", S.series);
+  await setConfig("series", S.series.filter(s => !s.pending));   // a series typed in Add is saved only with its first comic
   S.seriesSaved = true; announce();
 }
 async function loadCatalogueIndex() {
@@ -1178,7 +1179,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 220;
+const APP_BUILD = 221;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1399,6 +1400,7 @@ function scrollState() { const g = document.getElementById("gridbox"); return { 
 function restoreScroll(st) { if (!st) return; requestAnimationFrame(() => { const g = document.getElementById("gridbox"); if (g) g.scrollTop = st.gy || 0; window.scrollTo(0, st.y || 0); }); }
 function renderKeep() { const st = scrollState(); render(); restoreScroll(st); }
 function setView(v) {
+  if (v !== "add" && S.series.some(s => s.pending)) S.series = S.series.filter(s => !s.pending);   // left Add without saving: the new series goes
   if (v === "add" && S.view !== "add") S.returnTo = Object.assign({ view: S.view, col: S.col, shown: S.shown }, scrollState());
   S.view = v; S.confirmDelete = false; render();
   if (S.pendingScroll) { restoreScroll(S.pendingScroll); S.pendingScroll = null; } else window.scrollTo(0, 0);

@@ -48,10 +48,10 @@ VIEWS.add = {
 ${dupHtml(d)}
 ${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
-        ${!editing ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="readonline">Read online</button>
-          ${isNovel(d) ? `<details class="pastebox"><summary class="small">Paste the link or the page (Royal Road, Fullreads …)</summary>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="readonline">Read online</button>
+          ${isNovel(d) ? `<details class="pastebox"><summary class="small">${editing ? "Fill empty fields from the link or the page" : "Paste the link or the page (Royal Road, Fullreads …)"}</summary>
             <textarea id="f-paste" rows="4" placeholder="Paste the story's link (Share › Copy link), or the whole copied page"></textarea>
-            <button type="button" id="pastego">Fill from the pasted text</button></details>` : ""}</div>` : ""}
+            <button type="button" id="pastego">Fill from the pasted text</button></details>` : ""}</div>
         ${isNovel(d) && S.webVols && d.seriesName === S.webVols.series && S.webVols.vols.length ? `<div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted">Books on the page:</span>${S.webVols.vols.map((v, i) => `<button type="button" class="fchip${d.title === v.title ? " on" : ""}" data-wvol="${i}">${esc(v.n + ": " + v.title)}</button>`).join("")}</div>` : ""}
         <div class="isbnrow">
           <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="13 or old 10 digits"></label>
@@ -68,7 +68,7 @@ ${isBook ? `
           <label><span class="l">Translator</span><input id="f-translator" value="${esc(d.translator || "")}"></label>
           ` : ""}
           <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="e.g. Fantasy, Adventure (separate with commas)"></label>
-          <label class="wide"><span class="l">Book series</span>${d.newBookSeries
+          <label class="wide"><span class="l">Book series</span>${d.newBookSeries && !(d.seriesName && S.comics.some(x => x.id !== d.id && x.kind === "book" && x.seriesName === d.seriesName))
             ? `<input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="${isNovel(d) ? "Name of the new series, e.g. Harry Potter" : "Name of the new series, e.g. Carl Barks Collection"}">`
             : `<span class="bseries"><button type="button" class="pickbtn wrap" id="f-bseries-btn"><span>${esc(d.seriesName || "No series (single book)")}</span><span class="chev" aria-hidden="true">▾</span></button>${d.seriesName ? '<button type="button" id="f-bseries-x">Single book</button>' : ""}</span><input type="hidden" id="f-seriesName" value="${esc(d.seriesName)}">`}</label>
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12 or 0.5"></label>
@@ -223,9 +223,14 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "country", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      const words0 = d.words;
       ["link", "words"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value.trim(); });
-      // words without pages: about 300 words per printed page
-      { const w = parseInt(String(d.words || "").replace(/[^\d]/g, ""), 10); if (w > 0 && !String(d.pages || "").trim()) d.pages = String(Math.max(1, Math.round(w / 300))); }
+      // pages from words (about 300 words per printed page): Pages follows Words until you type Pages yourself
+      { const wn = v => parseInt(String(v || "").replace(/[^\d]/g, ""), 10), fromW = v => wn(v) > 0 ? String(Math.max(1, Math.round(wn(v) / 300))) : "";
+        const w = wn(d.words), pg = String(d.pages || "").trim();
+        if (pg && !d.pagesAuto && pg === fromW(words0)) d.pagesAuto = pg;   // pages worked out earlier, before the app remembered that
+        if (pg && d.pagesAuto && pg !== d.pagesAuto) delete d.pagesAuto;     // typed by hand
+        if (w > 0 && (!pg || d.pagesAuto)) { d.pages = fromW(d.words); d.pagesAuto = d.pages; } }
       // the suggestion list leaves "Fantasy, Adventure, " while typing: no empty genre at the end
       if (d.genre) d.genre = d.genre.split(",").map(x => x.trim()).filter(Boolean).join(", ");
       if (d.kind !== "book") d.date = isoDate(d.date);
@@ -246,13 +251,22 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     $("#pastego") && ($("#pastego").onclick = () => {
       grab(); const p = parseWebPage($("#f-paste").value);
       if (!p.title) { bookMsg('<div class="banner warn">Nothing found in the pasted text. Paste the story\'s link, or copy the whole page starting with its title.</div>'); return; }
+      if (p.vols.length > 1) { p.words = 0; }   // the page's words are the whole story's, not one book's
+      if (d.id) {
+        // editing a book: only empty fields are filled; title, series and status stay
+        const got = [], fill = (k, v, name) => { if (v && !String(d[k] || "").trim()) { d[k] = String(v); got.push(name); } };
+        fill("author", p.author, "author"); fill("link", p.link, "link"); fill("genre", p.genres.join(", "), "genres"); fill("format", p.format, "format");
+        fill("words", p.words, "words"); if (!(p.vols.length > 1)) fill("pages", p.pages, "pages");
+        if (p.words && !String(d.pages || "").trim()) { d.pages = String(Math.max(1, Math.round(p.words / 300))); d.pagesAuto = d.pages; got.push("pages"); }
+        render(); bookMsg(`<div class="banner ok">${got.length ? "Filled in the empty fields: " + got.join(", ") + "." : "Nothing new: the fields the page knows are already filled."} Title, series and status stay as they are. Check, then save.</div>`); return;
+      }
       readOnline(); if (p.format) d.format = p.format;
       if (p.author) d.author = p.author; if (p.genres.length && !d.genre) d.genre = p.genres.join(", "); if (p.link) d.link = p.link; if (p.words) d.words = String(p.words);
       if (p.vols.length) {
         const known = S.comics.some(c => c.kind === "book" && isNovel(c) && c.seriesName === p.title);
         S.webVols = { series: p.title, vols: p.vols }; d.seriesName = p.title; d.newBookSeries = !known; d.title = p.vols[0].title; d.issue = String(p.vols[0].n);
       } else { d.title = p.title; if (p.pages && !d.pages) d.pages = String(p.pages); }
-      if (p.words && !d.pages) d.pages = String(Math.max(1, Math.round(p.words / 300)));
+      if (p.words && !d.pages) { d.pages = String(Math.max(1, Math.round(p.words / 300))); d.pagesAuto = d.pages; }
       render();
       bookMsg(`<div class="banner ok">Filled in: ${[d.title && "title", p.author && "author", p.genres.length && "genres", p.link && "link", d.pages && "pages", p.words && "words"].filter(Boolean).join(", ") || "title"}.${p.vols.length ? ` The page lists ${p.vols.length} ${p.vols.length === 1 ? "book" : "books"}: saved as the book series “${esc(p.title)}”, book ${esc(String(p.vols[0].n))}. Type its pages yourself${p.pages ? ` (the page counts ${Number(p.pages).toLocaleString("de-CH")} pages for the whole story)` : ""}, then use Save &amp; next and tap the next book above.` : ""}${p.ongoing ? " Still running on the site." : ""} Check the fields, then save.</div>`);
     });
@@ -304,10 +318,11 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       grab();
       let se = findSeriesByName(name), made = false;
       if (!se) {
-        se = newSeriesFor(name, []); made = true;
+        // a series made here a moment ago with another name (a typo) goes again; the new one is saved only with the comic
+        S.series = S.series.filter(x => !(x.pending && x.id === d.seriesId));
+        se = newSeriesFor(name, []); made = true; se.pending = true;
         const entry = catEntry(se), file = entry && await catalogueFile(entry).catch(() => null);
         if (file) seriesFromCatalogue(se, file, entry);
-        try { await saveSeries(); } catch (err) { S.series = S.series.filter(x => x !== se); toast(errText(err)); return; }
       }
       d.seriesId = se.id; d.seriesName = se.name; rememberSeries(se.id); render();
       bookMsg(`<div class="banner ok">${made ? "New series “" + esc(se.name) + "” created" : "“" + esc(se.name) + "” is already one of your series: picked it"}${catEntry(se) ? ", linked to INDUCKS " + esc(catEntry(se).code) + ". Type the issue number and tap Fill from INDUCKS." : ". It isn't in the INDUCKS catalogue under this name: add its INDUCKS code under More › Series if it has one."}</div>`);
@@ -363,7 +378,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast("INDUCKS has no " + (se.short || se.name) + " " + (d.issue || "") + ". Check the number."); return;
       }
       if (hit.ic) {   // compact catalogue format
-        const fromCat = d.title && Object.values(file.issues || {}).some(x => x.t && norm(x.t) === norm(d.title));
+        const cf = d.title && catEntry(se) ? await catalogueFile(catEntry(se)).catch(() => null) : null;   // a title typed earlier that is only some issue's catalogue title gets replaced
+        const fromCat = !!(cf && Object.values(cf.issues || {}).some(x => x.t && norm(x.t) === norm(d.title)));
         d.title = (!d.title || fromCat ? hit.t : d.title) || d.title || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
         d.stories = keepOwnTitles(d.stories, (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "", pages: x.p || "" })));
         d.inducks = hit.ic; await fillExtras(se); render(); const hadX = storiesHadElsewhere(d), had = hadX.filter(m => m.comics.some(c => isOwn(c))).length, hadR = hadX.length - had; toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories") + (had ? " · you already have " + had + " of them in other comics" : "") + (hadR ? " · you've read " + hadR + " without owning " + (hadR === 1 ? "it" : "them") : "")); return;
@@ -393,6 +409,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       if (!unchanged && se && se.numbering === "year" && !p.year && d.issue.trim()) { toast("For " + (se.short || se.name) + " enter year and number, e.g. 1985/12, or 1985/? if you don't know the number"); $("#f-issue").focus(); return; }
       let target = se;
       if (!target) { target = findSeriesByName(d.seriesName.trim()) || newSeriesFor(d.seriesName.trim(), []); try { await saveSeries(); } catch (e) { toast(errText(e)); return; } }
+      if (target.pending) { delete target.pending; try { await saveSeries(); } catch (e) { target.pending = true; toast(errText(e)); return; } }
       const c = Object.assign({}, d, {
         seriesId: target.id, seriesName: target.name, issueLabel: p.label, issueSort: p.sort,
         issueYear: p.year || null, issueNum: p.n, copies: Math.max(1, parseInt(d.copies, 10) || 1),
@@ -401,18 +418,18 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
       let moved = false, alsoGone = [];
-      if (!d.id && !c.facsimile && p.label && !/\?/.test(p.label)) {
+      if ((!d.id || !unchanged) && !c.facsimile && p.label && !/\?/.test(p.label)) {   // new, or edited with another series or number
         // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
         // a letter is usually a variant cover (546A = 546), but INDUCKS also uses it for other items under one number:
         // De Luxe 34B is a box, not Timecrime 34. Different titles in the catalogue = different comics
         const ce = catEntry(target), cf = ce && (S.catCache[ce.file] || await catalogueFile(ce).catch(() => null)), ttl = k => cf && cf.issues && cf.issues[k] ? norm(cf.issues[k].t || "") : "";
         const otherItem = (a, b) => a !== b && ttl(a) && ttl(b) && ttl(a) !== ttl(b);
-        const same = S.comics.filter(x => x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label) && !otherItem(x.issueLabel || x.issue, p.label));
+        const same = S.comics.filter(x => x.id !== d.id && x.kind !== "book" && !x.facsimile && x.seriesId === target.id && sameSlot(x.issueLabel || x.issue, p.label) && !otherItem(x.issueLabel || x.issue, p.label));
         const wishes = same.filter(x => x.status === "wanted"), wish = wishes.find(x => (x.issueLabel || x.issue) === p.label) || wishes[0];
         const have = same.find(x => isOwn(x) && (x.issueLabel || x.issue) === p.label) || same.find(x => isOwn(x));
         const haveLab = have && (have.issueLabel || have.issue), exact = haveLab === p.label;
         const tag = (target.short || target.name) + " " + p.label;
-        if (isOwn(c) && wish && !have) {
+        if (!d.id && isOwn(c) && wish && !have) {
           // bought something from the wishlist: that entry becomes owned instead of a second one
           const sameNo = (wish.issueLabel || wish.issue) === p.label;
           ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k] && sameNo) c[k] = wish[k]; });
@@ -423,9 +440,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           const box = $("#confirmBox");
           box.innerHTML = have
             ? `<div class="confirm"><span>${exact ? esc(tag) + " is already in your collection" + (c.status === "wanted" ? "" : " (" + (have.copies || 1) + (have.copies > 1 ? " copies" : " copy") + ")") : esc(tag) + " overlaps with " + esc((target.short || target.name) + " " + haveLab) + ", which is already in your collection"}.</span>
-                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : exact ? `<button class="primary" id="dupCopy">One more identical copy</button><button id="dupSep">Separate copy (own condition, price, seller)</button>` : `<button class="primary" id="dupSep">Save anyway</button>`}
+                ${c.status === "wanted" ? `<button class="primary" id="dupWant">Add to wishlist anyway</button>` : exact && !d.id ? `<button class="primary" id="dupCopy">One more identical copy</button><button id="dupSep">Separate copy (own condition, price, seller)</button>` : `<button class="primary" id="dupSep">Save anyway</button>`}
                 ${next ? `<button id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`
-            : `<div class="confirm"><span>${esc(tag)} is already on your wishlist.</span>${next ? `<button class="primary" id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`;
+            : `<div class="confirm"><span>${esc(tag)} is already on your wishlist.</span>${d.id ? `<button class="primary" id="dupSep">Save anyway</button>` : ""}${next ? `<button class="primary" id="dupSkip">Skip to next number</button>` : ""}<button class="ghost" id="dupNo">Cancel</button></div>`;
           box.scrollIntoView({ block: "center" });
           $("#dupNo").onclick = () => { box.innerHTML = ""; };
           $("#dupSkip") && ($("#dupSkip").onclick = () => { box.innerHTML = ""; skipToNext(); });
@@ -467,7 +484,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       if (dbl) p = Object.assign({}, p, { n: +dbl[2] });   // after 2016-11-12 comes 2016/13
       const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
       S.editing = null;
-      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
+      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
       render(); $("#f-issue") && $("#f-issue").focus();
     };
     // skip a number you don't have: move on without saving anything
@@ -490,13 +507,27 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         isbn: d.isbn.trim(), pricePaid: parseAmt(d.pricePaid), value: parseAmt(d.value), valueChecked: parseAmt(d.valueChecked),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
+      delete c.newBookSeries;   // only for the form
+      // bought a book from the wishlist: that entry becomes owned instead of a second one (a wish made with "Want to own it"
+      // also takes the read-only entry's read date, ratings and link, then that entry goes)
+      let moved = false, rd = null;
+      if (!d.id && isOwn(c)) {
+        const w = findDup(c);
+        if (w && w.status === "wanted") {
+          ["title", "author", "publisher", "isbn", "coverUrl", "pages", "lang", "genre", "translator", "link", "words"].forEach(k => { if (!String(c[k] || "").trim() && w[k]) c[k] = w[k]; });
+          rd = w.fromRead ? S.comics.find(x => x.id === w.fromRead && notOwned(x)) : null;
+          if (rd) ["read", "readDate", "rating", "fav", "coverRating", "link", "words"].forEach(k => { if (rd[k] !== undefined && rd[k] !== "" && (c[k] === undefined || c[k] === "" || c[k] === false || c[k] === null)) c[k] = rd[k]; });
+          c.id = w.id; c.createdAt = w.createdAt; c.wasWish = true; c.wishLevel = ""; delete c.fromRead; moved = true;
+        }
+      }
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
       try {
         const before = d.id ? S.comics.find(x => x.id === d.id) : null;
         if (!prepareLot(d, c, before)) { btns.forEach(b => b.disabled = false); return; }
         const saved = await saveComic(c);
+        if (rd) await deleteComic(rd.id);
         const lotNote = await afterLotSave(saved, before);
-        toast("✓ " + (S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : notOwned(c) ? "Saved as read (not owned): " : "Saved to your archive: ") + (c.title || "book") + lotNote);
+        toast("✓ " + (moved ? "Moved from your wishlist to your collection: " : S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : notOwned(c) ? "Saved as read (not owned): " : "Saved to your archive: ") + (c.title || "book") + lotNote);
         if (next) {
           S.editing = null;
           S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, link: c.link || "", genre: c.genre || "", read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
@@ -509,7 +540,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     // a second copy of the same issue, with its own condition, price, seller and notes (not "one more copy" of the same)
     $("#secondCopy") && ($("#secondCopy").onclick = () => {
       grab();
-      const keep = ["kind", "bookType", "seriesId", "seriesName", "issue", "issueLabel", "title", "date", "pages", "stories", "coverUrl", "inducks", "duckipedia", "author", "publisher", "isbn", "format", "lang", "genres", "currency"];
+      const keep = ["kind", "bookType", "seriesId", "seriesName", "issue", "issueLabel", "title", "date", "pages", "stories", "coverUrl", "inducks", "duckipedia", "author", "publisher", "isbn", "format", "lang", "genre", "currency"];
       const pre = {}; keep.forEach(k => { if (d[k] !== undefined) pre[k] = d[k]; });
       const nth = S.comics.filter(x => isOwn(x) && copyKey(x) && copyKey(x) === copyKey(Object.assign({ status: "owned" }, d))).length + 1;
       const word = ["", "First", "Second", "Third", "Fourth", "Fifth"][nth] || nth + "th";

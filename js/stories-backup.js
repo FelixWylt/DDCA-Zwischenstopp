@@ -11,11 +11,24 @@ function splitChars(v) {
   return out.map(x => x.replace(/\u0001/g, ",").replace(/\s*\([^)]*\)/g, "").trim()).filter(Boolean);
 }
 const storyCode = v => String(v || "").replace(/\s+/g, " ").trim();
-// a story title you corrected yourself (Edit › Stories) stays when INDUCKS details are fetched again: matched by story code, else by place
+// when INDUCKS details are fetched again (Refresh all comics, Fill from INDUCKS), INDUCKS gives these fields of a story;
+// everything else a story has stays: Duckipedia's German title, translator, characters, plot, genre …, and a title you corrected
+// yourself (Edit › Stories). Matched by story code (the same code twice = chapters, matched in order), a story without code by place
+const INDUCKS_STORY_KEYS = ["title", "code", "writer", "artist", "hero", "pages"];
 function keepOwnTitles(old, fresh) {
-  const own = (old || []).filter(s => s.ownTitle && s.title);
-  if (!own.length) return fresh;
-  return fresh.map((s, i) => { const o = own.find(x => x.code && codeKey(x.code) === codeKey(s.code)) || (!s.code && (old || [])[i] && old[i].ownTitle ? old[i] : null); return o ? Object.assign({}, s, { title: o.title, ownTitle: true }) : s; });
+  old = old || []; if (!old.length) return fresh;
+  const byCode = new Map(), used = new Map();
+  old.forEach(s => { const k = codeKey(s.code); if (k) (byCode.get(k) || byCode.set(k, []).get(k)).push(s); });
+  return fresh.map((s, i) => {
+    const k = codeKey(s.code); let o = null;
+    if (k && byCode.has(k)) { const list = byCode.get(k), n = used.get(k) || 0; o = list[Math.min(n, list.length - 1)]; used.set(k, n + 1); }
+    else if (!k && old[i] && !codeKey(old[i].code)) o = old[i];
+    if (!o) return s;
+    const out = Object.assign({}, s);
+    Object.keys(o).forEach(key => { if (!INDUCKS_STORY_KEYS.includes(key) && o[key] != null && o[key] !== "" && (out[key] == null || out[key] === "")) out[key] = o[key]; });
+    if (o.ownTitle && o.title) { out.title = o.title; out.ownTitle = true; }
+    return out;
+  });
 }
 const codeKey = v => String(v || "").replace(/\s+/g, "").toLowerCase();
 // stories of this comic that are already in another comic you own or read (same INDUCKS story code): [{ s, comics }]
