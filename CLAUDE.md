@@ -67,7 +67,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
     Vol lines + words gives book 1 the whole story's words/pages. 12 Words → Pages only while Pages is empty → follow Words unless
     typed by hand. 15 new series made on leaving the name field (typos/cancel leave empty series; Tools › Delete empty series exists).
     16 idea: Read online + Paste link/page also when editing a book. 17 idea: duplicate warning when an edited comic's number changes.
-  - **Bundle B (Backup, lookup, wishlist, 12):** 4 Restore (stories-backup.js) writes every backup comic over the phone's and REPLACES
+  - **Bundle B DONE (da-v222, 2026-11-22):** Restore skips entries newer on the phone, series merged (fresh phone = backup's list); backup has priceBatchDone, Add all skips identical ranges; takeFromRead() in core.js (Add, Edit, saveBook); books.js fetchOk skips a host 10 min after a timeout; scanner pushState + popstate. User should test the back gesture (13) on the phone.
+    Was: **Bundle B (Backup, lookup, wishlist, 12):** 4 Restore (stories-backup.js) writes every backup comic over the phone's and REPLACES
     S.series → merge: phone keeps newer entries (updatedAt), series merged by id. 5 priceBatchDone not in backup (25 of 34 lists have no
     replace → ~105 ranges doubled after a restore) → back it up and/or make Add all skip identical ranges. 6 "Copy backup as text" =
     ~2 M characters: too long for Keep/Docs → reword (Gmail/file). 13 maybe, test on phone: back gesture leaves the scanner open.
