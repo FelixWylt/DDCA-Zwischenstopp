@@ -164,4 +164,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Bug hunt part 2 (Collection, Gaps, Wishlist, Series/prices): code read, backup checked, rechecked against da-v219 from the other chat; report 9 bugs + 5 ideas, no app change | 3–5 min (first guess 10–15 for all 3 parts ÷ 3) | 5–6 min (01:15 → 01:20:21) |
 | 2026-11-22 | da-v220 book-series Gaps read-only mark + shop list Zurich/1 h (1 places search with 10 queries, 1 web search; saved in the project) ; 1 check run, no errors | 3–4 min (first guess 2 ÷ 2 + 6–8 ÷ 3) + 1 run | 2–3 min (01:23 → 01:26:17, incl. 1 run of ~2.5 min) |
 | 2026-11-22 | More fairs in the shop list (comic fair, flea markets Kanzlei/Bürkliplatz/Bullingerhof, Antiquarian Book Fair, festivals; 1 page + 2 searches), project doc updated | 1–2 min (first guess 3–4 ÷ 2) | 1–2 min (01:29 → 01:30:19) |
+| 2026-11-22 | Bug hunt part 3 (Stats all tabs, Stories): code read on da-v220, report 8 bugs + 5 ideas, no app change | 3–5 min (first guess 10–15 for all 3 parts ÷ 3) | 2–3 min (01:33 → 01:35:28) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
