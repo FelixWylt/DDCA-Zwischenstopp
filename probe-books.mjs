@@ -2,7 +2,7 @@
 import fs from "fs";
 const H = { "User-Agent": "DagobertDucksArchiv/1.0 (cover lookup; github.com/FelixWylt)", "Accept": "application/json" };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const j = async u => { for (let t = 0; t < 3; t++) { try { await sleep(350); const r = await fetch(u, { headers: H, signal: AbortSignal.timeout(30000) }); if (r.ok) return r.json(); if (r.status === 404) return {}; } catch (e) {} await sleep(2000); } return {}; };
+const j = async u => { for (let t = 0; t < 3; t++) { try { await sleep(1600); const r = await fetch(u, { headers: H, signal: AbortSignal.timeout(30000) }); if (r.ok) return r.json(); if (r.status === 404) return {}; } catch (e) {} await sleep(8000); } return {}; };
 const LANG = { SE: "sv", DE: "de", CH: "de", IT: "it", US: "en", ENG: "en" };
 const strip = n => n.replace(/\s*\((swedish|german|english|italian)\)\s*$/i, "").trim();
 const NAMES = { "x-herman-hedning-co": ["Herman Hedning & C"], "x-herman-hedning-samlade-serier-swedish": ["Herman Hedning"], "x-marvel-mutanter-swedish": ["Marvel mutanter", "Marvel-mutanter"],
@@ -33,7 +33,7 @@ for (const s of input) {
   const cands = new Map();
   for (const nm of names) {
     let u = "https://www.comics.org/api/series/name/" + encodeURIComponent(nm) + "/?format=json";
-    for (let pg = 0; pg < 6 && u; pg++) { const r = await j(u); (r.results || []).forEach(x => { if (!lang || x.language === lang) cands.set(x.api_url, x); }); u = r.next; }
+    for (let pg = 0; pg < 4 && u; pg++) { const r = await j(u); (r.results || []).forEach(x => { if (!lang || x.language === lang) cands.set(x.api_url, x); }); u = r.next; }
   }
   const items = s.items.filter(i => i.label && !/\?/.test(i.label));
   const single = s.items.length === 1 && (!/^\d+$/.test(s.items[0].label) || s.numbering !== "year");
