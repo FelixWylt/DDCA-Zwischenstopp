@@ -220,11 +220,13 @@ VIEWS.collection = {
 function bookAboutObj(key) {
   if (!String(key || "").startsWith("book:")) return null;
   const n = key.slice(5), m = bookInfo(n), size = (S.bookSizes || {})[n];
-  return { about: m.about, aboutSrc: m.aboutSrc, srcName: "Wikipedia", srcLic: "CC BY-SA", pubHouse: [m.author, m.publisher].filter(Boolean).join(" · "), format: m.genres, latestTxt: [m.years, size ? size + " volumes" : ""].filter(Boolean).join(" · ") };
+  // a comic book series INDUCKS knows by the same name (Farbror Joakims liv = se/FJL) gets its INDUCKS link
+  const cat = S.catalogue && S.catalogue.series && !S.comics.some(c => c.kind === "book" && c.seriesName === n && isNovel(c)) ? S.catalogue.series[n.toLowerCase()] : null;
+  return { about: m.about, aboutSrc: m.aboutSrc, srcName: "Wikipedia", srcLic: "CC BY-SA", pubHouse: [m.author, m.publisher].filter(Boolean).join(" · "), format: m.genres, latestTxt: [m.years, size ? size + " volumes" : ""].filter(Boolean).join(" · "), code: cat && cat.code || "" };
 }
 // the series' description and facts (filled from INDUCKS / Duckipedia in Series), above its issues
 function seriesAbout(se) {
-  if (!se || !(se.about || se.pubHouse || se.format)) return "";
+  if (!se || !(se.about || se.pubHouse || se.format || se.code)) return "";   // a series INDUCKS has always shows its INDUCKS link
   const yrs = se.latestTxt != null ? se.latestTxt : se.numbering === "year" ? [se.firstYear, se.lastYear].filter(Boolean).join("–") : se.latest ? (se.first > 1 ? "issues " + se.first + "–" : "to issue ") + se.latest : "";
   const facts = [esc(se.pubHouse || ""), esc(se.format || ""), esc(yrs), se.code && `<a href="https://inducks.org/publication.php?c=${encodeURIComponent(se.code)}" target="_blank" rel="noopener">INDUCKS ${esc(se.code)}</a>`];
   return `<details class="card serabout"${S.aboutOpen ? " open" : ""}><summary><strong>About this series</strong></summary>

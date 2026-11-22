@@ -205,11 +205,13 @@ except typing the reply itself. Say in the report that the reply writing and Git
     no outside site. So cover links can't be collected here: the app finds them on the phone (it can reach Open Library, Google Books, Libris).
     GCD from GitHub (probes 2026-11-22): its API answers (series by name: /api/series/name/<name>/, issue JSON has "cover"), but sends no
     CORS header (the app can't ask it), and its pictures (files1.comics.org) fail with 403 on GitHub, also in a headless browser.
-    Shop list: claude/shops-zurich.md in the project (was a .bin, rewritten 2026-11-22).
+    Shop list: a Claude doc https://claude.ai/artifact/RC1qQvSjfR3sfWAUWboi52 (tables; claude/shops-zurich.md in the project only points to it).
 - **Covers waiting (da-v230):** catalogue/covers-batch.json {covers:[{sid,label,url,gcd}]} → Series › Tools › Covers waiting › Add all
   (coverBatchWaiting/applyCoverBatch in core.js; only comics without coverUrl). Made by the GCD lookup in probe-books.mjs on the cors-test
   branch (input cover-input.json from the backup; output covers-found.json). 2026-11-22: 27 covers; GCD stopped answering after 3 series
-  (rate limit?): next run slower (≥1.5 s between calls) for the other 28 series. da-v229: Get cover pictures also finds book covers.
+  (rate limit?). Slower run (1.6 s): +16 (Lucky Luke 6, Spirou 10); GCD stops after ~5 series per run, so run ~6 series at a time
+  (Asterix names last: broad searches). da-v229: Get cover pictures also finds book covers. da-v231: "About this series" always shows
+  when the series has an INDUCKS code (link); comic book series get the code by name from the catalogue index (Farbror Joakims liv = se/FJL).
   - **Repo access:** the first push-access request in a chat is often refused by the safety check (it wants the user's own words).
     Ask for push access only when the user asks for work on the repo; if refused, say so in one line and ask the user to say "try again".
   - **The backup is per chat:** a file sent in another chat can't be opened here, and project files hold no backup. Ask the user to
