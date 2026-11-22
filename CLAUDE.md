@@ -14,7 +14,9 @@
 2. **Measure from the user's message time** (system reminder, minute precision) to the commit time
    (`git log -1 --format=%ad --date=format:%H:%M:%S`). Don't start the clock at your first command:
    that misses the thinking/writing before it. Give a range where the minute precision matters.
-3. **After publishing**, report estimate vs. real time. Never report a guess as a measurement.
+3. **After every job** (also lookups, checks and stopped research, not only after publishing), report estimate vs. real time
+   and add its log line. Never report a guess as a measurement: read the clock FIRST, then write the row from it
+   (2026-11-22: a row said "3–4 min" before the clock was read; it was 1–2).
 4. **Add a line to the log in TIMELOG.md** in the same commit, with the real time read from the clock IN the commit
    command (python/`date` just before `git commit`), never written by hand beforehand. Start = user's message
    minute, so give it as a range (e.g. message 22:56, commit 22:58:10 → "1–2 min").
@@ -194,6 +196,17 @@ except typing the reply itself. Say in the report that the reply writing and Git
   the numbers are only estimates.
 
 ## Other working rules
+- **Mistakes not to repeat (2026-11-22, the user's wish):**
+  - **Every reply ends with "Unpublished: …"** (app versions, price lists, log/notes commits), also "Unpublished: nothing".
+  - **A plan for an app change names:** the new version (da-vNNN), "committed locally, pushed only on 'publish'", and whether a
+    screenshot check is needed (visible change: which screens) — plus estimate, how sure, waiting, Model/effort.
+  - **Check before promising web research:** test ONE source first, then estimate. Blocked from here (2026-11-22): comics.org (GCD,
+    WebFetch and curl), openlibrary.org (robots, proxy 403); comicbooks.com opens but WebFetch shows no picture links; curl reaches
+    no outside site. So cover links can't be collected here: the app finds them on the phone (it can reach Open Library, Google Books, Libris).
+  - **Repo access:** the first push-access request in a chat is often refused by the safety check (it wants the user's own words).
+    Ask for push access only when the user asks for work on the repo; if refused, say so in one line and ask the user to say "try again".
+  - **The backup is per chat:** a file sent in another chat can't be opened here, and project files hold no backup. Ask the user to
+    attach it. A 0-byte upload failed: ask again (pick it from Files, wait for its size, or zip it).
 - **Publish only on "publish" (the user's wish, 2026-11-22):** app changes too, not only price lists: after the go, make the change,
   test what can be tested here and commit locally (with its log line), but do NOT push. Say in each reply what is unpublished
   (app versions and price lists). On "publish" (or "done"): push everything at once, then ONE check run for all of it.
@@ -213,6 +226,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   | One very tricky bug that already failed once, or a big rebuild of a whole tab | Opus | extra |
   | Only if Opus on extra failed twice on the same problem | Fable | high |
   Say it only when the current setting differs from the table ("switch to high for this one"), else just "current setting is fine".
+  Judge by the job's real size, not by "it's an app change": ONE feature with one or two small parts is a "small fix" (medium);
+  high only for bundles of several changes or a tricky part (2026-11-22: a 2-part cover finder was wrongly put at high).
 - **New chat (the user's wish, 2026-11-20):** say on your own when it's time for a new chat: when the chat has grown long
   (many replies, this file re-sent many times) or answers slow down, and best at a quiet moment (nothing local, nothing waiting).
 - Bundle changes. Ask before bigger changes. Keep the climate impact low (few test runs, no needless searches).
