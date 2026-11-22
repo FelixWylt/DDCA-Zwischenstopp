@@ -196,4 +196,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Publish the log line of the cover-run check (no app change, no check run) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:15 → 23:15:53) |
 | 2026-11-22 | Covers waiting: +4 (Herman Hedning & Co 19, 24, Tintin 20, Winnetou 1); 47 in all; local | 1–2 min (first guess 3 ÷ 2) | 1–2 min (23:16 → 23:16:42) |
 | 2026-11-22 | Publish covers file (+4, 47 in all); no check run | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:16 → 23:16:52) |
+| 2026-11-22 | Frieren (English) wishlist: lookup of the volumes (Viz 1–14 out, 15 on 14 Jan 2027) + how the app can take many wishes; report + questions | 2–3 min (first guess 5 ÷ 2) | 2–3 min (23:19 → 23:20:00) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
