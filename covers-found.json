@@ -1,154 +1,42 @@
 [
  {
-  "sid": "x-asterix-english",
-  "label": "16",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/296/w400/296648.jpg",
-  "gcd": "Asterix (1969 series) [16] - Asterix and the Great Crossing (1977)",
-  "sure": false,
-  "why": "year 1977 vs 2004"
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "5",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/730/w400/730660.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 5 - Apache-klyftan (1972)",
-  "sure": false,
-  "why": "year 1972 vs 1975"
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "16",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/40/w400/40735.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 16 - Domaren – Lagen väster om Pecos (1974)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "18",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/731/w400/731639.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 18 - Ratata på spåret (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "17",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/731/w400/731638.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 17 - Angivaren (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "24",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/40/w400/40743.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 24 - Skumt spel i Texas (1976)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "8",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/730/w400/730663.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 8 - Bröderna Dalton får en chans (1972)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-lucky-lukes-aventyr",
-  "label": "4",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/1799/w400/1799927.jpg",
-  "gcd": "Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 4 - Jesse James (1971)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "6",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130443.jpg",
-  "gcd": "Spirous äventyr (1974 series) 6 - Buddhas fånge (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "8",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130445.jpg",
-  "gcd": "Spirous äventyr (1974 series) 8 - Noshörningens horn (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "5",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130442.jpg",
-  "gcd": "Spirous äventyr (1974 series) 5 - Vrakmysteriet (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "3",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130440.jpg",
-  "gcd": "Spirous äventyr (1974 series) 3 - Skuggan av Z (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "7",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130444.jpg",
-  "gcd": "Spirous äventyr (1974 series) 7 - Spirou och arvingarna (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "10",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130447.jpg",
-  "gcd": "Spirous äventyr (1974 series) 10 - Familjen Marsupilami (1976)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "2",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/861/w400/861215.jpg",
-  "gcd": "Spirous äventyr (1974 series) 2 - Z som i Zafir (1974)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "9",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130446.jpg",
-  "gcd": "Spirous äventyr (1974 series) 9 - Diktatorn och champinjonen (1976)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
+  "sid": "x-winnetou-swedish",
   "label": "1",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130438.jpg",
-  "gcd": "Spirous äventyr (1974 series) 1 - Högt spel i Bretzelburg (1974)",
+  "url": "https://files1.comics.org/img/gcd/covers_by_id/850/w400/850844.jpg",
+  "gcd": "Winnetou (1974 series) [nn] (?)",
   "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-spirous-aventyr",
-  "label": "4",
-  "url": "https://files1.comics.org/img/gcd/covers_by_id/130/w400/130441.jpg",
-  "gcd": "Spirous äventyr (1974 series) 4 - Undervattensmysteriet (1975)",
-  "sure": true,
-  "why": ""
- },
- {
-  "sid": "x-bamse-varldens-starkaste-bjorn",
-  "label": "1976/10",
-  "url": "",
-  "gcd": "Bamse - världens starkaste björn (1977 series) [nn] (?)",
-  "sure": false,
   "why": "single"
+ },
+ {
+  "sid": "x-herman-hedning-co",
+  "label": "19",
+  "url": "https://files1.comics.org/img/gcd/covers_by_id/1252/w400/1252027.jpg",
+  "gcd": "Herman Hedning & Co [julalbum] (1998 series) 19 - Grisaktiga svinerier ([julen] 2010)",
+  "sure": true,
+  "why": ""
+ },
+ {
+  "sid": "x-herman-hedning-co",
+  "label": "24",
+  "url": "https://files1.comics.org/img/gcd/covers_by_id/1335/w400/1335637.jpg",
+  "gcd": "Herman Hedning & Co [julalbum] (1998 series) 24 (?)",
+  "sure": true,
+  "why": ""
+ },
+ {
+  "sid": "x-herman-hedning-samlade-serier-swedish",
+  "label": "5",
+  "url": "",
+  "gcd": "Herman Hedning & Co [julalbum] (1990 series) 5 - Bängsäckar och tomteskägg ([julen] 1996)",
+  "sure": false,
+  "why": "year 1996 vs 2012"
+ },
+ {
+  "sid": "x-tintin-swedish",
+  "label": "20",
+  "url": "https://files1.comics.org/img/gcd/covers_by_id/123/w400/123070.jpg",
+  "gcd": "Tintins äventyr (1972 series) 20 - Tintin och hajsjön (1973)",
+  "sure": true,
+  "why": ""
  }
 ]

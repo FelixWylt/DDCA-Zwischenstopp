@@ -1,121 +1,35 @@
 
-## Asterix (English) (x-asterix-english) en: 31 candidates; best: Asterix 1969 (1/1 numbers)
-   cand Asterix 1969-1982 gb issues 57 hits 1 https://www.comics.org/api/series/20005/?format=json first descr: 1 - Asterix the Gaul | 1 - Asterix the Gaul [1996 Printing] | 2 - Asterix in Spain | 3 - Asterix in Britain
-   cand Asterix 1978- ca issues 21 hits 1 https://www.comics.org/api/series/60760/?format=json first descr: [1] - Asterix the Gaul | [2] - Asterix in Spain | [3] - Asterix in Britain | [4] - Asterix & Cleopatra
-   cand Asterix 1984-1992 fr issues 28 hits 1 https://www.comics.org/api/series/39347/?format=json first descr: [1] - Asterix the Gaul | [2] - Asterix and the Golden Sickle | [3] - Asterix and the Goths | [4] - Asterix the Gladiator
-   cand Asterix 1991- gb issues 40 hits 1 https://www.comics.org/api/series/97456/?format=json first descr: 1 - Asterix the Gaul | 2 - Asterix and the Golden Sickle | 3 - Asterix and the Goths | 4 - Asterix the Gladiator
-   ? 16 2004 Asterix in Switzerland -> Asterix (1969 series) [16] - Asterix and the Great Crossing (1977) https://files1.comics.org/img/gcd/covers_by_id/296/w400/296648.jpg year 1977 vs 2004
+## Winnetou (Swedish) (x-winnetou-swedish) sv: 1 candidates; best: Winnetou 1974 (0/1 numbers)
+   cand Winnetou 1974-1974 se issues 1 hits 0 https://www.comics.org/api/series/9764/?format=json first descr: 
+   + 1 1974 Mannen från Prärien -> Winnetou (1974 series) [nn] (?) https://files1.comics.org/img/gcd/covers_by_id/850/w400/850844.jpg single
 
-## Musiksaga (x-musiksaga) sv: 0 candidates; best: none
-   - 21 1983 Musse Piggs julsaga: no match
+## Herman Hedning & CO (x-herman-hedning-co) sv: 5 candidates; best: Herman Hedning & Co [julalbum] 1998 (2/2 numbers)
+   cand Herman Hedning & Co [julalbum] 1998-2024 se issues 23 hits 2 https://www.comics.org/api/series/48006/?format=json first descr: 7 - Landstormens lilla arsle | 8 - Universums ärkeufo | 9 - Urdatorns hämnd | 10 - Tiofaldigt totalkaos!
+   cand Herman Hedning & Co [julalbum] 1990-1997 se issues 6 hits 0 https://www.comics.org/api/series/9381/?format=json first descr: 1 | 2 - Samlade sattyg | 3 | 4 - Dumskallarnas Julafton
+   cand Herman Hedning & C:o: Jubileumsalbum: 1988-1998: En fet, dryg med extra allt!: 10 år av sattyg, svordomar och sinnesslöhet 1998-1998 se issues 1 hits 0 https://www.comics.org/api/series/48007/?format=json first descr: 
+   cand Herman Hedning & Co: 1988-2004: "Kaos i dumskallefabriken": 66 år av konflikter, kakafoni och krångel 2004-2004 se issues 1 hits 0 https://www.comics.org/api/series/34344/?format=json first descr: 
+   + 19 2010 Grisaktiga Svinerier -> Herman Hedning & Co [julalbum] (1998 series) 19 - Grisaktiga svinerier ([julen] 2010) https://files1.comics.org/img/gcd/covers_by_id/1252/w400/1252027.jpg 
+   + 24 2015 Full Metal Julbang! -> Herman Hedning & Co [julalbum] (1998 series) 24 (?) https://files1.comics.org/img/gcd/covers_by_id/1335/w400/1335637.jpg 
 
-## Lucky Lukes äventyr (x-lucky-lukes-aventyr) sv: 2 candidates; best: Lucky Lukes äventyr / Lucky Luke klassiker 1971 (7/7 numbers)
-   cand Lucky Lukes äventyr / Lucky Luke klassiker 1971-1989 se issues 108 hits 7 https://www.comics.org/api/series/46707/?format=json first descr: [1] - Diligensen | 1 - Diligensen [2:a upplagan (1972)] | [1] - Diligensen [3:e upplagan] | 1 - Diligensen [4:e upplagan (1983)]
-   cand Lucky Lukes äventyr 1984-1994 se issues 37 hits 0 https://www.comics.org/api/series/67237/?format=json first descr: [T-006] [90296] - Diligensen | [T-011] - Ömfotingen | T-015; K-01852 - Dalton City | T-019 - Jesse James
-   ? 5 1975 Apache-Klyftan -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 5 - Apache-klyftan (1972) https://files1.comics.org/img/gcd/covers_by_id/730/w400/730660.jpg year 1972 vs 1975
-   + 16 1974  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 16 - Domaren – Lagen väster om Pecos (1974) https://files1.comics.org/img/gcd/covers_by_id/40/w400/40735.jpg 
-   + 18 1975  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 18 - Ratata på spåret (1975) https://files1.comics.org/img/gcd/covers_by_id/731/w400/731639.jpg 
-   + 17 1975 Angivaren -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 17 - Angivaren (1975) https://files1.comics.org/img/gcd/covers_by_id/731/w400/731638.jpg 
-   + 24 1976 Skumt spel i Texas -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 24 - Skumt spel i Texas (1976) https://files1.comics.org/img/gcd/covers_by_id/40/w400/40743.jpg 
-   + 8 1972  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 8 - Bröderna Dalton får en chans (1972) https://files1.comics.org/img/gcd/covers_by_id/730/w400/730663.jpg 
-   + 4 1971  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 4 - Jesse James (1971) https://files1.comics.org/img/gcd/covers_by_id/1799/w400/1799927.jpg 
-
-## Spirous Äventyr (x-spirous-aventyr) sv: 18 candidates; best: Spirous äventyr 1974 (10/11 numbers)
-   cand Spirous äventyr 1974-1992 se issues 65 hits 10 https://www.comics.org/api/series/11011/?format=json first descr: 1 - Högt spel i Bretzelburg | 1 - Högt spel i Bretzelburg [2:a upplagan, 1980] | 1 - Högt spel i Bretzelburg [3:e upplagan, 1987] | 2 - Z som i Zafir
-   cand Ett extraordinärt äventyr med Spirou och Nicke 2014- se issues 12 hits 10 https://www.comics.org/api/series/155410/?format=json first descr: [1] - Spirou - porträtt av hjälten som oskuldsfull ung man | [2] - Operation Fladdermus | 3 - Leopardkvinnan | 4 - Nicke gifter sig
-   cand Den unge Spirou 1993-1997 se issues 4 hits 4 https://www.comics.org/api/series/11070/?format=json first descr: 3 | 4 - Hjälp, hon pussas! | 5 | 6
-   cand Den unge Spirou 1996-2015 se issues 9 hits 4 https://www.comics.org/api/series/11071/?format=json first descr: 7 | 8 | 9 | 10
-   - 0 1975 Guldmaskinen: no match
-   + 6   -> Spirous äventyr (1974 series) 6 - Buddhas fånge (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130443.jpg 
-   + 8   -> Spirous äventyr (1974 series) 8 - Noshörningens horn (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130445.jpg 
-   + 5   -> Spirous äventyr (1974 series) 5 - Vrakmysteriet (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130442.jpg 
-   + 3   -> Spirous äventyr (1974 series) 3 - Skuggan av Z (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130440.jpg 
-   + 7   -> Spirous äventyr (1974 series) 7 - Spirou och arvingarna (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130444.jpg 
-   + 10   -> Spirous äventyr (1974 series) 10 - Familjen Marsupilami (1976) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130447.jpg 
-   + 2   -> Spirous äventyr (1974 series) 2 - Z som i Zafir (1974) https://files1.comics.org/img/gcd/covers_by_id/861/w400/861215.jpg 
-   + 9   -> Spirous äventyr (1974 series) 9 - Diktatorn och champinjonen (1976) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130446.jpg 
-   + 1   -> Spirous äventyr (1974 series) 1 - Högt spel i Bretzelburg (1974) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130438.jpg 
-   + 4   -> Spirous äventyr (1974 series) 4 - Undervattensmysteriet (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130441.jpg 
-
-## Bamse - världens starkaste björn (x-bamse-varldens-starkaste-bjorn) sv: 2 candidates; best: Bamse - världens starkaste björn 1977 (0/1 numbers)
-   cand Bamse - världens starkaste björn 1977-1977 se issues 1 hits 0 https://www.comics.org/api/series/8305/?format=json first descr: 
-   cand Bamse - världens starkaste björn 2006-2006 se issues 1 hits 0 https://www.comics.org/api/series/139512/?format=json first descr: 
-   ? 1976/10 1976  -> Bamse - världens starkaste björn (1977 series) [nn] (?)  single
-
-## Asterix (German) (x-asterix-german) de: 0 candidates; best: none
-   - 14 2017 Asterix in Spanien: no match
-   - 3 2017 Asterix als Gladiator: no match
-   - 41 2025 Asterix in Lusitanien: no match
-   - 6 2017 Tour de France: no match
-
-## Winnetou (Swedish) (x-winnetou-swedish) sv: 0 candidates; best: none
-   - 1 1974 Mannen från Prärien: no match
-
-## Topolino Giornale (x-topolino-giornale) it: 0 candidates; best: none
-   - 443 1941 : no match
-
-## Herman Hedning & CO (x-herman-hedning-co) sv: 0 candidates; best: none
-   - 19 2010 Grisaktiga Svinerier: no match
-   - 24 2015 Full Metal Julbang!: no match
-
-## Spider-Man (x-spider-man-swedish) sv: 0 candidates; best: none
+## Spider-Man (x-spider-man-swedish) sv: 1 candidates; best: Amazing Spider-Man 1991 (0/1 numbers)
+   cand Amazing Spider-Man 1991-1991 se issues 2 hits 0 https://www.comics.org/api/series/10473/?format=json first descr: 1/1991 | 2/1991
    - 2004/12 2004 Den Nordiske Gudens Vrede!: no match
-
-## Kalle Anka & C:o (se-KA) sv: 0 candidates; best: none
-   - 2015/09 2015 Snöplågor med snöplogar: no match
-
-## The Sandman: The Deluxe Edition (x-the-sandman-the-deluxe-edition) en: 0 candidates; best: none
-   - 1 2020 The Sandman: no match
-
-## Spider-Man Magazin (x-spider-man-german) de: 0 candidates; best: none
-   - 8 2019 : no match
-
-## Micky Maus Zeitung (x-micky-maus-zeitung) de: 0 candidates; best: none
-   - 10 1937 : no match
-   - 12 1937 : no match
 
 ## X-Men (x-x-men-swedish) sv: 0 candidates; best: none
    - 1990/09 1990 X-Men mot Fantastic Four: no match
 
-## Marvel mutanter (x-marvel-mutanter-swedish) sv: 0 candidates; best: none
-   - 1989/? 1989 Mutantjägaren: no match
-   - 1990/? 1990 Mutantmassakern: no match
+## Herman Hedning Samlade Serier (x-herman-hedning-samlade-serier-swedish) sv: 11 candidates; best: Herman Hedning & Co [julalbum] 1990 (1/1 numbers)
+   cand Herman Hedning & Co [julalbum] 1990-1997 se issues 6 hits 1 https://www.comics.org/api/series/9381/?format=json first descr: 1 | 2 - Samlade sattyg | 3 | 4 - Dumskallarnas Julafton
+   cand Herman Hedning 1998-2018 se issues 159 hits 0 https://www.comics.org/api/series/8744/?format=json first descr: 1/1998 [1] | 1/1998 [promotion] | 2/1998 [2] | 1/1999 (3)
+   cand Herman Hedning & C:o: Jubileumsalbum: 1988-1998: En fet, dryg med extra allt!: 10 år av sattyg, svordomar och sinnesslöhet 1998-1998 se issues 1 hits 0 https://www.comics.org/api/series/48007/?format=json first descr: 
+   cand Herman Hedning & Co [julalbum] 1998-2024 se issues 23 hits 0 https://www.comics.org/api/series/48006/?format=json first descr: 7 - Landstormens lilla arsle | 8 - Universums ärkeufo | 9 - Urdatorns hämnd | 10 - Tiofaldigt totalkaos!
+   ? 5 2012 Samlade serier 2003-2004 -> Herman Hedning & Co [julalbum] (1990 series) 5 - Bängsäckar och tomteskägg ([julen] 1996)  year 1996 vs 2012
 
-## Scooby Doo (x-scooby-doo-swedish) sv: 0 candidates; best: none
-   - 1979/01 1979 : no match
+## Tintin (Swedish) (x-tintin-swedish) sv: 31 candidates; best: Tintins äventyr 1972 (1/1 numbers)
+   cand Tintins äventyr 1972-1994 se issues 39 hits 1 https://www.comics.org/api/series/8603/?format=json first descr: 1 - Den mystiska stjärnan | 1 - Den mystiska stjärnan [3:e upplagan] | 1 - Den mystiska stjärnan [11:e upplagan] | 2 - Kung Ottokars spira
+   cand Tintins äventyr 2004- se issues 24 hits 1 https://www.comics.org/api/series/15311/?format=json first descr: 1 - Tintin i Sovjet | 2 - Tintin i Kongo | 3 - Tintin i Amerika | 4 - Faraos cigarrer
+   cand Tintins äventyr 2015-2019 se issues 18 hits 1 https://www.comics.org/api/series/235711/?format=json first descr: 1 - Tintin i Sovjet | 4 - Faraos cigarrer | 5 - Blå lotus | 6 - Det sönderslagna örat
+   cand Tintins äventyr 2020- se issues 24 hits 1 https://www.comics.org/api/series/168767/?format=json first descr: 1 | 2 - Tintin i Kongo | 3 - Tintin i Amerika | 4
+   + 20 1973 Tintin och Hajsjön -> Tintins äventyr (1972 series) 20 - Tintin och hajsjön (1973) https://files1.comics.org/img/gcd/covers_by_id/123/w400/123070.jpg 
 
-## Herman Hedning Samlade Serier (x-herman-hedning-samlade-serier-swedish) sv: 0 candidates; best: none
-   - 5 2012 Samlade serier 2003-2004: no match
-
-## X:en (x-x-en-swedish) sv: 0 candidates; best: none
-   - 1984/01 1984 : no match
-
-## Asterix Magazin (German) (x-asterix-magazin-german) de: 0 candidates; best: none
-   - 2 2019 Asterix und Obelix auf Reisen: no match
-
-## Doctor Strange: Flight Of Bones (x-doctor-strange-flight-of-bones) en: 0 candidates; best: none
-   - 1 2016 The Flight of Bones: no match
-
-## Asterix (Swedish) (x-asterix-swedish) sv: 0 candidates; best: none
-   - 18 1976 Caesars lagerkrans: no match
-   - 16 1975 Asterix i Alperna: no match
-
-## Scooby Doo - Stort Presentalbum (x-scooby-doo-stort-presentalbum) sv: 0 candidates; best: none
-   - 1977 1977 : no match
-
-## Doctor Strange / The Punisher: Magic Bullets (x-doctor-strange-the-punisher-magic-bullets) en: 0 candidates; best: none
-   - 1 2017 : no match
-
-## Tintin (Swedish) (x-tintin-swedish) sv: 0 candidates; best: none
-   - 20 1973 Tintin och Hajsjön: no match
-
-## War of the Realms (x-war-of-the-realms) de: 0 candidates; best: none
-   - 1 2019 Kapitel 1: Die letzte Bastion: no match
-
-## Blixt Gordon (x-blixt-gordon) sv: 0 candidates; best: none
-   - 1 1973 : no match
-
-## Maus (x-maus) en: 0 candidates; best: none
-   -  2011 A Survivor's Tale: no match
-
-sure: 16 unsure: 3 of 51
+sure: 4 unsure: 1 of 7
