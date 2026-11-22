@@ -168,5 +168,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Bug hunt: final list (all except 40) in 4 bundles written to CLAUDE.md as handover nr. 12, Add-all note corrected | 1–2 min (first guess 3 ÷ 2) | 1–2 min (11:37 → 11:38:09) |
 | 2026-11-22 | da-v221 Bundle A (Add/Edit, 12 bug-hunt fixes: story details kept on refresh, Fill from INDUCKS, book wish move, pages follow words, pending new series, edit dup check …) ; 1 check run, no errors | 5–7 min (first guess 15–20 ÷ 3) + 1 run | 5–6 min (11:48 → 11:53:49, incl. 1 run of ~2.5 min) |
 | 2026-11-22 | Small Zurich flea markets added to the shop list (Wollishofen am See, Wipkingen, Rosenhof, Brockito; Kreis 7/8 not found online; 3 searches), project doc updated | about 1 min (first guess 2–3 ÷ 2) | 0–1 min (12:11 → 12:12:02) |
-| 2026-11-22 | kreisflohmi.ch read (1 page): 12 Kreis Saturdays 2026 (Kreis 7 29 Aug, Kreis 8 12 Sep), stalls at homes, map; added to the shop list | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (12:15 → 12:16:38) |
+| 2026-11-22 | kreisflohmi.ch read (1 page): 12 Kreis Saturdays 2026 (Kreis 7 29 Aug, Kreis 8 12 Sep), stalls at homes, map; added to the shop list | under 1 min (first guess 1–2 ÷ 2) | 1–2 min (12:15 → 12:16:38) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
