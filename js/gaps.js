@@ -68,7 +68,7 @@ function wishlistView() {
   const real = wishCost(all.filter(c => wishLevel(c) !== "dream")), dream = wishCost(dreams);
   const costLine = real.n || dream.n ? `<p class="small" style="margin:0"><strong>Cost ≈ ${money(real.t, "CHF")}</strong> for Must have and Want${real.n < all.length - dreams.length ? ` (${real.n} of ${all.length - dreams.length} have a price)` : ""}${dreams.length ? ` · Dream ≈ ${money(dream.t, "CHF")}${dream.n < dreams.length ? ` (${dream.n} of ${dreams.length} priced)` : ""}` : ""}</p>` : "";
   if (S.fair && all.length) return gapTabs() + kindChips + `<div class="fairbar"><input id="fairq" type="search" enterkeyhint="search" value="${esc(S.fairQ || "")}" placeholder="Number or series"><button type="button" id="fairoff">Leave fair mode</button></div>
-      <p class="small muted" style="margin:0">Fair mode: big rows, everything on one list, Must have first. “Got it” asks what you paid and where.</p><div id="fairres"></div><datalist id="gotsrc">${gotSources()}</datalist>`;
+      <p class="small muted" style="margin:0">Fair mode: big rows, everything on one list, Must have first. “I bought it” asks what you paid and where.</p><div id="fairres"></div><datalist id="gotsrc">${gotSources()}</datalist>`;
   const chip = (k, label) => `<button type="button" class="fchip${(S.wishFilter || "all") === k ? " on" : ""}" data-wf="${k}" aria-pressed="${(S.wishFilter || "all") === k}">${label}</button>`;
   return gapTabs() + kindChips + (all.length ? `<div class="row between wishhead"><div class="fchips">${chip("all", "All " + all.length)}${musts.length || dreams.length ? (musts.length ? chip("must", "★ Must have " + musts.length) : "") + (counts.want ? chip("want", "Want " + counts.want) : "") + (dreams.length ? chip("dream", "Dream " + dreams.length) : "") + (dreams.length ? chip("nodream", "Without Dream " + counts.nodream) : "") : ""}${fits.length ? chip("budget", "Within budget " + fits.length) : ""}</div><div class="row" style="gap:6px;flex-wrap:wrap">${wb.length && wc.length ? `<button type="button" data-wcopy="comics">Copy comics</button><button type="button" data-wcopy="books">Copy books</button><button type="button" data-wcopy="">Copy both</button>` : `<button type="button" data-wcopy="">Copy list for comic fair</button>`}<button type="button" id="fairon" class="primary">Fair mode</button></div></div><datalist id="gotsrc">${gotSources()}</datalist>
       <textarea id="wcopybox" class="mono" rows="6" readonly hidden></textarea>
@@ -131,14 +131,14 @@ function bindWishlist() {
   $("#fairoff") && ($("#fairoff").onclick = () => setFair(false));
   if ($("#fairq")) { $("#fairq").oninput = e => { S.fairQ = e.target.value; drawFair(); }; drawFair(); }
 }
-// ---- "Got it": asks what you paid and where (both may stay empty), then moves the wish to your collection ----
+// ---- "I bought it": asks what you paid and where (both may stay empty), then moves a wish or a Read-not-owned entry to your collection ----
 function gotSources() { const m = {}; S.comics.forEach(c => { const s = String(c.source || "").trim(); if (s) m[s] = (m[s] || 0) + 1; }); return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 40).map(([s]) => `<option value="${esc(s)}">`).join(""); }
 function gotPrefs() { try { return JSON.parse(localStorage.getItem("ddaGot") || "{}"); } catch (e) { return {}; } }
 function bindGot(root) {
   root.querySelectorAll("[data-got]").forEach(b => b.onclick = e => {
     e.stopPropagation();
     const c = S.comics.find(x => x.id === b.dataset.got); if (!c) return;
-    const row = b.closest(".wishrow, .fairrow"), old = row.querySelector(".gotform"); if (old) { old.remove(); return; }
+    const row = b.closest(".wishrow, .fairrow, .gotrow"), old = row.querySelector(".gotform"); if (old) { old.remove(); return; }
     const pr = gotPrefs(), cur = pr.cur || c.currency || "CHF";
     const f = document.createElement("div"); f.className = "gotform";
     f.innerHTML = `<label><span class="l">Price paid</span><input data-gp inputmode="decimal" placeholder="e.g. 5"></label>
@@ -152,9 +152,18 @@ function bindGot(root) {
       const paid = parseAmt(f.querySelector("[data-gp]").value), cu = f.querySelector("[data-gc]").value, src = f.querySelector("[data-gs]").value.trim();
       try { localStorage.setItem("ddaGot", JSON.stringify({ cur: cu, src })); } catch (x) {}
       try {
-        // the wishlist's maximum price isn't the price paid, so it is replaced by what you enter (or cleared)
-        await saveComic(Object.assign({}, c, { status: "owned", wasWish: true, pricePaid: typeof paid === "number" ? paid : "", currency: cu, source: src || c.source || "", purchaseDate: todayIso(), copies: c.copies || 1, wishLevel: "" }));
-        toast("✓ " + comicTag(c) + " moved to your collection" + (typeof paid === "number" ? " (" + money(paid, cu) + ")" : "")); renderKeep();
+        // the wishlist's maximum price isn't the price paid, so it is replaced by what you enter (or cleared).
+        // A wish counts as a fulfilled wish; a Read-not-owned entry keeps its read date and ratings, "Read from" gives way to the seller.
+        const base = S.comics.find(x => x.id === c.id) || c, fromWish = base.status === "wanted";
+        const body = Object.assign({}, base, { status: "owned", pricePaid: typeof paid === "number" ? paid : "", currency: cu, source: src || (fromWish ? base.source || "" : ""), purchaseDate: todayIso(), copies: base.copies || 1, wishLevel: "" });
+        if (fromWish) body.wasWish = true;
+        // a wish made with "Want to own it": the read-only entry's read date, rating, heart and link come along, then it goes
+        const rd = fromWish && base.fromRead ? S.comics.find(x => x.id === base.fromRead && notOwned(x)) : null;
+        if (rd) ["read", "readDate", "rating", "fav", "coverRating", "link", "words"].forEach(k => { if (rd[k] !== undefined && rd[k] !== "" && (body[k] === undefined || body[k] === "" || body[k] === false || body[k] === null)) body[k] = rd[k]; });
+        delete body.fromRead;
+        const saved = await saveComic(body); if (rd) await deleteComic(rd.id);
+        if (S.draft && S.draft.id === c.id) S.draft = JSON.parse(JSON.stringify(saved));
+        toast("✓ " + (base.kind === "book" && base.title ? base.title : comicTag(base)) + " moved to your collection" + (typeof paid === "number" ? " (" + money(paid, cu) + ")" : "")); renderKeep();
       } catch (x) { toast(errText(x)); }
     };
   });
@@ -172,7 +181,7 @@ function drawFair() {
     const s = seriesById(c.seriesId), bud = wishBudget(c), v = bud ? bud.v : valueOf(c);
     const sub = [wishLevel(c) === "must" ? "★ Must have" : wishLevel(c) === "dream" ? "Dream" : "", typeof c.pricePaid === "number" ? "Max " + money(c.pricePaid, c.currency) : "", v ? "worth ≈ " + money(v.amount, v.cur) : "", c.notes].filter(Boolean).join(" · ");
     return `<div class="fairrow${wishLevel(c) === "must" ? " must" : ""}"><div class="fnum"><small>${esc(isNovel(c) ? "Book" : s ? s.short || s.name : c.seriesName)}</small>${esc(c.issueLabel || c.issue || "")}</div>
-      <div class="fmid"><div class="t">${esc(c.title || (s ? s.name : c.seriesName) || "")}</div><div class="s">${esc(sub)}</div></div><button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button></div>`;
+      <div class="fmid"><div class="t">${esc(c.title || (s ? s.name : c.seriesName) || "")}</div><div class="s">${esc(sub)}</div></div><button class="gotit" type="button" data-got="${esc(c.id)}">I bought it</button></div>`;
   }).join("") + "</div>" + (list.length > 150 ? `<p class="small muted">${list.length - 150} more: type a number or series to narrow it down.</p>` : "")
     : '<div class="empty"><h3>Not on your wishlist</h3><p>Nothing matches. Check the number, or type only the series.</p></div>';
   bindGot(box);
@@ -184,7 +193,7 @@ function wishItem(c) {
   return `<div class="item wishrow">${cv ? `<div class="cthumb" data-zoom="${esc(c.id)}"><img src="${esc(cv)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"></div>` : ""}
     <button class="wishmain" data-open="${esc(c.id)}"><div class="num${String(c.issueLabel || c.issue || "").length > 4 ? " long" : ""}">${bk && !c.issue ? '<span style="font-size:.9rem">Book</span>' : esc(c.issueLabel || c.issue || "–")}<small>${bk ? "BOOK" : esc(s ? s.short : c.seriesName)}</small></div>
       <div style="min-width:0"><div class="t">${esc(c.title || (s ? s.name : c.seriesName))}${bud && bud.ok ? ' <span class="chip budget">Within budget</span>' : ""}</div><div class="s">${esc(sub)}</div></div></button>
-    <button class="gotit" type="button" data-got="${esc(c.id)}">Got it</button>
+    <button class="gotit" type="button" data-got="${esc(c.id)}">I bought it</button>
     <div class="seg small wlseg" role="group" aria-label="How much you want it">${WISH_LEVELS.map(([k, l]) => `<button type="button" data-wlset="${esc(c.id)}" data-lv="${k}" aria-pressed="${wishLevel(c) === k}">${k === "must" ? "★ " + l : l}</button>`).join("")}</div></div>`;
 }
 function wishlistBySeries(wl) {
@@ -213,10 +222,12 @@ VIEWS.gaps = {
     const catSq = gridCat(se);
     const covered = lab => { const f = fusedSquare(catSq, lab); return f ? [f] : splitLabel(catSq, lab) ? [lab] : issueSquares(lab); };   // 1967-02B has its own square; a double issue one wide square
     const inSquare = new Map();   // square -> every comic in it (variants, double issues)
+    // read without owning it: the square stays missing, with a dashed edge and a ✓ (read, not owned)
+    const readNo = new Map(); mine.forEach(c => { if (notOwned(c)) covered(c.issueLabel || c.issue).forEach(k => readNo.set(k, c)); });
     mine.forEach(c => { if (c.facsimile || notOwned(c)) return; covered(c.issueLabel || c.issue).forEach(k => { (c.status === "wanted" ? want : own).set(k, c); (inSquare.get(k) || inSquare.set(k, []).get(k)).push(c); }); });
     // owned and wished at once: the same comic both ways (546A owned with 546B wished is fine)
     const live = mine.filter(c => !c.facsimile), clash = new Set();
-    live.forEach(a => { if (a.status === "wanted") return; live.forEach(b => { if (b.status === "wanted" && sameSlot(a.issueLabel || a.issue, b.issueLabel || b.issue)) { clash.add(a.id); clash.add(b.id); } }); });
+    live.forEach(a => { if (a.status === "wanted" || notOwned(a)) return; live.forEach(b => { if (b.status === "wanted" && sameSlot(a.issueLabel || a.issue, b.issueLabel || b.issue)) { clash.add(a.id); clash.add(b.id); } }); });
     const clashSq = new Set(live.filter(c => clash.has(c.id)).flatMap(c => covered(c.issueLabel || c.issue)));
     const opts = seriesOptions(se.id, s => s.name) + bookSeriesOptions("");
     let grid = "", total = 0, ownIn = 0, wantIn = 0;
@@ -229,9 +240,9 @@ VIEWS.gaps = {
       if (o) ownIn++; else if (w) wantIn++;
       const all = inSquare.get(label) || [];
       const vars = all.filter(c => variantOf(c.issueLabel || c.issue));
-      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" + (wishLevel(w) ? " wl-" + wishLevel(w) : "") : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => isOwn(c)) && all.filter(c => isOwn(c)).every(c => c.read) ? " read" : "");
+      const cls = (clashSq.has(label) ? "owned conflict" : o ? "owned" : w ? "wanted" + (wishLevel(w) ? " wl-" + wishLevel(w) : "") : "") + (o && w && !clashSq.has(label) ? " alsowant" : "") + (all.some(c => isOwn(c)) && all.filter(c => isOwn(c)).every(c => c.read) ? " read" : "") + (!o && readNo.has(label) ? " readno read" : "");
       const vtxt = vars.length && !splitLabel(catSq, label) ? `<sup>${esc([...new Set(vars.filter(c => !o || isOwn(c)).map(c => variantOf(c.issueLabel || c.issue)))].sort().join(""))}</sup>` : "";
-      const info = all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing";
+      const info = (all.length ? all.map(c => (c.issueLabel || c.issue) + (c.status === "wanted" ? " on wishlist" : " owned")).join(", ") : "missing") + (!o && readNo.has(label) ? " · read, not owned" : "");
       const eds = [...new Set(all.filter(c => isOwn(c) && c.edition && editionKey(c.edition) !== editionKey(defEd)).map(c => editionMark(c.edition)))];
       const etxt = eds.length ? `<span class="edb">${esc(eds.join(" "))}</span>` : "";
       return `<button class="cell ${cls}${eds.length ? " hased" : ""}" data-issue="${esc(label)}" data-id="${esc(all.length === 1 ? all[0].id : "")}" data-ids="${esc(all.map(c => c.id).join(","))}" title="${esc(tag + " " + label + " · " + info + (eds.length ? " · " + all.filter(c => c.edition).map(c => c.edition).join(", ") : ""))}">${esc(txt)}${vtxt}${etxt}</button>`;
@@ -318,7 +329,7 @@ VIEWS.gaps = {
     const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
     if ((S.gapTab || "gaps") === "wishlist") return wishlistView();
     const edList = seriesEditions(se.id);
-    return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
+    return gapTabs() + gapHead(ownCount, wantCount, total, { cur: se.id, editions: edList.length ? edList : null, defEd, legend: `<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span><i style="background:var(--cell);outline:1.5px dashed var(--owned);outline-offset:-2px"></i>Read, not owned</span><span>Small letters: variants, e.g. 546<sup>AB</sup></span>
         <span>${se.numbering === "year" ? `Grid covers ${esc(se.firstYear || "?")}–${esc(se.lastYear || "?")}, ${cat0 ? (cat0.own ? "with the issues in its issue list (Seriekatalogen)" : "with the issues INDUCKS lists for each year") : (perYearParts(se).parts.length ? "issues a year as set (" + esc(se.perYear) + ")" : esc(perYearOf(se, 0) || 52) + " issues a year")}` : `Grid runs ${+se.first > 1 ? "from issue " + esc(se.first) + " " : ""}to issue ${esc(se.latest || "you own with the highest number")}`}. Adjust this under Series.</span>` }) + `
       ${notInGrid.length ? `<details class="offgrid"><summary class="small"><strong>${[
             both.size ? both.size + (both.size === 1 ? " issue is" : " issues are") + " owned and wished at once" : "",

@@ -609,13 +609,15 @@ function detailHtml(c) {
       row("Publisher", t(c.publisher)), row("Year", t(c.date)), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Language", t(c.lang)), row("Genres", t(c.genre)), row("ISBN", t(c.isbn))]
     : [row("Series", t(se ? se.name : c.seriesName)), row("Issue", t(showLabel(c.issueLabel || c.issue || ""))), row("Title", t(c.title)), row("Released", t(niceDate(c.date))), row("Pages", t(c.pages)), row("Format", t(c.format)), row("Edition", t(c.edition)), row("Genres", t(c.genre || storyGenres(c))),
       row("INDUCKS", c.inducks ? `<a href="https://inducks.org/issue.php?c=${encodeURIComponent(c.inducks).replace(/%20/g, "+")}" target="_blank" rel="noopener">${t(c.inducks)}</a>` : ""), row("Facsimile", c.facsimile ? "yes, reprint" : "")];
+  const linkRow = c.link ? row("Link", `<a href="${t(c.link)}" target="_blank" rel="noopener">${t(c.link.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60))}</a>`) : "";
   const copy = c.status === "wanted"
-    ? [row("Wishlist", (WISH_LEVELS.find(([k]) => k === wishLevel(c)) || [, "Want"])[1]), row("Maximum price", t(money(c.pricePaid, c.currency))), row("Notes", t(c.notes))]
+    ? [row("Wishlist", (WISH_LEVELS.find(([k]) => k === wishLevel(c)) || [, "Want"])[1]), row("Maximum price", t(money(c.pricePaid, c.currency))), row("Read", c.fromRead ? "yes, before (Read, not owned)" : ""), row("Notes", t(c.notes)), linkRow]
+    : notOwned(c) ? [row("Read on", t(niceDate(c.readDate || ""))), row("Read from", t(c.source)), linkRow, row("Notes", t(c.notes))]
     : [row("Condition", t(grade)), row("Copies", (c.copies || 1) > 1 ? c.copies : ""), row("Location", t(c.location)),
       row("Paid", t(money(c.pricePaid, c.currency)) + (lot ? ` <span class="muted">(lot of ${lot.members.length}, ${t(money(lot.total, lot.currency))})</span>` : "")),
       row("Bought", t([niceDate(c.purchaseDate), c.source].filter(Boolean).join(" · "))), row("Read", c.read ? "yes" + (c.readDate ? ", " + t(niceDate(c.readDate)) : "") : "not yet"),
       row("For trade", c.forTrade ? "yes" : ""), row("Value", v ? t(money(v.amount * (c.copies || 1), v.cur)) + ` <span class="muted">(${v.how === "checked" ? "checked price" : v.how === "table" ? "price table" : "own estimate"})</span>` : ""),
-      row("Special", t(c.special)), row("Extras", (c.extras || []).length ? c.extras.map(x => esc(x.what || "Extra") + (typeof x.value === "number" ? " (" + esc(money(x.value, x.cur || "CHF")) + ")" : "")).join("<br>") : ""), row("Notes", t(c.notes))];
+      row("Special", t(c.special)), linkRow, row("Extras", (c.extras || []).length ? c.extras.map(x => esc(x.what || "Extra") + (typeof x.value === "number" ? " (" + esc(money(x.value, x.cur || "CHF")) + ")" : "")).join("<br>") : ""), row("Notes", t(c.notes))];
   const cv = coverOf(c);
   return `<div class="row between"><div><h2 style="margin:0">${t(head)}</h2>${!isBook && c.title ? "" : ""}<p class="lede" style="margin:4px 0 0">${t(isBook ? [c.author, c.date].filter(Boolean).join(" · ") : [c.title, niceDate(c.date)].filter(Boolean).join(" · "))}</p></div>
       <span class="row" style="gap:6px"><button id="vback" type="button">Back</button><button id="vedit" class="primary" type="button">Edit</button></span></div>
@@ -625,7 +627,8 @@ function detailHtml(c) {
       ${isMine(c) ? `<div class="row" style="gap:10px;align-items:center">${heartHtml(c.fav, 'id="v-fav"')}${starsHtml(c.rating, 'id="v-rating"')}<span class="small muted">saved straight away</span></div>` : ""}
       ${cv || c.coverRating ? `<div class="row" style="gap:10px;align-items:center"><span class="small muted">Cover</span>${starsHtml(c.coverRating, 'id="v-cover" aria-label="Cover rating"')}</div>` : ""}
     </div>
-    <div class="card stack"><h3>${c.status === "wanted" ? "On your wishlist" : notOwned(c) ? "Read, not owned" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl></div>
+    <div class="card stack gotrow"><h3>${c.status === "wanted" ? "On your wishlist" : notOwned(c) ? "Read, not owned" : "Your copy"}</h3><dl class="facts">${copy.join("")}</dl>
+      ${c.status === "wanted" || notOwned(c) ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button class="gotit" type="button" data-got="${t(c.id)}">I bought it</button>${notOwned(c) ? (S.comics.some(x => x.status === "wanted" && x.fromRead === c.id) ? '<span class="chip">On your wishlist</span>' : '<button type="button" class="ghost" id="v-wantown">Want to own it</button>') : ""}</div>` : ""}</div>
     ${(c.stories || []).length ? `<div class="card stack"><h3>Stories <span class="muted small">${c.stories.length}</span></h3>${hadElsewhereHtml(c, true)}<div class="stories">${c.stories.map(s => storyView(s, true)).join("")}</div></div>` : ""}
     ${c.duckipedia ? duckipediaCard(c) : ""}`;
 }
@@ -635,4 +638,12 @@ function bindDetail(c) {
   const save = async patch => { try { const saved = await saveComic(Object.assign({}, S.comics.find(x => x.id === c.id) || c, patch)); S.draft = JSON.parse(JSON.stringify(saved)); } catch (e) { toast(errText(e)); } };
   $("#v-fav") && ($("#v-fav").onclick = e => { const on = !e.currentTarget.classList.contains("on"); e.currentTarget.classList.toggle("on", on); e.currentTarget.textContent = on ? "♥" : "♡"; save({ fav: on }); });
   bindStars($("#app"), (v, box) => save(box.id === "v-cover" ? { coverRating: v } : { rating: v }));
+  bindGot($("#app"));
+  // Want to own it: a wishlist entry next to the read-only one; buying it later brings the read date and ratings along
+  $("#v-wantown") && ($("#v-wantown").onclick = async () => {
+    const r = S.comics.find(x => x.id === c.id) || c, w = JSON.parse(JSON.stringify(r));
+    ["id", "createdAt", "updatedAt", "read", "readDate", "rating", "fav", "coverRating", "source", "notes", "pricePaid", "purchaseDate", "wasWish", "wishGotOn"].forEach(k => delete w[k]);
+    Object.assign(w, { status: "wanted", fromRead: r.id, wishLevel: "", currency: r.currency || "CHF" });
+    try { await saveComic(w); toast("✓ " + (r.kind === "book" ? r.title || "Book" : comicTag(r)) + " added to your wishlist"); renderKeep(); } catch (e) { toast(errText(e)); }
+  });
 }

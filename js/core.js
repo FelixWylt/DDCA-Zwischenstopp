@@ -905,7 +905,7 @@ async function reloadFromDb() {
 }
 if (channel) channel.onmessage = () => reloadFromDb();
 async function saveComic(c, quiet) {
-  // a wish that becomes owned (Got it, or "I own it" in its edit form) counts as a fulfilled wish; without a purchase date, in the month it changed
+  // a wish that becomes owned (I bought it, or "I own it" in its edit form) counts as a fulfilled wish; without a purchase date, in the month it changed
   const old = c && c.id && S.comics.find(x => x.id === c.id);
   if (old && old.status === "wanted" && isOwn(c) && !c.wasWish) { c = Object.assign({}, c, { wasWish: true }); if (!/^\d{4}/.test(String(c.purchaseDate || ""))) c.wishGotOn = todayIso(); }
   const body = stamp(c);
@@ -1178,7 +1178,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 218;
+const APP_BUILD = 219;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

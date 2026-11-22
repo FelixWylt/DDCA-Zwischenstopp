@@ -687,3 +687,7 @@ rect.hit.on { fill: var(--accent); opacity: 0.12; }
 .fchips.swipe { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
 .fchips.swipe::-webkit-scrollbar { display: none; }
 .fchips.swipe > * { flex-shrink: 0; }
+
+/* Gaps: read without owning it (still missing): dashed edge + the read tick */
+.cell.readno { outline: 1.5px dashed var(--owned); outline-offset: -3px; color: var(--owned); }
+.cell.wanted.readno { outline-color: var(--wanted); color: var(--wanted); }

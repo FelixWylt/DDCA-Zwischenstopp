@@ -48,10 +48,10 @@ VIEWS.add = {
 ${dupHtml(d)}
 ${coverOf(d) ? `<div class="coverrow"><img class="cover" data-zoom="${esc(d.id || "")}" src="${esc(coverOf(d))}" alt="Cover, tap to enlarge" onerror="this.closest('.coverrow').hidden=true"></div>` : ""}
 ${isBook ? `
-        ${isNovel(d) && !editing ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="readonline">Read online</button>
-          <details class="pastebox"><summary class="small">Paste from the page (Royal Road, Fullreads …)</summary>
-            <textarea id="f-paste" rows="4" placeholder="Open the story's page, select everything, copy it and paste it here"></textarea>
-            <button type="button" id="pastego">Fill from the pasted text</button></details></div>` : ""}
+        ${!editing ? `<div class="row" style="gap:8px;flex-wrap:wrap"><button type="button" class="ghost" id="readonline">Read online</button>
+          ${isNovel(d) ? `<details class="pastebox"><summary class="small">Paste the link or the page (Royal Road, Fullreads …)</summary>
+            <textarea id="f-paste" rows="4" placeholder="Paste the story's link (Share › Copy link), or the whole copied page"></textarea>
+            <button type="button" id="pastego">Fill from the pasted text</button></details>` : ""}</div>` : ""}
         ${isNovel(d) && S.webVols && d.seriesName === S.webVols.series && S.webVols.vols.length ? `<div class="row" style="gap:6px;flex-wrap:wrap"><span class="small muted">Books on the page:</span>${S.webVols.vols.map((v, i) => `<button type="button" class="fchip${d.title === v.title ? " on" : ""}" data-wvol="${i}">${esc(v.n + ": " + v.title)}</button>`).join("")}</div>` : ""}
         <div class="isbnrow">
           <label><span class="l">ISBN</span><input id="f-isbn" class="mono" inputmode="numeric" autocomplete="off" value="${esc(d.isbn)}" placeholder="13 or old 10 digits"></label>
@@ -74,11 +74,11 @@ ${isBook ? `
           <label><span class="l">Volume</span><input id="f-issue" value="${esc(d.issue)}" placeholder="e.g. 12 or 0.5"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="${isNovel(d) ? "e.g. dtv" : "e.g. Egmont Comic Collection"}"></label>
           <label><span class="l">Year</span><input id="f-date" inputmode="numeric" value="${esc(d.date)}" placeholder="2005"></label>
-          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Web serial", "Short story", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Format</span><select id="f-format">${["", "Hardcover", "Softcover", "Paperback", "Box set", "E-book", "Audiobook", "Web serial", "Short story", "Webcomic", "Other"].map(v => `<option value="${v}"${d.format === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Language</span><select id="f-lang">${[...new Set(["", "German", "Swedish", "Italian", "English", "French", "Norwegian", "Danish", "Dutch", "Spanish", "Other", d.lang || ""])].map(v => `<option value="${v}"${(d.lang || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
-          ${isNovel(d) ? `<label><span class="l">Words</span><input id="f-words" inputmode="numeric" value="${esc(d.words || "")}" placeholder="pages = words ÷ 300"></label>
-          <label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="where you read it, e.g. a Royal Road page"></label>` : ""}
+          ${isNovel(d) ? `<label><span class="l">Words</span><input id="f-words" inputmode="numeric" value="${esc(d.words || "")}" placeholder="pages = words ÷ 300"></label>` : ""}
+          <label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="${isNovel(d) ? "where you read it, e.g. a Royal Road page" : "where you read it online (optional)"}"></label>
           <label><span class="l">Country</span><input id="f-country" list="countrylist" value="${esc(d.country || "")}" placeholder="${esc(isNovel(d) ? bookCountry(Object.assign({}, d, { country: "" })) || "where it first came out" : bookCountry(Object.assign({}, d, { country: "" })) || "of this edition")}"></label>
           <datalist id="countrylist">${[...new Set(Object.values(COUNTRY_NAMES).concat(S.comics.map(c => c.country).filter(Boolean)))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
@@ -96,7 +96,7 @@ ${isBook ? `
           <label><span class="l">Issue</span><input id="f-issue" placeholder="${esc(hint)}" value="${esc(d.issue)}"></label>
           <button id="lookup" ${catReady ? "" : "disabled"}>Fill from INDUCKS</button>
         </div>
-        <div class="row" style="gap:8px"><button class="ghost" id="comicscan" type="button">Scan barcode or ISBN</button></div>
+        <div class="row" style="gap:8px;flex-wrap:wrap"><button class="ghost" id="comicscan" type="button">Scan barcode or ISBN</button>${!editing ? '<button type="button" class="ghost" id="readonline">Read online</button>' : ""}</div>
         <div id="bookmsg"></div>
         ${S.catalogue ? `<label><span class="l">Find by title</span><input id="f-titleq" type="search" autocomplete="off" placeholder="words from the cover, e.g. destino paperone"></label><div id="titlehits" class="stack"></div>` : ""}
         ${!se ? `<label><span class="l">New series name</span><input id="f-seriesName" value="${esc(d.seriesName)}" placeholder="e.g. Donald Duck Extra"></label>` : ""}
@@ -107,12 +107,13 @@ ${isBook ? `
           <label class="wide"><span class="l">Issue title</span><input id="f-title" value="${esc(d.title)}" placeholder="e.g. Der Schatz des Goldenen Helms"></label>
           <label><span class="l">Publication date</span><input id="f-date" value="${esc(niceDate(d.date))}" placeholder="TT.MM.JJJJ or MM.JJJJ"></label>
           <label><span class="l">Pages</span><input id="f-pages" inputmode="numeric" value="${esc(d.pages)}"></label>
-          <label><span class="l">Format</span><select id="f-format">${["", "Heft", "Taschenbuch / Pocket", "Softcover", "Hardcover", "Album", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
+          <label><span class="l">Format</span><select id="f-format">${["", "Heft", "Taschenbuch / Pocket", "Softcover", "Hardcover", "Album", "Webcomic", "Other"].map(v => `<option value="${v}"${(d.format || "") === v ? " selected" : ""}>${v || "Not set"}</option>`).join("")}</select></label>
           <label><span class="l">Edition</span><input id="f-edition" list="f-edlist" value="${esc(d.edition || "")}" placeholder="${esc(defaultEditionOf(d.seriesId) ? "counts as " + defaultEditionOf(d.seriesId) : "e.g. 1. Auflage")}"><datalist id="f-edlist">${[...new Set(seriesEditions(d.seriesId).concat(["1. Auflage", "höhere Auflagen", "Neuauflage", "Sonderausgabe"]))].map(x => `<option>${esc(x)}</option>`).join("")}</datalist></label>
           <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="${esc(storyGenres(d) ? "From the stories: " + storyGenres(d) : "e.g. Humour, Adventure (separate with commas)")}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
+          ${d.link || notOwned(d) ? `<label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="where you read it online (optional)"></label>` : ""}
         </div>
         <datalist id="genres">${[...new Set(["Humour", "Adventure", "Crime", "Fantasy", "Science Fiction", "Horror", "Mythology", "Fairy Tales", "History", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="publishers">${[...new Set(S.comics.filter(c => c.seriesId === d.seriesId).map(c => c.publisher).concat(S.comics.map(c => c.publisher)).filter(Boolean))].slice(0, 40).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
@@ -135,6 +136,7 @@ ${isBook ? `
         <div class="grid-form">
           <label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="TT.MM.JJJJ, MM.JJJJ or JJJJ"></label>
           <label><span class="l">Read from</span><input id="f-source" list="readfrom" value="${esc(d.source)}" placeholder="Library, e-book, borrowed…"><datalist id="readfrom"><option>Library</option><option>Free e-book</option><option>Borrowed</option><option>Online</option></datalist></label>
+          <div class="row wide" style="gap:6px;flex-wrap:wrap">${["Library", "Free e-book", "Borrowed", "Online"].map(x => `<button type="button" class="fchip${d.source === x ? " on" : ""}" data-rsrc="${x}">${x}</button>`).join("")}</div>
           <div class="row wide" style="gap:10px;align-items:center"><span class="small muted">Cover</span>${starsHtml(d.coverRating, 'id="f-coverRating" aria-label="Cover rating"')}</div>
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label></div></div>` : `
       <div class="card stack"><div class="row between"><h3>Your copy</h3><span class="row" style="gap:10px">${heartHtml(d.fav, 'id="f-fav"')}${starsHtml(d.rating, 'id="f-rating"')}</span></div>
@@ -239,11 +241,11 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     $("#xadd") && ($("#xadd").onclick = () => { grab(); d.extras = (d.extras || []).concat([{ what: "", value: "", cur: d.currency || "CHF" }]); render(); });
     document.querySelectorAll("[data-xdel]").forEach(b => b.onclick = () => { grab(); d.extras.splice(+b.dataset.xdel, 1); render(); });
     // read online: one tap for Read, not owned + Online + today + Web serial
-    const readOnline = () => { d.status = "notowned"; d.read = true; d.readDate = d.readDate || todayIso(); d.source = d.source || "Online"; if (!d.format) d.format = "Web serial"; };
+    const readOnline = () => { d.status = "notowned"; d.read = true; d.readDate = d.readDate || todayIso(); d.source = d.source || "Online"; if (!d.format) d.format = isNovel(d) ? "Web serial" : "Webcomic"; };
     $("#readonline") && ($("#readonline").onclick = () => { grab(); readOnline(); render(); });
     $("#pastego") && ($("#pastego").onclick = () => {
       grab(); const p = parseWebPage($("#f-paste").value);
-      if (!p.title) { bookMsg('<div class="banner warn">Nothing found in the pasted text. Copy the whole page, starting with the story\'s title.</div>'); return; }
+      if (!p.title) { bookMsg('<div class="banner warn">Nothing found in the pasted text. Paste the story\'s link, or copy the whole page starting with its title.</div>'); return; }
       readOnline(); if (p.format) d.format = p.format;
       if (p.author) d.author = p.author; if (p.genres.length && !d.genre) d.genre = p.genres.join(", "); if (p.link) d.link = p.link; if (p.words) d.words = String(p.words);
       if (p.vols.length) {
@@ -254,6 +256,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       render();
       bookMsg(`<div class="banner ok">Filled in: ${[d.title && "title", p.author && "author", p.genres.length && "genres", p.link && "link", d.pages && "pages", p.words && "words"].filter(Boolean).join(", ") || "title"}.${p.vols.length ? ` The page lists ${p.vols.length} ${p.vols.length === 1 ? "book" : "books"}: saved as the book series “${esc(p.title)}”, book ${esc(String(p.vols[0].n))}. Type its pages yourself${p.pages ? ` (the page counts ${Number(p.pages).toLocaleString("de-CH")} pages for the whole story)` : ""}, then use Save &amp; next and tap the next book above.` : ""}${p.ongoing ? " Still running on the site." : ""} Check the fields, then save.</div>`);
     });
+    document.querySelectorAll("[data-rsrc]").forEach(b => b.onclick = () => { const el = $("#f-source"); if (el) el.value = b.dataset.rsrc; document.querySelectorAll("[data-rsrc]").forEach(x => x.classList.toggle("on", x === b)); });
     document.querySelectorAll("[data-wvol]").forEach(b => b.onclick = () => { grab(); const v = S.webVols.vols[+b.dataset.wvol]; d.title = v.title; d.issue = String(v.n); render(); });
     document.querySelectorAll("[data-st]").forEach(b => b.onclick = () => { grab(); d.status = b.dataset.st; if (d.status === "notowned") { d.read = true; d.readDate = d.readDate || todayIso(); } render(); });
     document.querySelectorAll("[data-wl]").forEach(b => b.onclick = () => { d.wishLevel = b.dataset.wl; document.querySelectorAll("[data-wl]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); });
@@ -363,7 +366,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         const fromCat = d.title && Object.values(file.issues || {}).some(x => x.t && norm(x.t) === norm(d.title));
         d.title = (!d.title || fromCat ? hit.t : d.title) || d.title || ""; d.date = hit.d || d.date; d.pages = hit.pg || d.pages; if (hit.cv && fromSources(d.coverUrl)) d.coverUrl = inducksImg(hit.cv);   // the cover of the issue now chosen (29 → 29B); one you pasted yourself is kept
         d.stories = keepOwnTitles(d.stories, (hit.s || []).map(x => ({ title: x.t || "", code: x.c || "", writer: x.w || "", artist: x.a || "", hero: x.h || "", pages: x.p || "" })));
-        d.inducks = hit.ic; await fillExtras(se); render(); const had = storiesHadElsewhere(d).length; toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories") + (had ? " · you already have " + had + " of them in other comics" : "")); return;
+        d.inducks = hit.ic; await fillExtras(se); render(); const hadX = storiesHadElsewhere(d), had = hadX.filter(m => m.comics.some(c => isOwn(c))).length, hadR = hadX.length - had; toast("Filled from INDUCKS: " + d.stories.length + (d.stories.length === 1 ? " story" : " stories") + (had ? " · you already have " + had + " of them in other comics" : "") + (hadR ? " · you've read " + hadR + " without owning " + (hadR === 1 ? "it" : "them") : "")); return;
       }
       d.title = d.title || hit.title || ""; d.date = hit.date || d.date; d.pages = hit.pages || d.pages; d.coverUrl = d.coverUrl || hit.cover || "";
       d.stories = (hit.stories || []).map(s => ({ title: s.title || "", code: s.code || "", writer: s.writer || "", artist: s.artist || "", hero: s.hero || "" }));
@@ -686,6 +689,17 @@ function parseWebPage(text) {
   const lines = plain.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   const num = s => parseInt(String(s || "").replace(/[^\d]/g, ""), 10) || 0;
   const r = { title: "", author: "", genres: [], link: "", pages: 0, words: 0, vols: [], format: "", ongoing: false };
+  // only a link (Share › Copy link on the phone): the title comes from the link's last part, e.g. …/fiction/112557/the-wandering-inn
+  const bare = raw.trim().replace(urls[0] || "\u0000", "").trim();
+  if (urls.length === 1 && !/\n/.test(raw.trim()) && bare.split(/\s+/).filter(Boolean).length <= 12) {
+    const u = urls[0].replace(/[?#].*$/, "").replace(/\/+$/, ""), rr1 = /royalroad\.com\/fiction\/(\d+)(?:\/([a-z0-9-]+))?/i.exec(u);
+    const slug = rr1 ? rr1[2] || "" : decodeURIComponent(u.split("/").pop() || "").replace(/\.[a-z]{2,5}$/i, "");
+    const small = new Set(["a", "an", "the", "of", "and", "or", "in", "on", "to", "for", "at", "by", "with"]);
+    r.title = bare.replace(/\s*[|–-]\s*Royal Road.*$/i, "").trim() || slug.split(/[-_]+/).filter(Boolean).map((w, i) => i && small.has(w.toLowerCase()) ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    r.link = rr1 ? "https://www.royalroad.com/fiction/" + rr1[1] + (rr1[2] ? "/" + rr1[2] : "") : urls[0];
+    if (rr1) r.format = "Web serial"; else if (/fullreads\.com/i.test(u)) r.format = "Short story";
+    return r;
+  }
   const skip = /^(home|menu|login|log in|sign in|search|read|fictions?|advertisement|report)$/i;
   r.title = (lines.find(l => !skip.test(l) && !/^by\s/i.test(l)) || "").replace(/^Read\s+/, "").replace(/\s*\|.*$/, "").trim();
   const by = /\bby\s+(.+?)(?:\s*\|.*)?$/i.exec(lines.find(l => /^by\s+\S/i.test(l)) || "") || /^.+?\sby\s+([^|]+?)\s*(?:\||$)/i.exec(lines[0] || "");

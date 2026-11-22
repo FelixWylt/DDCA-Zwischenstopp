@@ -18,7 +18,7 @@ function keepOwnTitles(old, fresh) {
   return fresh.map((s, i) => { const o = own.find(x => x.code && codeKey(x.code) === codeKey(s.code)) || (!s.code && (old || [])[i] && old[i].ownTitle ? old[i] : null); return o ? Object.assign({}, s, { title: o.title, ownTitle: true }) : s; });
 }
 const codeKey = v => String(v || "").replace(/\s+/g, "").toLowerCase();
-// stories of this comic that are already in another comic you own (same INDUCKS story code): [{ s, comics }]
+// stories of this comic that are already in another comic you own or read (same INDUCKS story code): [{ s, comics }]
 function storiesHadElsewhere(d) {
   const mine = new Map();
   (d.stories || []).forEach(s => { const k = codeKey(s.code); if (k && !mine.has(k)) mine.set(k, { s, comics: [] }); });
@@ -34,9 +34,12 @@ function storiesHadElsewhere(d) {
 function hadElsewhereHtml(d, links) {
   const xs = storiesHadElsewhere(d); if (!xs.length) return "";
   const n = (d.stories || []).length;
-  const head = xs.length === n ? (n === 1 ? "You already have this story" : "You already have all " + n + " stories") : "You already have " + xs.length + " of these " + n + " stories";
-  const where = c => links ? `<button type="button" class="link" data-hopen="${esc(c.id)}">${esc(comicTag(c))}</button>` : esc(comicTag(c));
-  return `<div class="banner hadst small"><b>${head}</b> in other comics:<ul>${xs.map(m => `<li>${esc(m.s.title || m.s.dTitle || m.s.code)}: ${m.comics.map(where).join(", ")}</li>`).join("")}</ul></div>`;
+  // owned somewhere vs. only read (Read, not owned): said apart, so "you have it" is never said about a library copy
+  const ownN = xs.filter(m => m.comics.some(c => isOwn(c))).length, readN = xs.length - ownN;
+  const of = k => k === n ? (n === 1 ? "this story" : "all " + n + " stories") : k + " of these " + n + " stories";
+  const head = [ownN ? "You already have " + of(ownN) + " in other comics" : "", readN ? (ownN ? "you've read " + readN + " more" : "You've already read " + of(readN)) + " without owning " + (readN === 1 ? "it" : "them") : ""].filter(Boolean).join("; ");
+  const where = c => (links ? `<button type="button" class="link" data-hopen="${esc(c.id)}">${esc(comicTag(c))}</button>` : esc(comicTag(c))) + (notOwned(c) ? " (read, not owned)" : "");
+  return `<div class="banner hadst small"><b>${head}</b>:<ul>${xs.map(m => `<li>${esc(m.s.title || m.s.dTitle || m.s.code)}: ${m.comics.map(where).join(", ")}</li>`).join("")}</ul></div>`;
 }
 // a writer's or artist's name anywhere in the app opens their page under Stories
 document.addEventListener("click", e => {
@@ -161,7 +164,7 @@ function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short 
 VIEWS.stories = {
   html() {
     const st = S.st = S.st || {};
-    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100, sub: "stories", olang: "", clang: "", pc: "", chl: "" }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
+    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100, sub: "stories", olang: "", clang: "", pc: "", chl: "", ownf: "" }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
     if (["writers", "artists", "chars"].includes(st.mode)) { st.role = st.mode; st.tab = "people"; } delete st.mode;
     if (st.sort === "fav") { st.sort = "rating"; st.tab = "fav"; }
     loadStoryInfo();
@@ -191,6 +194,8 @@ VIEWS.stories = {
       const mo = new Map(), mc = new Map();
       all.forEach(e => { tally(mo, storyOrigLang(e)); new Set(e.items.map(comicLangOf)).forEach(l => tally(mc, l)); });
       fRows = optRow("Original", "data-olang", st.olang, mo) + optRow("In my comics", "data-clang", st.clang, mc);
+      // owned vs. only read (Read, not owned): only when you have such entries and the wishlist isn't the only thing shown
+      if (st.status !== "wanted") { const mh = new Map(); all.forEach(e => tally(mh, storyHave(e))); if (mh.get("Read, not owned") || st.ownf) fRows += optRow("I have it", "data-ownf", st.ownf, mh); }
     }
     const subChips = st.tab === "all" && !st.who ? `<div class="fchips">${chip('data-stsub="stories"', st.sub !== "series", "Stories")}${chip('data-stsub="series"', st.sub === "series", "Story series")}</div>` : "";
     const sortSel = st.tab === "all" && st.sub !== "series" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
@@ -208,7 +213,7 @@ VIEWS.stories = {
     const st = S.st;
     document.querySelectorAll("[data-stab]").forEach(b => b.onclick = () => { if (st.tab === b.dataset.stab) return; st.tab = b.dataset.stab; st.q = ""; st.shown = 100; if (st.tab !== "all") st.who = null; render(); });
     document.querySelectorAll("[data-role]").forEach(b => b.onclick = () => { st.role = b.dataset.role; st.shown = 100; render(); });
-    [["stsub", "sub"], ["olang", "olang"], ["clang", "clang"], ["pc", "pc"], ["chl", "chl"]].forEach(([a, k]) => document.querySelectorAll(`[data-${a}]`).forEach(b => b.onclick = () => { st[k] = b.dataset[a]; st.shown = 100; if (k === "sub") st.q = ""; render(); }));
+    [["stsub", "sub"], ["olang", "olang"], ["clang", "clang"], ["pc", "pc"], ["chl", "chl"], ["ownf", "ownf"]].forEach(([a, k]) => document.querySelectorAll(`[data-${a}]`).forEach(b => b.onclick = () => { st[k] = b.dataset[a]; st.shown = 100; if (k === "sub") st.q = ""; render(); }));
     document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
     $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
     $("[data-strated]") && ($("[data-strated]").onclick = () => { st.rated = !st.rated; if (st.rated && st.sort === "title") st.sort = "rating"; st.shown = 100; render(); });
@@ -243,6 +248,8 @@ function storyRow(e) {
       <div class="row" style="gap:6px">${e.items.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}${c.status === "wanted" ? " · wishlist" : notOwned(c) ? " · read, not owned" : ""}</button>`).join("")}</div>
     </div></details>`;
 }
+// how you have a story: in a comic you own, or only read (Read, not owned); wishlist-only stories count as neither
+function storyHave(e) { return e.items.some(c => isOwn(c)) ? "Owned" : e.items.some(c => notOwned(c)) ? "Read, not owned" : ""; }
 function drawStories() {
   const box = $("#stres"); if (!box) return;
   const st = S.st, q = norm(st.q), words = q ? q.split(" ") : [];
@@ -267,6 +274,7 @@ function drawStories() {
     let person = "";
     if (st.olang) list = list.filter(e => storyOrigLang(e) === st.olang);
     if (st.clang) list = list.filter(e => e.items.some(c => comicLangOf(c) === st.clang));
+    if (st.ownf) list = list.filter(e => storyHave(e) === st.ownf);
     if (st.tab === "all" && st.sub === "series" && !st.who) {
       // Story series: every series your stories belong to, with how many stories and comics
       const m = new Map();
