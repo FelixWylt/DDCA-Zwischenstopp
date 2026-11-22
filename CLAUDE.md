@@ -6,7 +6,9 @@
   Anything that needs their data (prices, entries) is given to them as text to paste or type in.
 
 ## Time estimates (the user has asked for this several times — follow it every time)
-1. **Before starting** any job, give an estimate in real time as a range, plus how sure you are.
+1. **Before starting** any job, give an estimate in real time as a range, plus how sure you are. EVERY job, also checks,
+   lookups in the backup/catalogue and research before an answer, and also when the user's go comes with new data
+   (a pasted table): the estimate comes in the first message, before any tool call (2026-11-22: forgotten several times).
    Estimate at Claude's own pace, not a person's. Base it on the log below: Claude tends to estimate too HIGH.
    State waiting separately (GitHub Actions network probe: about 1 minute; the user's replies don't count).
 2. **Measure from the user's message time** (system reminder, minute precision) to the commit time
@@ -182,6 +184,10 @@ except typing the reply itself. Say in the report that the reply writing and Git
   the numbers are only estimates.
 
 ## Other working rules
+- **Publish only on "publish" (the user's wish, 2026-11-22):** app changes too, not only price lists: after the go, make the change,
+  test what can be tested here and commit locally (with its log line), but do NOT push. Say in each reply what is unpublished
+  (app versions and price lists). On "publish" (or "done"): push everything at once, then ONE check run for all of it.
+  Never count a "yes" to a plan as "publish", even when the plan says it would be published.
 - **Report before starting (the user's wish, 2026-11-20):** before changing anything, report what you found and the plan
   (with the time estimate and any questions), then wait for the user's go. Only answers need no report first.
 - **More power (the user's wish, 2026-11-21):** (see the guideline table below) before a job, say when it needs more than the current setting: a higher "effort"
