@@ -178,4 +178,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | Price list Spindelmannen (Seriekatalogen VF, 1984–1999/8, 202 issues + 1991/2B, replace) into prices.json + restore-batch, local (not published) | about 2 min (first guess 4 ÷ 2) | 0–1 min (21:27 → 21:27:38) |
 | 2026-11-22 | da-v228 format names in English (Heft → Magazine, Taschenbuch / Pocket → Pocket book; renamed on start, save, restore), Duckipedia series sizes in English; published with the Spindelmannen price list; 1 check run (edit-comic, series-tools, prices), no errors | 2–3 min (first guess 5 ÷ 2) + 1 run | 4–5 min (21:37 → 21:41:01, incl. 1 run of ~2 min) |
 | 2026-11-22 | CLAUDE.md: app changes also wait for "publish"; estimate before every job incl. checks/lookups | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:45 → 21:46:03) |
+| 2026-11-22 | CLAUDE.md handover nr. 13 (da-v225–228, Spindelmannen) + publish (notes only, no check run: no app or price change) | about 1 min | 0–1 min (21:48 → 21:48:22) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

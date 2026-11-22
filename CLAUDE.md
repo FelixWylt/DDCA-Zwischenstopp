@@ -96,6 +96,16 @@ except typing the reply itself. Say in the report that the reply writing and Git
     45 idea: Overview "on wishlist" tile opens the Wishlist. 46 idea: Reading by "Read from" (Library, Online, own). 47 idea: Stories
     chip "Unread". 48 idea: Stats › Stories card "story series you have most of" (totals from story-info.json storySeries).
   - Not wanted: 40 (Stats Wishes fulfilled note still says "Got it").
+- **Done 2026-11-22 evening (handover nr. 13):** da-v225 Longest stories: pages = largest total of any of the user's comics
+  (chapters per comic add up; was the first copy found), a later chapter's Duckipedia title (dTitle) names the story when the first
+  chapter has none (firstD/gotD in storyIndex). da-v226 Overview To do "comics without stories" skips comics with c.inducks set
+  (DSBP 63 Postcard Collection has no stories in INDUCKS). da-v227 story ratings Writing/Art (storyRatings[key].writing/.art) under
+  Overall on the story page; Rated chip, Stats ratings note averages, best writers by Writing / artists by Art (fallback Overall);
+  screens shot "13b-story-rating". da-v228 formats in English: FMT_EN (Heft → Magazine, Taschenbuch / Pocket → Pocket book) on start,
+  in stamp() and saveSeries; enSize() for Duckipedia series sizes ("200 × 135 mm", "varying pages"). The user kept "Magazine" (not "Issue").
+  Spindelmannen price list (Seriekatalogen VF, 1984–1999/8, 1991/2B variant, replace) published with da-v228; the user still taps Add all
+  and gives the 9 "?" copies their numbers. Spider-Man (SE) and Spider-Man Magazin lists were already done 2026-11-15.
+  The user's backup of 2026-11-22 was used for checks (kept off GitHub).
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
