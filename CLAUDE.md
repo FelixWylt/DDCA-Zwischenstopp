@@ -203,6 +203,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   - **Check before promising web research:** test ONE source first, then estimate. Blocked from here (2026-11-22): comics.org (GCD,
     WebFetch and curl), openlibrary.org (robots, proxy 403); comicbooks.com opens but WebFetch shows no picture links; curl reaches
     no outside site. So cover links can't be collected here: the app finds them on the phone (it can reach Open Library, Google Books, Libris).
+    GCD from GitHub (probes 2026-11-22): its API answers (series by name: /api/series/name/<name>/, issue JSON has "cover"), but sends no
+    CORS header (the app can't ask it), and its pictures (files1.comics.org) fail with 403 on GitHub, also in a headless browser.
+    Shop list: claude/shops-zurich.md in the project (was a .bin, rewritten 2026-11-22).
   - **Repo access:** the first push-access request in a chat is often refused by the safety check (it wants the user's own words).
     Ask for push access only when the user asks for work on the repo; if refused, say so in one line and ask the user to say "try again".
   - **The backup is per chat:** a file sent in another chat can't be opened here, and project files hold no backup. Ask the user to
