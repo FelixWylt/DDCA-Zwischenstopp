@@ -1,0 +1,799 @@
+[
+ {
+  "sid": "x-spindelmannen-swedish",
+  "name": "Spindelmannen",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1984,
+  "last": 1999,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1987/09",
+    "year": "1987",
+    "title": "Secret Wars"
+   },
+   {
+    "label": "1987/12",
+    "year": "1987",
+    "title": "Skorpionen tar sig en brud, men det är J Jonah Jamesons tjej!"
+   },
+   {
+    "label": "1988/05",
+    "year": "1988",
+    "title": "På pricken, Spindelmannen!"
+   },
+   {
+    "label": "1988/02",
+    "year": "1988",
+    "title": "Secret Wars"
+   },
+   {
+    "label": "1988/06",
+    "year": "1988",
+    "title": "Slutet"
+   },
+   {
+    "label": "1988/09",
+    "year": "1988",
+    "title": "Bättre EN FÅGEL i handen, än FYRA bakom ryggen!"
+   },
+   {
+    "label": "1988/08",
+    "year": "1988",
+    "title": "Fyra flaxande faror"
+   },
+   {
+    "label": "1988/07",
+    "year": "1988",
+    "title": ""
+   },
+   {
+    "label": "1988/01",
+    "year": "1988",
+    "title": "X-men slår till!"
+   }
+  ]
+ },
+ {
+  "sid": "x-herman-hedning-swedish",
+  "name": "Herman Hedning",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1998,
+  "last": 2026,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1999/04",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "2000/02",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "2009/06",
+    "year": "2009",
+    "title": ""
+   },
+   {
+    "label": "1999/02",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1999/05",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1999/06",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1998/01",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "2000/01",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1998/02",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1999/03",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1999/01",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "2010/07",
+    "year": "2010",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-91-an-swedish",
+  "name": "91:an",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1956,
+  "last": 2026,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1956/04",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/07",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/06",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1998/16",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/09",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/03",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/08",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1979/20",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/10",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/01",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/05",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1978/25",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1956/02",
+    "year": "",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-asterix-english",
+  "name": "Asterix (English)",
+  "country": "ENG",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "16",
+    "year": "2004",
+    "title": "Asterix in Switzerland"
+   }
+  ]
+ },
+ {
+  "sid": "x-musiksaga",
+  "name": "Musiksaga",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "21",
+    "year": "1983",
+    "title": "Musse Piggs julsaga"
+   }
+  ]
+ },
+ {
+  "sid": "x-lucky-lukes-aventyr",
+  "name": "Lucky Lukes äventyr",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "5",
+    "year": "1975",
+    "title": "Apache-Klyftan"
+   },
+   {
+    "label": "16",
+    "year": "1974",
+    "title": ""
+   },
+   {
+    "label": "18",
+    "year": "1975",
+    "title": ""
+   },
+   {
+    "label": "17",
+    "year": "1975",
+    "title": "Angivaren"
+   },
+   {
+    "label": "24",
+    "year": "1976",
+    "title": "Skumt spel i Texas"
+   },
+   {
+    "label": "8",
+    "year": "1972",
+    "title": ""
+   },
+   {
+    "label": "4",
+    "year": "1971",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-spirous-aventyr",
+  "name": "Spirous Äventyr",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "0",
+    "year": "1975",
+    "title": "Guldmaskinen"
+   },
+   {
+    "label": "6",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "8",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "5",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "3",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "7",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "10",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "2",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "9",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "1",
+    "year": "",
+    "title": ""
+   },
+   {
+    "label": "4",
+    "year": "",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-bamse-varldens-starkaste-bjorn",
+  "name": "Bamse - världens starkaste björn",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1973,
+  "last": 2026,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1976/10",
+    "year": "1976",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-asterix-german",
+  "name": "Asterix (German)",
+  "country": "DE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "14",
+    "year": "2017",
+    "title": "Asterix in Spanien"
+   },
+   {
+    "label": "3",
+    "year": "2017",
+    "title": "Asterix als Gladiator"
+   },
+   {
+    "label": "41",
+    "year": "2025",
+    "title": "Asterix in Lusitanien"
+   },
+   {
+    "label": "6",
+    "year": "2017",
+    "title": "Tour de France"
+   }
+  ]
+ },
+ {
+  "sid": "x-winnetou-swedish",
+  "name": "Winnetou (Swedish)",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "1974",
+    "title": "Mannen från Prärien"
+   }
+  ]
+ },
+ {
+  "sid": "x-topolino-giornale",
+  "name": "Topolino Giornale",
+  "country": "IT",
+  "code": "it/TG",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "443",
+    "year": "1941",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-herman-hedning-co",
+  "name": "Herman Hedning & CO",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "19",
+    "year": "2010",
+    "title": "Grisaktiga Svinerier"
+   },
+   {
+    "label": "24",
+    "year": "2015",
+    "title": "Full Metal Julbang!"
+   }
+  ]
+ },
+ {
+  "sid": "x-spider-man-swedish",
+  "name": "Spider-Man",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1999,
+  "last": 2013,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "2004/12",
+    "year": "2004",
+    "title": "Den Nordiske Gudens Vrede!"
+   }
+  ]
+ },
+ {
+  "sid": "se-KA",
+  "name": "Kalle Anka & C:o",
+  "country": "SE",
+  "code": "se/KA",
+  "lang": "",
+  "first": 1948,
+  "last": 2026,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "2015/09",
+    "year": "2015",
+    "title": "Snöplågor med snöplogar"
+   }
+  ]
+ },
+ {
+  "sid": "x-the-sandman-the-deluxe-edition",
+  "name": "The Sandman: The Deluxe Edition",
+  "country": "US",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "2020",
+    "title": "The Sandman"
+   }
+  ]
+ },
+ {
+  "sid": "x-spider-man-german",
+  "name": "Spider-Man Magazin",
+  "country": "DE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "8",
+    "year": "2019",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-micky-maus-zeitung",
+  "name": "Micky Maus Zeitung",
+  "country": "CH",
+  "code": "ch/MMZ",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "10",
+    "year": "1937",
+    "title": ""
+   },
+   {
+    "label": "12",
+    "year": "1937",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-x-men-swedish",
+  "name": "X-Men",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1990,
+  "last": 1993,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1990/09",
+    "year": "1990",
+    "title": "X-Men mot Fantastic Four"
+   }
+  ]
+ },
+ {
+  "sid": "x-marvel-mutanter-swedish",
+  "name": "Marvel mutanter",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1989,
+  "last": 1990,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1989/?",
+    "year": "1989",
+    "title": "Mutantjägaren"
+   },
+   {
+    "label": "1990/?",
+    "year": "1990",
+    "title": "Mutantmassakern"
+   }
+  ]
+ },
+ {
+  "sid": "x-scooby-doo-swedish",
+  "name": "Scooby Doo",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1973,
+  "last": 1983,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1979/01",
+    "year": "1979",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-herman-hedning-samlade-serier-swedish",
+  "name": "Herman Hedning Samlade Serier",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "5",
+    "year": "2012",
+    "title": "Samlade serier 2003-2004"
+   }
+  ]
+ },
+ {
+  "sid": "x-x-en-swedish",
+  "name": "X:en",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": 1984,
+  "last": 1985,
+  "numbering": "year",
+  "items": [
+   {
+    "label": "1984/01",
+    "year": "1984",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-asterix-magazin-german",
+  "name": "Asterix Magazin (German)",
+  "country": "DE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "2",
+    "year": "2019",
+    "title": "Asterix und Obelix auf Reisen"
+   }
+  ]
+ },
+ {
+  "sid": "x-doctor-strange-flight-of-bones",
+  "name": "Doctor Strange: Flight Of Bones",
+  "country": "US",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "2016",
+    "title": "The Flight of Bones"
+   }
+  ]
+ },
+ {
+  "sid": "x-asterix-swedish",
+  "name": "Asterix (Swedish)",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "18",
+    "year": "1976",
+    "title": "Caesars lagerkrans"
+   },
+   {
+    "label": "16",
+    "year": "1975",
+    "title": "Asterix i Alperna"
+   }
+  ]
+ },
+ {
+  "sid": "x-scooby-doo-stort-presentalbum",
+  "name": "Scooby Doo - Stort Presentalbum",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1977",
+    "year": "1977",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-doctor-strange-the-punisher-magic-bullets",
+  "name": "Doctor Strange / The Punisher: Magic Bullets",
+  "country": "US",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "2017",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-tintin-swedish",
+  "name": "Tintin (Swedish)",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "20",
+    "year": "1973",
+    "title": "Tintin och Hajsjön"
+   }
+  ]
+ },
+ {
+  "sid": "x-war-of-the-realms",
+  "name": "War of the Realms",
+  "country": "DE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "2019",
+    "title": "Kapitel 1: Die letzte Bastion"
+   }
+  ]
+ },
+ {
+  "sid": "x-blixt-gordon",
+  "name": "Blixt Gordon",
+  "country": "SE",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "1",
+    "year": "1973",
+    "title": ""
+   }
+  ]
+ },
+ {
+  "sid": "x-maus",
+  "name": "Maus",
+  "country": "US",
+  "code": "",
+  "lang": "",
+  "first": "",
+  "last": "",
+  "numbering": "running",
+  "items": [
+   {
+    "label": "",
+    "year": "2011",
+    "title": "A Survivor's Tale"
+   }
+  ]
+ }
+]
