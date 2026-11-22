@@ -1209,9 +1209,21 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/prices.json"); if (r.ok) S.priceSugg = (await r.json()).series || {}; } catch (e) {}
   // price lists Claude has collected for your series (Series › Tools › Price lists waiting)
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
+  // cover links Claude has looked up (comics.org) for comics without a cover (Series › Tools › Covers waiting)
+  try { const r = await fetch("catalogue/covers-batch.json"); if (r.ok) { S.coverBatch = (await r.json()).covers || []; if (S.view === "series") render(); } } catch (e) {}
+}
+// comics without a cover that a waiting cover link fits (same series, same number); a cover you set yourself is never replaced
+function coverBatchWaiting() {
+  const want = new Map(); (S.coverBatch || []).forEach(e => { if (e && e.url) want.set(e.sid + "|" + e.label, e.url); });
+  return S.comics.filter(c => c.kind !== "book" && !c.coverUrl && want.has(c.seriesId + "|" + (c.issueLabel || c.issue || ""))).map(c => ({ c, url: want.get(c.seriesId + "|" + (c.issueLabel || c.issue || "")) }));
+}
+async function applyCoverBatch() {
+  let n = 0;
+  for (const { c, url } of coverBatchWaiting()) if (await saveComic(Object.assign({}, c, { coverUrl: url }), true).catch(() => null)) n++;
+  await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 229;
+const APP_BUILD = 230;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

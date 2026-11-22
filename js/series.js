@@ -522,6 +522,7 @@ VIEWS.series = {
         <p class="small muted" style="margin:0">Fills empty details of every Disney series at once: INDUCKS code, country, years, latest issue, publisher and format from INDUCKS, plus a short description from Duckipedia for German series. Book series get author, publisher, years, genres, number of volumes and a description from Wikidata and Wikipedia. What you've entered yourself is kept. Needs internet for Duckipedia; takes about a second per series.</p>
         <div class="row" style="align-items:center"><button id="fillall"${S.db ? "" : " disabled"}>${S.fillAll && S.fillAll.running ? "Stop" : "Fill all series"}</button><span class="small muted" id="fillprog">${S.fillAll && !S.fillAll.running ? esc(S.fillAll.msg) : ""}</span></div></div>
       ${priceBatchCard()}
+      ${coverBatchCard()}
       ${emptySeriesCard()}
       ${(st => st.length ? `<div class="card stack"><h3>Books that belong to a comic series</h3><p class="small muted" style="margin:0">These are saved as books, but their book series has the name of one of your comic series, so gap grid and stats can't count them as issues.</p>
         <div class="list">${st.map(({ c, se }) => `<div class="small">${esc(c.title || "Untitled")} · book series “${esc(c.seriesName)}” ${esc(c.issue || "")} → <strong>${esc(se.short || se.name)} ${esc(c.issue || "")}</strong></div>`).join("")}</div>
@@ -592,6 +593,7 @@ VIEWS.series = {
     $("#serfind") && ($("#serfind").oninput = e => { S.serFind = e.target.value; $("#serlist").innerHTML = serListHtml(S.serTab === "books" ? "books" : "comics"); bindList(); });
     document.querySelectorAll("[data-sgap]").forEach(b => b.onclick = async () => { await leave(); S.gapSeries = b.dataset.sgap; S.gapTab = "gaps"; nav("gaps"); });
     $("#dkall") && ($("#dkall").onclick = () => duckipediaBulk());
+    $("#cbatch") && ($("#cbatch").onclick = async () => { $("#cbatch").disabled = true; try { const n = await applyCoverBatch(); toast("Added " + n + " covers"); } catch (e) { toast(errText(e)); } render(); });
     $("#pbatch") && ($("#pbatch").onclick = async () => { $("#pbatch").disabled = true; try { const r = await applyPriceBatch(); toast("Added " + r.ranges + " price ranges for " + r.series + " series"); } catch (e) { toast(errText(e)); } render(); });
     bindValueRules();
     document.querySelectorAll("[data-bkfill]").forEach(b => b.onclick = async () => {
@@ -694,6 +696,15 @@ VIEWS.series = {
   }
 };
 
+// Series › Tools: cover links Claude has looked up on comics.org (catalogue/covers-batch.json), added with one tap
+function coverBatchCard() {
+  const w = coverBatchWaiting(); if (!w.length) return "";
+  const by = {}; w.forEach(({ c }) => { const n = (seriesById(c.seriesId) || {}).name || "?"; by[n] = (by[n] || 0) + 1; });
+  return `<div class="card stack"><h3>Covers waiting</h3>${lastRunText("covers")}
+    <p class="small muted" style="margin:0">Cover pictures Claude found on comics.org (Grand Comics Database) for ${w.length} of your comics without a cover. Only comics without a cover get one. comics.org doesn't allow copies, so these covers show only while you're online.</p>
+    <ul class="small" style="margin:0;padding-left:18px">${Object.keys(by).sort().map(n => `<li><strong>${esc(n)}</strong>: ${by[n]}</li>`).join("")}</ul>
+    <div class="row"><button type="button" class="primary" id="cbatch"${S.db ? "" : " disabled"}>Add all</button></div></div>`;
+}
 // Series › Tools: price lists Claude has prepared (catalogue/restore-batch.json), added with one tap
 function priceBatchCard() {
   const w = priceBatchWaiting(); if (!w.length) return "";

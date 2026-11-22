@@ -1,5 +1,5 @@
 // Dagobert Ducks Archiv service worker: keeps the app (and the INDUCKS catalogue) on the phone for offline use.
-const APP_VERSION = "da-v229";
+const APP_VERSION = "da-v230";
 const CATALOGUE = "202611212257";   // set by the INDUCKS catalogue job, so phones pick up a new catalogue
 const VERSION = APP_VERSION + "-" + CATALOGUE;      // changes when either changes, so phones notice
 const SHELL_CACHE = "da-app-" + APP_VERSION, CAT_CACHE = "da-cat-" + CATALOGUE;
@@ -50,7 +50,7 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
   event.respondWith((async () => {
     // price lists change often: fetch them fresh when online, the cached copy only when offline
-    if (/\/catalogue\/(prices|restore-batch)\.json$/.test(new URL(req.url).pathname)) {
+    if (/\/catalogue\/(prices|restore-batch|covers-batch)\.json$/.test(new URL(req.url).pathname)) {
       try { const res = await fetch(req, { cache: "no-store" }); if (res.ok) { (await caches.open(CAT_CACHE)).put(req, res.clone()); return res; } } catch (e) {}
       return (await caches.match(req, { ignoreSearch: true })) || Response.error();
     }

@@ -1,0 +1,168 @@
+{
+ "made": "2026-11-22",
+ "note": "Cover links from the Grand Comics Database (comics.org API), matched by series, number and year. Shown online only (comics.org allows no copies).",
+ "covers": [
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/05",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103954.jpg",
+   "gcd": "Spindelmannen (1988 series) 5/1988 ([Maj] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/02",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103951.jpg",
+   "gcd": "Spindelmannen (1988 series) 2/1988 ([Februari] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/06",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103955.jpg",
+   "gcd": "Spindelmannen (1988 series) 6/1988 ([Juni] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/09",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103958.jpg",
+   "gcd": "Spindelmannen (1988 series) 9/1988 ([September] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/08",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103957.jpg",
+   "gcd": "Spindelmannen (1988 series) 8/1988 ([Augusti] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/07",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103956.jpg",
+   "gcd": "Spindelmannen (1988 series) 7/1988 ([Juli] 1988)"
+  },
+  {
+   "sid": "x-spindelmannen-swedish",
+   "label": "1988/01",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/103/w400/103950.jpg",
+   "gcd": "Spindelmannen (1988 series) 1/1988 ([Januari] 1988)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/04",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/850/w400/850386.jpg",
+   "gcd": "Herman Hedning (1998 series) 4/1999 (6) ([26 augusti] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "2000/02",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/211/w400/211618.jpg",
+   "gcd": "Herman Hedning (1998 series) 2/2000 (10) ([13 april] 2000)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "2009/06",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/849/w400/849719.jpg",
+   "gcd": "Herman Hedning (1998 series) 6/2009 (86) ([8 september] 2009)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/02",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/850/w400/850384.jpg",
+   "gcd": "Herman Hedning (1998 series) 2/1999 (4) ([29 april] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/05",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1020/w400/1020030.jpg",
+   "gcd": "Herman Hedning (1998 series) 5/1999 (7) ([21 oktober] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/06",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/211/w400/211616.jpg",
+   "gcd": "Herman Hedning (1998 series) 6/1999 (8) ([december] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1998/01",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1692/w400/1692683.jpg",
+   "gcd": "Herman Hedning (1998 series) 1/1998 [1] ([höst] 1998)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "2000/01",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/211/w400/211617.jpg",
+   "gcd": "Herman Hedning (1998 series) 1/2000 (9) ([17 februari] 2000)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1998/02",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/688/w400/688258.jpg",
+   "gcd": "Herman Hedning (1998 series) 2/1998 [2] ([15 december] 1998)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/03",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/211/w400/211613.jpg",
+   "gcd": "Herman Hedning (1998 series) 3/1999 (5) ([23 juni] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "1999/01",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/850/w400/850385.jpg",
+   "gcd": "Herman Hedning (1998 series) 1/1999 (3) ([4 mars] 1999)"
+  },
+  {
+   "sid": "x-herman-hedning-swedish",
+   "label": "2010/07",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/688/w400/688340.jpg",
+   "gcd": "Herman Hedning (1998 series) 7/2010 (95) ([7 september] 2010)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/04",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/72/w400/72466.jpg",
+   "gcd": "91:an (1956 series) 4/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/07",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1538/w400/1538189.jpg",
+   "gcd": "91:an (1956 series) 7/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/06",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1538/w400/1538188.jpg",
+   "gcd": "91:an (1956 series) 6/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/09",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1544/w400/1544120.jpg",
+   "gcd": "91:an (1956 series) 9/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/03",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1510/w400/1510699.jpg",
+   "gcd": "91:an (1956 series) 3/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/08",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1550/w400/1550874.jpg",
+   "gcd": "91:an (1956 series) 8/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/10",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/72/w400/72472.jpg",
+   "gcd": "91:an (1956 series) 10/1956 (?)"
+  },
+  {
+   "sid": "x-91-an-swedish",
+   "label": "1956/01",
+   "url": "https://files1.comics.org/img/gcd/covers_by_id/1671/w400/1671879.jpg",
+   "gcd": "91:an (1956 series) 1/1956 ([Februari] 1956)"
+  }
+ ]
+}
