@@ -45,7 +45,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   `.cell.readno` (dashed edge + ✓, legend), no clash mark with a wish; e) Read from: one-tap buttons (data-rsrc); f) Stories: row
   "I have it" (Owned / Read, not owned, storyHave), only when such items exist. 4) Read online also for comic issues and comic books
   (format "Webcomic", Link field); comic page shows Link. 5) Paste box takes a bare link: title from the link's last part (parseWebPage),
-  Royal Road = Web serial, fullreads = Short story. Not done: read mark in book-series gaps; webcomic page reader (answer A: not yet).
+  Royal Road = Web serial, fullreads = Short story. da-v220: book-series Gaps mark read-only volumes too (bookGapsHtml, tap opens the entry). Not done: webcomic page reader (answer A: not yet).
+  Shop list (Zurich + 1 h) saved in the claude.ai project as claude/shops-zurich.md (2026-11-22).
 - **Two chats at once (2026-11-22):** a push is refused when another chat pushed first. ALWAYS check the push result
   (`git fetch --depth=5 origin main` + compare), never hide its output; on refusal: `git fetch --depth=50 origin main`, `git rebase origin/main`.
 - **Open (handover nr. 11, 2026-11-22):** nothing waiting locally. The user may send a backup to check da-v217/218 (Story series,
