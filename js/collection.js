@@ -529,18 +529,20 @@ function bookGapsHtml() {
   const vol = c => { const m = /^\s*(\d{1,4}(?:[.,]\d{1,2})?)\s*$/.exec(String(c.issue || "")); return m ? +m[1].replace(",", ".") : null; };
   const own = new Map(), want = new Map();
   mine.forEach(c => { const v = vol(c); if (v != null && !notOwned(c)) (c.status === "wanted" ? want : own).set(v, c); });
+  // read without owning it (library, web serial): still missing, but with a dashed edge and a ✓; a tap opens that entry
+  const readNo = new Map(); mine.forEach(c => { const v = vol(c); if (v != null && notOwned(c)) readNo.set(v, c); });
   const sizes = S.bookSizes || {}, maxHave = Math.floor(Math.max(0, ...mine.map(c => vol(c) || 0))), size = Math.max(+sizes[name] || 0, maxHave);
-  const extraVols = [...new Set([...own.keys(), ...want.keys()].filter(v => !Number.isInteger(v) || v === 0))];
+  const extraVols = [...new Set([...own.keys(), ...want.keys(), ...readNo.keys()].filter(v => !Number.isInteger(v) || v === 0))];
   const squares = [...new Set([...Array(size).keys()].map(i => i + 1).concat(extraVols))].sort((x, y) => x - y);
   let cells = "";
   for (const n of squares) {
-    const o = own.get(n), w = want.get(n);
-    cells += `<button class="cell${Number.isInteger(n) ? "" : " half"} ${o && w ? "owned conflict" : o ? "owned" : w && wishLevel(w) ? "wanted wl-" + wishLevel(w) : w ? "wanted" : ""}${o && o.read ? " read" : ""}" data-vol="${n}" data-id="${esc((o || w || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing"))}">${n}</button>`;
+    const o = own.get(n), w = want.get(n), r = !o && readNo.get(n);
+    cells += `<button class="cell${Number.isInteger(n) ? "" : " half"} ${o && w ? "owned conflict" : o ? "owned" : w && wishLevel(w) ? "wanted wl-" + wishLevel(w) : w ? "wanted" : ""}${o && o.read ? " read" : ""}${r ? " readno read" : ""}" data-vol="${n}" data-id="${esc((o || w || r || {}).id || "")}" title="${esc(name + " " + n + (o ? " · owned" : w ? " · on wishlist" : " · missing") + (r ? " · read, not owned" : ""))}">${n}</button>`;
   }
   const noVol = mine.filter(c => vol(c) == null);
   const ownCount = [...own.keys()].length, wantCount = [...want.keys()].filter(k => !own.has(k)).length;
   const wl = sortComics(S.comics.filter(c => c.status === "wanted"));
-  return gapTabs() + gapHead(ownCount, wantCount, squares.length, { legend: '<span><i style="background:var(--owned)"></i>✓ Read</span>' + '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span>' }) + `
+  return gapTabs() + gapHead(ownCount, wantCount, squares.length, { legend: '<span><i style="background:var(--owned)"></i>✓ Read</span>' + '<span><i style="background:var(--owned)"></i>Owned</span><span><i style="background:var(--wanted-soft);box-shadow:inset 0 0 0 1.5px var(--wanted)"></i>Wishlist</span><span><i style="background:var(--cell)"></i>Missing</span><span><i style="background:var(--cell);outline:1.5px dashed var(--owned);outline-offset:-2px"></i>Read, not owned</span>' }) + `
     <div class="row" style="align-items:end;gap:8px"><label style="max-width:220px"><span class="l">Volumes in this series</span><input id="bsize" type="number" min="1" inputmode="numeric" value="${esc(sizes[name] || "")}" placeholder="${maxHave || "e.g. 7"}"></label><button id="bsizego" type="button">Save</button></div>
     ${noVol.length ? `<p class="small muted" style="margin:0">${noVol.length} ${noVol.length === 1 ? "book has" : "books have"} no volume number, so ${noVol.length === 1 ? "it isn't" : "they aren't"} in the grid: ${noVol.map(c => esc(c.title)).join(", ")}.</p>` : ""}
     ${seriesAbout(bookAboutObj("book:" + name))}
