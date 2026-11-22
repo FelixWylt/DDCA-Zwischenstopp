@@ -213,7 +213,8 @@ VIEWS.stats = {
       const noCov = {}; sel.filter(c => !c.coverUrl).forEach(c => { const k = isNovel(c) ? "" : seriesKeyOf(c); if (k) noCov[k] = (noCov[k] || 0) + 1; });
       const covTop = Object.entries(noCov).sort((a, b) => b[1] - a[1]).slice(0, 6);
       if (covTop.length) todo.push(`<div class="todo"><button type="button" class="link" data-pick="miss|cover|${sc}"><b>${nf(sel.filter(c => !c.coverUrl).length)}</b> without a cover</button>: ${covTop.map(([k, n]) => { const c0 = bySer[k] && bySer[k][0]; return c0 ? `<button type="button" class="chipbtn" data-scol='${esc(JSON.stringify({ p: publisherOf(c0), g: groupOf(c0), s: k }))}'>${esc(seriesTitle(k))} ${n}</button>` : ""; }).join(" ")}</div>`);
-      const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && catEntry(seriesById(c.seriesId))).length;
+      // a comic already linked to its INDUCKS issue that still has no stories has none there (a postcard book: DSBP 63), so Fill all can't help
+      const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && !c.inducks && catEntry(seriesById(c.seriesId))).length;
       if (noStory) todo.push(`<div class="todo"><b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS) <button type="button" id="goFill">Fill all</button></div>`);
       if (noVal.length) todo.push(`<div class="todo"><b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet <button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}</div>`);
       const bdays = daysSince(S.lastBackup);
