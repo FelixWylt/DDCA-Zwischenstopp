@@ -36,11 +36,18 @@ except typing the reply itself. Say in the report that the reply writing and Git
   original language for 88,749 (18,312 differ from their prefix's usual one), country for 1,521 of 2,573 creators. The first try
   (23:10–23:22) failed: inducks.org timed out from GitHub (curl 28). Rebuild by hand only when the user asks:
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/inducks-catalogue.yml/dispatches -f ref=main`.
-- **Open (2026-11-22 00:34):** bundle planned, not started (needs effort high): user still to pick from 2a–f (a story note splits
-  own/read-only, b ONE button "I bought it" (replaces the name "Got it" everywhere: Wishlist, Fair mode, + new on Read-not-owned items; same popup; fulfilled wish only when it came from the wishlist; the user's choice 00:56), c read mark in Gaps, d "Want to own it", e Source suggestions, f Stories filter);
-  point 4 = Read online also for comics/comic books (format Webcomic; no webcomic page reader yet, answer A: not yet);
-  point 5 = phone: Desktop site works for copying, but pasting the LINK is enough: title (+ series) from the Royal Road link's slug.
-  Bug hunt: new chat, Opus extra, 3 parts, report only (order written 2026-11-22 00:37). Do the bundle after it, together with chosen fixes.
+- **Done (2026-11-22, da-v219): the "Read, not owned" bundle** (user: "everything" of 2a–f, plus 4 and 5), done BEFORE the bug hunt's fixes
+  (the user's go at 00:59; a parallel bug-hunt chat was running, its part 1 report was written against da-v218).
+  a) story note says owned and read-only apart (hadElsewhereHtml, Fill toast); b) "Got it" is now "I bought it" everywhere (bindGot in
+  gaps.js, row = .wishrow/.fairrow/.gotrow) and also on the comic page of wishlist and Read-not-owned items (a read-only item keeps read
+  date/ratings, "Read from" gives way to the seller); d) "Want to own it" on a read-only item's page makes a wish with `fromRead`; buying
+  that wish copies read/readDate/rating/fav/coverRating/link/words and deletes the read-only entry; c) Gaps: read-only squares
+  `.cell.readno` (dashed edge + ✓, legend), no clash mark with a wish; e) Read from: one-tap buttons (data-rsrc); f) Stories: row
+  "I have it" (Owned / Read, not owned, storyHave), only when such items exist. 4) Read online also for comic issues and comic books
+  (format "Webcomic", Link field); comic page shows Link. 5) Paste box takes a bare link: title from the link's last part (parseWebPage),
+  Royal Road = Web serial, fullreads = Short story. Not done: read mark in book-series gaps; webcomic page reader (answer A: not yet).
+- **Two chats at once (2026-11-22):** a push is refused when another chat pushed first. ALWAYS check the push result
+  (`git fetch --depth=5 origin main` + compare), never hide its output; on refusal: `git fetch --depth=50 origin main`, `git rebase origin/main`.
 - **Open (handover nr. 11, 2026-11-22):** nothing waiting locally. The user may send a backup to check da-v217/218 (Story series,
   Original / In my comics rows, People › Country, Characters › In my comics). Still on the phone: Series › Tools › Price lists
   waiting › Add all, and once Series › Tools › Refresh all books.
