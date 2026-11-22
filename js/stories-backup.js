@@ -151,20 +151,28 @@ function storyIndex(status) {
       if (map.has(key) && map.get(key).items.includes(c)) {
         const e = map.get(key), t = st.ownTitle ? st.title : st.dTitle || st.title;
         if (e.curC === c) {
-          if (t && e.curT >= 0 && !e.ownT) e.titles[e.curT] = sharedTitle(e.titles[e.curT], t);
-          if (e.pgFrom === c && parseFloat(st.pages) > 0) e.pages = (e.pages || 0) + parseFloat(st.pages);
+          // a Duckipedia title on a later chapter (when the first had none) is the whole story's name:
+          // "6. Kapitel: Die Zukunft" carries "Die Chroniken des Planeten T" (2026-11-22)
+          if (st.dTitle && !st.ownTitle && !e.ownT && !e.firstD && !e.gotD) {
+            e.gotD = true;
+            if (e.curT >= 0) e.titles[e.curT] = st.dTitle;
+            else if (!e.titles.includes(st.dTitle)) { e.titles.unshift(st.dTitle); e.curT = 0; }
+          } else if (t && e.curT >= 0 && !e.ownT && !e.gotD) e.titles[e.curT] = sharedTitle(e.titles[e.curT], t);
+          if (parseFloat(st.pages) > 0) { e.curPg += parseFloat(st.pages); if (e.curPg > (e.pages || 0)) e.pages = e.curPg; }
         }
         return;
       }
       let e = map.get(key);
       if (!e) { e = { key, code, titles: [], writers: new Set(), artists: new Set(), chars: new Set(), charLang: new Map(), genre: "", plot: "", original: "", first: "", items: [] }; map.set(key, e); }
-      const title = st.ownTitle ? st.title : st.dTitle || st.title; e.curC = c; e.curT = -1; e.ownT = !!st.ownTitle;
+      const title = st.ownTitle ? st.title : st.dTitle || st.title; e.curC = c; e.curT = -1; e.ownT = !!st.ownTitle; e.firstD = !!st.dTitle; e.gotD = false;
       if (title && !e.titles.includes(title)) { e.titles.push(title); e.curT = e.titles.length - 1; }
       splitPeople(st.writer).forEach(x => e.writers.add(x)); splitPeople(st.artist).forEach(x => e.artists.add(x));
       const cl = comicLangOf(c);
       splitChars(st.characters).concat(st.hero ? [st.hero] : []).forEach(x => { e.chars.add(x); if (cl) (e.charLang.get(x) || e.charLang.set(x, new Set()).get(x)).add(cl); });
       ["genre", "plot", "original", "first"].forEach(k => { if (!e[k] && st[k]) e[k] = st[k]; });
-      if (!e.pages && parseFloat(st.pages) > 0) { e.pages = parseFloat(st.pages); e.pgFrom = c; }
+      // pages: the chapters in one comic add up; the story's length is the largest total of any of your comics
+      // (a weekly prints a serial in parts, another comic whole: YM 036 = 1 page per Micky Maus issue, 88 in all)
+      e.curPg = parseFloat(st.pages) > 0 ? parseFloat(st.pages) : 0; if (e.curPg > (e.pages || 0)) e.pages = e.curPg;
       if (st.plot && !e.plotFrom && c.duckipedia) e.plotFrom = c.duckipedia;
       e.items.push(c);
     });
