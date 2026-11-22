@@ -193,4 +193,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | da-v231 INDUCKS link always in "About this series" (Gaps, folder) for series with a code + comic book series by name (Farbror Joakims liv se/FJL); shop list as a Claude doc with tables (project note points to it); next GCD cover run started (6 series); local | 2–3 + 2–3 min (first guesses 5 + 5 ÷ 2) + run | 2–3 min (23:00 → 23:02:25, the run goes on) |
 | 2026-11-22 | Publish da-v230 covers file (43 covers) + da-v231 + notes; 1 check run (series-ltb-copies, series-tools), no errors | under 1 min + 2 min wait | 4–5 min (23:03 → 23:07:03, incl. the check run) |
 | 2026-11-22 | Check GCD cover run (6 series, cors-test): 4 sure + 1 unsure of 7 comics, nothing added yet; local | no estimate given (forgotten) | 1–2 min (23:13 → 23:14:05) |
+| 2026-11-22 | Publish the log line of the cover-run check (no app change, no check run) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:15 → 23:15:53) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
