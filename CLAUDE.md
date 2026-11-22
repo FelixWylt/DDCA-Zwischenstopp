@@ -49,11 +49,48 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Shop list (Zurich + 1 h) saved in the claude.ai project as claude/shops-zurich.md (2026-11-22).
 - **Two chats at once (2026-11-22):** a push is refused when another chat pushed first. ALWAYS check the push result
   (`git fetch --depth=5 origin main` + compare), never hide its output; on refusal: `git fetch --depth=50 origin main`, `git rebase origin/main`.
-- **Open (handover nr. 11, 2026-11-22):** nothing waiting locally. The user may send a backup to check da-v217/218 (Story series,
-  Original / In my comics rows, People › Country, Characters › In my comics). Still on the phone: Series › Tools › Price lists
-  waiting › Add all, and once Series › Tools › Refresh all books.
-- **Older open points (handover nr. 10):** the user may check one story per code and Read online entries; the user still has to tap Series › Tools › Price lists waiting › Add all (nothing new waiting since 2026-11-15).
-  After da-v213: Refresh all books once fills book countries (author's country); Fill on book series fills their Country.
+- **Open (handover nr. 12, 2026-11-22 11:40): bug-hunt fixes, chosen = ALL of 1–48 except 40** (Opus high is enough; none needs extra).
+  Found by reading da-v218–220 + the user's backup of 2026-11-21 (kept off GitHub). FIRST re-check each point against the newest code.
+  Do the bundles in order (A first: bug 1 can wipe data). Mark: all **high**. Each bundle = one version, one report before, one log line.
+  The user was told: **don't tap Series › Tools › Refresh all comics until bug 1 is fixed.**
+  The user's backup shows all 34 price lists are ALREADY added (every batch id has ranges noted "Claude, 2026-11-15"): "Add all" is done.
+  Still on the phone: once Series › Tools › Refresh all books (fills book countries; Fill on book series fills their Country).
+  - **Bundle A (Add/Edit, 12):** 1+42 refreshAll (series.js) and Fill from INDUCKS (add.js hit.ic branch) replace c.stories with INDUCKS ones
+    and drop Duckipedia story extras (dTitle, translator, characters, plot, genre); Duckipedia is skipped when dkDue() false (<30 days;
+    212 comics fetched 2026-10-31) → keep the extras by story code (like keepOwnTitles). 42 = Stats › Overview › To do "Fill all" leads there.
+    2 add.js Fill from INDUCKS: `fromCat` uses `file`, undefined in the hit.ic branch → ReferenceError whenever d.title is set (silent).
+    3 saveBook never moves a wish (dupHtml promises "saving moves it to your collection") → do it like doSave, incl. fromRead.
+    7 goNext (comics) for Read, not owned: no readDate → set today like saveBook. 8 "genres" typo in secondCopy keep list and scan.js
+    comicFromCode → "genre". 9 saveBook stores newBookSeries (13 books) → don't save it / ignore it when the series exists.
+    10 dupHtml (core.js) says "is already in your collection" for notowned → "you read this (not owned)". 11 maybe: parseWebPage with
+    Vol lines + words gives book 1 the whole story's words/pages. 12 Words → Pages only while Pages is empty → follow Words unless
+    typed by hand. 15 new series made on leaving the name field (typos/cancel leave empty series; Tools › Delete empty series exists).
+    16 idea: Read online + Paste link/page also when editing a book. 17 idea: duplicate warning when an edited comic's number changes.
+  - **Bundle B (Backup, lookup, wishlist, 12):** 4 Restore (stories-backup.js) writes every backup comic over the phone's and REPLACES
+    S.series → merge: phone keeps newer entries (updatedAt), series merged by id. 5 priceBatchDone not in backup (25 of 34 lists have no
+    replace → ~105 ranges doubled after a restore) → back it up and/or make Add all skip identical ranges. 6 "Copy backup as text" =
+    ~2 M characters: too long for Keep/Docs → reword (Gmail/file). 13 maybe, test on phone: back gesture leaves the scanner open.
+    14 maybe: DNB asked first, 9 s timeout each (lookup + genre step) → skip a source after it failed this session (= idea 21).
+    18 idea: keep wishlist notes when a comic wish becomes owned in doSave. 19 idea: Backup counts + compare table show Read, not owned.
+    20 idea: CSV adds edition, rating, read date, checked value, value, link, words. 21 see 14. 29 buying a fromRead wish via Add
+    (doSave move) or Edit "I own it" skips bindGot's merge (read date/ratings) and leaves the read-only entry. 31 idea: I bought it
+    asks the condition (Z chips). 35 idea: Copy list for comic fair marks Must ★, option without Dream.
+  - **Bundle C (Collection, Gaps, Series, 12):** 22 collection copyKey merges different "year/?" comics into one "7×" row (Spindelmannen
+    1988/?) → '?' labels never copies (as Stats slotKey). 23 Duplicates for trade + trade list ignore separate copies (LTB Maus-Edition 7,
+    Magnus Chase 1) → count copyKey groups too. 24 Gaps read mode (and Edit) clears readDate on untick → keep the old date for an undo.
+    25 valueNumber (core.js) returns issueNum for running variants "546A" → use issueSort (546.01) so "546A:" ranges apply.
+    26 parsePrices typed split `,(?!5(?!\d))` cuts "8,50 €" → split only on ", " / ";". 27 Remove series leaves its valueRules.
+    28 countText ignores notowned (folder line "0 comics"). 30 book page lacks Words, Country. 32 idea: price ranges card lists your
+    comics without a range. 33 idea: Gaps "Copy missing numbers". 34 idea: Tools show when each bulk job last ran. 44 idea: series
+    without Latest issue (10: Asterix German, Lucky Lukes äventyr, Musiksaga …) are missing in Stats › How complete → note with links.
+  - **Bundle D (Stats, Stories, 10):** 36 storyIndex("wanted") lets notowned in (`isOwn` test) → only status wanted. 37 Stats links
+    data-stq / .hbar[data-who] keep old Stories filters (olang, clang, ownf, sub=series) → reset them. 38 Overview This month "read"
+    counts sel only, its list uses isMine → count selN too. 39 maybe: Unread pile pace counts notowned by pages, not by items.
+    41 Stories sort by code: localeCompare with numeric: true. 43 Stats What you collect (.hbar[data-g]) keeps S.colSort → set "series".
+    45 idea: Overview "on wishlist" tile opens the Wishlist. 46 idea: Reading by "Read from" (Library, Online, own). 47 idea: Stories
+    chip "Unread". 48 idea: Stats › Stories card "story series you have most of" (totals from story-info.json storySeries).
+  - Not wanted: 40 (Stats Wishes fulfilled note still says "Got it").
+- **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
   AND an entry to catalogue/restore-batch.json (id = the user's series id from their backup, sugg = the prices.json key,
