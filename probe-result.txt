@@ -1,86 +1,46 @@
 
-## Spindelmannen (x-spindelmannen-swedish) sv: 18 candidates; best: Spindelmannen 1988 (7/9 numbers)
-   cand Spindelmannen 1988-1996 se issues 131 hits 7 https://www.comics.org/api/series/10418/?format=json first descr: 1/1988 | 2/1988 | 3/1988 | 4/1988
-   cand Spindelmannen 1984-1987 se issues 39 hits 2 https://www.comics.org/api/series/10417/?format=json first descr: 1/1984 | 2/1984 | 3/1984 | 1/1985
-   cand Mästaren på karate och Spindelmannen 1974-1974 se issues 1 hits 0 https://www.comics.org/api/series/11185/?format=json first descr: [nn]
-   cand Spindelmannen 1974-1975 se issues 13 hits 0 https://www.comics.org/api/series/9998/?format=json first descr: 1/1974 | 2/1974 | 3/1974 | 4/1974
-   - 1987/09 1987 Secret Wars: no match
-   - 1987/12 1987 Skorpionen tar sig en brud, men det är J Jonah Jamesons tjej!: no match
-   + 1988/05 1988 På pricken, Spindelmannen! -> Spindelmannen (1988 series) 5/1988 ([Maj] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103954.jpg 
-   + 1988/02 1988 Secret Wars -> Spindelmannen (1988 series) 2/1988 ([Februari] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103951.jpg 
-   + 1988/06 1988 Slutet -> Spindelmannen (1988 series) 6/1988 ([Juni] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103955.jpg 
-   + 1988/09 1988 Bättre EN FÅGEL i handen, än FYRA bakom ryggen! -> Spindelmannen (1988 series) 9/1988 ([September] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103958.jpg 
-   + 1988/08 1988 Fyra flaxande faror -> Spindelmannen (1988 series) 8/1988 ([Augusti] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103957.jpg 
-   + 1988/07 1988  -> Spindelmannen (1988 series) 7/1988 ([Juli] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103956.jpg 
-   + 1988/01 1988 X-men slår till! -> Spindelmannen (1988 series) 1/1988 ([Januari] 1988) https://files1.comics.org/img/gcd/covers_by_id/103/w400/103950.jpg 
-
-## Herman Hedning (x-herman-hedning-swedish) sv: 11 candidates; best: Herman Hedning 1998 (12/12 numbers)
-   cand Herman Hedning 1998-2018 se issues 159 hits 12 https://www.comics.org/api/series/8744/?format=json first descr: 1/1998 [1] | 1/1998 [promotion] | 2/1998 [2] | 1/1999 (3)
-   cand Herman Hedning & Co [julalbum] 1990-1997 se issues 6 hits 0 https://www.comics.org/api/series/9381/?format=json first descr: 1 | 2 - Samlade sattyg | 3 | 4 - Dumskallarnas Julafton
-   cand Herman Hedning & C:o: Jubileumsalbum: 1988-1998: En fet, dryg med extra allt!: 10 år av sattyg, svordomar och sinnesslöhet 1998-1998 se issues 1 hits 0 https://www.comics.org/api/series/48007/?format=json first descr: 
-   cand Herman Hedning & Co [julalbum] 1998-2024 se issues 23 hits 0 https://www.comics.org/api/series/48006/?format=json first descr: 7 - Landstormens lilla arsle | 8 - Universums ärkeufo | 9 - Urdatorns hämnd | 10 - Tiofaldigt totalkaos!
-   + 1999/04   -> Herman Hedning (1998 series) 4/1999 (6) ([26 augusti] 1999) https://files1.comics.org/img/gcd/covers_by_id/850/w400/850386.jpg 
-   + 2000/02   -> Herman Hedning (1998 series) 2/2000 (10) ([13 april] 2000) https://files1.comics.org/img/gcd/covers_by_id/211/w400/211618.jpg 
-   + 2009/06 2009  -> Herman Hedning (1998 series) 6/2009 (86) ([8 september] 2009) https://files1.comics.org/img/gcd/covers_by_id/849/w400/849719.jpg 
-   + 1999/02   -> Herman Hedning (1998 series) 2/1999 (4) ([29 april] 1999) https://files1.comics.org/img/gcd/covers_by_id/850/w400/850384.jpg 
-   + 1999/05   -> Herman Hedning (1998 series) 5/1999 (7) ([21 oktober] 1999) https://files1.comics.org/img/gcd/covers_by_id/1020/w400/1020030.jpg 
-   + 1999/06   -> Herman Hedning (1998 series) 6/1999 (8) ([december] 1999) https://files1.comics.org/img/gcd/covers_by_id/211/w400/211616.jpg 
-   + 1998/01   -> Herman Hedning (1998 series) 1/1998 [1] ([höst] 1998) https://files1.comics.org/img/gcd/covers_by_id/1692/w400/1692683.jpg 
-   + 2000/01   -> Herman Hedning (1998 series) 1/2000 (9) ([17 februari] 2000) https://files1.comics.org/img/gcd/covers_by_id/211/w400/211617.jpg 
-   + 1998/02   -> Herman Hedning (1998 series) 2/1998 [2] ([15 december] 1998) https://files1.comics.org/img/gcd/covers_by_id/688/w400/688258.jpg 
-   + 1999/03   -> Herman Hedning (1998 series) 3/1999 (5) ([23 juni] 1999) https://files1.comics.org/img/gcd/covers_by_id/211/w400/211613.jpg 
-   + 1999/01   -> Herman Hedning (1998 series) 1/1999 (3) ([4 mars] 1999) https://files1.comics.org/img/gcd/covers_by_id/850/w400/850385.jpg 
-   + 2010/07 2010  -> Herman Hedning (1998 series) 7/2010 (95) ([7 september] 2010) https://files1.comics.org/img/gcd/covers_by_id/688/w400/688340.jpg 
-
-## 91:an (x-91-an-swedish) sv: 24 candidates; best: 91:an 1956 (10/13 numbers)
-   cand 91:an 1956-1965 se issues 120 hits 10 https://www.comics.org/api/series/7639/?format=json first descr: 1/1956 | 1/1956 [Facsimilutgåva] | 2/1956 | 3/1956
-   cand 91:an 1966-1997 se issues 804 hits 2 https://www.comics.org/api/series/62938/?format=json first descr: 1/1966 | 2/1966 | 3/1966 | 4/1966
-   cand 91:an 1997- se issues 688 hits 1 https://www.comics.org/api/series/8011/?format=json first descr: 25/1997 | 26/1997 | 1/1998 | 2/1998
-   cand 91 Karlsson [91:an, julalbum] 1934-1965 se issues 30 hits 0 https://www.comics.org/api/series/8008/?format=json first descr: 1934 | 1935 | 1936 | 1937
-   + 1956/04   -> 91:an (1956 series) 4/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/72/w400/72466.jpg 
-   + 1956/07   -> 91:an (1956 series) 7/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/1538/w400/1538189.jpg 
-   + 1956/06   -> 91:an (1956 series) 6/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/1538/w400/1538188.jpg 
-   - 1998/16  : no match
-   + 1956/09   -> 91:an (1956 series) 9/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/1544/w400/1544120.jpg 
-   + 1956/03   -> 91:an (1956 series) 3/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/1510/w400/1510699.jpg 
-   + 1956/08   -> 91:an (1956 series) 8/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/1550/w400/1550874.jpg 
-   - 1979/20  : no match
-   + 1956/10   -> 91:an (1956 series) 10/1956 (?) https://files1.comics.org/img/gcd/covers_by_id/72/w400/72472.jpg 
-   + 1956/01   -> 91:an (1956 series) 1/1956 ([Februari] 1956) https://files1.comics.org/img/gcd/covers_by_id/1671/w400/1671879.jpg 
-   ? 1956/05   -> undefined undefined (?)  
-   - 1978/25  : no match
-   ? 1956/02   -> undefined undefined (?)  
-
-## Asterix (English) (x-asterix-english) en: 0 candidates; best: none
-   - 16 2004 Asterix in Switzerland: no match
+## Asterix (English) (x-asterix-english) en: 31 candidates; best: Asterix 1969 (1/1 numbers)
+   cand Asterix 1969-1982 gb issues 57 hits 1 https://www.comics.org/api/series/20005/?format=json first descr: 1 - Asterix the Gaul | 1 - Asterix the Gaul [1996 Printing] | 2 - Asterix in Spain | 3 - Asterix in Britain
+   cand Asterix 1978- ca issues 21 hits 1 https://www.comics.org/api/series/60760/?format=json first descr: [1] - Asterix the Gaul | [2] - Asterix in Spain | [3] - Asterix in Britain | [4] - Asterix & Cleopatra
+   cand Asterix 1984-1992 fr issues 28 hits 1 https://www.comics.org/api/series/39347/?format=json first descr: [1] - Asterix the Gaul | [2] - Asterix and the Golden Sickle | [3] - Asterix and the Goths | [4] - Asterix the Gladiator
+   cand Asterix 1991- gb issues 40 hits 1 https://www.comics.org/api/series/97456/?format=json first descr: 1 - Asterix the Gaul | 2 - Asterix and the Golden Sickle | 3 - Asterix and the Goths | 4 - Asterix the Gladiator
+   ? 16 2004 Asterix in Switzerland -> Asterix (1969 series) [16] - Asterix and the Great Crossing (1977) https://files1.comics.org/img/gcd/covers_by_id/296/w400/296648.jpg year 1977 vs 2004
 
 ## Musiksaga (x-musiksaga) sv: 0 candidates; best: none
    - 21 1983 Musse Piggs julsaga: no match
 
-## Lucky Lukes äventyr (x-lucky-lukes-aventyr) sv: 0 candidates; best: none
-   - 5 1975 Apache-Klyftan: no match
-   - 16 1974 : no match
-   - 18 1975 : no match
-   - 17 1975 Angivaren: no match
-   - 24 1976 Skumt spel i Texas: no match
-   - 8 1972 : no match
-   - 4 1971 : no match
+## Lucky Lukes äventyr (x-lucky-lukes-aventyr) sv: 2 candidates; best: Lucky Lukes äventyr / Lucky Luke klassiker 1971 (7/7 numbers)
+   cand Lucky Lukes äventyr / Lucky Luke klassiker 1971-1989 se issues 108 hits 7 https://www.comics.org/api/series/46707/?format=json first descr: [1] - Diligensen | 1 - Diligensen [2:a upplagan (1972)] | [1] - Diligensen [3:e upplagan] | 1 - Diligensen [4:e upplagan (1983)]
+   cand Lucky Lukes äventyr 1984-1994 se issues 37 hits 0 https://www.comics.org/api/series/67237/?format=json first descr: [T-006] [90296] - Diligensen | [T-011] - Ömfotingen | T-015; K-01852 - Dalton City | T-019 - Jesse James
+   ? 5 1975 Apache-Klyftan -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 5 - Apache-klyftan (1972) https://files1.comics.org/img/gcd/covers_by_id/730/w400/730660.jpg year 1972 vs 1975
+   + 16 1974  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 16 - Domaren – Lagen väster om Pecos (1974) https://files1.comics.org/img/gcd/covers_by_id/40/w400/40735.jpg 
+   + 18 1975  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 18 - Ratata på spåret (1975) https://files1.comics.org/img/gcd/covers_by_id/731/w400/731639.jpg 
+   + 17 1975 Angivaren -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 17 - Angivaren (1975) https://files1.comics.org/img/gcd/covers_by_id/731/w400/731638.jpg 
+   + 24 1976 Skumt spel i Texas -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 24 - Skumt spel i Texas (1976) https://files1.comics.org/img/gcd/covers_by_id/40/w400/40743.jpg 
+   + 8 1972  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 8 - Bröderna Dalton får en chans (1972) https://files1.comics.org/img/gcd/covers_by_id/730/w400/730663.jpg 
+   + 4 1971  -> Lucky Lukes äventyr / Lucky Luke klassiker (1971 series) 4 - Jesse James (1971) https://files1.comics.org/img/gcd/covers_by_id/1799/w400/1799927.jpg 
 
-## Spirous Äventyr (x-spirous-aventyr) sv: 0 candidates; best: none
+## Spirous Äventyr (x-spirous-aventyr) sv: 18 candidates; best: Spirous äventyr 1974 (10/11 numbers)
+   cand Spirous äventyr 1974-1992 se issues 65 hits 10 https://www.comics.org/api/series/11011/?format=json first descr: 1 - Högt spel i Bretzelburg | 1 - Högt spel i Bretzelburg [2:a upplagan, 1980] | 1 - Högt spel i Bretzelburg [3:e upplagan, 1987] | 2 - Z som i Zafir
+   cand Ett extraordinärt äventyr med Spirou och Nicke 2014- se issues 12 hits 10 https://www.comics.org/api/series/155410/?format=json first descr: [1] - Spirou - porträtt av hjälten som oskuldsfull ung man | [2] - Operation Fladdermus | 3 - Leopardkvinnan | 4 - Nicke gifter sig
+   cand Den unge Spirou 1993-1997 se issues 4 hits 4 https://www.comics.org/api/series/11070/?format=json first descr: 3 | 4 - Hjälp, hon pussas! | 5 | 6
+   cand Den unge Spirou 1996-2015 se issues 9 hits 4 https://www.comics.org/api/series/11071/?format=json first descr: 7 | 8 | 9 | 10
    - 0 1975 Guldmaskinen: no match
-   - 6  : no match
-   - 8  : no match
-   - 5  : no match
-   - 3  : no match
-   - 7  : no match
-   - 10  : no match
-   - 2  : no match
-   - 9  : no match
-   - 1  : no match
-   - 4  : no match
+   + 6   -> Spirous äventyr (1974 series) 6 - Buddhas fånge (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130443.jpg 
+   + 8   -> Spirous äventyr (1974 series) 8 - Noshörningens horn (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130445.jpg 
+   + 5   -> Spirous äventyr (1974 series) 5 - Vrakmysteriet (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130442.jpg 
+   + 3   -> Spirous äventyr (1974 series) 3 - Skuggan av Z (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130440.jpg 
+   + 7   -> Spirous äventyr (1974 series) 7 - Spirou och arvingarna (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130444.jpg 
+   + 10   -> Spirous äventyr (1974 series) 10 - Familjen Marsupilami (1976) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130447.jpg 
+   + 2   -> Spirous äventyr (1974 series) 2 - Z som i Zafir (1974) https://files1.comics.org/img/gcd/covers_by_id/861/w400/861215.jpg 
+   + 9   -> Spirous äventyr (1974 series) 9 - Diktatorn och champinjonen (1976) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130446.jpg 
+   + 1   -> Spirous äventyr (1974 series) 1 - Högt spel i Bretzelburg (1974) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130438.jpg 
+   + 4   -> Spirous äventyr (1974 series) 4 - Undervattensmysteriet (1975) https://files1.comics.org/img/gcd/covers_by_id/130/w400/130441.jpg 
 
-## Bamse - världens starkaste björn (x-bamse-varldens-starkaste-bjorn) sv: 0 candidates; best: none
-   - 1976/10 1976 : no match
+## Bamse - världens starkaste björn (x-bamse-varldens-starkaste-bjorn) sv: 2 candidates; best: Bamse - världens starkaste björn 1977 (0/1 numbers)
+   cand Bamse - världens starkaste björn 1977-1977 se issues 1 hits 0 https://www.comics.org/api/series/8305/?format=json first descr: 
+   cand Bamse - världens starkaste björn 2006-2006 se issues 1 hits 0 https://www.comics.org/api/series/139512/?format=json first descr: 
+   ? 1976/10 1976  -> Bamse - världens starkaste björn (1977 series) [nn] (?)  single
 
 ## Asterix (German) (x-asterix-german) de: 0 candidates; best: none
    - 14 2017 Asterix in Spanien: no match
@@ -158,4 +118,4 @@
 ## Maus (x-maus) en: 0 candidates; best: none
    -  2011 A Survivor's Tale: no match
 
-sure: 27 unsure: 2 of 85
+sure: 16 unsure: 3 of 51
