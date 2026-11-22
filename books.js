@@ -50,8 +50,16 @@
 
   // ---- helpers ----
   function withTimeout(p, ms) { return Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), ms))]); }
-  async function getJson(url) { const r = await withTimeout(fetch(url), 9000); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }
-  async function getText(url) { const r = await withTimeout(fetch(url), 9000); if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }
+  // a database that didn't answer (timeout, no connection) is skipped for 10 minutes, so the others don't wait 9 seconds for it each time
+  const downUntil = {}, hostOf = u => { try { return new URL(u).host; } catch (e) { return ""; } };
+  async function fetchOk(url) {
+    const h = hostOf(url);
+    if (downUntil[h] && Date.now() < downUntil[h]) throw new Error("skipped: " + h + " didn't answer a moment ago");
+    try { return await withTimeout(fetch(url), 9000); }
+    catch (e) { if (navigator.onLine !== false) downUntil[h] = Date.now() + 600000; throw e; }
+  }
+  async function getJson(url) { const r = await fetchOk(url); if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); }
+  async function getText(url) { const r = await fetchOk(url); if (!r.ok) throw new Error("HTTP " + r.status); return r.text(); }
   const tidy = s => String(s || "").replace(/[\u0098\u009c]/g, "").replace(/\s+/g, " ").replace(/\s*[\/:;,=]\s*$/, "").replace(/\s+\.$/, "").trim();
   // "Lindgren, Astrid, 1907-2002" -> "Astrid Lindgren"
   function personName(s) {

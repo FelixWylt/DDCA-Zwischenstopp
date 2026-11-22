@@ -187,9 +187,13 @@ async function scanBarcode(opts) {
   document.body.appendChild(box);
   const video = box.querySelector("video");
   let stream, stop = false;
-  const close = () => { stop = true; if (stream) stream.getTracks().forEach(t => t.stop()); box.remove(); };
+  // the phone's back gesture closes the scanner like Cancel (a history entry is added while it is open)
+  let onBack = null;
+  const close = () => { if (stop && !box.isConnected) return; stop = true; if (stream) stream.getTracks().forEach(t => t.stop()); box.remove();
+    if (onBack) { window.removeEventListener("popstate", onBack); onBack = null; try { if (history.state && history.state.scanner) history.replaceState(Object.assign({}, history.state, { scanner: false }), "", location.href); } catch (e) {} } };
   return new Promise(async (resolve, reject) => {
     box.querySelector("button").onclick = () => { close(); resolve(null); };
+    try { history.pushState(Object.assign({}, history.state, { scanner: true }), "", location.href); onBack = () => { close(); resolve(null); }; window.addEventListener("popstate", onBack); } catch (e) {}
     let firstHit = 0, best = null; const seen = {};
     const done = (code, ext) => {
       // magazines: keep looking briefly for the add-on, which tells the issue number. Its check digit is weak, so one

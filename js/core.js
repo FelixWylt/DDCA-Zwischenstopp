@@ -1062,6 +1062,12 @@ function findDup(d) {
   const p = parseIssue(se, d.issue); if (!p.label || /\?/.test(p.label)) return null;
   return S.comics.find(c => other(c) && c.kind !== "book" && !c.facsimile === !d.facsimile && c.seriesId === se.id && sameSlot(c.issueLabel || c.issue, p.label)) || null;
 }
+// buying a wish made with "Want to own it": the read-only entry's read date, ratings, heart and link come along; returns that entry (delete it after saving)
+function takeFromRead(c, wish) {
+  const rd = wish && wish.fromRead ? S.comics.find(x => x.id === wish.fromRead && notOwned(x)) : null;
+  if (rd) ["read", "readDate", "rating", "fav", "coverRating", "link", "words"].forEach(k => { if (rd[k] !== undefined && rd[k] !== "" && (c[k] === undefined || c[k] === "" || c[k] === false || c[k] === null)) c[k] = rd[k]; });
+  delete c.fromRead; return rd;
+}
 function dupHtml(d) {
   const c = findDup(d);
   if (!c) return '<div id="dupnote"></div>';
@@ -1179,7 +1185,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 221;
+const APP_BUILD = 222;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1201,7 +1207,9 @@ async function applyPriceBatch() {
   for (const e of list) {
     const se = seriesById(e.id), rules = priceBatchRules(e);   // read before the patch changes the series
     if (e.replace) S.valueRules = (S.valueRules || []).filter(r => r.s !== e.id);
-    S.valueRules = (S.valueRules || []).concat(rules); n += rules.length;
+    // a range that is already there (same series, numbers, edition, price) isn't added twice (after a restore the app may not know a list was added)
+    const rk = r => [r.s, r.from, r.to, r.ed || "", r.price, r.cur].join("|"), had = new Set((S.valueRules || []).map(rk)), add = rules.filter(r => !had.has(rk(r)));
+    S.valueRules = (S.valueRules || []).concat(add); n += add.length;
     if (se && e.patch && typeof e.patch === "object") ["numbering", "perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest", "first"].forEach(k => { if (k in e.patch) se[k] = e.patch[k]; });
     // a series switched from running numbers to year/number (Herman Hedning): your copies get their new numbers ("86" -> "2009/06")
     if (e.renumber && typeof e.renumber === "object") {

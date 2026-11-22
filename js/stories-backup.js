@@ -354,7 +354,7 @@ function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = m
 // everything a backup holds: comics, series and every setting (cover pictures and exchange-rate downloads come back by themselves)
 function backupData() {
   return { app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, valueHistory: S.valueHistory, bookSeriesExtra: S.bookSeriesExtra,
-    groupKeep: S.groupKeep, barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, lastSeries: S.lastSeries, rates: S.rates };
+    groupKeep: S.groupKeep, priceBatchDone: S.priceBatchDone || [], barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, lastSeries: S.lastSeries, rates: S.rates };
 }
 // entries changed or added since the last backup
 function changedSinceBackup() { const t = S.lastBackup || ""; return S.comics.filter(c => !t || String(c.updatedAt || c.createdAt || "") > t).length; }
@@ -364,6 +364,7 @@ function backupCompare(b) {
   const rows = [
     ["Entries", b.comics, S.comics], ["… of them owned", (b.comics || []).filter(c => c && isOwn(c)), S.comics.filter(c => isOwn(c))],
     ["… on the wishlist", (b.comics || []).filter(c => c && c.status === "wanted"), S.comics.filter(c => c.status === "wanted")],
+    ["… read, not owned", (b.comics || []).filter(c => c && notOwned(c)), S.comics.filter(c => notOwned(c))],
     ["Series", b.series, S.series], ["Price ranges", b.valueRules, S.valueRules], ["Own condition factors", b.gradeFactors, S.gradeFactors],
     ["Story ratings", b.storyRatings, S.storyRatings], ["Book series info", b.bookSeriesInfo, S.bookMeta], ["Empty book series", b.bookSeriesExtra, S.bookSeriesExtra],
     ["Volumes per book series", b.bookSizes, S.bookSizes], ["Group choices", b.groupKeep, S.groupKeep], ["Learned barcodes", b.barcodes, S.barcodes], ["Months of value history", b.valueHistory, S.valueHistory]
@@ -371,7 +372,7 @@ function backupCompare(b) {
   const ratesTxt = b.rates ? (b.rates.manual ? "yes, your own" : "yes") : "no";
   return `<table class="cmp small"><thead><tr><th></th><th>In backup</th><th>On this phone</th></tr></thead><tbody>${rows.map(([k, x, y]) => { const a = n(x), p = n(y); return `<tr${a < p ? ' class="less"' : ""}><td>${k}</td><td>${a.toLocaleString("de-CH")}</td><td>${p.toLocaleString("de-CH")}</td></tr>`; }).join("")}
     <tr><td>Exchange rates</td><td>${ratesTxt}</td><td>${S.rates ? "yes" : "no"}</td></tr></tbody></table>
-    <p class="small muted" style="margin:0">Nothing changes until you tap Restore. Restoring adds what's missing and keeps what's on this phone${rows.some(([, x, y]) => n(x) < n(y)) ? "; rows in red have more on the phone than in the backup" : ""}.</p>`;
+    <p class="small muted" style="margin:0">Nothing changes until you tap Restore. Restoring adds what's missing and keeps what's on this phone (an entry you changed here after the backup stays as it is)${rows.some(([, x, y]) => n(x) < n(y)) ? "; rows in red have more on the phone than in the backup" : ""}.</p>`;
 }
 function backupFile(asText) {
   const data = JSON.stringify(backupData());
@@ -413,8 +414,8 @@ async function readBackupText(txt) {
 }
 async function markBackedUp() { S.lastBackup = new Date().toISOString(); try { await setConfig("lastBackup", S.lastBackup); } catch (e) {} }
 function csvFile() {
-  const cols = ["type", "series", "issue", "status", "title", "date", "grade", "copies", "pricePaid", "currency", "value", "purchaseDate", "source", "location", "read", "forTrade", "notes", "author", "publisher", "isbn", "format", "language", "stories"];
-  const rows = sortComics(S.comics).map(c => { const se = seriesById(c.seriesId); return [c.kind === "book" ? (isNovel(c) ? "book" : "comic book") : "comic", se ? se.name : c.seriesName, c.issueLabel || c.issue, c.status, c.title, c.date, c.grade, c.copies, amtVal(c.pricePaid), c.currency, amtVal(c.value), c.purchaseDate, c.source, c.location, c.read ? "yes" : "no", c.forTrade ? "yes" : "no", c.notes, c.author, c.publisher, c.isbn, c.format, c.lang, (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist].filter(Boolean).join(" | ")).join(" ;; ")]; });
+  const cols = ["type", "series", "issue", "status", "title", "date", "grade", "copies", "pricePaid", "currency", "value", "purchaseDate", "source", "location", "read", "forTrade", "notes", "author", "publisher", "isbn", "format", "language", "stories", "edition", "rating", "readDate", "valueChecked", "link", "words"];
+  const rows = sortComics(S.comics).map(c => { const se = seriesById(c.seriesId); return [c.kind === "book" ? (isNovel(c) ? "book" : "comic book") : "comic", se ? se.name : c.seriesName, c.issueLabel || c.issue, c.status, c.title, c.date, c.grade, c.copies, amtVal(c.pricePaid), c.currency, amtVal(c.value), c.purchaseDate, c.source, c.location, c.read ? "yes" : "no", c.forTrade ? "yes" : "no", c.notes, c.author, c.publisher, c.isbn, c.format, c.lang, (c.stories || []).map(s => [s.title, s.code, s.writer, s.artist].filter(Boolean).join(" | ")).join(" ;; "), c.edition || "", c.rating || "", c.readDate || "", amtVal(c.valueChecked), c.link || "", c.words || ""]; });
   const csv = Papa.unparse({ fields: cols, data: rows });
   return new File(["﻿" + csv], "dagobert-archiv-table-" + new Date().toISOString().slice(0, 10) + ".csv", { type: "text/csv" });
 }
@@ -455,7 +456,7 @@ VIEWS.backup = {
       <div><h2>Backup</h2><p class="lede">Your archive is stored only on this phone and works without internet. Keep a copy on your PC in case the phone is lost, reset or replaced.</p></div>
       ${status}
       <div class="stats" style="grid-template-columns:repeat(auto-fit,minmax(105px,1fr))">
-        <div class="card stat"><div class="v">${n.toLocaleString("de-CH")}</div><div class="k">entries on this phone: ${(k => k.owned + " owned · " + k.wanted + " on wishlist")({ owned: S.comics.filter(c => isOwn(c)).length, wanted: S.comics.filter(c => c.status === "wanted").length })}</div></div>
+        <div class="card stat"><div class="v">${n.toLocaleString("de-CH")}</div><div class="k">entries on this phone: ${(k => k.owned + " owned · " + k.wanted + " on wishlist" + (k.read ? " · " + k.read + " read, not owned" : ""))({ owned: S.comics.filter(c => isOwn(c)).length, wanted: S.comics.filter(c => c.status === "wanted").length, read: S.comics.filter(c => notOwned(c)).length })}</div></div>
         <div class="card stat"><div class="v" style="font-size:1.15rem">${S.lastBackup ? esc(stampDate(S.lastBackup)) : "Never"}</div><div class="k">last backup</div></div>
         <div class="card stat"><div class="v" style="font-size:1.15rem">${S.persisted ? "Protected" : "Not yet"}</div><div class="k">${S.persisted ? "Android won't clear this data on its own" : "requested on first save"}${mb ? " · " + mb + " used" : ""}</div></div>
       </div>
@@ -470,7 +471,7 @@ VIEWS.backup = {
         <div class="banner warn" id="bnote" hidden></div>
         <details class="card" style="padding:12px"><summary><strong>Downloads don't work in my browser</strong></summary>
           <div class="stack" style="margin-top:10px">
-            <p class="small" style="margin:0">Copy the whole archive as text instead, then paste it into an email to yourself (Gmail), a Google Keep note or a Google Docs document. To restore, paste that text under Restore.</p>
+            <p class="small" style="margin:0">Copy the whole archive as text instead, then paste it into an email to yourself (Gmail) and send it. The text is long (about ${Math.max(1, Math.round(JSON.stringify(S.comics).length / 3 / 1048576 * 10) / 10)} MB): too long for a Google Keep note or a Google Docs document, so “Save backup to Downloads” is safer when it works. To restore, paste that text under Restore.</p>
             <div class="row"><button class="primary" id="bcopy"${n ? "" : " disabled"}>Copy backup as text</button></div>
             <textarea id="bcopybox" class="mono" rows="4" readonly hidden></textarea>
           </div></details></div>
@@ -518,7 +519,7 @@ VIEWS.backup = {
         box.value = txt; box.hidden = false;
         if (!copied) { box.focus(); box.select(); }
         await markBackedUp();
-        showBackupNote(copied ? "Backup copied (" + Math.round(txt.length / 1024) + " KB of text). Now open Gmail, Keep or Docs and paste it." : "Your browser didn't allow copying automatically. The text is selected in the box: press and hold it, choose Copy, then paste it into Gmail, Keep or Docs.");
+        showBackupNote(copied ? "Backup copied (" + Math.round(txt.length / 1024).toLocaleString("de-CH") + " KB of text). Now write an email to yourself in Gmail, paste it and send it (Keep and Docs can't hold that much)." : "Your browser didn't allow copying automatically. The text is selected in the box: press and hold it, choose Copy, then paste it into an email to yourself in Gmail.");
       } catch (e) { showBackupNote("Copying didn't work (" + (e && e.name || "error") + ")."); }
       btn.disabled = false;
     });
@@ -532,11 +533,14 @@ VIEWS.backup = {
         // a price file (made by Claude): no comics, only price ranges, maybe replacing a series' ranges and setting its years/per year
         const priceOnly = !b.comics.length && Array.isArray(b.valueRules) && b.valueRules.length > 0, replaceFor = new Set(Array.isArray(b.valueRulesReplace) ? b.valueRulesReplace : []);
         const have = new Set(S.comics.map(c => c.id));
-        const fresh = isClz ? b.comics.filter(c => c && !have.has(c.id)) : b.comics;
+        // an entry changed on this phone after the backup was made stays as it is
+        const phoneById = new Map(S.comics.map(c => [c.id, c])), newerHere = c => { const p = c && phoneById.get(c.id); return !!(p && String(p.updatedAt || p.createdAt || "") > String(c.updatedAt || c.createdAt || "")); };
+        const kept = isClz ? 0 : b.comics.filter(newerHere).length;
+        const fresh = isClz ? b.comics.filter(c => c && !have.has(c.id)) : b.comics.filter(c => c && !newerHere(c));
         const known = b.comics.length - fresh.length;
         // only entries from the old in-app CLZ importer qualify; comics from converted files carry clzBatch/seriesGroup
         const oldClz = b.source === "clz-import" ? S.comics.filter(c => c.importedFrom === "CLZ" && !ids.has(c.id) && !c.clzBatch && !c.seriesGroup) : [];
-        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${priceOnly ? "Add " + b.valueRules.length + " price ranges for " + new Set(b.valueRules.map(r => r.s)).size + " series" + (replaceFor.size ? " (the current ranges of " + replaceFor.size + " of them are replaced)" : "") + "? Your comics stay as they are." : isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?"}</span>${isClz ? "" : backupCompare(b)}
+        box.innerHTML = `<div class="confirm" style="display:grid;gap:10px"><span>${priceOnly ? "Add " + b.valueRules.length + " price ranges for " + new Set(b.valueRules.map(r => r.s)).size + " series" + (replaceFor.size ? " (the current ranges of " + replaceFor.size + " of them are replaced)" : "") + "? Your comics stay as they are." : isClz ? (fresh.length ? "Add " + fresh.length + " comics from your CLZ collection?" : "All comics in this file are already in your archive.") + (known && fresh.length ? " " + known + " already in your archive stay as they are." : "") : "Restore " + b.comics.length + (b.comics.length === 1 ? " entry" : " entries") + " from " + esc(stampDate(b.exported)) + "?" + (kept ? " " + kept + (kept === 1 ? " entry was" : " entries were") + " changed on this phone after the backup: " + (kept === 1 ? "it stays" : "they stay") + " as on the phone." : "")}</span>${isClz ? "" : backupCompare(b)}
           ${oldClz.length ? `<label class="check" style="min-height:0"><input id="rmold" type="checkbox" checked> Remove the ${oldClz.length} entries from the earlier CLZ import first</label>` : ""}
           <div class="row"><button class="primary" id="yesrest"${isClz && !fresh.length && !oldClz.length ? " disabled" : ""}>${isClz ? "Add" : "Restore"}</button><button id="norest">Cancel</button></div></div>`;
         $("#norest").onclick = () => { box.innerHTML = ""; clear(); };
@@ -547,7 +551,9 @@ VIEWS.backup = {
               await tx("comics", "readwrite", st => { gone.forEach(id => st.delete(id)); });
               S.comics = S.comics.filter(c => !gone.includes(c.id));
             }
-            if (Array.isArray(b.series) && b.series.length) { S.series = b.series; await saveSeries(); }
+            // series: a fresh phone takes the backup's list; otherwise your series stay and the backup adds the ones missing here
+            if (Array.isArray(b.series) && b.series.length) { if (!S.seriesSaved) S.series = b.series.map(x => Object.assign({}, x)); else { const ids = new Set(S.series.map(s => s.id)); S.series = S.series.concat(b.series.filter(x => x && x.id && !ids.has(x.id)).map(x => Object.assign({}, x))); } await saveSeries(); }
+            if (Array.isArray(b.priceBatchDone)) { S.priceBatchDone = [...new Set((S.priceBatchDone || []).concat(b.priceBatchDone))]; await setConfig("priceBatchDone", S.priceBatchDone); }
             if (Array.isArray(b.bookSeriesExtra)) { const have = new Set((S.bookSeriesExtra || []).map(x => x.name)); S.bookSeriesExtra = (S.bookSeriesExtra || []).concat(b.bookSeriesExtra.filter(x => x && x.name && !have.has(x.name))); await setConfig("bookSeriesExtra", S.bookSeriesExtra); }
             if (replaceFor.size) S.valueRules = (S.valueRules || []).filter(r => !replaceFor.has(r.s));
             if (b.seriesPatch && typeof b.seriesPatch === "object" && !(Array.isArray(b.series) && b.series.length)) { let ch = false; S.series.forEach(se => { const pa = b.seriesPatch[se.id]; if (pa && typeof pa === "object") { ["perYear", "firstYear", "lastYear", "defaultEdition", "issueList", "latest"].forEach(k => { if (k in pa) se[k] = pa[k]; }); ch = true; } }); if (ch) await saveSeries(); }

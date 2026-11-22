@@ -417,7 +417,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         value: parseAmt(d.value), valueChecked: parseAmt(d.valueChecked),
         stories: d.stories.filter(s => s.title || s.code || s.writer || s.artist || s.hero)
       });
-      let moved = false, alsoGone = [];
+      let moved = false, alsoGone = [], fromReadGone = null;
+      // Edit › "I own it" on a wish made with "Want to own it"
+      if (orig && orig.status === "wanted" && isOwn(c) && orig.fromRead) fromReadGone = takeFromRead(c, orig);
       if ((!d.id || !unchanged) && !c.facsimile && p.label && !/\?/.test(p.label)) {   // new, or edited with another series or number
         // same number, or overlapping squares (a double issue 2016-11-12 against 2016/11 or 2016/12)
         // a letter is usually a variant cover (546A = 546), but INDUCKS also uses it for other items under one number:
@@ -433,6 +435,8 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
           // bought something from the wishlist: that entry becomes owned instead of a second one
           const sameNo = (wish.issueLabel || wish.issue) === p.label;
           ["title", "date", "pages", "inducks", "duckipedia", "coverUrl"].forEach(k => { if (!c[k] && wish[k] && sameNo) c[k] = wish[k]; });
+          if (!String(c.notes || "").trim() && wish.notes) c.notes = wish.notes;   // the wish's notes stay
+          fromReadGone = takeFromRead(c, wish);
           if (!c.stories.length && (wish.stories || []).length && sameNo) c.stories = wish.stories;
           c.id = wish.id; c.createdAt = wish.createdAt; c.wasWish = true; moved = true;
           alsoGone = wishes.filter(x => x !== wish).map(x => x.id);   // a double issue also clears the other number's wish
@@ -463,6 +467,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         const saved = await saveComic(c);
         const lotNote = await afterLotSave(saved, before);
         for (const id of alsoGone) await deleteComic(id);
+        if (fromReadGone && fromReadGone.id !== saved.id) await deleteComic(fromReadGone.id);
         if (saved.barcode && saved.seriesId) {
           S.barcodes = Object.assign({}, S.barcodes, { [saved.barcode]: saved.seriesId }); setConfig("barcodes", S.barcodes).catch(() => {});
           if (saved.issueYear) { S.barcodeYears = Object.assign({}, S.barcodeYears, { [saved.barcode]: saved.issueYear }); setConfig("barcodeYears", S.barcodeYears).catch(() => {}); }
@@ -515,17 +520,18 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         const w = findDup(c);
         if (w && w.status === "wanted") {
           ["title", "author", "publisher", "isbn", "coverUrl", "pages", "lang", "genre", "translator", "link", "words"].forEach(k => { if (!String(c[k] || "").trim() && w[k]) c[k] = w[k]; });
-          rd = w.fromRead ? S.comics.find(x => x.id === w.fromRead && notOwned(x)) : null;
-          if (rd) ["read", "readDate", "rating", "fav", "coverRating", "link", "words"].forEach(k => { if (rd[k] !== undefined && rd[k] !== "" && (c[k] === undefined || c[k] === "" || c[k] === false || c[k] === null)) c[k] = rd[k]; });
-          c.id = w.id; c.createdAt = w.createdAt; c.wasWish = true; c.wishLevel = ""; delete c.fromRead; moved = true;
+          if (!String(c.notes || "").trim() && w.notes) c.notes = w.notes;
+          rd = takeFromRead(c, w);
+          c.id = w.id; c.createdAt = w.createdAt; c.wasWish = true; c.wishLevel = ""; moved = true;
         }
       }
+      { const o = d.id && S.comics.find(x => x.id === d.id); if (o && o.status === "wanted" && isOwn(c) && o.fromRead) rd = takeFromRead(c, o); }
       const btns = document.querySelectorAll("#save, #saveNext"); btns.forEach(b => b.disabled = true);
       try {
         const before = d.id ? S.comics.find(x => x.id === d.id) : null;
         if (!prepareLot(d, c, before)) { btns.forEach(b => b.disabled = false); return; }
         const saved = await saveComic(c);
-        if (rd) await deleteComic(rd.id);
+        if (rd && rd.id !== saved.id) await deleteComic(rd.id);
         const lotNote = await afterLotSave(saved, before);
         toast("✓ " + (moved ? "Moved from your wishlist to your collection: " : S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : notOwned(c) ? "Saved as read (not owned): " : "Saved to your archive: ") + (c.title || "book") + lotNote);
         if (next) {
