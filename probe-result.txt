@@ -1,18 +1,32 @@
 
-== api root https://www.comics.org/api/ 
- 200 ACAO: null application/json 99 
-{"series":"https://www.comics.org/api/series/","publisher":"https://www.comics.org/api/publisher/"}
+== Spindelmannen count 18
+   Mästaren på karate och Spindelmannen 1974 se sv issues 1 https://www.comics.org/api/series/11185/?format=json
+   Spindelmannen 1974 se sv issues 13 https://www.comics.org/api/series/9998/?format=json
+   Spindelmannen 1978 se sv issues 81 https://www.comics.org/api/series/7685/?format=json
+   Spindelmannen 1984 se sv issues 39 https://www.comics.org/api/series/10417/?format=json
+   Spindelmannen 1988 se sv issues 131 https://www.comics.org/api/series/10418/?format=json
+   Spindelmannen 1997 se sv issues 9 https://www.comics.org/api/series/10421/?format=json
+  issue keys: api_url,series_name,descriptor,number,volume,variant_name,title,publication_date,key_date,price,page_count,editing,indicia_publisher,brand_emblem,isbn,barcode,rating,on_sale_date,indicia_frequency,notes,variant_of,series,indicia_printer,keywords,story_set,cover
+  issue: Spindelmannen (1974 series) 3/1974 1974 cover: https://files1.comics.org/img/gcd/covers_by_id/91/w400/91253.jpg
 
-== series by name https://www.comics.org/api/series/name/Spindelmannen/?format=json 
- 200 ACAO: null application/json 31429 
-{"count":18,"next":null,"previous":null,"results":[{"api_url":"https://www.comics.org/api/series/11185/?format=json","name":"Mästaren på karate och Spindelmannen","country":"se","language":"sv","active_issues":["https://www.comics.org/api/issue/132998/?format=json"],"issue_descriptors":["[nn]"],"color":"","dimensions":"","paper_stock":"","binding":"","publishing_format":"","notes":"Marvels Shang-Chi, Master of Kung-Fu möter Spider-Man.","year_began":1974,"year_ended":1974,"publisher":"https://www.comics.org/api/publisher/1254/?format=json"},{"api_url":"https://www.comics.org/api/series/9998/?format=json","name":"Spindelmannen","country":"se","language":"sv","active_issues":["https://www.comics.org/api/issue/91974/?format=json","https://www.comics.org/api/issue/91975/?format=json","https://www.comics.org/api/issue/91976/?format=json","https://www.comics.org/api/issue/91977/?format=json","https://www.comics.org/api/issue/91978/?format=json","https://www.comics.org/api/issue/91979/?format=json","https://www.comics.org/api/issue/91980/?format=json","https://www.comics.org/api/issue/91981/?format=json","https://www.comics.org/api/issue/91982/?format=json","https://www.comics.org/api/issue/91983/?format=json","https://www.comics.org/api/issue/91984/?format=json","https://www.comics.org/api/issue/91985/?format=json","https://www.comics.org/api/issue/91986/?format=json"],"issue_descriptors":["1/1974","2/1974","3/1974","4/1974","5/1974","1/1975","2/1975","3/1975","4/1975","5/1975","6/1975","7/1975","8/1975"],"color":"","dimensions":"","paper_stock":"","binding":"","publishing_format":"","notes":"1974 (5 nr); 1975 (8 nr).","year_began":1974,"year_ended":1975,"publisher":"https://www.comics.org/api/publisher/1254/?format=json"},{"api_url":"https://www.comics.org/api/series/7685/?format=json","name":"Spindelmannen","country":"se","language":"sv","active_issues":["https://www.comics.org/api/issue/104559/?format=json","https://www.comics.org/api/issue/104560/?format=json","https://www.comics.org/api/issue/104561/?format=json","https://www.comics.org/api/issue/104562/?format=json","https://www.comics.org/api/issue/104563/?format=json","https://www.comics.org/api/issue/104564/?format=json","https://www.comics.org/api/issue/104565/?format=json","https://www.comics.org/api/issue/104566/?format=json","https://www.comics.org/api/issue/104567/?format=json","https://www.comics.org/api/issue/68482/?format=json","https://www.comics.org/api/issue/104568/?format=json","https://www.
+== Herman Hedning count 14
+   Herman Hedning 1998 se sv issues 159 https://www.comics.org/api/series/8744/?format=json
+   Herman Hedning 1998 no no issues 88 https://www.comics.org/api/series/24038/?format=json
+   Herman Hedning 2019 se sv issues 38 https://www.comics.org/api/series/168726/?format=json
+   Herman Hedning & C:o: Jubileumsalbum: 1988-1998: En fet, dryg med extra allt!: 10 år av sattyg, svordomar och sinnesslöhet 1998 se sv issues 1 https://www.comics.org/api/series/48007/?format=json
+   Herman Hedning & Co [julalbum] 1990 se sv issues 6 https://www.comics.org/api/series/9381/?format=json
+   Herman Hedning & Co [julalbum] 1998 se sv issues 23 https://www.comics.org/api/series/48006/?format=json
+  issue keys: api_url,series_name,descriptor,number,volume,variant_name,title,publication_date,key_date,price,page_count,editing,indicia_publisher,brand_emblem,isbn,barcode,rating,on_sale_date,indicia_frequency,notes,variant_of,series,indicia_printer,keywords,story_set,cover
+  issue: Herman Hedning (1998 series) 2/1998 [2] [15 december] 1998 cover: https://files1.comics.org/img/gcd/covers_by_id/688/w400/688258.jpg
 
-== issue https://www.comics.org/api/issue/104731/?format=json 
- 200 ACAO: null application/json 1110 
-{"api_url":"https://www.comics.org/api/issue/104731/?format=json","series_name":"Spindelmannen (1988 series)","descriptor":"6/1991","number":"6/1991","volume":"","variant_name":"","title":"","publication_date":"","key_date":"","price":"","page_count":null,"editing":"","indicia_publisher":null,"brand_emblem":"","isbn":"","barcode":"","rating":"","on_sale_date":"","indicia_frequency":"","notes":"Numret har en affisch som bilaga; Månadens Marvelhjälte – Silver Surfer.","variant_of":null,"series":"https://www.comics.org/api/series/10418/?format=json","indicia_printer":"","keywords":"","story_set":[{"type":"cover","title":"Spindelmannen möter Wolverine i Life's End","feature":"Spindelmannen","sequence_number":0,"page_count":"1.000","script":"None","pencils":"Todd McFarlane (signed as McFarlane)","inks":"Todd McFarlane (signed as McFarlane)","colors":"?","letters":"tryckstil","editing":"None","job_number":"","genre":"superhero","first_line":"","characters":"Spindelmannen; Black Fox","synopsis":"","notes":"","keywords":""}],"cover":"https://files1.comics.org/img/gcd/covers_by_id/103/w400/103991.jpg"}
+== Lucky Lukes äventyr count 2
+   Lucky Lukes äventyr 1984 se sv issues 37 https://www.comics.org/api/series/67237/?format=json
+   Lucky Lukes äventyr / Lucky Luke klassiker 1971 se sv issues 108 https://www.comics.org/api/series/46707/?format=json
+  issue keys: api_url,series_name,descriptor,number,volume,variant_name,title,publication_date,key_date,price,page_count,editing,indicia_publisher,brand_emblem,isbn,barcode,rating,on_sale_date,indicia_frequency,notes,variant_of,series,indicia_printer,keywords,story_set,cover
+  issue: Lucky Lukes äventyr (1984 series) T-015; K-01852 [1985] cover: https://files1.comics.org/img/gcd/covers_by_id/82/w400/82620.jpg
 
-== search page https://www.comics.org/searchNew/?q=Spindelmannen&search_object=series 
- 403 ACAO: null text/html; charset=UTF-8 5756 
-<!DOCTYPE html><html lang="en-US"><head><title>Just a moment...</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=Edge"><meta name="robots" content="noindex,nofollow"><meta name="viewport" content="width=device-width,initial-scal
+== picture https://files1.comics.org/img/gcd/covers_by_id/91/w400/91253.jpg {"shown":"ERROR","copy":"blocked: Failed to fetch"}
 
-== image https://files1.comics.org//img/gcd/covers_by_id/104/w400/104731.jpg 403 ACAO: null text/html; charset=UTF-8 5708 
+== picture https://files1.comics.org/img/gcd/covers_by_id/688/w400/688258.jpg {"shown":"ERROR","copy":"blocked: Failed to fetch"}
+
+== picture https://files1.comics.org/img/gcd/covers_by_id/82/w400/82620.jpg {"shown":"ERROR","copy":"blocked: Failed to fetch"}
