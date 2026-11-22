@@ -179,4 +179,6 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | da-v228 format names in English (Heft → Magazine, Taschenbuch / Pocket → Pocket book; renamed on start, save, restore), Duckipedia series sizes in English; published with the Spindelmannen price list; 1 check run (edit-comic, series-tools, prices), no errors | 2–3 min (first guess 5 ÷ 2) + 1 run | 4–5 min (21:37 → 21:41:01, incl. 1 run of ~2 min) |
 | 2026-11-22 | CLAUDE.md: app changes also wait for "publish"; estimate before every job incl. checks/lookups | about 1 min (first guess 2 ÷ 2) | 0–1 min (21:45 → 21:46:03) |
 | 2026-11-22 | CLAUDE.md handover nr. 13 (da-v225–228, Spindelmannen) + publish (notes only, no check run: no app or price change) | about 1 min | 0–1 min (21:48 → 21:48:22) |
+| 2026-11-22 | Backup of 22 Nov (21:55) checked for missing covers: 155 of 911 (85 comics, mostly Swedish non-INDUCKS series; 70 books, 2 with ISBN); 84 covers not stored on the phone; plan A/B reported, no change | 1–2 min (first guess 3–5 ÷ 3) | 2–3 min (21:56 → ~21:58, reply included; no log line made then) |
+| 2026-11-22 | Rules re-read (CLAUDE.md, TIMELOG) after the user's reminder; log line for the cover check added | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (21:58 → 21:58:27) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
