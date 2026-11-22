@@ -86,7 +86,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
     28 countText ignores notowned (folder line "0 comics"). 30 book page lacks Words, Country. 32 idea: price ranges card lists your
     comics without a range. 33 idea: Gaps "Copy missing numbers". 34 idea: Tools show when each bulk job last ran. 44 idea: series
     without Latest issue (10: Asterix German, Lucky Lukes äventyr, Musiksaga …) are missing in Stats › How complete → note with links.
-  - **Bundle D (Stats, Stories, 10):** 36 storyIndex("wanted") lets notowned in (`isOwn` test) → only status wanted. 37 Stats links
+  - **Bundle D DONE (da-v224, 2026-11-22, pushed 12:4x after a second add_repo try; the first try in a chat can be refused, retry):** storiesGo() in stories-backup.js opens Stories with clean filters (Stats links, data-goperson); storyRead() + Unread chip; readFromOf() + pick "rfrom" + card "Reading by where from" (stats.js); Stats › Stories card "Story series you have most of" (SINFO.tot); on-wishlist tile data-gowish.
+    Was: **Bundle D (Stats, Stories, 10):** 36 storyIndex("wanted") lets notowned in (`isOwn` test) → only status wanted. 37 Stats links
     data-stq / .hbar[data-who] keep old Stories filters (olang, clang, ownf, sub=series) → reset them. 38 Overview This month "read"
     counts sel only, its list uses isMine → count selN too. 39 maybe: Unread pile pace counts notowned by pages, not by items.
     41 Stories sort by code: localeCompare with numeric: true. 43 Stats What you collect (.hbar[data-g]) keeps S.colSort → set "series".
