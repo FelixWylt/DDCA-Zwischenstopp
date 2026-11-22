@@ -42,12 +42,15 @@ function pickInfo(pick) {
     read: [c => c.read && String(c.readDate || "").startsWith(val), `read in ${val}`],
     src: [c => String(c.source || "").trim().toLowerCase() === val.toLowerCase(), `bought from ${val}`],
     readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"],
-    notowned: [c => notOwned(c), "read, not owned"]
+    notowned: [c => notOwned(c), "read, not owned"],
+    rfrom: [c => c.read && readFromOf(c).toLowerCase() === String(val).toLowerCase(), val === "Own copy" ? "read in your own copy" : `read from ${val}`]
   }[type] || [() => false, "?"];
   // reading lists also show what you read without owning it
-  const who = ["read", "readnodate", "notowned"].includes(type) ? isMine : isOwn;
+  const who = ["read", "readnodate", "notowned", "rfrom"].includes(type) ? isMine : isOwn;
   return { test: c => who(c) && inScope(c) && T[0](c), label: T[1], scope };
 }
+// where something was read: your own copy, else its "Read from" (first letter capital, so "library" and "Library" are one bar)
+function readFromOf(c) { if (isOwn(c)) return "Own copy"; const s = String(c.source || "").trim(); return s ? s[0].toUpperCase() + s.slice(1) : c.link ? "Online" : "Not set"; }
 function openPick(pick) { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.colTab = String(pick).endsWith("|b") ? "books" : "comics"; S.col = { pick }; S.shown = 200; nav("collection"); try { history.replaceState({ col: S.col }, "", "#collection"); } catch (e) {} }
 // the number of a tapped bar, in a line above its chart, with a link to what's in it
 function barRead(b) {
@@ -192,11 +195,11 @@ VIEWS.stats = {
     // ================= Overview =================
     if (tab === "overview") {
       const valSel = valueChf(sel), readN = sel.filter(c => c.read).length;
-      const tile = (v, k, to, extra) => `<button type="button" class="stile" data-sttab="${to}"><span class="v2">${v}</span><span class="k small muted">${k}</span>${extra || ""}</button>`;
-      const tiles = `<div class="tiles4">${tile(nf(sel.length), word + " you own", "collection")}${tile(valSel != null ? "≈ " + Math.round(valSel).toLocaleString("de-CH") : "–", "CHF value", "money")}${tile(nf(selW.length), "on wishlist", "collection")}${tile(pct(readN, sel.length) + " %", "read · " + nf(sel.length - readN) + " to go", "reading", `<span class="meter"><span style="width:${pct(readN, sel.length)}%"></span></span>`)}</div>`;
+      const tile = (v, k, to, extra) => `<button type="button" class="stile" ${to === "wishlist" ? 'data-gowish="1"' : `data-sttab="${to}"`}><span class="v2">${v}</span><span class="k small muted">${k}</span>${extra || ""}</button>`;
+      const tiles = `<div class="tiles4">${tile(nf(sel.length), word + " you own", "collection")}${tile(valSel != null ? "≈ " + Math.round(valSel).toLocaleString("de-CH") : "–", "CHF value", "money")}${tile(nf(selW.length), "on wishlist", "wishlist")}${tile(pct(readN, sel.length) + " %", "read · " + nf(sel.length - readN) + " to go", "reading", `<span class="meter"><span style="width:${pct(readN, sel.length)}%"></span></span>`)}</div>`;
       const sc = scope === "b" ? "b" : scope === "c" ? "c" : "a";
       const spentIn = prefix => sel.filter(c => typeof c.pricePaid === "number" && boughtOn(c).startsWith(prefix)).reduce((a, c) => a + paidOf(c), 0);
-      const addedM = sel.filter(c => boughtOn(c).startsWith(ymNow)).length, enteredM = sel.filter(c => enteredOn(c).startsWith(ymNow)).length, readM = sel.filter(c => String(c.readDate || "").startsWith(ymNow)).length;
+      const addedM = sel.filter(c => boughtOn(c).startsWith(ymNow)).length, enteredM = sel.filter(c => enteredOn(c).startsWith(ymNow)).length, readM = sel.concat(selN).filter(c => c.read && String(c.readDate || "").startsWith(ymNow)).length;   // as its list: read without owning counts too
       const month = card("This month", M[now.getMonth()] + " " + yNow, `<div class="row monthrow">
         <button type="button" class="stat3"${addedM ? ` data-pick="added|${ymNow}|${sc}"` : ""}><span class="v2">${nf(addedM)}</span><span class="k small muted">bought</span></button>
         <button type="button" class="stat3"${enteredM ? ` data-pick="entered|${ymNow}|${sc}"` : ""}><span class="v2">${nf(enteredM)}</span><span class="k small muted">entered</span></button>
@@ -399,14 +402,23 @@ VIEWS.stats = {
       const best = role => { const m = {}; idx.forEach(e => { const r = +storyRate(e).rating; if (r > 0) e[role].forEach(n => { const x = m[n] = m[n] || { t: 0, n: 0 }; x.t += r; x.n++; }); }); return Object.entries(m).filter(([, x]) => x.n >= 2).map(([n, x]) => [n, x.t / x.n, x.n]).sort((a, b) => b[1] - a[1] || b[2] - a[2]); };
       const bW = ordered("best", best("writers")).slice(0, 8), bA = ordered("best", best("artists")).slice(0, 8), bl = xs => openList(xs.map(([n, a, k]) => `<li><button type="button" class="link" data-goperson="${xs === bW ? "writers" : "artists"}" data-n="${esc(n)}">${esc(n)}</button> <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`));
       const bestCard = bW.length || bA.length ? card("Best rated creators " + sortBtn("best"), "your story ratings, at least 2", `${bW.length ? `<div class="small"><strong>Writers</strong>${bl(bW)}</div>` : ""}${bA.length ? `<div class="small"><strong>Artists</strong>${bl(bA)}</div>` : ""}`) : "";
-      return head + `<div class="two">${readCard}${rateCard}</div><div class="two">${made}${who("chars", "Top characters")}</div><div class="two">${who("writers", "Top writers")}${who("artists", "Top artists")}</div><div class="two">${pairCard}${repCard}</div><div class="two">${originCard}${longCard}</div>${bestCard}` + note("Each story counts once, even if you have it in several comics or languages. Stories from things you read without owning them count too. Tap a name to see the stories.");
+      // story series you have most of: your stories in each, of all the stories INDUCKS puts in it (catalogue/story-info.json)
+      loadStoryInfo();
+      let sserCard = "";
+      if (SINFO) {
+        const tot = SINFO.tot || (SINFO.tot = (() => { const t = {}; SINFO.ser.forEach(v => v.forEach(k => t[k] = (t[k] || 0) + 1)); return t; })());
+        const have = {}; idx.forEach(e => storySeriesOf(e).forEach(k => have[k] = (have[k] || 0) + 1));
+        const sl = ordered("sser", Object.entries(have).map(([k, n]) => [k, n, Math.max(n, tot[k] || 0)]).sort((a, b) => b[1] - a[1] || b[1] / b[2] - a[1] / a[2])).slice(0, 8);
+        if (sl.length) sserCard = card("Story series you have most of " + sortBtn("sser"), "stories", `<div class="hbars">${sl.map(([k, n, t]) => `<button class="hbar" data-sser="${esc(k)}" title="${esc(seriesNameOf(k))}: ${n} of ${t} stories"><span class="lab">${esc(seriesNameOf(k))}</span><span class="track"><span class="fill" style="width:${Math.max(1, n / t * 100).toFixed(1)}%"></span></span><span class="n">${nf(n)}/${nf(t)}</span></button>`).join("")}</div>` + note("Your stories in each story series, of all the stories INDUCKS lists in it; the bar shows how much of the series you have. Tap one to see your stories."));
+      } else sserCard = card("Story series you have most of", "", note(sinfoMissing ? "The story series come with the next catalogue update." : "Loading the story series …"));
+      return head + `<div class="two">${readCard}${rateCard}</div><div class="two">${made}${who("chars", "Top characters")}</div><div class="two">${who("writers", "Top writers")}${who("artists", "Top artists")}</div><div class="two">${pairCard}${repCard}</div><div class="two">${originCard}${longCard}</div>${sserCard && bestCard ? `<div class="two">${sserCard}${bestCard}</div>` : sserCard + bestCard}` + note("Each story counts once, even if you have it in several comics or languages. Stories from things you read without owning them count too. Tap a name to see the stories.");
     }
 
     // ================= Reading =================
     const unread = sel.filter(c => !c.read && !c.facsimile), yearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().slice(0, 10);
-    const readYear = sel.filter(c => c.read && /^\d{4}-\d{2}/.test(c.readDate || "") && c.readDate >= yearAgo).length;
-    // how long the pile takes: by pages when most unread entries have a page count (a thick novel isn't a 32-page comic), else by items
-    const recent = sel.concat(selN).filter(c => c.read && /^\d{4}-\d{2}/.test(c.readDate || "") && c.readDate >= yearAgo);
+    // how long the pile takes: by pages when most unread entries have a page count (a thick novel isn't a 32-page comic), else by items;
+    // your pace counts everything you read, also what you read without owning it (by pages and by items alike)
+    const recent = sel.concat(selN).filter(c => c.read && /^\d{4}-\d{2}/.test(c.readDate || "") && c.readDate >= yearAgo), readYear = recent.length;
     const pgPace = recent.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0) / 12, pgLeft = unread.reduce((a, c) => a + (parseInt(c.pages, 10) || 0), 0);
     const byPages = pgPace > 0 && unread.length && unread.filter(c => parseInt(c.pages, 10) > 0).length / unread.length >= 0.7;
     const pace = byPages ? pgPace : readYear / 12, left = byPages ? pgLeft : unread.length;
@@ -416,7 +428,10 @@ VIEWS.stats = {
     const avgRows = (o, label, all) => ordered("avg", Object.entries(o).filter(([, x]) => x.n >= 2).map(([k, x]) => [label(k), x.t / x.n, x.n]).sort((a, b) => b[1] - a[1])).slice(0, all ? 1e9 : 6);
     const rS = avgRows(rs, seriesTitle, S.statAllAvg), rA = [], nAvg = Object.values(rs).filter(x => x.n >= 2).length;
     const avgCard = rS.length || rA.length ? card("Average ratings " + sortBtn("avg"), "with at least 2 rated", `${rS.length ? `<div class="small"><strong>Series</strong>${openList(rS.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} rated</span></li>`))}</div>` : ""}${rA.length ? `<div class="small"><strong>Artists (story ratings)</strong>${openList(rA.map(([n, a, k]) => `<li>${esc(n)} <span class="muted">★ ${a.toFixed(1).replace(".", ",")} · ${k} stories</span></li>`))}</div>` : ""}${nAvg > rS.length + rA.length || S.statAllAvg ? `<button class="ghost" id="stAllAvg" type="button">${S.statAllAvg ? "Show fewer" : "Show all " + nAvg}</button>` : ""}`) : "";
-    return head + readingCard(sel, word, selN) + `<div class="two">${pile}${avgCard}</div>` + ratedCard(sel.concat(selN), scope === "b" ? "books" : "comics");
+    // where you read things: your own copy, or what you noted under "Read from" (Library, Online …)
+    const rfl = tallyOf(sel.concat(selN).filter(c => c.read), c => [readFromOf(c)], 8, "rfrom");
+    const fromCard = selN.some(c => c.read) && rfl.length > 1 ? card("Reading by where from " + sortBtn("rfrom"), "everything read", pickBars(rfl.map(([n, k]) => [n, k, `rfrom|${n}|${scope}`])) + note("Own copy = something you own. The others come from “Read from” on things you read without owning them. Tap a bar to see them.")) : "";
+    return head + readingCard(sel, word, selN) + `<div class="two">${pile}${avgCard}</div>` + fromCard + ratedCard(sel.concat(selN), scope === "b" ? "books" : "comics");
   },
   bind() {
     document.querySelectorAll("[data-sttab]").forEach(b => b.onclick = () => { S.statTab = b.dataset.sttab; render(); window.scrollTo(0, 0); });
@@ -425,7 +440,7 @@ VIEWS.stats = {
     document.querySelectorAll("[data-compl]").forEach(b => b.onclick = () => { S.statCompl = b.dataset.compl; renderKeep(); });
     document.querySelectorAll("[data-fg]").forEach(b => b.onclick = () => { S.statFG = b.dataset.fg; renderKeep(); });
     document.querySelectorAll(".highlight[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
-    document.querySelectorAll("[data-stq]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || {}, { tab: "all", who: null, q: b.dataset.stq, shown: 100, status: "owned" }); nav("stories"); });
+    document.querySelectorAll("[data-stq]").forEach(b => b.onclick = () => storiesGo({ q: b.dataset.stq }));
     $("#goFill") && ($("#goFill").onclick = () => { S.serTab = "tools"; S.serEditObj = null; S.serEditBook = null; nav("series"); setTimeout(() => { const r = $("#rfbox"); r && r.scrollIntoView({ block: "start" }); }, 100); });
     $("#goBackup") && ($("#goBackup").onclick = () => nav("backup"));
     $("#goTrade") && ($("#goTrade").onclick = () => { S.filters.q = ""; S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
@@ -433,8 +448,10 @@ VIEWS.stats = {
     document.querySelectorAll("[data-srcby]").forEach(b => b.onclick = () => { S.statSrcBy = b.dataset.srcby; renderKeep(); });
     $("#stAllSrc") && ($("#stAllSrc").onclick = () => { S.statAllSrc = !S.statAllSrc; renderKeep(); });
     $("#stAllAvg") && ($("#stAllAvg").onclick = () => { S.statAllAvg = !S.statAllAvg; renderKeep(); });
-    document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => { S.st = Object.assign(S.st || { q: "", status: "owned", sort: "title", shown: 100 }, { tab: "all", q: "", shown: 100, status: "owned", who: { role: b.dataset.role, name: b.dataset.who } }); nav("stories"); });
-    document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
+    document.querySelectorAll(".hbar[data-who]").forEach(b => b.onclick = () => storiesGo({ who: { role: b.dataset.role, name: b.dataset.who } }));
+    document.querySelectorAll("[data-sser]").forEach(b => b.onclick = () => storiesGo({ who: { role: "series", name: b.dataset.sser } }));
+    document.querySelectorAll("[data-gowish]").forEach(b => b.onclick = () => { if (S.statScope === "b") S.wishKind = "books"; else if (S.statScope === "c") S.wishKind = "comics"; S.wishFilter = "all"; S.gapTab = "wishlist"; nav("gaps"); window.scrollTo(0, 0); });
+    document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("[data-snoend]").forEach(b => b.onclick = () => { const s = seriesById(b.dataset.snoend); if (!s) return; S.serTab = "comics"; S.serPath = { u: s.publisher || "No universe yet", g: s.group || OTHER_GROUP }; S.serEditObj = s; S.serEditBook = null; nav("series"); });
     refreshRates();

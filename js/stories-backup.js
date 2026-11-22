@@ -57,7 +57,7 @@ function hadElsewhereHtml(d, links) {
 // a writer's or artist's name anywhere in the app opens their page under Stories
 document.addEventListener("click", e => {
   const p = e.target.closest("[data-goperson]"), h = e.target.closest("[data-hopen]");
-  if (p) { e.preventDefault(); S.st = Object.assign(S.st || {}, { tab: "all", who: { role: p.dataset.goperson, name: p.dataset.n }, q: "", shown: 100, status: "all" }); nav("stories"); window.scrollTo(0, 0); }
+  if (p) { e.preventDefault(); storiesGo({ who: { role: p.dataset.goperson, name: p.dataset.n }, status: "all" }); }
   else if (h) { e.preventDefault(); S.editing = h.dataset.hopen; S.draft = null; nav("add"); window.scrollTo(0, 0); }
 });
 // every story once, with the comics it appears in (a reprinted story is one story)
@@ -98,8 +98,14 @@ function loadStoryInfo() {
     Object.entries(j.storySeries || {}).forEach(([k, v]) => ser.set(storyCode(k), v));
     Object.entries(j.lang || {}).forEach(([k, v]) => lang.set(storyCode(k), v));
     SINFO = { series: j.series || {}, ser, lang, def: j.langDefault || {}, people: j.people || {} };
-    if (S.view === "stories") render();
+    if (S.view === "stories") render(); else if (S.view === "stats" && S.statTab === "stories") renderKeep();
   }).catch(() => {});
+}
+// open Stories from somewhere else (Stats, a comic's page) with a clean slate: old filters (language rows, I have it,
+// Story series, Reprinted/Rated/Unread) would hide what was tapped
+function storiesGo(o) {
+  S.st = Object.assign(S.st || {}, { tab: "all", who: null, q: "", shown: 100, status: "owned", sub: "stories", olang: "", clang: "", pc: "", chl: "", ownf: "", reprinted: false, rated: false, unread: false }, o);
+  nav("stories"); window.scrollTo(0, 0);
 }
 const _dn = {};
 function dispName(type, code) {
@@ -134,7 +140,7 @@ function storyIndex(status) {
   const map = new Map();
   S.comics.forEach(c => {
     if (status === "owned" && c.status === "wanted") return;
-    if (status === "wanted" && isOwn(c)) return;
+    if (status === "wanted" && c.status !== "wanted") return;   // Wishlist: only wishes, not read-not-owned entries
     (c.stories || []).forEach((st, i) => {
       if (!st.title && !st.code) return;
       const code = storyCode(st.code);
@@ -177,7 +183,7 @@ function comicTag(c) { const se = seriesById(c.seriesId); return (se ? se.short 
 VIEWS.stories = {
   html() {
     const st = S.st = S.st || {};
-    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, shown: 100, sub: "stories", olang: "", clang: "", pc: "", chl: "", ownf: "" }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
+    Object.entries({ q: "", tab: "all", role: "writers", who: null, status: "owned", sort: "title", reprinted: false, rated: false, unread: false, shown: 100, sub: "stories", olang: "", clang: "", pc: "", chl: "", ownf: "" }).forEach(([k, v]) => { if (st[k] === undefined) st[k] = v; });
     if (["writers", "artists", "chars"].includes(st.mode)) { st.role = st.mode; st.tab = "people"; } delete st.mode;
     if (st.sort === "fav") { st.sort = "rating"; st.tab = "fav"; }
     loadStoryInfo();
@@ -189,7 +195,7 @@ VIEWS.stories = {
     const inChips = [["owned", "Owned"], ["wanted", "Wishlist"], ["all", "Both"]].map(([k, l]) => chip(`data-stin="${k}"`, st.status === k, l)).join("");
     const filters = st.tab === "people"
       ? `<div class="fchips">${[["writers", "Writers"], ["artists", "Artists"], ["chars", "Characters"]].map(([k, l]) => chip(`data-role="${k}"`, st.role === k, l)).join("")}</div>`
-      : `<div class="fchips">${inChips}${st.tab === "all" && (st.sub !== "series" || st.who) ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") : ""}</div>`;
+      : `<div class="fchips">${inChips}${st.tab === "all" && (st.sub !== "series" || st.who) ? chip('data-strep="1"', st.reprinted, "Reprinted") + chip('data-strated="1"', st.rated, "Rated") + chip('data-stunread="1"', st.unread, "Unread") : ""}</div>`;
     // filter rows (one swipe row each, only values you have): original language + language in your comics on All stories and
     // Favourites; the creator's own country on Writers/Artists; the language of your comics on Characters
     const optRow = (label, attr, cur, counts) => {
@@ -229,6 +235,7 @@ VIEWS.stories = {
     [["stsub", "sub"], ["olang", "olang"], ["clang", "clang"], ["pc", "pc"], ["chl", "chl"], ["ownf", "ownf"]].forEach(([a, k]) => document.querySelectorAll(`[data-${a}]`).forEach(b => b.onclick = () => { st[k] = b.dataset[a]; st.shown = 100; if (k === "sub") st.q = ""; render(); }));
     document.querySelectorAll("[data-stin]").forEach(b => b.onclick = () => { st.status = b.dataset.stin; st.shown = 100; render(); });
     $("[data-strep]") && ($("[data-strep]").onclick = () => { st.reprinted = !st.reprinted; st.shown = 100; render(); });
+    $("[data-stunread]") && ($("[data-stunread]").onclick = () => { st.unread = !st.unread; st.shown = 100; render(); });
     $("[data-strated]") && ($("[data-strated]").onclick = () => { st.rated = !st.rated; if (st.rated && st.sort === "title") st.sort = "rating"; st.shown = 100; render(); });
     // search 0.2 s after the last key, so typing or deleting quickly doesn't redraw the list for every letter
     $("#stq").oninput = e => { st.q = e.target.value; st.shown = 100; clearTimeout(st._t); st._t = setTimeout(drawStories, 200); };
@@ -262,6 +269,8 @@ function storyRow(e) {
     </div></details>`;
 }
 // how you have a story: in a comic you own, or only read (Read, not owned); wishlist-only stories count as neither
+// a story counts as read once a comic it's in is marked read (owned or read without owning), as in Stats › Stories read
+const storyRead = e => e.items.some(c => c.read && isMine(c));
 function storyHave(e) { return e.items.some(c => isOwn(c)) ? "Owned" : e.items.some(c => notOwned(c)) ? "Read, not owned" : ""; }
 function drawStories() {
   const box = $("#stres"); if (!box) return;
@@ -328,7 +337,8 @@ function drawStories() {
     } else {
       if (st.reprinted) list = list.filter(e => e.items.length > 1);
       if (st.rated) list = list.filter(e => +storyRate(e).rating > 0);
-      list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~") : cmpT);
+      if (st.unread) list = list.filter(e => !storyRead(e));
+      list = list.slice().sort(st.sort === "rating" ? (a, b) => (+storyRate(b).rating || 0) - (+storyRate(a).rating || 0) || cmpT(a, b) : st.sort === "comics" ? (a, b) => b.items.length - a.items.length || cmpT(a, b) : st.sort === "code" ? (a, b) => (a.code || "~").localeCompare(b.code || "~", "en", { numeric: true }) : cmpT);
       if (st.desc) list.reverse();   // ↑: the order turned round (lowest rating, fewest reprints, Z to A)
       const reprints = list.filter(e => e.items.length > 1).length;
       html = `<p class="muted small" style="margin:8px 0">${list.length} ${list.length === 1 ? "story" : "stories"}${reprints && !st.reprinted ? " · " + reprints + " of them in more than one comic" : ""}</p>` +
