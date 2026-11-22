@@ -77,7 +77,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
     20 idea: CSV adds edition, rating, read date, checked value, value, link, words. 21 see 14. 29 buying a fromRead wish via Add
     (doSave move) or Edit "I own it" skips bindGot's merge (read date/ratings) and leaves the read-only entry. 31 idea: I bought it
     asks the condition (Z chips). 35 idea: Copy list for comic fair marks Must ★, option without Dream.
-  - **Bundle C (Collection, Gaps, Series, 12):** 22 collection copyKey merges different "year/?" comics into one "7×" row (Spindelmannen
+  - **Bundle C DONE (da-v223, 2026-11-22):** copyKey '' for '?'; sepCopies()/isTradeable() in collection.js; readDateWas on untick (Gaps, Edit); valueNumber running variants; parsePrices splits on ; or ', '; lastRuns config + lastRunText/markRun (core.js); Stats noEnd note (data-snoend); Gaps #copymiss reads the grid.
+    Was: **Bundle C (Collection, Gaps, Series, 12):** 22 collection copyKey merges different "year/?" comics into one "7×" row (Spindelmannen
     1988/?) → '?' labels never copies (as Stats slotKey). 23 Duplicates for trade + trade list ignore separate copies (LTB Maus-Edition 7,
     Magnus Chase 1) → count copyKey groups too. 24 Gaps read mode (and Edit) clears readDate on untick → keep the old date for an undo.
     25 valueNumber (core.js) returns issueNum for running variants "546A" → use issueSort (546.01) so "546A:" ranges apply.
