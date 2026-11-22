@@ -980,7 +980,7 @@ function bindBackupNag() {
   });
 }
 function coverBar() {
-  if (S.colTab === "books" || !S.comics.length) return "";
+  if (!S.comics.length) return "";
   const noUrl = S.comics.filter(noCoverYet).length, notKept = S.comics.filter(needsKeep).length;
   const run = S.cv && S.cv.running;
   if (!run && !notKept && (!noUrl || S.cvAsked)) return S.cv && S.cv.msg ? `<p class="small muted" style="margin:8px 0">${esc(S.cv.msg)}</p>` : "";
@@ -1019,10 +1019,23 @@ const coverRetry = c => {
   if (c.coverNoneCat !== undefined && file !== c.coverNoneCat) return true;
   return Date.now() - Date.parse(c.coverNone + "Z") >= 30 * 864e5;
 };
-const noCoverYet = c => c.kind !== "book" && !c.coverUrl && (!c.coverNone || coverRetry(c));
+// books: the book databases are asked again 30 days after a try found nothing; web serials and short stories have no cover to find
+const bookNoCover = c => c.kind === "book" && (/^(Web serial|Short story)$/.test(c.format || "") || /royalroad\.com|fullreads\.com/.test(c.link || ""));
+const noCoverYet = c => !c.coverUrl && !bookNoCover(c) && (!c.coverNone || (c.kind === "book" ? Date.now() - Date.parse(c.coverNone + "Z") >= 30 * 864e5 : coverRetry(c)));
+// a book's cover from Open Library, Google Books, Libris or the DNB: by ISBN, else by title + author (only a hit whose title and author match)
+async function bookCover(c) {
+  if (!window.Books) return "";
+  if (c.isbn) { try { const r = await Books.lookupIsbn(c.isbn); if (r && r.data && r.data.cover) return r.data.cover; } catch (e) {} }
+  const norm = t => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+  const main = norm(String(c.title || "").split(/\s[:–-]\s|: /)[0]); if (main.length < 3) return "";
+  const last = norm(String(c.author || "").split(/,|&| and /)[0]).split(" ").pop();
+  let hits = []; try { hits = await Books.search((c.title || "") + (c.author ? " " + String(c.author).split(/,|&/)[0] : "")); } catch (e) {}
+  const ok = h => { const t = norm(h.title); return h.cover && (t === main || t.startsWith(main + " ") || main.startsWith(t + " ") && t.length >= 8) && (!last || (h.authors || []).some(a => norm(a).split(" ").includes(last))); };
+  const h = hits.find(ok); return h ? h.cover : "";
+}
 // the stored copy only while it is of the current picture: after a cover change the new one shows (and is stored next)
 const coverOf = c => (S.coverObj && S.coverObj[c.id] && (!c.coverUrl || S.coverHas[c.id + "|" + c.coverUrl]) ? S.coverObj[c.id] : "") || c.coverUrl || "";
-// finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and keeps small copies of all
+// finds covers for comics without one (INDUCKS catalogue first, then Duckipedia) and books (book databases), and keeps small copies of all
 async function fetchAllCovers() {
   if (S.cv && S.cv.running) return;
   const run = S.cv = { running: true, stop: false, found: 0, kept: 0, done: 0, total: 0 };
@@ -1033,6 +1046,7 @@ async function fetchAllCovers() {
   for (const c of need) {
     if (run.stop) break;
     const se = seriesById(c.seriesId); let url = "";
+    if (c.kind === "book") { url = await bookCover(c).catch(() => ""); if (url) { if (await saveComic(Object.assign({}, c, { coverUrl: url }), true).catch(() => null)) run.found++; } else await saveComic(Object.assign({}, c, { coverNone: new Date().toISOString().slice(0, 16) }), true).catch(() => null); run.done++; draw(); continue; }
     try {
       const hit = se && await catalogueLookup(se, c.issueLabel || c.issue);
       if (hit && hit.cv) url = inducksImg(hit.cv);
@@ -1197,7 +1211,7 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 228;
+const APP_BUILD = 229;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
