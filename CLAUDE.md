@@ -52,10 +52,11 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **Open (handover nr. 12, 2026-11-22 11:40): bug-hunt fixes, chosen = ALL of 1–48 except 40** (Opus high is enough; none needs extra).
   Found by reading da-v218–220 + the user's backup of 2026-11-21 (kept off GitHub). FIRST re-check each point against the newest code.
   Do the bundles in order (A first: bug 1 can wipe data). Mark: all **high**. Each bundle = one version, one report before, one log line.
-  The user was told: **don't tap Series › Tools › Refresh all comics until bug 1 is fixed.**
+  Bug 1 fixed in da-v221: Refresh all comics is safe again (told the user).
   The user's backup shows all 34 price lists are ALREADY added (every batch id has ranges noted "Claude, 2026-11-15"): "Add all" is done.
   Still on the phone: once Series › Tools › Refresh all books (fills book countries; Fill on book series fills their Country).
-  - **Bundle A (Add/Edit, 12):** 1+42 refreshAll (series.js) and Fill from INDUCKS (add.js hit.ic branch) replace c.stories with INDUCKS ones
+  - **Bundle A DONE (da-v221, 2026-11-22 ~11:55):** keepOwnTitles keeps every non-INDUCKS story field by code (chapters in order); new series `pending` until its comic is saved (saveSeries skips, setView drops); pagesAuto; edit dup check skips the wish move.
+    Was: **Bundle A (Add/Edit, 12):** 1+42 refreshAll (series.js) and Fill from INDUCKS (add.js hit.ic branch) replace c.stories with INDUCKS ones
     and drop Duckipedia story extras (dTitle, translator, characters, plot, genre); Duckipedia is skipped when dkDue() false (<30 days;
     212 comics fetched 2026-10-31) → keep the extras by story code (like keepOwnTitles). 42 = Stats › Overview › To do "Fill all" leads there.
     2 add.js Fill from INDUCKS: `fromCat` uses `file`, undefined in the hit.ic branch → ReferenceError whenever d.title is set (silent).

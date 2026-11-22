@@ -166,4 +166,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-22 | More fairs in the shop list (comic fair, flea markets Kanzlei/Bürkliplatz/Bullingerhof, Antiquarian Book Fair, festivals; 1 page + 2 searches), project doc updated | 1–2 min (first guess 3–4 ÷ 2) | 1–2 min (01:29 → 01:30:19) |
 | 2026-11-22 | Bug hunt part 3 (Stats all tabs, Stories): code read on da-v220, report 8 bugs + 5 ideas, no app change | 3–5 min (first guess 10–15 for all 3 parts ÷ 3) | 2–3 min (01:33 → 01:35:28) |
 | 2026-11-22 | Bug hunt: final list (all except 40) in 4 bundles written to CLAUDE.md as handover nr. 12, Add-all note corrected | 1–2 min (first guess 3 ÷ 2) | 1–2 min (11:37 → 11:38:09) |
+| 2026-11-22 | da-v221 Bundle A (Add/Edit, 12 bug-hunt fixes: story details kept on refresh, Fill from INDUCKS, book wish move, pages follow words, pending new series, edit dup check …) ; 1 check run, no errors | 5–7 min (first guess 15–20 ÷ 3) + 1 run | 5–6 min (11:48 → 11:53:49, incl. 1 run of ~2.5 min) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
