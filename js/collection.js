@@ -241,7 +241,7 @@ function booksBrowse(pool, col, crumbs, more) {
   const firstAuthor = c => splitPeople(c.author)[0] || "";
   const genresOf = c => String(c.genre || "").split(",").map(x => x.trim()).filter(Boolean);
   const bySeriesVol = (a, b) => de(a.seriesName || "~", b.seriesName || "~") || (a.issueSort ?? 1e9) - (b.issueSort ?? 1e9) || de(a.date || "", b.date || "") || de(a.title || "", b.title || "");
-  const folder = (target, t, sub, n) => `<button class="folder" data-col='${esc(JSON.stringify(Object.assign({ p: NOVEL_PUB }, target)))}'><div style="min-width:0"><div class="t">${esc(t)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div><span class="count">${n}</span><span class="chev" aria-hidden="true">›</span></button>`;
+  const folder = (target, t, sub, n) => `<button class="folder" data-col='${esc(JSON.stringify(Object.assign({ p: NOVEL_PUB }, target)))}'><div style="min-width:0"><div class="t">${esc(t)}${target && target.s ? completeChip(target.s) : ""}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div><span class="count">${n}</span><span class="chev" aria-hidden="true">›</span></button>`;
   const back = label => crumbs([{ label: "All books", col: {} }, { label }]);
   const total = `<p class="muted small" style="margin:0 0 8px">${countText(pool)}</p>`;
   if (!pool.length) return `<div class="empty"><h3>${S.filters.status === "wanted" ? "No books on your wishlist" : "No books yet"}</h3><p>Add a book with its ISBN or by scanning the barcode.</p><div class="row" style="justify-content:center;margin-top:12px"><button class="primary" id="newbook">Add a book</button></div></div>`;
@@ -387,7 +387,7 @@ function drawResults() {
     html = crumbs(trail) +
       (keys.length ? '<div class="list">' + keys.map(k => {
         const list = bySeries[k], se = seriesById(k), yrs = yearsText(list);
-        return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g: col.g, s: k }))}'><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}</div>
+        return `<button class="folder" data-col='${esc(JSON.stringify({ p: col.p, g: col.g, s: k }))}'><div style="min-width:0"><div class="t">${esc(seriesTitle(k))}${se && se.short ? ` <span class="chip">${esc(se.short)}</span>` : ""}${completeChip(k)}</div>
           <div class="s">${esc([countText(list), yrs, valueTag(list)].filter(Boolean).join(" · "))}</div></div><span class="count">${list.length}</span><span class="chev" aria-hidden="true">›</span></button>`;
       }).join("") + '</div>' : singles.length ? "" : '<div class="empty"><h3>Nothing to show here</h3><p>Nothing in this group fits “Show”. Change it above.</p></div>') +
       (singles.length ? `<h3 class="listhead">Single comics <span class="muted">${singles.length}</span></h3>` + entriesHtml(singles) : "");
@@ -450,7 +450,7 @@ function pickerItems(opts) {
   const cnt = {}; S.comics.forEach(c => { const k = c.kind === "book" ? "book:" + (c.seriesName || "") : c.seriesId; cnt[k] = (cnt[k] || 0) + 1; });
   const items = S.series.filter(s => !(opts.noSingles && isSingleSeries(s))).map(s => ({ key: s.id, label: seriesLabel(s), short: s.short || "", group: (s.publisher || OTHER_PUB) + " · " + (s.group || OTHER_GROUP), uni: s.publisher || OTHER_PUB, code: (catEntry(s) || {}).code || s.code || "", n: cnt[s.id] || 0 }));
   if (opts.books) { const names = {}; (S.bookSeriesExtra || []).forEach(x => { names[x.name] = !!x.novel; }); S.comics.forEach(c => { if (c.kind === "book" && c.seriesName) names[c.seriesName] = isNovel(c); }); Object.keys(names).forEach(n => items.push({ key: "book:" + n, label: n, short: "", group: names[n] ? "Book series" : "Book series (comic books)", uni: "Book series", code: "", n: cnt["book:" + n] || 0 })); }
-  return items;
+  return items.filter(x => (!opts.onlyBooks || String(x.key).startsWith("book:")) && x.key !== opts.exclude);
 }
 function seriesKeyLabel(key) {
   if (!key) return "Choose a series";
@@ -568,6 +568,7 @@ function bindBookGaps() {
   document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
   document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
   document.querySelectorAll(".cell[data-vol]").forEach(b => b.onclick = () => {
+    if (S.moveMode) { moveToggle(b); return; }
     if (S.readMode) {   // quick reading log, like for comics: tap an owned volume to mark it read today, tap again to undo
       const c = own.get(+b.dataset.vol);
       if (!c) { toast("Only owned volumes can be marked as read"); return; }

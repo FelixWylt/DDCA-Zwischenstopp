@@ -281,7 +281,7 @@ function bookSeriesPage(n, sect) {
       ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}</div>`, false)}
     ${sect(k, "prices", "Price ranges", (rs => rs.length ? rs.length + (rs.length === 1 ? " range" : " ranges") : "none yet")((S.valueRules || []).filter(r => r.s === k && typeof r.price === "number")), `<div class="sform">${valueRulesHtml(k)}</div>`, false)}
     </div>
-    <div class="row" style="margin-top:10px"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button><button type="button" class="ghost" data-bk2c="${esc(n)}">Make it a comic series</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div><div id="cellpick"></div>`;
+    <div class="row" style="margin-top:10px"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button><button type="button" class="ghost" data-bk2c="${esc(n)}">Make it a comic series</button><button type="button" class="ghost" data-smerge="${esc("book:" + n)}">Merge into…</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div><div id="cellpick"></div>`;
 }
 // ---- Wikidata (facts) and Wikipedia (description) for a book series; empty fields only, then your own books fill the rest ----
 const WD = "https://www.wikidata.org/w/api.php";
@@ -467,6 +467,37 @@ async function comicToBookSeries(se, bookType) {
   await setConfig("valueRules", S.valueRules || []); await setConfig("bookSizes", S.bookSizes || {}); await setConfig("bookSeriesInfo", S.bookMeta); await setConfig("bookSeriesExtra", S.bookSeriesExtra || []);
   return name;
 }
+// ---- merge two series (da-v234): entries move, empty details are filled, the kept series' price ranges win ----
+function seriesEntries(key) { return S.comics.filter(c => String(key).startsWith("book:") ? c.kind === "book" && c.seriesName === key.slice(5) : c.seriesId === key); }
+function mergePlan(fromKey, toKey) {
+  const span = r => { let a = rangeBound(toKey, r.from), b = rangeBound(toKey, r.to, true); return [isNaN(a) ? -Infinity : a, isNaN(b) ? Infinity : b]; };
+  const priced = r => typeof r.price === "number", keep = (S.valueRules || []).filter(r => r.s === toKey && priced(r));
+  const overlaps = r => keep.some(k => editionKey(k.ed) === editionKey(r.ed) && (([a, b], [c, d]) => a <= d && c <= b)(span(r), span(k)));
+  const theirs = (S.valueRules || []).filter(r => r.s === fromKey);
+  return { entries: seriesEntries(fromKey), keep: keep.length, add: theirs.filter(r => !priced(r) || !overlaps(r)), skip: theirs.filter(r => priced(r) && overlaps(r)) };
+}
+async function mergeSeries(fromKey, toKey) {
+  const plan = mergePlan(fromKey, toKey), isB = String(fromKey).startsWith("book:");
+  await moveEntries(plan.entries, toKey);
+  S.valueRules = (S.valueRules || []).filter(r => r.s !== fromKey).concat(plan.add.map(r => Object.assign({}, r, { s: toKey })));
+  const empty = v => v == null || v === "";
+  if (isB) {
+    const a = fromKey.slice(5), b = toKey.slice(5), meta = Object.assign({}, S.bookMeta || {}), sizes = Object.assign({}, S.bookSizes || {});
+    const m = Object.assign({}, meta[b] || {}); Object.entries(meta[a] || {}).forEach(([k, v]) => { if (empty(m[k])) m[k] = v; }); meta[b] = m; delete meta[a];
+    if (sizes[a]) sizes[b] = Math.max(+sizes[b] || 0, +sizes[a]); delete sizes[a];
+    S.bookMeta = meta; S.bookSizes = sizes; S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== a);
+  } else {
+    const f = seriesById(fromKey), t = seriesById(toKey);
+    ["short", "code", "country", "pubHouse", "format", "about", "aboutSrc", "first", "perYear", "firstYear", "lastYear", "issueList", "defaultEdition"].forEach(k => { if (empty(t[k]) && !empty(f[k])) t[k] = f[k]; });
+    if (+f.latest > +t.latest) t.latest = f.latest;
+    if (f.firstYear && t.firstYear) t.firstYear = Math.min(+f.firstYear, +t.firstYear); if (f.lastYear && t.lastYear) t.lastYear = Math.max(+f.lastYear, +t.lastYear);
+    S.series = S.series.filter(x => x !== f);
+  }
+  markComplete(fromKey, false);
+  await saveSeries(); await setConfig("valueRules", S.valueRules);
+  await setConfig("bookSizes", S.bookSizes || {}); await setConfig("bookSeriesInfo", S.bookMeta || {}); await setConfig("bookSeriesExtra", S.bookSeriesExtra || []);
+  return plan;
+}
 // saves renamed book series and volume counts (called by "Save series")
 async function saveBookSeries() {
   const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}), fix = [];
@@ -526,7 +557,7 @@ VIEWS.series = {
       <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="4">${esc(s.about || "")}</textarea></label>
       ${s.aboutSrc ? (t => `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a>${t && norm(t) !== norm(s.name) ? ` page “${esc(t)}”` : ""} (GNU FDL 1.2)</div>`)((() => { try { return decodeURIComponent((/duckipedia\.org\/(.+)$/.exec(s.aboutSrc) || [])[1] || "").replace(/_/g, " "); } catch (e) { return ""; } })()) : ""}</div>`, false)
       + (s.id ? sect(key, "prices", "Price ranges", priceMeta(s.id), `<div class="sform">${valueRulesHtml(s.id)}</div>`, false) : "")
-      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}${s.id ? `<button type="button" class="ghost" data-c2b="${i}">Make it a book series</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div><div id="cellpick"></div>`; };
+      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}${s.id ? `<button type="button" class="ghost" data-c2b="${i}">Make it a book series</button><button type="button" class="ghost" data-smerge="${esc(s.id)}">Merge into…</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div><div id="cellpick"></div>`; };
     // ---- the lists: Universe › Group › Series, like Collection ----
     const tab = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
     const bookNames = bookSeriesNames();
@@ -710,6 +741,22 @@ VIEWS.series = {
       const run = async u => { if (!u) return; try { const se = await bookToComicSeries(name, u); sheetClose(); S.serEditBook = null; S.serTab = "comics"; S.serPath = { u: se.publisher, g: se.group || OTHER_GROUP }; S.serEditObj = se; toast(name + " is now a comic series in " + u); render(); window.scrollTo(0, 0); } catch (e) { toast(errText(e)); } };
       document.querySelectorAll("[data-uni]").forEach(x => x.onclick = () => run(x.dataset.uni));
       $("#unewgo").onclick = () => run($("#unew").value.trim());
+    });
+    // merge: pick the series to keep, check, then move everything into it
+    document.querySelectorAll("[data-smerge]").forEach(b => b.onclick = async () => {
+      const from = b.dataset.smerge, isB = from.startsWith("book:");
+      if (isB) { try { await saveBookSeries(); } catch (e) {} } else grab();
+      const to = await pickSeries({ books: isB, onlyBooks: isB, exclude: from, title: "Merge " + seriesKeyLabel(from) + " into" });
+      if (!to || to === "_other" || to === from) return;
+      const fse = !isB && seriesById(from), tse = !isB && seriesById(to);
+      if (fse && tse && (fse.numbering === "year") !== (tse.numbering === "year")) { toast("These two are numbered differently (by year / running). Change one under Numbering first."); return; }
+      const p = mergePlan(from, to), fl = seriesKeyLabel(from), tl = seriesKeyLabel(to), pr = p.add.filter(r => typeof r.price === "number").length;
+      sheetOpen(`<div class="confirm"><strong>Merge ${esc(fl)} into ${esc(tl)}?</strong>
+        <p class="small" style="margin:0">${p.entries.length} ${p.entries.length === 1 ? "entry moves" : "entries move"} to ${esc(tl)}; ${esc(fl)} is then removed. Empty details of ${esc(tl)} are filled from ${esc(fl)}.</p>
+        <div class="banner warn small">Check the price ranges of both series before merging. ${esc(tl)} keeps its ${p.keep} ${p.keep === 1 ? "range" : "ranges"}; ${pr} of ${esc(fl)}'s are added${p.skip.length ? `, <strong>${p.skip.length} that overlap ${esc(tl)}'s are left out</strong> (${esc(p.skip.map(rangeText).join(", "))})` : ""}.</div>
+        <button class="primary" id="mgo">Merge</button><button class="ghost" id="cpX">Cancel</button></div>`);
+      $("#cpX").onclick = sheetClose;
+      $("#mgo").onclick = async () => { $("#mgo").disabled = true; try { await mergeSeries(from, to); sheetClose(); toast(fl + " merged into " + tl); if (isB) { S.serEditBook = to.slice(5); } else { S.serEditObj = seriesById(to); S.serPath = { u: S.serEditObj.publisher || "No universe yet", g: S.serEditObj.group || OTHER_GROUP }; } render(); window.scrollTo(0, 0); } catch (e) { toast(errText(e)); } };
     });
     // comic series -> book series: running numbers only; asks Book or Comic book
     document.querySelectorAll("[data-c2b]").forEach(b => b.onclick = () => {

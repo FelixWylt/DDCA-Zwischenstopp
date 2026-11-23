@@ -183,6 +183,9 @@ VIEWS.stats = {
     });
     // series you own comics of but whose end isn't known (no Latest issue, no years): How complete can't count them
     const noEnd = perSeries.filter(x => !x.tot && (ownBy.get(x.s.id) || []).length && !(x.s.numbering === "year" && catEntry(x.s))).map(x => x.s);
+    // remember complete series for the gold "Complete" label (only where the size is known now; book series by their number of volumes)
+    if (scope !== "b") perSeries.forEach(x => { if (x.tot) markComplete(x.s.id, x.n >= x.tot); });
+    if (typeof bookSeriesNames === "function") bookSeriesNames().forEach(n => { if (parseInt((S.bookSizes || {})[n], 10)) markComplete("book:" + n, bookSeriesComplete(n)); });
     perSeries.splice(0, perSeries.length, ...perSeries.filter(x => x.tot && x.n));
     if (loads.length) Promise.allSettled(loads).then(() => { if (S.view === "stats") renderKeep(); });   // one redraw when all have loaded
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
@@ -227,7 +230,10 @@ VIEWS.stats = {
       // one highlight: the series closest to complete
       const close = perSeries.map(x => Object.assign({ miss: x.tot - x.n }, x)).filter(x => x.miss > 0 && x.n / x.tot >= 0.25).sort((a, b) => a.miss - b.miss || b.n - a.n)[0];
       const hl = close && scope !== "b" ? `<button type="button" class="card highlight" data-gap="${esc(close.s.id)}"><span class="small muted">Closest to complete</span><strong>${esc(seriesLabel(close.s))}: only ${nf(close.miss)} missing</strong><span class="small muted">${nf(close.n)} of ${nf(close.tot)} · tap for the gap grid</span></button>` : "";
-      return head + tiles + hl + month + todoCard;
+      const ck = Object.keys(S.completeKeys || {}).filter(k => k.startsWith("book:") ? scope !== "c" || !S.comics.some(c => c.kind === "book" && c.seriesName === k.slice(5) && isNovel(c)) : scope !== "b" && seriesById(k))
+        .sort((a, b) => seriesKeyLabel(a).localeCompare(seriesKeyLabel(b), "de", { numeric: true }));
+      const complCard = ck.length ? card('Complete series <span class="chip complete">Complete</span>', nf(ck.length), `<div class="row" style="flex-wrap:wrap;gap:6px">${ck.map(k => `<button type="button" class="chipbtn" data-cgap="${esc(k)}">${esc(seriesKeyLabel(k))}</button>`).join("")}</div>${note("Every number owned. Tap one for its gap grid.")}`) : "";
+      return head + tiles + hl + complCard + month + todoCard;
     }
 
     // ================= Collection =================
@@ -263,7 +269,7 @@ VIEWS.stats = {
       const clO = ordered("compl", cl);
       const shown = S.statAllSeries ? clO : clO.slice(0, 8);
       const completion = scope !== "b" && cl.length ? card("How complete " + sortBtn("compl"), `<span class="seg small" role="group"><button type="button" data-compl="" aria-pressed="${!fewest}">Biggest</button><button type="button" data-compl="few" aria-pressed="${fewest}">Fewest missing</button></span>`,
-        `<div class="hbars">${shown.map(({ s, n, tot }) => `<button class="hbar" data-gap="${esc(s.id)}" title="${esc(s.name)}: ${n} of ${tot}"><span class="lab">${esc(seriesLabel(s))}</span><span class="track"><span class="fill owned" style="width:${Math.max(1, Math.min(100, n / tot * 100)).toFixed(1)}%"></span></span><span class="n">${fewest ? nf(tot - n) + "<small>missing</small>" : pct(n, tot) + " %<small>" + nf(n) + " / " + nf(tot) + "</small>"}</span></button>`).join("")}</div>
+        `<div class="hbars">${shown.map(({ s, n, tot }) => `<button class="hbar" data-gap="${esc(s.id)}" title="${esc(s.name)}: ${n} of ${tot}"><span class="lab">${esc(seriesLabel(s))}${n >= tot ? ' <span class="chip complete">Complete</span>' : ""}</span><span class="track"><span class="fill owned" style="width:${Math.max(1, Math.min(100, n / tot * 100)).toFixed(1)}%"></span></span><span class="n">${fewest ? nf(tot - n) + "<small>missing</small>" : pct(n, tot) + " %<small>" + nf(n) + " / " + nf(tot) + "</small>"}</span></button>`).join("")}</div>
         ${cl.length > 8 ? `<button class="ghost" id="stAllSeries" type="button">${S.statAllSeries ? "Show fewer" : "Show all " + cl.length + " series"}</button>` : ""}
         ${noEnd.length ? `<p class="small muted" style="margin:8px 0 0">Not counted: ${noEnd.length} ${noEnd.length === 1 ? "series has" : "series have"} no Latest issue (or years) set yet. Tap one to add it in Series: ${noEnd.map(s => `<button type="button" class="link" data-snoend="${esc(s.id)}">${esc(seriesLabel(s))}</button>`).join(", ")}</p>` : ""}
         ${note(fewest ? "Series with the fewest issues missing. " + (cl[0] ? nf(wishIn(cl[0].s.id).length) + " of " + esc(seriesLabel(cl[0].s)) + "'s missing ones are on your wishlist. " : "") + "Tap a series for its gap grid." : "Biggest first. Tap a series for its gap grid.")}`) : "";
@@ -458,6 +464,7 @@ VIEWS.stats = {
     document.querySelectorAll("[data-sser]").forEach(b => b.onclick = () => storiesGo({ who: { role: "series", name: b.dataset.sser } }));
     document.querySelectorAll("[data-gowish]").forEach(b => b.onclick = () => { if (S.statScope === "b") S.wishKind = "books"; else if (S.statScope === "c") S.wishKind = "comics"; S.wishFilter = "all"; S.gapTab = "wishlist"; nav("gaps"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-g]").forEach(b => b.onclick = () => { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.shown = 200; S.col = b.dataset.p === BOOK_PUB ? { p: BOOK_PUB, g: BOOK_GROUP } : { p: b.dataset.p, g: b.dataset.g }; nav("collection"); window.scrollTo(0, 0); });
+    document.querySelectorAll("[data-cgap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.cgap; S.gapTab = "gaps"; nav("gaps"); window.scrollTo(0, 0); });
     document.querySelectorAll(".hbar[data-gap]").forEach(b => b.onclick = () => { S.gapSeries = b.dataset.gap; S.gapTab = "gaps"; nav("gaps"); });
     document.querySelectorAll("[data-snoend]").forEach(b => b.onclick = () => { const s = seriesById(b.dataset.snoend); if (!s) return; S.serTab = "comics"; S.serPath = { u: s.publisher || "No universe yet", g: s.group || OTHER_GROUP }; S.serEditObj = s; S.serEditBook = null; nav("series"); });
     refreshRates();

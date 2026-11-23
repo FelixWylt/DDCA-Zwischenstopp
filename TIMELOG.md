@@ -219,4 +219,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Plan for D/E/F (move entries, merge series, series complete) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (21:47 → 21:47:55) |
 | 2026-11-23 | Answer: D/E/F plan updated after the user's answers | under 1 min (first guess 1) | 0–1 min (21:54 → 21:54:44) |
 | 2026-11-23 | Answer: F mark = gold Complete label noted | under 1 min (first guess 1) | 0–1 min (21:57 → 21:57:26) |
+| 2026-11-23 | da-v234 bundle: Move mode in the gap grid, Merge into…, Complete label (grid, Collection, Stats) | 6–8 min (first guess 20 ÷ 3) | 3–4 min (21:58 → 22:01:53) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

@@ -135,6 +135,33 @@ function isbnWarnings(c) {
   return out;
 }
 const isbnWarnHtml = c => (w => w.length ? `<div class="banner warn small isbnwarn">⚠ ${w.map(esc).join("<br>⚠ ")}</div>` : "")(isbnWarnings(c));
+// ---- complete series (da-v234): remembered when the gap grid or Stats counts them, shown as a gold "Complete" label ----
+function isComplete(key) { return !!(S.completeKeys || {})[key]; }
+function markComplete(key, done) {
+  if (!key) return; S.completeKeys = S.completeKeys || {};
+  if (!!S.completeKeys[key] === !!done) return;
+  if (done) S.completeKeys[key] = true; else delete S.completeKeys[key];
+  setConfig("completeSeries", S.completeKeys).catch(() => {});
+}
+const completeChip = key => isComplete(key) ? ' <span class="chip complete">Complete</span>' : "";
+// a book series is complete when its number of volumes is set and you own every one of them
+function bookSeriesComplete(name) {
+  const size = parseInt((S.bookSizes || {})[name], 10); if (!size) return false;
+  const have = new Set(S.comics.filter(c => c.kind === "book" && c.seriesName === name && isOwn(c)).map(c => parseFloat(String(c.issue || "").replace(",", "."))));
+  for (let i = 1; i <= size; i++) if (!have.has(i)) return false; return true;
+}
+// ---- move entries to another series (da-v234): comic ⇄ comic, book ⇄ book, comic ⇄ book ----
+function entryMovedTo(c, key) {
+  if (String(key).startsWith("book:")) {
+    const name = key.slice(5), proto = S.comics.find(x => x.kind === "book" && x.seriesName === name && x.id !== c.id), extra = (S.bookSeriesExtra || []).find(x => x.name === name);
+    const bookType = proto ? proto.bookType || "" : extra ? (extra.novel ? "book" : "") : c.kind === "book" ? c.bookType || "" : "";
+    const o = Object.assign({}, c, { kind: "book", bookType, seriesId: "_book", seriesName: name, issue: c.issueLabel || c.issue || "", title: c.title || name + " " + (c.issueLabel || c.issue || "") });
+    ["issueLabel", "issueSort", "issueYear", "issueNum"].forEach(k => delete o[k]); return o;
+  }
+  const se = seriesById(key), p = parseIssue(se, c.issueLabel || c.issue || "");
+  return Object.assign({}, c, { kind: "issue", bookType: "", seriesId: se.id, seriesName: se.name, issue: p.label || c.issue || "", issueLabel: p.label || c.issue || "", issueNum: p.n, issueSort: p.sort, issueYear: p.year || null });
+}
+async function moveEntries(list, key) { const fix = list.map(c => entryMovedTo(c, key)); if (fix.length) await saveMany(fix, null, true); return fix.length; }
 // format names in English (the user's wish, 2026-11-22): old German names are renamed on start, on save and on restore
 const FMT_EN = { "Heft": "Magazine", "Taschenbuch / Pocket": "Pocket book" };
 // series sizes from Duckipedia in English: "200 mm (Höhe) × 135 mm (Breite)" -> "200 × 135 mm", "wechselnd pages" -> "varying pages"
@@ -766,6 +793,7 @@ async function boot() {
     S.lastSeries = await getConfig("lastSeries") || null;
     S.barcodes = await getConfig("barcodes") || {};
     S.bookSizes = await getConfig("bookSizes") || {};
+    S.completeKeys = await getConfig("completeSeries") || {};
     S.barcodeYears = await getConfig("barcodeYears") || {};
     S.recentSeries = await getConfig("recentSeries") || [];
     S.comics = await tx("comics", "readonly", st => st.getAll()) || [];
@@ -1242,7 +1270,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 233;
+const APP_BUILD = 234;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

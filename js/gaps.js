@@ -14,27 +14,36 @@ function bindGapTabs() {
 }
 // header of the grid: series, progress, filter chips (all / missing / wishlist / unread) and reading mode
 function gapHead(owned, wanted, total, info) {
-  const pct = total ? Math.round(owned / total * 100) : 0, f = S.gapFilter || "all";
+  const pct = total ? Math.round(owned / total * 100) : 0, f = S.gapFilter || "all", gkey = info.cur || S.gapSeries;
+  // complete only when the series' end is known (Latest issue, years or INDUCKS; a book series' number of volumes), else the grid just stops at your highest number
+  const gse = seriesById(gkey), known = gapIsBook(gkey) ? parseInt((S.bookSizes || {})[gkey.slice(5)], 10) > 0 : !!gse && (gse.numbering === "year" ? !!(catEntry(gse) || gse.lastYear || gse.issueList) : +gse.latest > 0);
+  const done = known && total > 0 && owned >= total;
+  markComplete(gkey, done);   // remembered for the gold "Complete" label in Collection and Stats
+  if (S.moveFor !== gkey) { S.moveSel = new Set(); S.moveFor = gkey; }
   const chip = (k, label) => `<button type="button" class="fchip${f === k ? " on" : ""}" data-gf="${k}" aria-pressed="${f === k}">${label}</button>`;
   return `<div class="card stack gaphead">
       ${gapPicker(info.cur || S.gapSeries)}
-      <div><div class="row between small"><span><strong>${owned}</strong> of ${total} owned · ${pct}%</span><span class="muted">${wanted} wanted · ${Math.max(0, total - owned)} missing</span></div>
+      <div><div class="row between small"><span><strong>${owned}</strong> of ${total} owned · ${pct}%${done ? ' <span class="chip complete">Complete</span>' : ""}</span><span class="muted">${wanted} wanted · ${Math.max(0, total - owned)} missing</span></div>
         <div class="meter" style="margin-top:4px"><span style="width:${pct}%"></span></div></div>
       <div class="fchips">${chip("all", "All")}${chip("missing", "Missing")}${chip("wanted", "Wishlist")}${info.read === false ? "" : chip("unread", "Unread")}
         ${info.read === false ? "" : `<button type="button" class="fchip readchip${S.readMode ? " on" : ""}" id="readmode" aria-pressed="${!!S.readMode}">✓ Mark read</button>`}
+        <button type="button" class="fchip readchip${S.moveMode ? " on" : ""}" id="movemode" aria-pressed="${!!S.moveMode}">Move</button>
         ${info.editions ? `<button type="button" class="fchip readchip${S.edMode ? " on" : ""}" id="edmode" aria-pressed="${!!S.edMode}">Edition</button>` : ""}
         <button type="button" class="fchip" id="copymiss" data-name="${esc((s => s ? s.short || s.name : String(info.cur || S.gapSeries || "").replace(/^book:/, ""))(seriesById(info.cur || S.gapSeries)))}">Copy missing numbers</button>
         <button type="button" class="fchip" id="wishall">Wish all missing</button>
         ${gapWishesOf(info.cur || S.gapSeries).some(c => wishLevel(c) !== "must") ? `<button type="button" class="fchip" id="unwishall">Remove all wishes</button>` : ""}
         <details class="ginfo"><summary aria-label="What the colours mean">ⓘ</summary><div class="legend small">${info.legend}</div></details></div>
       ${S.readMode ? '<p class="small muted" style="margin:0">Reading mode: tap an owned issue to mark it read today; tap again to undo.</p>' : ""}
+      ${S.moveMode ? `<div class="row movebar" style="align-items:center;gap:8px;flex-wrap:wrap"><span class="small">Move mode: tap squares (or entries in the list under the grid). <strong id="movecount">${S.moveSel.size}</strong> selected</span><button type="button" class="primary" id="movego">Move to…</button><button type="button" class="ghost" id="moveclr">Clear</button></div>` : ""}
       ${S.edMode && info.editions ? `<p class="small muted" style="margin:0">Edition mode: tap an owned issue to choose its edition. Unmarked squares count as ${esc(info.defEd || "the price table's general prices")}; small letters show other editions (${esc(info.editions.map(e => editionMark(e) + " = " + e).join(", "))}).</p>` : ""}
     </div>`;
 }
 function bindGapHead() {
   document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(!$("#readmode")); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
-  $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; if (S.readMode) S.edMode = false; renderKeep(); });
-  $("#edmode") && ($("#edmode").onclick = () => { S.edMode = !S.edMode; if (S.edMode) S.readMode = false; renderKeep(); });
+  $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; if (S.readMode) { S.edMode = false; S.moveMode = false; } renderKeep(); });
+  $("#edmode") && ($("#edmode").onclick = () => { S.edMode = !S.edMode; if (S.edMode) { S.readMode = false; S.moveMode = false; } renderKeep(); });
+  $("#movemode") && ($("#movemode").onclick = () => { S.moveMode = !S.moveMode; if (S.moveMode) { S.readMode = false; S.edMode = false; } else S.moveSel = new Set(); renderKeep(); });
+  bindMoveMode();
   bindWholeSeriesWishes();
   // the squares you don't own, as text: runs of numbers shortened (12–15), yearly series by year (1985: 3, 7–9)
   $("#copymiss") && ($("#copymiss").onclick = async () => {
@@ -68,6 +77,24 @@ function gapBound(key, txt, end) {
   const se = !gapIsBook(key) && seriesById(key);
   if (se && se.numbering === "year" && /^\d{4}$/.test(s)) return +s * 1000 + (end ? 999 : 0);
   const v = gapPos(key, s); return isNaN(v) ? (end ? Infinity : -Infinity) : v;
+}
+// ---- Move mode (da-v234): pick squares, then move their entries to another series ----
+const moveIdsOf = el => (el.dataset.ids || el.dataset.id || el.dataset.open || "").split(",").filter(Boolean);
+function moveToggle(el) {
+  const ids = moveIdsOf(el); if (!ids.length) { toast("Nothing in this square to move"); return; }
+  const on = !ids.every(id => S.moveSel.has(id)); ids.forEach(id => on ? S.moveSel.add(id) : S.moveSel.delete(id));
+  el.classList.toggle("msel", on); const n = $("#movecount"); if (n) n.textContent = S.moveSel.size;
+}
+function bindMoveMode() {
+  if (!S.moveMode) return;
+  document.querySelectorAll("#gridbox .cell, .offgrid [data-open]").forEach(el => { const ids = moveIdsOf(el); if (ids.length && ids.every(id => S.moveSel.has(id))) el.classList.add("msel"); });
+  $("#moveclr") && ($("#moveclr").onclick = () => { S.moveSel = new Set(); document.querySelectorAll(".msel").forEach(x => x.classList.remove("msel")); $("#movecount").textContent = 0; });
+  $("#movego") && ($("#movego").onclick = async () => {
+    const list = S.comics.filter(c => S.moveSel.has(c.id)); if (!list.length) { toast("Tap the squares to move first"); return; }
+    const from = S.gapSeries, key = await pickSeries({ books: true, exclude: from, title: "Move " + list.length + (list.length === 1 ? " entry" : " entries") + " to" });
+    if (!key || key === "_other" || key === from) return;
+    try { const n = await moveEntries(list, key); S.moveSel = new Set(); S.moveMode = false; toast(n + (n === 1 ? " entry" : " entries") + " moved to " + seriesKeyLabel(key)); renderKeep(); } catch (e) { toast(errText(e)); }
+  });
 }
 function bindWholeSeriesWishes() {
   const key = S.gapSeries, se = seriesById(key), name = se ? se.short || se.name : String(key || "").replace(/^book:/, "");
@@ -422,11 +449,12 @@ VIEWS.gaps = {
     if (String(S.gapSeries || "").startsWith("book:") && $("#bsize")) return bindBookGaps();
     bindGapTabs(); bindGapHead(); bindGapPicker();
     const open = id => { S.editing = id; S.draft = null; nav("add"); };
-    document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open));
+    document.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { if (S.moveMode) { moveToggle(b); return; } open(b.dataset.open); });
     $("#movestray") && ($("#movestray").onclick = async () => { try { const n = await moveStrays(strayBooks(S.gapSeries)); toast(n + (n === 1 ? " copy moved" : " copies moved")); renderKeep(); } catch (e) { toast(errText(e)); } });
     const og = $("details.offgrid"); if (og) { og.open = !!S.offgridOpen; og.ontoggle = () => { S.offgridOpen = og.open; }; }
     document.querySelectorAll("details.wishseries").forEach(d => d.ontoggle = () => { S.wishOpen = S.wishOpen || {}; S.wishOpen[d.dataset.wk] = d.open; });
     document.querySelectorAll(".cell").forEach(b => b.onclick = async () => {
+      if (S.moveMode) { moveToggle(b); return; }
       if (S.edMode && seriesEditions(S.gapSeries).length) {   // choose the edition of the owned comic(s) in this square
         const mine = (b.dataset.ids || "").split(",").map(id => S.comics.find(c => c.id === id)).filter(c => c && isOwn(c));
         if (!mine.length) { toast("Only owned issues have an edition"); return; }

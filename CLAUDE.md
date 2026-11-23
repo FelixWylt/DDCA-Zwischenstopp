@@ -127,7 +127,13 @@ except typing the reply itself. Say in the report that the reply writing and Git
   21:47: user wants D/E/F next (move entries, merge series, series complete) as da-v234: plan sent, waiting for the go.
   21:54 answers: D in the gap grid (not Collection); E keep the kept series' ranges + add the other's only where none, with a warning
   to check ranges first; F not ✓ (same as the read mark): 21:57 chose B = gold "Complete" word label (gap grid, Collection folders, Stats).
-  Still waiting for the go.
+  **da-v234 built (go 21:58, local until "publish"):** D gaps.js Move chip (#movemode, S.moveMode/S.moveSel, moveToggle/bindMoveMode; cells and
+  the off-grid list; Move to… = pickSeries {books, exclude}) + core.js entryMovedTo()/moveEntries() (comic⇄comic/book); E series.js
+  "Merge into…" (data-smerge, pickSeries onlyBooks/exclude; mergePlan: kept series' ranges win, the other's added only without overlap,
+  warning box lists left-out ranges; mergeSeries fills empty fields, removes the other; different numbering refused); F core.js
+  completeKeys (config completeSeries, markComplete/isComplete/completeChip/bookSeriesComplete): set by gapHead (only with a known end)
+  and Stats (perSeries with tot, book series with a size); gold chip .complete in gap head, Collection folders, Stats card "Complete
+  series" (data-cgap) and How complete. Screens at publish: + series-ltb-copies/collection, stats, series (with da-v233's list).
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
