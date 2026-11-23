@@ -210,4 +210,6 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | New chat: open repo, read handover nr. 14, check da-v232 + 47 covers | under 1 min (first guess 1 ÷ 2; estimate not given before start) | 0–1 min (21:00 → 21:00:30) |
 | 2026-11-23 | Answer: is a nightly cover run (idea 5) worth it? + note back gesture works | under 1 min (first guess 2 ÷ 2) | 0–1 min (21:03 → 21:03:41) |
 | 2026-11-23 | Plan for ideas 1, 3, 4 (read gaps/series/books code) | 1–2 min (first guess 3 ÷ 2) | 1–2 min (21:05 → 21:06:16) |
+| 2026-11-23 | Answer: what the back gesture is (no estimate given, no log line then; added late, not measured) | – | not measured (21:01 → reply ~21:02) |
+| 2026-11-23 | Answer: did I follow the guidelines? (self-check of this chat) | under 1 min (first guess 1) | 0–1 min (21:07 → 21:07:29) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
