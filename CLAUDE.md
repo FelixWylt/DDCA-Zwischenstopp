@@ -115,7 +115,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   4 move a series book ⇄ comic, 5 nightly GCD cover run (~6 series a night), 6 webcomic reader (still "not yet").
   Still on the phone: Refresh all books once; check the Winnetou 1 cover after Add all. Back gesture in the scanner: tested, works (2026-11-23).
   Chosen 2026-11-23 21:05: ideas 1, 3, 4 (plan sent, waiting for the go); 2, 5, 6 not wanted. 21:10: plan + 1b "Remove all wishes" (the reverse of 1). Answers 21:14: Want preselected; ask the universe; Remove keeps Must have. With the bundle add the rule
-  "answers to questions are not a go" (the user's wish, 21:17). Still waiting for the go.
+  "answers to questions are not a go" (the user's wish, 21:17). 21:26: + A (from–to range in Wish all missing), B (cost of the new
+  wishes in that box), C (Stats › Overview › To do lists ISBN warnings). D/E/F (move entries, merge series, series complete) not now. Still waiting for the go.
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
