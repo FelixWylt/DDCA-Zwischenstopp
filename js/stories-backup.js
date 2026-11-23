@@ -183,8 +183,15 @@ function storySeriesCard(code) {
       ? (x.parts.length === 1 ? "part " : "parts ") + x.parts.map(k => have.own.has(k) ? nf(num.get(k)) : `<b class="gold">${nf(num.get(k))}</b>`).join(", ")
       : x.parts.slice(0, 3).map(k => { const t = esc(label({ title: (SWHERE.s.get(k) || [""])[0] }) || k); return have.own.has(k) ? t : `<b class="gold">${t}</b>`; }).join(" · ") + (x.parts.length > 3 ? ` · +${x.parts.length - 3}` : "");
     const tag = h => h === "owned" ? '<span class="chip">owned</span>' : h === "read" ? '<span class="chip">read, not owned</span>' : h === "wish" ? '<span class="chip wanted">wishlist</span>' : "";
-    const body = gl.map(g => `<div class="wheregroup"><div class="small"><strong>${esc(pubOf(g.pi)[2])}</strong> <span class="muted">${g.xs.length}</span></div>${g.xs.map(x =>
-      `<div class="whererow small"><span class="wnum">${esc(String(x.key))}</span><span class="wparts">${partTxt(x)}</span>${tag(x.have)}${x.have ? "" : `<button type="button" class="ghost tiny" data-swish="${x.pi}|${esc(String(x.key))}">Wish</button>`}</div>`).join("")}</div>`).join("");
+    // da-v238: one folded line per series (stays open after a Wish), and at first only comics with parts you're missing
+    const onlyMiss = !S.stWhereAll, opened = S.stWhereOpen || (S.stWhereOpen = new Set());
+    const shownG = gl.map(g => Object.assign({}, g, { show: onlyMiss ? g.xs.filter(x => x.miss) : g.xs, nMiss: g.xs.filter(x => x.miss).length })).filter(g => g.show.length);
+    const allOwned = gl.length - shownG.length;
+    const body = `<div class="fchips" style="margin-top:6px"><button type="button" class="fchip${onlyMiss ? " on" : ""}" data-swall aria-pressed="${onlyMiss}">Only comics with ${kind === "cont" ? "parts" : "stories"} I'm missing</button></div>`
+      + shownG.map(g => `<details class="wheregroup" data-wpi="${g.pi}"${opened.has(code + "|" + g.pi) ? " open" : ""}><summary class="small"><strong>${esc(pubOf(g.pi)[2])}</strong> <span class="muted">· ${nf(g.xs.length)} ${g.xs.length === 1 ? "comic" : "comics"}${g.nMiss ? ` · <b class="gold">${nf(g.nMiss)}</b> with ${kind === "cont" ? "parts" : "stories"} you're missing` : " · nothing missing"}</span></summary>${g.show.map(x =>
+      `<div class="whererow small"><span class="wnum">${esc(String(x.key))}</span><span class="wparts">${partTxt(x)}</span>${tag(x.have)}${x.have ? "" : `<button type="button" class="ghost tiny" data-swish="${x.pi}|${esc(String(x.key))}">Wish</button>`}</div>`).join("")}</details>`).join("")
+      + (onlyMiss && allOwned ? `<p class="small muted" style="margin:6px 0 0">${nf(allOwned)} more ${allOwned === 1 ? "series has" : "series have"} only comics with ${kind === "cont" ? "parts" : "stories"} you own: switch the chip off to see them.</p>` : "")
+      + (!shownG.length ? `<p class="small muted" style="margin:6px 0 0">You own every ${kind === "cont" ? "part" : "story"} printed in these comics. ✓</p>` : "");
     const inner = `<p class="small muted" style="margin:0">${nf(rows.length)} ${rows.length === 1 ? "comic" : "comics"} in the app's ${nf(SWHERE.pubs.length)} INDUCKS series. <b class="gold">Gold</b> = ${kind === "cont" ? "a part" : "a story"} you don't own yet; comics with the most of them come first.${nowhere ? ` ${nf(nowhere)} of ${nf(parts.length)} ${nowhere === 1 ? "is" : "are"} printed only in series the app has no list for.` : ""}${extra ? ` ${nf(extra)} more INDUCKS ${extra === 1 ? "entry isn't" : "entries aren't"} counted: covers, one-page title pages, or stories printed only in series the app has no list for.` : ""}</p>${body}`;
     const listParts = kind === "cont" && parts.length ? `<details><summary>All ${nf(parts.length)} parts</summary><ol class="partlist small">${parts.map(k => { const w = SWHERE.s.get(k), t = (w && w[0]) || k;
       return `<li>${esc(t)} <span class="muted">${have.read.has(k) ? "read" : have.own.has(k) ? "owned" : have.wish.has(k) ? "on the wishlist" : "missing"}</span></li>`; }).join("")}</ol></details>` : "";
@@ -448,6 +455,8 @@ function drawStories() {
     box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
     // story series page (da-v237): its kind, and wishes straight from "Where to find them"
     box.querySelectorAll("[data-skind]").forEach(b => b.onclick = async () => { await setStoryKind(st.who.name, b.dataset.skind); drawStories(); });
+    $("[data-swall]") && ($("[data-swall]").onclick = () => { S.stWhereAll = !S.stWhereAll; drawStories(); });
+    box.querySelectorAll("details[data-wpi]").forEach(d => d.ontoggle = () => { const k = (st.who || {}).name + "|" + d.dataset.wpi, o = S.stWhereOpen || (S.stWhereOpen = new Set()); if (d.open) o.add(k); else o.delete(k); });
     box.querySelectorAll("[data-swish]").forEach(b => b.onclick = async () => { b.disabled = true; const i = b.dataset.swish.indexOf("|");
       try { await wishFromStory(+b.dataset.swish.slice(0, i), b.dataset.swish.slice(i + 1)); } catch (e) { toast(errText(e)); } drawStories(); });
     box.querySelectorAll("[data-sfav]").forEach(b => b.onclick = async () => {

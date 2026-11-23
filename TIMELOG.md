@@ -240,4 +240,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | da-v237 To do bundle (1–10, rough dates) + story series kinds, where to find them, bigger sort arrow (local) | 10–13 min (first guess 35 ÷ 3) | 8–9 min incl. the 1-min stop (go 23:40, stopped 23:41, continued 23:42 → 23:49:14) |
 | 2026-11-23/24 | Publish da-v237 + 10 log commits, one check run (stats, edit-comic, stories, story-series, todo-list + visit): no errors | under 1 min + ~2 min waiting (first guess 4) | 3–4 min incl. waiting (23:58 → 00:01:35); + push refused by the automatic catalogue rebuild, rebased, pushed 00:03 |
 | 2026-11-24 | Plan da-v238 (fold Where to find them per series + only-missing chip) | under 1 min (first guess 1 ÷ 2) | 0–1 min (00:05 → 00:05:23) |
+| 2026-11-24 | da-v238 part 1: Where to find them folded per series + chip "Only comics with parts I'm missing" (local) | ~3 min (first guess 6 ÷ 2) | 1–2 min (00:07 → 00:08:42) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

@@ -664,7 +664,8 @@ body.kb .savebar { position: static; border-top: 0; }
 /* story series: where to find the stories */
 .gold { color: #a8780a; }
 .wherecard > summary { cursor: pointer; margin: 4px 0; }
-.wheregroup { margin-top: 10px; }
+.wheregroup { margin-top: 8px; }
+.wheregroup > summary { cursor: pointer; padding: 6px 0; }
 .whererow { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line, #e5e5e5); }
 .whererow .wnum { min-width: 4.5em; font-variant-numeric: tabular-nums; }
 .whererow .wparts { flex: 1; min-width: 0; }
