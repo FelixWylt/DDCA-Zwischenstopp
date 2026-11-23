@@ -222,4 +222,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | da-v234 bundle: Move mode in the gap grid, Merge into…, Complete label (grid, Collection, Stats) | 6–8 min (first guess 20 ÷ 3) | 3–4 min (21:58 → 22:01:53) |
 | 2026-11-23 | Publish da-v233 + da-v234, one check run (no errors), handover nr. 15 | 2–3 min + ~2 min waiting (first guess 5 ÷ 2) | 3–4 min incl. waiting (22:37 → 22:40:10) |
 | 2026-11-23 | Answer: single-comic series (Micky Holmes & Donald Watson, INDUCKS de/MHDW = 1 issue) | under 1 min (first guess 1) | 0–1 min (22:56 → 22:56:14) |
+| 2026-11-23 | Publish log commits only (single-comics fix not built: no go); no check run | under 1 min (first guess 1) | 0–1 min (22:57 → 22:57:30) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

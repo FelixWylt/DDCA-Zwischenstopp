@@ -138,6 +138,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (series, edit-comic, stats, series-tools, notowned, series-ltb-copies, collection + visit): no JavaScript errors; book grid shows Move and
   Wish all missing. Not yet tried on the phone: Wish all missing / Remove all wishes, ISBN warning, Make it a comic/book series, Move, Merge,
   Complete label (Collection label appears after the grid or Stats counted a series). Nothing chosen next.
+  Offered 22:56, no go yet: da-v235 single comics (isSingleSeries) get no Complete label and stay out of How complete / no prices yet.
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
