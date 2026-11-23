@@ -108,6 +108,12 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Spindelmannen price list (Seriekatalogen VF, 1984–1999/8, 1991/2B variant, replace) published with da-v228; the user still taps Add all
   and gives the 9 "?" copies their numbers. Spider-Man (SE) and Spider-Man Magazin lists were already done 2026-11-15.
   The user's backup of 2026-11-22 was used for checks (kept off GitHub).
+- **Handover nr. 14 (2026-11-23 ~21:00, app da-v232, nothing local after publish):** 2026-11-22/23 late: +4 GCD covers (47 waiting;
+  Samlade serier 5 match was wrong, left out); Frieren (English, Viz) vols 1–15 sent as a Restore file (frieren-english-wishlist.json,
+  1–7 Must have, 15 comes out 14 Jan 2027; the user owns German vol 1 only); da-v232 Farbror Joakims liv grid (now a comic series, comic "2017").
+  Ideas offered, none chosen yet: 1 "Wish the whole series" button, 2 coming-out dates on wishes + "Coming soon", 3 bootleg/ISBN warning,
+  4 move a series book ⇄ comic, 5 nightly GCD cover run (~6 series a night), 6 webcomic reader (still "not yet").
+  Still on the phone: Refresh all books once; test the back gesture in the scanner; check the Winnetou 1 cover after Add all.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
