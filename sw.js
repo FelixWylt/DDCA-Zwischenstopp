@@ -50,7 +50,7 @@ self.addEventListener("fetch", event => {
   if (req.method !== "GET" || new URL(req.url).origin !== self.location.origin) return;
   event.respondWith((async () => {
     // price lists change often: fetch them fresh when online, the cached copy only when offline
-    if (/\/catalogue\/(prices|restore-batch|covers-batch)\.json$/.test(new URL(req.url).pathname)) {
+    if (/\/catalogue\/(prices|restore-batch|covers-batch|story-kinds)\.json$/.test(new URL(req.url).pathname)) {
       try { const res = await fetch(req, { cache: "no-store" }); if (res.ok) { (await caches.open(CAT_CACHE)).put(req, res.clone()); return res; } } catch (e) {}
       return (await caches.match(req, { ignoreSearch: true })) || Response.error();
     }

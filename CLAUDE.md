@@ -157,8 +157,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
   setting) from catalogue/story-where.json (scripts/build_story_where.py, also run by the catalogue workflow; parts = stories of 2+ pages,
   reading order = story code order), Wish button (wishFromStory, adds the series from the catalogue if needed). Screens: stats, edit-comic,
   stories, story-series (new), todo-list (new) + visit.
-  **Next, chosen by the user (2026-11-23):** pre-set the kind of as many story series as possible, as its OWN task with full attention
-  (not part of da-v237). Idea: a catalogue/story-kinds.json read by storyKindOf as a default under the user's own choice.
+- **da-v238 built overnight (go 2026-11-24 00:07 "do everything overnight", local until "publish"; the user looks in the morning):**
+  1) storySeriesCard "Where to find them": one folded <details data-wpi> per series (open state kept in S.stWhereOpen), chip
+  "Only comics with parts I'm missing" (data-swall, S.stWhereAll; on at first). 2) Pre-set kinds: catalogue/story-kinds.json
+  {kinds: {series code: cont|loose|setting}} for 411 of 1,070 series (70 cont, 54 setting, 287 loose; judged from names + story
+  titles, not looked up one by one; 452 series have countable stories). storyKindOf: the user's choice (config storyKinds; "none" =
+  Not set over a pre-set) › SKINDS (loadStoryKinds, called by loadStoryInfo); the page notes "pre-set by Claude". sw.js fetches
+  story-kinds.json network-first, so corrections arrive without an app update. Left unset on purpose (unsure): Duck Dynasty,
+  Il re del Klondike, Paperinik e la macchina del Fangus, P.d.P., and the 1-story series.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)

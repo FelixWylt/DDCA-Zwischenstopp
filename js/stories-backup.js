@@ -91,6 +91,7 @@ function sharedTitle(a, b) {
 // language and the creators' own country, matched by story code, so comics need no Refresh
 let SINFO = null, sinfoTry = 0, sinfoMissing = false;
 function loadStoryInfo() {
+  loadStoryKinds();
   if (SINFO || Date.now() - sinfoTry < 60000) return; sinfoTry = Date.now();
   fetch("catalogue/story-info.json").then(r => r.ok ? r.json() : null).then(j => {
     if (!j) { if (!sinfoMissing) { sinfoMissing = true; if (S.view === "stories") render(); } return; }
@@ -125,10 +126,14 @@ const seriesNameOf = code => ((SINFO && SINFO.series[code]) || {}).n || code;
 // kind: "cont" continuing story (DoubleDuck), "loose" separate stories in one format (riddles), "setting" only a shared
 // setting (PIA); not set works like loose. Your choice is in config storyKinds (and in the backup).
 const STORY_KINDS = [["cont", "Continuing story"], ["loose", "Loose series"], ["setting", "Shared setting"]];
-const storyKindOf = code => (S.storyKinds || {})[code] || "";
+// a kind you chose wins; else the pre-set one (catalogue/story-kinds.json, Claude 2026-11-24); "none" = you set Not set
+const storyKindOf = code => { const u = (S.storyKinds || {})[code]; return u === "none" ? "" : u || (SKINDS && SKINDS[code]) || ""; };
+const storyKindPreset = code => !(S.storyKinds || {})[code] && !!(SKINDS && SKINDS[code]);
+let SKINDS = null;
+function loadStoryKinds() { if (SKINDS) return; SKINDS = {}; fetch("catalogue/story-kinds.json").then(r => r.ok ? r.json() : null).then(j => { if (j && j.kinds) { SKINDS = j.kinds; if (S.view === "stories") drawStories(); } }).catch(() => {}); }
 const storyKindLabel = k => (STORY_KINDS.find(x => x[0] === k) || [, "Not set"])[1];
 async function setStoryKind(code, k) {
-  S.storyKinds = Object.assign({}, S.storyKinds); if (k) S.storyKinds[code] = k; else delete S.storyKinds[code];
+  S.storyKinds = Object.assign({}, S.storyKinds); if (k) S.storyKinds[code] = k; else if (SKINDS && SKINDS[code]) S.storyKinds[code] = "none"; else delete S.storyKinds[code];
   await setConfig("storyKinds", S.storyKinds).catch(() => {});
 }
 // every story of a series in the catalogue, in reading order (story codes follow the first printing: I TL 2276-1 before I TL 2301-1)
@@ -165,7 +170,8 @@ function storySeriesCard(code) {
   const nf = n => Number(n).toLocaleString("de-CH");
   const kind = storyKindOf(code), have = storyCodeSets();
   const chips0 = `<div class="fchips" role="group" aria-label="Kind of story series">${STORY_KINDS.concat([["", "Not set"]]).map(([k, l]) => `<button type="button" class="fchip${kind === k ? " on" : ""}" data-skind="${k}" aria-pressed="${kind === k}">${l}</button>`).join("")}</div>`;
-  if (!SWHERE) { loadStoryWhere(); return chips0 + `<p class="small muted" style="margin:0">Loading the series' stories …</p>`; }
+  const preNote = storyKindPreset(code) ? `<p class="small muted" style="margin:0">Kind pre-set by Claude from the series' story titles: tap another one if it's wrong.</p>` : "";
+  if (!SWHERE) { loadStoryWhere(); return chips0 + preNote + `<p class="small muted" style="margin:0">Loading the series' stories …</p>`; }
   // INDUCKS also files covers and one-page title pages under a story series: only stories of 2+ pages count as parts
   const all = seriesParts(code), parts = all.filter(k => { const w = SWHERE.s.get(k); return Math.max(w ? w[2] : 0, have.pages.get(k) || 0) >= 2; }), extra = all.length - parts.length;
   const nOwn = parts.filter(k => have.own.has(k)).length, nRead = parts.filter(k => have.read.has(k)).length;
@@ -197,7 +203,7 @@ function storySeriesCard(code) {
       return `<li>${esc(t)} <span class="muted">${have.read.has(k) ? "read" : have.own.has(k) ? "owned" : have.wish.has(k) ? "on the wishlist" : "missing"}</span></li>`; }).join("")}</ol></details>` : "";
     where = listParts + (rows.length ? `<details class="wherecard"${kind === "setting" ? "" : " open"}><summary><strong>Where to find them</strong></summary>${inner}</details>` : `<p class="small muted" style="margin:0">None of these stories is printed in the app's INDUCKS series.</p>`);
   }
-  return `${chips0}${prog ? `<div class="small">${prog}</div>` : ""}${where}`;
+  return `${chips0}${preNote}${prog ? `<div class="small">${prog}</div>` : ""}${where}`;
 }
 // a wish for a comic from a story series' "Where to find them"; its series is added when it isn't one of yours yet
 async function wishFromStory(pi, key) {
