@@ -213,4 +213,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Answer: what the back gesture is (no estimate given, no log line then; added late, not measured) | – | not measured (21:01 → reply ~21:02) |
 | 2026-11-23 | Answer: did I follow the guidelines? (self-check of this chat) | under 1 min (first guess 1) | 0–1 min (21:07 → 21:07:29) |
 | 2026-11-23 | Answer: reverse of idea 1 (remove a series' wishes) added to the plan | under 1 min (first guess 1) | 0–1 min (21:10 → 21:10:46) |
+| 2026-11-23 | Answer: more ideas for the wish/series bundle | under 1 min (first guess 2 ÷ 2) | 0–1 min (21:17 → 21:17:21) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
