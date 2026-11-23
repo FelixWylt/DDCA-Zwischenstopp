@@ -218,4 +218,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | da-v233 bundle: Wish all missing (+range, cost), Remove all wishes, ISBN/bootleg warning (+To do), book ⇄ comic series move, no-go rule | 6–8 min (first guess 20 ÷ 3) | 4–5 min (21:27 → 21:31:26) |
 | 2026-11-23 | Plan for D/E/F (move entries, merge series, series complete) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (21:47 → 21:47:55) |
 | 2026-11-23 | Answer: D/E/F plan updated after the user's answers | under 1 min (first guess 1) | 0–1 min (21:54 → 21:54:44) |
+| 2026-11-23 | Answer: F mark = gold Complete label noted | under 1 min (first guess 1) | 0–1 min (21:57 → 21:57:26) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
