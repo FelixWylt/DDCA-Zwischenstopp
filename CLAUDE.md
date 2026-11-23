@@ -113,7 +113,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   1–7 Must have, 15 comes out 14 Jan 2027; the user owns German vol 1 only); da-v232 Farbror Joakims liv grid (now a comic series, comic "2017").
   Ideas offered, none chosen yet: 1 "Wish the whole series" button, 2 coming-out dates on wishes + "Coming soon", 3 bootleg/ISBN warning,
   4 move a series book ⇄ comic, 5 nightly GCD cover run (~6 series a night), 6 webcomic reader (still "not yet").
-  Still on the phone: Refresh all books once; test the back gesture in the scanner; check the Winnetou 1 cover after Add all.
+  Still on the phone: Refresh all books once; check the Winnetou 1 cover after Add all. Back gesture in the scanner: tested, works (2026-11-23).
+  Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
+  (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
