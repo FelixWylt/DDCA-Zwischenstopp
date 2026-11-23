@@ -227,4 +227,6 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | da-v236 single books never Complete + publish + check run | 1–2 min + ~2 min waiting (first guess 3 ÷ 2) | 3–4 min incl. waiting (23:00 → 23:03:06) |
 | 2026-11-23 | Handover nr. 16: note in CLAUDE.md + message for the next chat | under 1 min (first guess 2 ÷ 2) | 0–1 min (23:04 → 23:04:53) |
 | 2026-11-23 | Publish handover nr. 16 (notes only, no check run) | under 1 min (first guess 1) | 0–1 min (23:06 → 23:06:06) |
+| 2026-11-23 | New chat: attach repo, read handover nr. 16, check nothing local (estimate FORGOTTEN) | none given | 0–1 min (23:06 → ~23:06, no commit) |
+| 2026-11-23 | Log line for the forgotten start-check estimate | ~1 min (first guess 1–2 ÷ 2) | 0–1 min (23:07 → 23:07:45) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
