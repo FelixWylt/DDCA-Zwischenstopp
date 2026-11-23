@@ -136,7 +136,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   series" (data-cgap) and How complete. Screens at publish: + series-ltb-copies/collection, stats, series (with da-v233's list).
 - **Handover nr. 16 (2026-11-23 ~23:05, app da-v236 published):** after nr. 15 came da-v235 (single comics out of
   Complete/How complete/no prices) and da-v236 (single books never Complete); both check runs clean. The user tested da-v233/234 on the
-  phone: "Everything is there". Nothing chosen next; no ideas waiting. This note + its log line may still be local (push on "publish").
+  phone: "Everything is there". Nothing chosen next; no ideas waiting. Published 23:06, nothing local.
 - **Handover nr. 15 (2026-11-23 ~22:42, app da-v234 published, nothing local):** da-v233 + da-v234 pushed 22:37; one check run
   (series, edit-comic, stats, series-tools, notowned, series-ltb-copies, collection + visit): no JavaScript errors; book grid shows Move and
   Wish all missing. Not yet tried on the phone: Wish all missing / Remove all wishes, ISBN warning, Make it a comic/book series, Move, Merge,
