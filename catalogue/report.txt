@@ -1,4 +1,4 @@
-INDUCKS publications: 7,374
+INDUCKS publications: 7,377
 
 PUBLICATIONS
   ✓ Lustiges Taschenbuch  →  de/LTB  'Lustiges Taschenbuch'  (by code)
@@ -81,9 +81,9 @@ PUBLICATIONS
   ✓ Der Stammbaum der Ducks (1999)  →  de/SDD  'Der Stammbaum der Ducks'  (by code)
 
 issues in chosen publications: 21,719
-entries: 236,301, story versions: 120,493
-cover scans: 21,090 of 21,719 issues
-story heroes: 76,384, their names: 5,577
+entries: 236,337, story versions: 120,525
+cover scans: 21,091 of 21,719 issues
+story heroes: 76,392, their names: 5,577
 
 FILES
   inducks-de-LTB.json: 667 issues, 867 KB  e.g. 334 = de/LTB 334 2005-02-01 (9 stories)
@@ -108,7 +108,7 @@ FILES
   inducks-se-WDK.json: 32 issues, 13 KB  e.g. 1979/01 = se/WDK1979-01 1979 (8 stories)
   inducks-se-J.json: 224 issues, 149 KB  e.g. 1986/01 = se/J 1986-01 1986-01 (4 stories)
   inducks-se-BL.json: 53 issues, 28 KB  e.g. 1990/06 = se/BL 1990-06 1990-11-23 (3 stories)
-  inducks-se-MP.json: 319 issues, 203 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
+  inducks-se-MP.json: 319 issues, 204 KB  e.g. 1995-05-06 = se/MP1995-05-06 1995 (8 stories)
   inducks-no-DD.json: 4,071 issues, 3,651 KB  e.g. 1993/37 = no/DD1993-37 1993-09-14 (7 stories)
   inducks-ch-MMZ.json: 19 issues, 8 KB  e.g. 9 = ch/MMZ  9 1937-05 (1 stories)
   inducks-de-DDCO.json: 104 issues, 52 KB  e.g. 53 = de/DDCO 53 2018-04-13 (3 stories)
@@ -168,10 +168,10 @@ STORY INFO
   inducks_storysubseries: storycode, subseriescode, storysubseriescomment
   inducks_subseries: subseriescode, subseriesname, official, subseriescomment, subseriescategory
   inducks_subseriesname: subseriescode, languagecode, subseriesname, preferred, subseriesnamecomment
-stories in a story series: 12,782 of 88,750, series: 1,067
-original languages: 88,749 stories, 18,312 differ from their prefix's usual language
+stories in a story series: 12,816 of 88,763, series: 1,070
+original languages: 88,762 stories, 18,312 differ from their prefix's usual language
   inducks_person: personcode, nationalitycountrycode, fullname, official, personcomment, unknownstudiomember, isfake, numberofindexedissues, birthname, borndate, bornplace, deceaseddate, deceasedplace, education, moviestext, comicstext, othertext, photofilename, photocomment, photosource, personrefs
 creators with a country: 1,521 of 2,573
-story-info.json: 917 KB
+story-info.json: 919 KB
 
 files in the ISV export: createtables.sql
