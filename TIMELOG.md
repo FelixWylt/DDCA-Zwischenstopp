@@ -209,4 +209,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Publish handover nr. 14 + log lines; no check run | under 1 min (first guess 1 ÷ 2) | 0–1 min (20:59 → 20:59:19) |
 | 2026-11-23 | New chat: open repo, read handover nr. 14, check da-v232 + 47 covers | under 1 min (first guess 1 ÷ 2; estimate not given before start) | 0–1 min (21:00 → 21:00:30) |
 | 2026-11-23 | Answer: is a nightly cover run (idea 5) worth it? + note back gesture works | under 1 min (first guess 2 ÷ 2) | 0–1 min (21:03 → 21:03:41) |
+| 2026-11-23 | Plan for ideas 1, 3, 4 (read gaps/series/books code) | 1–2 min (first guess 3 ÷ 2) | 1–2 min (21:05 → 21:06:16) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

@@ -114,6 +114,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Ideas offered, none chosen yet: 1 "Wish the whole series" button, 2 coming-out dates on wishes + "Coming soon", 3 bootleg/ISBN warning,
   4 move a series book ⇄ comic, 5 nightly GCD cover run (~6 series a night), 6 webcomic reader (still "not yet").
   Still on the phone: Refresh all books once; check the Winnetou 1 cover after Add all. Back gesture in the scanner: tested, works (2026-11-23).
+  Chosen 2026-11-23 21:05: ideas 1, 3, 4 (plan sent, waiting for the go); 2, 5, 6 not wanted.
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
