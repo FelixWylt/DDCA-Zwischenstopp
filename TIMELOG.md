@@ -235,4 +235,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Plan da-v237 + story series "where to find" (catalogue check: 10,230 series stories in 76 files) + bigger sort arrow | 1–2 min (first guess 3 ÷ 2) | 1–2 min (23:24 → 23:25:25) |
 | 2026-11-23 | Plan da-v237: story series kinds (continuing / loose / shared setting), questions | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:31 → 23:31:45) |
 | 2026-11-23 | Plan da-v237 restated with answers (kinds; pre-setting = own task later) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:38 → 23:38:31) |
+| 2026-11-23 | Explain question 3 (what changes per kind) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:39 → 23:39:25) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
