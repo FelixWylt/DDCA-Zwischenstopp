@@ -17,7 +17,7 @@ function gapHead(owned, wanted, total, info) {
   const pct = total ? Math.round(owned / total * 100) : 0, f = S.gapFilter || "all", gkey = info.cur || S.gapSeries;
   // complete only when the series' end is known (Latest issue, years or INDUCKS; a book series' number of volumes), else the grid just stops at your highest number
   const gse = seriesById(gkey), known = gapIsBook(gkey) ? parseInt((S.bookSizes || {})[gkey.slice(5)], 10) > 0 : !!gse && (gse.numbering === "year" ? !!(catEntry(gse) || gse.lastYear || gse.issueList) : +gse.latest > 0);
-  const done = known && total > 0 && owned >= total;
+  const done = known && total > 0 && owned >= total && !isSingleSeries(gse);   // a single comic book gets no Complete label
   markComplete(gkey, done);   // remembered for the gold "Complete" label in Collection and Stats
   if (S.moveFor !== gkey) { S.moveSel = new Set(); S.moveFor = gkey; }
   const chip = (k, label) => `<button type="button" class="fchip${f === k ? " on" : ""}" data-gf="${k}" aria-pressed="${f === k}">${label}</button>`;

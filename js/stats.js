@@ -184,14 +184,14 @@ VIEWS.stats = {
     // series you own comics of but whose end isn't known (no Latest issue, no years): How complete can't count them
     const noEnd = perSeries.filter(x => !x.tot && (ownBy.get(x.s.id) || []).length && !(x.s.numbering === "year" && catEntry(x.s))).map(x => x.s);
     // remember complete series for the gold "Complete" label (only where the size is known now; book series by their number of volumes)
-    if (scope !== "b") perSeries.forEach(x => { if (x.tot) markComplete(x.s.id, x.n >= x.tot); });
+    if (scope !== "b") perSeries.forEach(x => { if (isSingleSeries(x.s)) markComplete(x.s.id, false); else if (x.tot) markComplete(x.s.id, x.n >= x.tot); });   // a single comic book is no series to complete
     if (typeof bookSeriesNames === "function") bookSeriesNames().forEach(n => { if (parseInt((S.bookSizes || {})[n], 10)) markComplete("book:" + n, bookSeriesComplete(n)); });
-    perSeries.splice(0, perSeries.length, ...perSeries.filter(x => x.tot && x.n));
+    perSeries.splice(0, perSeries.length, ...perSeries.filter(x => x.tot && x.n && !isSingleSeries(x.s)));
     if (loads.length) Promise.allSettled(loads).then(() => { if (S.view === "stats") renderKeep(); });   // one redraw when all have loaded
     const wishIn = sid => S.comics.filter(c => c.status === "wanted" && c.seriesId === sid);
     // value per series (also tells which series have no prices)
     const bySer = {}; sel.forEach(c => { const k = isNovel(c) ? (c.seriesName ? "book:" + c.seriesName : "") : seriesKeyOf(c); if (k) (bySer[k] = bySer[k] || []).push(c); });
-    const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null).sort((a, b) => b.list.length - a.list.length);
+    const serVals = Object.keys(bySer).map(k => ({ k, v: valueChf(bySer[k]), list: bySer[k] })), noVal = serVals.filter(x => x.v == null && !isSingleSeries(seriesById(x.k))).sort((a, b) => b.list.length - a.list.length);
     const noValList = () => S.statNoVal ? `<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px">${noVal.map(x => x.k.startsWith("name:") ? `<span class="chipbtn" title="Not in your series list">${esc(seriesTitle(x.k))} ${x.list.length}</span>` : `<button type="button" class="chipbtn" data-priceser="${esc(x.k)}">${esc(seriesTitle(x.k))} ${x.list.length}</button>`).join("")}</div><p class="small muted" style="margin:4px 0 0">Tap a series to open its price ranges (Single books: the list of your books, where each gets its own value). The number is how many you own.</p>` : "";
     const bk = () => scope !== "c" && novels.length ? bookStats(novels, novelsWanted, true) : null;
     let idx0 = null; const idxGet = () => idx0 || (idx0 = storyIndex("owned"));
