@@ -116,6 +116,25 @@ async function moveStrays(list) {
   await saveMany(fix, null, true); fix.forEach(remember); announce();
   return fix.length;
 }
+// ---- ISBN / bootleg warning (da-v233): a number that doesn't add up, a made-up publisher, or another publisher than the series' other volumes ----
+const FAKE_PUB = /^(generic|unknown|unbekannt|okänd|n\/?a|none|no brand|unbranded|underground|wos limited\b.*)$/i;
+function isbnWarnings(c) {
+  if (!c) return [];
+  const out = [], raw = String(c.isbn || "").toUpperCase().replace(/[^0-9X]/g, ""), book = c.kind === "book", N = x => (window.Books ? Books.normalize(x) : "") || "";
+  const n13 = raw ? N(raw) : "";
+  if (raw && !n13 && (book || /^97[89]\d{10}$/.test(raw))) out.push(raw.length === 10 || raw.length === 13 ? "The ISBN doesn't add up (its check digit is wrong): a typo, or a made-up number as on unofficial copies." : "The ISBN has " + raw.length + " digits; a real one has 13 (or 10 on older books).");
+  const pub = String(c.publisher || "").trim();
+  if (pub && (FAKE_PUB.test(pub) || /\bgeneric\b/i.test(pub))) out.push("“" + pub + "” isn't a real publisher: often an unofficial copy (bootleg).");
+  if (n13 && book && c.seriesName) {   // same series, same language: the first digits name the publisher
+    const others = S.comics.filter(x => x.id !== c.id && x.kind === "book" && x.seriesName === c.seriesName && (!c.lang || !x.lang || x.lang === c.lang)).map(x => N(x.isbn)).filter(Boolean);
+    if (others.length >= 2) {
+      let p = others[0]; others.forEach(o => { let i = 0; while (i < p.length && p[i] === o[i]) i++; p = p.slice(0, i); }); p = p.slice(0, 7);
+      if (p.length >= 6 && !n13.startsWith(p)) out.push("The ISBN doesn't start like your other volumes of " + c.seriesName + " (" + p + "…): another publisher, or an unofficial copy.");
+    }
+  }
+  return out;
+}
+const isbnWarnHtml = c => (w => w.length ? `<div class="banner warn small isbnwarn">⚠ ${w.map(esc).join("<br>⚠ ")}</div>` : "")(isbnWarnings(c));
 // format names in English (the user's wish, 2026-11-22): old German names are renamed on start, on save and on restore
 const FMT_EN = { "Heft": "Magazine", "Taschenbuch / Pocket": "Pocket book" };
 // series sizes from Duckipedia in English: "200 mm (Höhe) × 135 mm (Breite)" -> "200 × 135 mm", "wechselnd pages" -> "varying pages"
@@ -1223,7 +1242,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 232;
+const APP_BUILD = 233;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

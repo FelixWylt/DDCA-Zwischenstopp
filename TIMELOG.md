@@ -215,4 +215,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Answer: reverse of idea 1 (remove a series' wishes) added to the plan | under 1 min (first guess 1) | 0–1 min (21:10 → 21:10:46) |
 | 2026-11-23 | Answer: more ideas for the wish/series bundle | under 1 min (first guess 2 ÷ 2) | 0–1 min (21:17 → 21:17:21) |
 | 2026-11-23 | Plan: add ideas A, B, C to the bundle | under 1 min (first guess 1) | 0–1 min (21:26 → 21:26:44) |
+| 2026-11-23 | da-v233 bundle: Wish all missing (+range, cost), Remove all wishes, ISBN/bootleg warning (+To do), book ⇄ comic series move, no-go rule | 6–8 min (first guess 20 ÷ 3) | 4–5 min (21:27 → 21:31:26) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

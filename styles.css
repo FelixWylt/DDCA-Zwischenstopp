@@ -691,3 +691,6 @@ rect.hit.on { fill: var(--accent); opacity: 0.12; }
 /* Gaps: read without owning it (still missing): dashed edge + the read tick */
 .cell.readno { outline: 1.5px dashed var(--owned); outline-offset: -3px; color: var(--owned); }
 .cell.wanted.readno { outline-color: var(--wanted); color: var(--wanted); }
+
+.isbnwarn { margin: 6px 0; }
+.isbnwarn-t { color: var(--danger, #b4532a); margin-top: 2px; }

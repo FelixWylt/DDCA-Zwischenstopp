@@ -281,7 +281,7 @@ function bookSeriesPage(n, sect) {
       ${m.aboutSrc ? `<div class="wide small muted">Text from <a href="${esc(m.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${m.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(m.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : ""}</div>`, false)}
     ${sect(k, "prices", "Price ranges", (rs => rs.length ? rs.length + (rs.length === 1 ? " range" : " ranges") : "none yet")((S.valueRules || []).filter(r => r.s === k && typeof r.price === "number")), `<div class="sform">${valueRulesHtml(k)}</div>`, false)}
     </div>
-    <div class="row" style="margin-top:10px"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div>`;
+    <div class="row" style="margin-top:10px"><button type="button" data-bkfill="${esc(n)}">Fill from Wikidata and Wikipedia</button><button type="button" class="ghost" data-bkgap="${esc(n)}">Open gap grid</button><button type="button" class="ghost" data-bk2c="${esc(n)}">Make it a comic series</button>${bs.length ? "" : `<button type="button" class="ghost danger" data-bkrm="${esc(n)}">Remove series</button>`}</div><div id="cellpick"></div>`;
 }
 // ---- Wikidata (facts) and Wikipedia (description) for a book series; empty fields only, then your own books fill the rest ----
 const WD = "https://www.wikidata.org/w/api.php";
@@ -437,6 +437,36 @@ async function deleteEmptySeries() {
   await setConfig("bookSizes", sizes); await setConfig("bookSeriesInfo", meta);
   return ids.size + names.size;
 }
+// ---- move a series between Books and Comics (da-v233): its entries, price ranges and description go along ----
+function universeChoices() { return [...new Set([DISNEY, "Franco-Belgian", "Marvel", "DC", "King Features", "Swedish comics", OTHER_PUB].concat(S.series.map(s => s.publisher).filter(Boolean)))].filter(p => !isBookUni(p)).sort(pubCompare); }
+async function bookToComicSeries(name, universe) {
+  const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === name), m = bookInfo(name);
+  const used = new Set(S.series.map(s => s.id)); let id = "x-" + slug(name), k = 2; while (used.has(id)) id = "x-" + slug(name) + "-" + k++;
+  const maxVol = Math.max(0, ...bs.map(c => parseInt(c.issue, 10) || 0)), size = parseInt((S.bookSizes || {})[name], 10) || 0;
+  const se = { id, name, short: "", publisher: universe, group: guessGroup(name), code: "", country: "", numbering: "running", latest: Math.max(size, maxVol) || "", pubHouse: m.publisher || "", about: m.about || "" };
+  if (universe === DISNEY && arrangedInUse()) Object.assign(se, arrangeSeries(se));
+  S.series.push(se);
+  const fix = bs.map(c => { const p = parseIssue(se, c.issue || ""); return Object.assign({}, c, { kind: "issue", bookType: "", seriesId: id, seriesName: name, issue: p.label || c.issue || "", issueLabel: p.label || c.issue || "", issueNum: p.n, issueSort: p.sort, issueYear: p.year || null }); });
+  (S.valueRules || []).forEach(r => { if (r.s === "book:" + name) r.s = id; });
+  const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}); delete sizes[name]; delete meta[name];
+  S.bookSizes = sizes; S.bookMeta = meta; S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== name);
+  await saveSeries(); if (fix.length) await saveMany(fix, null, true);
+  await setConfig("valueRules", S.valueRules || []); await setConfig("bookSizes", sizes); await setConfig("bookSeriesInfo", meta); await setConfig("bookSeriesExtra", S.bookSeriesExtra);
+  return se;
+}
+async function comicToBookSeries(se, bookType) {
+  const name = se.name, cs = S.comics.filter(c => c.seriesId === se.id);
+  if (bookSeriesNames().includes(name)) throw new Error("A book series called “" + name + "” already exists. Rename one of them first.");
+  const fix = cs.map(c => { const o = Object.assign({}, c, { kind: "book", bookType, seriesId: "_book", seriesName: name, issue: c.issueLabel || c.issue || "", title: c.title || name + " " + (c.issueLabel || c.issue || "") }); ["issueLabel", "issueSort", "issueYear", "issueNum"].forEach(k => delete o[k]); if (!o.publisher && se.pubHouse) o.publisher = se.pubHouse; return o; });
+  S.bookMeta = Object.assign({}, S.bookMeta, { [name]: Object.assign({}, bookInfo(name), { publisher: se.pubHouse || "", about: se.about || "" }) });
+  if (+se.latest) S.bookSizes = Object.assign({}, S.bookSizes, { [name]: +se.latest });
+  if (!cs.length) S.bookSeriesExtra = (S.bookSeriesExtra || []).concat([{ name, novel: bookType === "book" }]);
+  (S.valueRules || []).forEach(r => { if (r.s === se.id) r.s = "book:" + name; });
+  S.series = S.series.filter(x => x !== se);
+  await saveSeries(); if (fix.length) await saveMany(fix, null, true);
+  await setConfig("valueRules", S.valueRules || []); await setConfig("bookSizes", S.bookSizes || {}); await setConfig("bookSeriesInfo", S.bookMeta); await setConfig("bookSeriesExtra", S.bookSeriesExtra || []);
+  return name;
+}
 // saves renamed book series and volume counts (called by "Save series")
 async function saveBookSeries() {
   const sizes = Object.assign({}, S.bookSizes || {}), meta = Object.assign({}, S.bookMeta || {}), fix = [];
@@ -496,7 +526,7 @@ VIEWS.series = {
       <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="4">${esc(s.about || "")}</textarea></label>
       ${s.aboutSrc ? (t => `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a>${t && norm(t) !== norm(s.name) ? ` page “${esc(t)}”` : ""} (GNU FDL 1.2)</div>`)((() => { try { return decodeURIComponent((/duckipedia\.org\/(.+)$/.exec(s.aboutSrc) || [])[1] || "").replace(/_/g, " "); } catch (e) { return ""; } })()) : ""}</div>`, false)
       + (s.id ? sect(key, "prices", "Price ranges", priceMeta(s.id), `<div class="sform">${valueRulesHtml(s.id)}</div>`, false) : "")
-      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div>`; };
+      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}${s.id ? `<button type="button" class="ghost" data-c2b="${i}">Make it a book series</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div><div id="cellpick"></div>`; };
     // ---- the lists: Universe › Group › Series, like Collection ----
     const tab = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
     const bookNames = bookSeriesNames();
@@ -666,6 +696,32 @@ VIEWS.series = {
     document.querySelectorAll("[data-bkrm]").forEach(b => b.onclick = async () => {
       S.bookSeriesExtra = (S.bookSeriesExtra || []).filter(x => x.name !== b.dataset.bkrm); await setConfig("bookSeriesExtra", S.bookSeriesExtra);
       toast(b.dataset.bkrm + " removed"); S.serEditBook = null; render();
+    });
+    // book series -> comic series: asks the universe
+    document.querySelectorAll("[data-bk2c]").forEach(b => b.onclick = async () => {
+      try { await saveBookSeries(); } catch (e) {}   // keep what was typed
+      const name = b.dataset.bk2c, n = S.comics.filter(c => c.kind === "book" && c.seriesName === name).length;
+      sheetOpen(`<div class="confirm"><strong>Make ${esc(name)} a comic series</strong>
+        <p class="small" style="margin:0">${n} ${n === 1 ? "entry moves" : "entries move"} along with numbers, ISBNs, read marks, wishes and price ranges. Which universe does it belong to?</p>
+        ${universeChoices().map(u => `<button type="button" data-uni="${esc(u)}">${esc(u)}</button>`).join("")}
+        <div class="row" style="gap:6px"><input id="unew" placeholder="Another universe"><button type="button" id="unewgo">Use it</button></div>
+        <button class="ghost" id="cpX">Cancel</button></div>`);
+      $("#cpX").onclick = sheetClose;
+      const run = async u => { if (!u) return; try { const se = await bookToComicSeries(name, u); sheetClose(); S.serEditBook = null; S.serTab = "comics"; S.serPath = { u: se.publisher, g: se.group || OTHER_GROUP }; S.serEditObj = se; toast(name + " is now a comic series in " + u); render(); window.scrollTo(0, 0); } catch (e) { toast(errText(e)); } };
+      document.querySelectorAll("[data-uni]").forEach(x => x.onclick = () => run(x.dataset.uni));
+      $("#unewgo").onclick = () => run($("#unew").value.trim());
+    });
+    // comic series -> book series: running numbers only; asks Book or Comic book
+    document.querySelectorAll("[data-c2b]").forEach(b => b.onclick = () => {
+      grab(); const se = S.series[+b.dataset.c2b]; if (!se) return;
+      if (se.numbering === "year") { sheetOpen(`<div class="confirm"><strong>${esc(se.name)} can't become a book series</strong><p class="small" style="margin:0">It is numbered by year (like 1987/5). Book series only take volume numbers (1, 2, 3 …).</p><button class="ghost" id="cpX">OK</button></div>`); $("#cpX").onclick = sheetClose; return; }
+      const n = S.comics.filter(c => c.seriesId === se.id).length;
+      const lost = [se.code && "its INDUCKS code (" + se.code + ")", se.perYear && "issues per year", se.issueList && "its own issue list", se.short && "its short name", se.format && "its format"].filter(Boolean);
+      sheetOpen(`<div class="confirm"><strong>Make ${esc(se.name)} a book series</strong>
+        <p class="small" style="margin:0">${n} ${n === 1 ? "entry moves" : "entries move"} along with numbers, read marks, wishes and price ranges.${lost.length ? " Books don't have " + esc(lost.join(", ")) + ", so that is dropped." : ""} Is it a book or a comic book series?</p>
+        <button type="button" data-btype="">Comic book</button><button type="button" data-btype="book">Book</button><button class="ghost" id="cpX">Cancel</button></div>`);
+      $("#cpX").onclick = sheetClose;
+      document.querySelectorAll("[data-btype]").forEach(x => x.onclick = async () => { try { const name = await comicToBookSeries(se, x.dataset.btype); sheetClose(); S.serEditObj = null; S.serTab = "books"; S.serEditBook = name; toast(name + " is now a book series"); render(); window.scrollTo(0, 0); } catch (e) { toast(errText(e)); } });
     });
     if ($("#addser")) $("#addser").onclick = () => {
       const s = { id: "", name: "", short: "", publisher: (S.serPath || {}).u || "", group: (S.serPath || {}).g || "", code: "", country: "", numbering: "running", latest: "" };

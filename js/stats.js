@@ -43,6 +43,7 @@ function pickInfo(pick) {
     src: [c => String(c.source || "").trim().toLowerCase() === val.toLowerCase(), `bought from ${val}`],
     readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"],
     notowned: [c => notOwned(c), "read, not owned"],
+    isbn: [c => isbnWarnings(c).length > 0, "with an ISBN warning (typo or unofficial copy?)"],
     rfrom: [c => c.read && readFromOf(c).toLowerCase() === String(val).toLowerCase(), val === "Own copy" ? "read in your own copy" : `read from ${val}`]
   }[type] || [() => false, "?"];
   // reading lists also show what you read without owning it
@@ -216,6 +217,9 @@ VIEWS.stats = {
       // a comic already linked to its INDUCKS issue that still has no stories has none there (a postcard book: DSBP 63), so Fill all can't help
       const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && !c.inducks && catEntry(seriesById(c.seriesId))).length;
       if (noStory) todo.push(`<div class="todo"><b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS) <button type="button" id="goFill">Fill all</button></div>`);
+      // ISBN / bootleg warnings (da-v233): owned ones open as a list, wishes in the Wishlist
+      { const iw = sel.filter(pickInfo("isbn||" + sc).test).length, iwW = S.comics.filter(c => c.status === "wanted" && (scope !== "b" || isNovel(c)) && (scope !== "c" || !isNovel(c)) && isbnWarnings(c).length).length;
+        if (iw || iwW) todo.push(`<div class="todo">${iw ? `<button type="button" class="link" data-pick="isbn||${sc}"><b>${nf(iw)}</b> with an ISBN warning</button>` : ""}${iw && iwW ? " · " : ""}${iwW ? `<button type="button" class="link" data-gowish><b>${nf(iwW)}</b> ${iwW === 1 ? "wish" : "wishes"} with an ISBN warning</button>` : ""}</div>`); }
       if (noVal.length) todo.push(`<div class="todo"><b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet <button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}</div>`);
       const bdays = daysSince(S.lastBackup);
       if (bdays > 30) todo.push(`<div class="todo">${S.lastBackup ? "Last backup " + nf(bdays) + " days ago" : "No backup yet"} <button type="button" id="goBackup">Make a backup</button></div>`);

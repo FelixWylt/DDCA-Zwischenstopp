@@ -59,6 +59,7 @@ ${isBook ? `
           <button id="isbnscan" type="button" class="ghost" aria-label="Scan the barcode with the camera">Scan barcode</button>
           <button id="isbnsbn" type="button" class="ghost"${window.Books && Books.isItalian(d.isbn) ? "" : " hidden"} title="Opens the Italian national library catalogue in the browser">Look up in SBN</button>
         </div>
+        <div id="isbnwarn">${isbnWarnHtml(d)}</div>
         <div id="bookmsg"></div>
         <div class="grid-form">
           <label class="wide"><span class="l">Title</span><input id="f-title" value="${esc(d.title)}" placeholder="${isNovel(d) ? "e.g. Der kleine Hobbit" : "e.g. Carl Barks: Die Ducks"}"></label>
@@ -112,6 +113,7 @@ ${isBook ? `
           <label class="wide"><span class="l">Genres</span><input id="f-genre" list="genres" value="${esc(d.genre || "")}" placeholder="${esc(storyGenres(d) ? "From the stories: " + storyGenres(d) : "e.g. Humour, Adventure (separate with commas)")}"></label>
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
+          <div id="isbnwarn" class="wide">${isbnWarnHtml(d)}</div>
           <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
           ${d.link || notOwned(d) ? `<label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="where you read it online (optional)"></label>` : ""}
         </div>
@@ -196,6 +198,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
     $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s", el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
     document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
+    // ISBN / bootleg warning follows what you type
+    const warnNow = () => { const w = $("#isbnwarn"); if (w) w.innerHTML = isbnWarnHtml(Object.assign({}, d, { isbn: ($("#f-isbn") || {}).value || "", publisher: $("#f-publisher") ? $("#f-publisher").value : d.publisher })); };
+    ["f-isbn", "f-publisher"].forEach(k => { const el = $("#" + k); if (el) el.addEventListener("input", warnNow); });
     $("#isbnfill") && ($("#isbnfill").onclick = () => fillFromIsbn(d, grab));
     $("#comicscan") && ($("#comicscan").onclick = async () => {
       grab();

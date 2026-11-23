@@ -24,6 +24,8 @@ function gapHead(owned, wanted, total, info) {
         ${info.read === false ? "" : `<button type="button" class="fchip readchip${S.readMode ? " on" : ""}" id="readmode" aria-pressed="${!!S.readMode}">✓ Mark read</button>`}
         ${info.editions ? `<button type="button" class="fchip readchip${S.edMode ? " on" : ""}" id="edmode" aria-pressed="${!!S.edMode}">Edition</button>` : ""}
         <button type="button" class="fchip" id="copymiss" data-name="${esc((s => s ? s.short || s.name : String(info.cur || S.gapSeries || "").replace(/^book:/, ""))(seriesById(info.cur || S.gapSeries)))}">Copy missing numbers</button>
+        <button type="button" class="fchip" id="wishall">Wish all missing</button>
+        ${gapWishesOf(info.cur || S.gapSeries).some(c => wishLevel(c) !== "must") ? `<button type="button" class="fchip" id="unwishall">Remove all wishes</button>` : ""}
         <details class="ginfo"><summary aria-label="What the colours mean">ⓘ</summary><div class="legend small">${info.legend}</div></details></div>
       ${S.readMode ? '<p class="small muted" style="margin:0">Reading mode: tap an owned issue to mark it read today; tap again to undo.</p>' : ""}
       ${S.edMode && info.editions ? `<p class="small muted" style="margin:0">Edition mode: tap an owned issue to choose its edition. Unmarked squares count as ${esc(info.defEd || "the price table's general prices")}; small letters show other editions (${esc(info.editions.map(e => editionMark(e) + " = " + e).join(", "))}).</p>` : ""}
@@ -33,6 +35,7 @@ function bindGapHead() {
   document.querySelectorAll("[data-gf]").forEach(b => b.onclick = () => { S.gapFilter = b.dataset.gf; const g = $("#gridbox"); if (g) g.className = gridClass(!$("#readmode")); document.querySelectorAll("[data-gf]").forEach(x => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); });
   $("#readmode") && ($("#readmode").onclick = () => { S.readMode = !S.readMode; if (S.readMode) S.edMode = false; renderKeep(); });
   $("#edmode") && ($("#edmode").onclick = () => { S.edMode = !S.edMode; if (S.edMode) S.readMode = false; renderKeep(); });
+  bindWholeSeriesWishes();
   // the squares you don't own, as text: runs of numbers shortened (12–15), yearly series by year (1985: 3, 7–9)
   $("#copymiss") && ($("#copymiss").onclick = async () => {
     const labs = [...document.querySelectorAll("#gridbox .cell[data-issue]")].filter(b => !b.classList.contains("owned")).map(b => b.dataset.issue);
@@ -42,6 +45,62 @@ function bindGapHead() {
       ns.forEach(x => { if (/^\d+$/.test(x) && a != null && +x === b + 1) { b = +x; return; } flush(); if (/^\d+$/.test(x)) { a = b = +x; } else out.push(x); }); flush(); return out.join(", "); };
     const txt = "Missing in " + $("#copymiss").dataset.name + " (" + labs.length + "):\n" + [...byYear].map(([y, ns]) => (y ? y + ": " : "") + runs(ns)).join("\n");
     try { await navigator.clipboard.writeText(txt); toast(labs.length + " missing numbers copied"); } catch (e) { sheetOpen(`<textarea class="mono" rows="8" style="width:100%">${esc(txt)}</textarea><p class="small muted">Press and hold the text, then Copy.</p>`); }
+  });
+}
+// ---- whole-series wishes (da-v233): every empty square onto the wishlist at once, or all Want/Dream wishes off again ----
+const gapIsBook = key => String(key || "").startsWith("book:");
+function gapWishesOf(key) { return S.comics.filter(c => c.status === "wanted" && (gapIsBook(key) ? c.kind === "book" && c.seriesName === key.slice(5) : c.seriesId === key)); }
+function gapWishDraft(key, label, lv) {   // one wish, like a single "Add to wishlist" tap on that square
+  if (gapIsBook(key)) {
+    const name = key.slice(5), mine = S.comics.filter(c => c.kind === "book" && c.seriesName === name), extra = (S.bookSeriesExtra || []).find(x => x.name === name), proto = mine[0] || { bookType: extra && extra.novel ? "book" : "" };
+    return blankDraft({ kind: "book", bookType: proto.bookType || "", seriesId: "_book", seriesName: name, issue: label, author: proto.author || "", publisher: proto.publisher || "", lang: proto.lang || "", status: "wanted", wishLevel: lv });
+  }
+  const se = seriesById(key), p = parseIssue(se, label);
+  return Object.assign(blankDraft({ seriesId: se.id, seriesName: se.name, issue: label, status: "wanted", wishLevel: lv }), { issueLabel: p.label, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n });
+}
+// where a square sits, for From–To: volume or running number; yearly series year·1000 + number, a bare year = the whole year
+function gapPos(key, label) {
+  if (gapIsBook(key)) return parseFloat(String(label).replace(",", "."));
+  const p = parseIssue(seriesById(key), label); return typeof p.sort === "number" && !isNaN(p.sort) ? p.sort : parseFloat(label);
+}
+function gapBound(key, txt, end) {
+  const s = String(txt || "").trim(); if (!s) return end ? Infinity : -Infinity;
+  const se = !gapIsBook(key) && seriesById(key);
+  if (se && se.numbering === "year" && /^\d{4}$/.test(s)) return +s * 1000 + (end ? 999 : 0);
+  const v = gapPos(key, s); return isNaN(v) ? (end ? Infinity : -Infinity) : v;
+}
+function bindWholeSeriesWishes() {
+  const key = S.gapSeries, se = seriesById(key), name = se ? se.short || se.name : String(key || "").replace(/^book:/, "");
+  $("#wishall") && ($("#wishall").onclick = () => {
+    const labels = [...document.querySelectorAll("#gridbox .cell[data-issue], #gridbox .cell[data-vol]")].filter(b => !["owned", "wanted", "readno"].some(k => b.classList.contains(k))).map(b => b.dataset.issue || b.dataset.vol);
+    if (!labels.length) { toast("Nothing missing here"); return; }
+    let lv = "";   // Want (the user's wish)
+    sheetOpen(`<div class="confirm"><strong>Wish all missing: ${esc(name)}</strong>
+      <div class="row" style="gap:8px"><label><span class="l">From</span><input id="wfrom" placeholder="${esc(labels[0])}"></label><label><span class="l">To</span><input id="wto" placeholder="${esc(labels[labels.length - 1])}"></label></div>
+      <div class="seg" role="group" aria-label="How much you want them">${WISH_LEVELS.map(([k, l]) => `<button type="button" data-wal="${k}" aria-pressed="${k === lv}">${k === "must" ? "★ " : ""}${l}</button>`).join("")}</div>
+      <p class="small" id="wsum" style="margin:0"></p>
+      <button class="primary" id="wgo">Add</button><button class="ghost" id="cpX">Cancel</button></div>`);
+    const pick = () => { const a = gapBound(key, $("#wfrom").value, false), b = gapBound(key, $("#wto").value, true); return labels.filter(l => { const v = gapPos(key, l); return isNaN(v) || (v >= a && v <= b); }); };
+    const sum = () => {
+      const ls = pick(), cost = wishCost(ls.map(l => gapWishDraft(key, l, lv)));
+      $("#wsum").innerHTML = ls.length ? `Adds <strong>${ls.length}</strong> ${ls.length === 1 ? "wish" : "wishes"}${ls.length > 1 ? " (" + esc(ls[0]) + " to " + esc(ls[ls.length - 1]) + ")" : ""}.${cost.n ? ` About <strong>${esc(money(Math.round(cost.t), "CHF"))}</strong>${cost.n < ls.length ? " for the " + cost.n + " with a price range" : ""}.` : " No price ranges for these yet."}${ls.length > 100 ? " <strong>That's a lot of wishes.</strong>" : ""}` : "No missing number in that range.";
+      $("#wgo").disabled = !ls.length; $("#wgo").textContent = ls.length ? "Add " + ls.length + (ls.length === 1 ? " wish" : " wishes") : "Add";
+    };
+    $("#wfrom").oninput = sum; $("#wto").oninput = sum; sum();
+    document.querySelectorAll("[data-wal]").forEach(b => b.onclick = () => { lv = b.dataset.wal; document.querySelectorAll("[data-wal]").forEach(x => x.setAttribute("aria-pressed", x === b)); sum(); });
+    $("#cpX").onclick = sheetClose;
+    $("#wgo").onclick = async () => {
+      const ls = pick(); if (!ls.length) return; $("#wgo").disabled = true;
+      try { await saveMany(ls.map(l => gapWishDraft(key, l, lv))); sheetClose(); toast(ls.length + (ls.length === 1 ? " wish" : " wishes") + " added"); renderKeep(); } catch (e) { toast(errText(e)); }
+    };
+  });
+  $("#unwishall") && ($("#unwishall").onclick = () => {
+    const all = gapWishesOf(key), gone = all.filter(c => wishLevel(c) !== "must"), keep = all.length - gone.length;
+    sheetOpen(`<div class="confirm"><strong>Remove ${gone.length} ${gone.length === 1 ? "wish" : "wishes"} in ${esc(name)}?</strong>
+      <p class="small" style="margin:0">Want and Dream wishes go${keep ? `; your ${keep} ★ Must have ${keep === 1 ? "wish stays" : "wishes stay"}` : ""}. Notes written on them go too. Owned and read entries stay.</p>
+      <button class="danger" id="uwgo">Remove ${gone.length}</button><button class="ghost" id="cpX">Cancel</button></div>`);
+    $("#cpX").onclick = sheetClose;
+    $("#uwgo").onclick = async () => { $("#uwgo").disabled = true; try { for (const c of gone) await deleteComic(c.id); sheetClose(); toast(gone.length + (gone.length === 1 ? " wish" : " wishes") + " removed"); renderKeep(); } catch (e) { toast(errText(e)); } };
   });
 }
 const gridClass = noRead => [S.readMode && !noRead ? "readmode" : "", "gf-" + (noRead && S.gapFilter === "unread" ? "all" : S.gapFilter || "all")].join(" ");

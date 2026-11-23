@@ -116,7 +116,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Still on the phone: Refresh all books once; check the Winnetou 1 cover after Add all. Back gesture in the scanner: tested, works (2026-11-23).
   Chosen 2026-11-23 21:05: ideas 1, 3, 4 (plan sent, waiting for the go); 2, 5, 6 not wanted. 21:10: plan + 1b "Remove all wishes" (the reverse of 1). Answers 21:14: Want preselected; ask the universe; Remove keeps Must have. With the bundle add the rule
   "answers to questions are not a go" (the user's wish, 21:17). 21:26: + A (from–to range in Wish all missing), B (cost of the new
-  wishes in that box), C (Stats › Overview › To do lists ISBN warnings). D/E/F (move entries, merge series, series complete) not now. Still waiting for the go.
+  wishes in that box), C (Stats › Overview › To do lists ISBN warnings). D/E/F (move entries, merge series, series complete) not now.
+  **da-v233 built (go 21:27, local until "publish"):** gaps.js gapHead chips "Wish all missing" (#wishall: empty squares read from the grid,
+  From–To via gapPos/gapBound, level chips, Want preselected, cost via wishCost) and "Remove all wishes" (#unwishall, keeps Must have),
+  bindWholeSeriesWishes/gapWishDraft/gapWishesOf; core.js isbnWarnings()/isbnWarnHtml() (check digit, length, FAKE_PUB, first 7 digits vs
+  ≥2 other valid volumes of the same book series + language) in Add/Edit (#isbnwarn, live) and the book page ISBN row; stats.js pick "isbn"
+  + To do line (owned list, wishes → Wishlist); series.js "Make it a comic series" (data-bk2c, asks the universe, bookToComicSeries) and
+  "Make it a book series" (data-c2b, not for yearly series, asks Book/Comic book, comicToBookSeries); both carry price ranges + description.
+  Screens at publish: series, edit-comic, stats, series-tools (opens the 91:an grid), notowned (opens a book grid), plus visit=1.
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
@@ -233,6 +240,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Never count a "yes" to a plan as "publish", even when the plan says it would be published.
 - **Report before starting (the user's wish, 2026-11-20):** before changing anything, report what you found and the plan
   (with the time estimate and any questions), then wait for the user's go. Only answers need no report first.
+  **Answers to questions are NOT a go** (the user's wish, 2026-11-23): after the user answers a plan's questions or adds to it,
+  restate the plan and wait for an explicit "go".
 - **More power (the user's wish, 2026-11-21):** (see the guideline table below) before a job, say when it needs more than the current setting: a higher "effort"
   setting (usually "high" is enough for big bundles; "extra" only for one very tricky problem) or a stronger model. Say it in the
   report, before the go, with one line on why.
