@@ -165,6 +165,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Not set over a pre-set) › SKINDS (loadStoryKinds, called by loadStoryInfo); the page notes "pre-set by Claude". sw.js fetches
   story-kinds.json network-first, so corrections arrive without an app update. Left unset on purpose (unsure): Duck Dynasty,
   Il re del Klondike, Paperinik e la macchina del Fangus, P.d.P., and the 1-story series.
+  Checked before publishing on a test branch (push HEAD to check-v238, screens.yml dispatched with ref=check-v238: it serves that
+  branch's copy, Pages untouched): no errors. Branches can't be deleted from here (proxy 403): check-v238 is left on GitHub, harmless.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
