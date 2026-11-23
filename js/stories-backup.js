@@ -121,6 +121,91 @@ function countryName(code) {
 }
 const storySeriesOf = e => (SINFO && e.code && SINFO.ser.get(e.code)) || [];
 const seriesNameOf = code => ((SINFO && SINFO.series[code]) || {}).n || code;
+// ---- story series kinds and where to find their stories (da-v237) ----
+// kind: "cont" continuing story (DoubleDuck), "loose" separate stories in one format (riddles), "setting" only a shared
+// setting (PIA); not set works like loose. Your choice is in config storyKinds (and in the backup).
+const STORY_KINDS = [["cont", "Continuing story"], ["loose", "Loose series"], ["setting", "Shared setting"]];
+const storyKindOf = code => (S.storyKinds || {})[code] || "";
+const storyKindLabel = k => (STORY_KINDS.find(x => x[0] === k) || [, "Not set"])[1];
+async function setStoryKind(code, k) {
+  S.storyKinds = Object.assign({}, S.storyKinds); if (k) S.storyKinds[code] = k; else delete S.storyKinds[code];
+  await setConfig("storyKinds", S.storyKinds).catch(() => {});
+}
+// every story of a series in the catalogue, in reading order (story codes follow the first printing: I TL 2276-1 before I TL 2301-1)
+function seriesParts(code) {
+  if (!SINFO) return [];
+  if (!SINFO.parts) { const m = new Map(); SINFO.ser.forEach((v, k) => v.forEach(sc => (m.get(sc) || m.set(sc, []).get(sc)).push(k))); m.forEach(v => v.sort((a, b) => a.localeCompare(b, "en", { numeric: true }))); SINFO.parts = m; }
+  return SINFO.parts.get(code) || [];
+}
+// which comics print each series story (catalogue/story-where.json, made from the app's INDUCKS issue lists); loaded only here
+let SWHERE = null, swTry = 0;
+function loadStoryWhere() {
+  if (SWHERE || Date.now() - swTry < 60000) return; swTry = Date.now();
+  fetch("catalogue/story-where.json").then(r => r.ok ? r.json() : null).then(j => {
+    if (!j) return; const m = new Map(); Object.entries(j.s || {}).forEach(([k, v]) => m.set(storyCode(k), v));
+    SWHERE = { pubs: j.pubs || [], s: m }; if (S.view === "stories") drawStories();
+  }).catch(() => {});
+}
+// your stories by code: owned, read (owned or not), on the wishlist
+function storyCodeSets() {
+  const own = new Set(), read = new Set(), wish = new Set(), pages = new Map();
+  S.comics.forEach(c => (c.stories || []).forEach(x => { const k = storyCode(x.code); if (!k) return; if (isOwn(c)) own.add(k); if (c.read && isMine(c)) read.add(k); if (c.status === "wanted") wish.add(k);
+    const pg = parseInt(x.pages, 10) || 0; if (pg > (pages.get(k) || 0)) pages.set(k, pg); }));
+  return { own, read, wish, pages };
+}
+// your entries by catalogue file + issue: owned beats read, read beats wishlist
+function issueStatusMap() {
+  const m = new Map(), rank = { owned: 3, read: 2, wish: 1 };
+  S.comics.forEach(c => { if (c.kind === "book") return; const se = seriesById(c.seriesId), e = se && catEntry(se); if (!e) return;
+    const k = e.file + "|" + parseIssue(se, c.issueLabel || c.issue).label, v = isOwn(c) ? "owned" : notOwned(c) ? "read" : "wish";
+    if (!m.has(k) || rank[v] > rank[m.get(k)]) m.set(k, v); });
+  return m;
+}
+function storySeriesCard(code) {
+  const nf = n => Number(n).toLocaleString("de-CH");
+  const kind = storyKindOf(code), have = storyCodeSets();
+  const chips0 = `<div class="fchips" role="group" aria-label="Kind of story series">${STORY_KINDS.concat([["", "Not set"]]).map(([k, l]) => `<button type="button" class="fchip${kind === k ? " on" : ""}" data-skind="${k}" aria-pressed="${kind === k}">${l}</button>`).join("")}</div>`;
+  if (!SWHERE) { loadStoryWhere(); return chips0 + `<p class="small muted" style="margin:0">Loading the series' stories …</p>`; }
+  // INDUCKS also files covers and one-page title pages under a story series: only stories of 2+ pages count as parts
+  const all = seriesParts(code), parts = all.filter(k => { const w = SWHERE.s.get(k); return Math.max(w ? w[2] : 0, have.pages.get(k) || 0) >= 2; }), extra = all.length - parts.length;
+  const nOwn = parts.filter(k => have.own.has(k)).length, nRead = parts.filter(k => have.read.has(k)).length;
+  const prog = parts.length ? (kind === "cont" ? `<strong>${nf(nRead)} of ${nf(parts.length)} parts read</strong> · ${nf(nOwn)} owned` : `<strong>${nf(nOwn)} of ${nf(parts.length)} owned</strong>${nRead ? " · " + nf(nRead) + " read" : ""}`) : "";
+  let where = "";
+  {
+    const st = issueStatusMap(), num = new Map(parts.map((k, i) => [k, i + 1])), comics = new Map(); let nowhere = 0;
+    parts.forEach(k => { const w = SWHERE.s.get(k); if (!w) { nowhere++; return; } w[1].forEach(([pi, key]) => { const id = pi + "|" + key; (comics.get(id) || comics.set(id, { pi, key, parts: [] }).get(id)).parts.push(k); }); });
+    const pubOf = pi => SWHERE.pubs[pi] || ["", "", "?"], label = x => (x.title || "").slice(0, 60);
+    const rows = [...comics.values()].map(x => Object.assign(x, { have: st.get(pubOf(x.pi)[0] + "|" + x.key) || "", miss: x.parts.filter(k => !have.own.has(k)).length }));
+    const groups = new Map(); rows.forEach(x => (groups.get(x.pi) || groups.set(x.pi, []).get(x.pi)).push(x));
+    const gl = [...groups.entries()].map(([pi, xs]) => ({ pi, xs: xs.sort((a, b) => b.miss - a.miss || String(a.key).localeCompare(String(b.key), "en", { numeric: true })), miss: Math.max(...xs.map(x => x.miss)) }))
+      .sort((a, b) => b.miss - a.miss || pubOf(a.pi)[2].localeCompare(pubOf(b.pi)[2], "de", { numeric: true }));
+    const partTxt = x => kind === "cont"
+      ? (x.parts.length === 1 ? "part " : "parts ") + x.parts.map(k => have.own.has(k) ? nf(num.get(k)) : `<b class="gold">${nf(num.get(k))}</b>`).join(", ")
+      : x.parts.slice(0, 3).map(k => { const t = esc(label({ title: (SWHERE.s.get(k) || [""])[0] }) || k); return have.own.has(k) ? t : `<b class="gold">${t}</b>`; }).join(" · ") + (x.parts.length > 3 ? ` · +${x.parts.length - 3}` : "");
+    const tag = h => h === "owned" ? '<span class="chip">owned</span>' : h === "read" ? '<span class="chip">read, not owned</span>' : h === "wish" ? '<span class="chip wanted">wishlist</span>' : "";
+    const body = gl.map(g => `<div class="wheregroup"><div class="small"><strong>${esc(pubOf(g.pi)[2])}</strong> <span class="muted">${g.xs.length}</span></div>${g.xs.map(x =>
+      `<div class="whererow small"><span class="wnum">${esc(String(x.key))}</span><span class="wparts">${partTxt(x)}</span>${tag(x.have)}${x.have ? "" : `<button type="button" class="ghost tiny" data-swish="${x.pi}|${esc(String(x.key))}">Wish</button>`}</div>`).join("")}</div>`).join("");
+    const inner = `<p class="small muted" style="margin:0">${nf(rows.length)} ${rows.length === 1 ? "comic" : "comics"} in the app's ${nf(SWHERE.pubs.length)} INDUCKS series. <b class="gold">Gold</b> = ${kind === "cont" ? "a part" : "a story"} you don't own yet; comics with the most of them come first.${nowhere ? ` ${nf(nowhere)} of ${nf(parts.length)} ${nowhere === 1 ? "is" : "are"} printed only in series the app has no list for.` : ""}${extra ? ` ${nf(extra)} more INDUCKS ${extra === 1 ? "entry isn't" : "entries aren't"} counted: covers, one-page title pages, or stories printed only in series the app has no list for.` : ""}</p>${body}`;
+    const listParts = kind === "cont" && parts.length ? `<details><summary>All ${nf(parts.length)} parts</summary><ol class="partlist small">${parts.map(k => { const w = SWHERE.s.get(k), t = (w && w[0]) || k;
+      return `<li>${esc(t)} <span class="muted">${have.read.has(k) ? "read" : have.own.has(k) ? "owned" : have.wish.has(k) ? "on the wishlist" : "missing"}</span></li>`; }).join("")}</ol></details>` : "";
+    where = listParts + (rows.length ? `<details class="wherecard"${kind === "setting" ? "" : " open"}><summary><strong>Where to find them</strong></summary>${inner}</details>` : `<p class="small muted" style="margin:0">None of these stories is printed in the app's INDUCKS series.</p>`);
+  }
+  return `${chips0}${prog ? `<div class="small">${prog}</div>` : ""}${where}`;
+}
+// a wish for a comic from a story series' "Where to find them"; its series is added when it isn't one of yours yet
+async function wishFromStory(pi, key) {
+  const pub = SWHERE && SWHERE.pubs[pi]; if (!pub) return;
+  const entry = S.catalogue && Object.values(S.catalogue.series || {}).find(x => x.file === pub[0]);
+  if (!entry) { toast("The catalogue isn't loaded yet: try again in a moment"); return; }
+  const f = await catalogueFile(entry).catch(() => null), hit = f && f.issues[key];
+  if (!hit) { toast("INDUCKS has no issue " + key + " in " + pub[2]); return; }
+  let se = S.series.find(x => { const e = catEntry(x); return e && e.file === pub[0]; }), made = false;
+  if (!se) { se = findSeriesByName(entry.series || entry.title) || newSeriesFor(entry.series || entry.title, []); seriesFromCatalogue(se, f, entry); delete se.pending; made = true; await saveSeries(); }
+  const p = parseIssue(se, key);
+  const d = Object.assign(blankDraft({ seriesId: se.id, seriesName: se.name, issue: key, status: "wanted", wishLevel: "" }), { issueLabel: p.label, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n });
+  await saveMany([applyIssueFromCatalogue(d, key, hit)]);
+  toast((se.short || se.name) + " " + p.label + " is on your wishlist" + (made ? " (series added)" : ""));
+}
 function storyOrigLang(e) {
   if (!SINFO || !e.code) return "";
   return langName(SINFO.lang.get(e.code) || SINFO.def[e.code.split(" ")[0]] || "");
@@ -225,7 +310,7 @@ VIEWS.stories = {
       if (st.status !== "wanted") { const mh = new Map(); all.forEach(e => tally(mh, storyHave(e))); if (mh.get("Read, not owned") || st.ownf) fRows += optRow("I have it", "data-ownf", st.ownf, mh); }
     }
     const subChips = st.tab === "all" && !st.who ? `<div class="fchips">${chip('data-stsub="stories"', st.sub !== "series", "Stories")}${chip('data-stsub="series"', st.sub === "series", "Story series")}</div>` : "";
-    const sortSel = st.tab === "all" && st.sub !== "series" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
+    const sortSel = st.tab === "all" && st.sub !== "series" ? `<label class="inline"><span class="l">Sort</span><select id="stsort">${[["title", "Title"], ["comics", "Most reprinted"], ["code", "Story code"], ["rating", "My rating"]].map(([k, l]) => `<option value="${k}"${st.sort === k ? " selected" : ""}>${l}</option>`).join("")}</select></label><button type="button" class="ghost tiny sortdir big" id="stdir" title="Turn the order round" aria-label="${st.desc ? "Reversed order" : "Usual order"}, tap to turn round">${st.desc ? "↑" : "↓"}</button>` : "";
     const head = `<div><h2>Stories</h2><p class="lede hide-phone">Every story in your comics, counted once even when it's reprinted. Tap a story to see where you have it.</p></div>
       <div class="subtabs three" role="tablist" aria-label="Show">${tab("all", "All stories", all.length)}${tab("people", "People")}${tab("fav", "Favourites", nFav)}</div>
       <div class="stack" style="gap:8px">
@@ -312,10 +397,15 @@ function drawStories() {
       const m = new Map();
       list.forEach(e => storySeriesOf(e).forEach(code => { const x = m.get(code) || { code, n: seriesNameOf(code), stories: 0, comics: new Set() }; x.stories++; e.items.forEach(c => x.comics.add(c.id)); m.set(code, x); }));
       const ser = [...m.values()].filter(x => { const t = norm([x.n, x.code].concat((SINFO.series[x.code] || {}).a || []).join(" ")); return words.every(w => t.includes(w)); })
+        .filter(x => !st.skind || (st.skind === "none" ? !storyKindOf(x.code) : storyKindOf(x.code) === st.skind))
         .sort((a, b) => b.stories - a.stories || a.n.localeCompare(b.n, "de", { numeric: true }));
+      // filter by kind (da-v237)
+      const kchip = (k, l) => `<button type="button" class="fchip${(st.skind || "") === k ? " on" : ""}" data-skf="${k}" aria-pressed="${(st.skind || "") === k}">${l}</button>`;
+      const kinds = SINFO ? `<div class="fchips" role="group" aria-label="Kind" style="margin-top:8px">${kchip("", "All kinds")}${STORY_KINDS.map(([k, l]) => kchip(k, l)).join("")}${kchip("none", "Not set")}</div>` : "";
       box.innerHTML = !SINFO ? `<p class="muted small" style="margin:8px 0">${sinfoMissing ? "The story series come with the next catalogue update (INDUCKS couldn't be reached)." : "Loading the story series …"}</p>`
-        : `<p class="muted small" style="margin:8px 0">${ser.length} story ${ser.length === 1 ? "series" : "series"}</p>` + (ser.length ? '<div class="list">' + ser.slice(0, st.shown).map(x => { const al = ((SINFO.series[x.code] || {}).a || []).slice(0, 3).join(" · "); return `<button class="folder" data-ser="${esc(x.code)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}${al ? " · " + esc(al) : ""}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("") + '</div>' : '<div class="empty"><h3>No story series found</h3><p>Try another name, or tap All in the rows above.</p></div>') + more(ser.length);
+        : kinds + `<p class="muted small" style="margin:8px 0">${ser.length} story ${ser.length === 1 ? "series" : "series"}</p>` + (ser.length ? '<div class="list">' + ser.slice(0, st.shown).map(x => { const al = ((SINFO.series[x.code] || {}).a || []).slice(0, 3).join(" · "); return `<button class="folder" data-ser="${esc(x.code)}"><div style="min-width:0"><div class="t">${esc(x.n)}</div><div class="s">${storyKindOf(x.code) ? esc(storyKindLabel(storyKindOf(x.code))) + " · " : ""}${x.stories} ${x.stories === 1 ? "story" : "stories"} · in ${x.comics.size} ${x.comics.size === 1 ? "comic" : "comics"}${al ? " · " + esc(al) : ""}</div></div><span class="count">${x.stories}</span><span class="chev" aria-hidden="true">›</span></button>`; }).join("") + '</div>' : '<div class="empty"><h3>No story series found</h3><p>Try another name, or tap All in the rows above.</p></div>') + more(ser.length);
       box.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { st.who = { role: "series", name: b.dataset.ser }; st.sub = "stories"; st.q = ""; st.shown = 100; render(); window.scrollTo(0, 0); });
+      box.querySelectorAll("[data-skf]").forEach(b => b.onclick = () => { st.skind = b.dataset.skf; st.shown = 100; drawStories(); });
       $("#stmore") && ($("#stmore").onclick = () => { st.shown += 200; drawStories(); });
       return;
     }
@@ -329,7 +419,7 @@ function drawStories() {
       const al = st.who.role === "series" && SINFO ? ((SINFO.series[st.who.name] || {}).a || []).join(" · ") : "";
       person = `<div class="card stack small personcard"><h3 style="margin:0">${esc(st.who.role === "series" ? seriesNameOf(st.who.name) : st.who.name)}</h3>${al ? `<div class="muted">Also called: ${esc(al)}</div>` : ""}
         <div class="muted">${role} · ${list.length} ${list.length === 1 ? "story" : "stories"} in ${cs.length} ${cs.length === 1 ? "comic" : "comics"}${own < cs.length ? " (" + [own + " owned", cs.filter(c => c.status === "wanted").length + " on the wishlist", cs.filter(notOwned).length + " read, not owned"].filter(x => !/^0 /.test(x)).join(", ") + ")" : ""}${yrs.length ? " · first published " + yrs[0] + (yrs[yrs.length - 1] !== yrs[0] ? "–" + yrs[yrs.length - 1] : "") : ""}</div>
-        <details><summary>The comics (${cs.length})</summary><div class="row" style="gap:6px;margin-top:6px">${cs.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}</button>`).join("")}</div></details></div>`;
+        <details><summary>The comics (${cs.length})</summary><div class="row" style="gap:6px;margin-top:6px">${cs.map(c => `<button class="chipbtn${c.status === "wanted" ? " wanted" : ""}" data-open="${esc(c.id)}">${esc(comicTag(c))}</button>`).join("")}</div></details>${st.who.role === "series" ? storySeriesCard(st.who.name) : ""}</div>`;
     }
     // each story's search text is made once per list, not on every key
     if (words.length) list = list.filter(e => { const t = e._q || (e._q = norm([e.titles.join(" "), e.code, e.original, [...e.writers].join(" "), [...e.artists].join(" "), [...e.chars].join(" "), e.items.map(comicTag).join(" "), storySeriesOf(e).map(c => [seriesNameOf(c)].concat((SINFO.series[c] || {}).a || []).join(" ")).join(" ")].join(" "))); return words.every(w => t.includes(w)); });
@@ -356,6 +446,10 @@ function drawStories() {
     }
     box.innerHTML = person + html;
     box.querySelectorAll("[data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; nav("add"); });
+    // story series page (da-v237): its kind, and wishes straight from "Where to find them"
+    box.querySelectorAll("[data-skind]").forEach(b => b.onclick = async () => { await setStoryKind(st.who.name, b.dataset.skind); drawStories(); });
+    box.querySelectorAll("[data-swish]").forEach(b => b.onclick = async () => { b.disabled = true; const i = b.dataset.swish.indexOf("|");
+      try { await wishFromStory(+b.dataset.swish.slice(0, i), b.dataset.swish.slice(i + 1)); } catch (e) { toast(errText(e)); } drawStories(); });
     box.querySelectorAll("[data-sfav]").forEach(b => b.onclick = async () => {
       const k = b.dataset.sfav, on = !(S.storyRatings[k] || {}).fav;
       b.classList.toggle("on", on); b.textContent = on ? "♥" : "♡";
@@ -374,7 +468,7 @@ function showBackupNote(msg) { const n = $("#bnote"); if (n) { n.textContent = m
 // everything a backup holds: comics, series and every setting (cover pictures and exchange-rate downloads come back by themselves)
 function backupData() {
   return { app: "dagobert-archiv", format: 1, exported: new Date().toISOString(), series: S.series, comics: S.comics, storyRatings: S.storyRatings, bookSizes: S.bookSizes, bookSeriesInfo: S.bookMeta, valueRules: S.valueRules, gradeFactors: S.gradeFactors, valueHistory: S.valueHistory, bookSeriesExtra: S.bookSeriesExtra,
-    groupKeep: S.groupKeep, priceBatchDone: S.priceBatchDone || [], barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, lastSeries: S.lastSeries, rates: S.rates };
+    groupKeep: S.groupKeep, priceBatchDone: S.priceBatchDone || [], storyKinds: S.storyKinds || {}, todoHidden: S.todoHidden || [], barcodes: S.barcodes, barcodeYears: S.barcodeYears, recentSeries: S.recentSeries, lastSeries: S.lastSeries, rates: S.rates };
 }
 // entries changed or added since the last backup
 function changedSinceBackup() { const t = S.lastBackup || ""; return S.comics.filter(c => !t || String(c.updatedAt || c.createdAt || "") > t).length; }
@@ -588,6 +682,8 @@ VIEWS.backup = {
             if (Array.isArray(b.recentSeries) && !(S.recentSeries || []).length) { S.recentSeries = b.recentSeries; await setConfig("recentSeries", S.recentSeries); }
             if (b.rates && (!S.rates || (b.rates.manual && !S.rates.manual))) { S.rates = b.rates; await setConfig("rates", S.rates); }
             if (b.lastSeries && !S.lastSeries) { S.lastSeries = b.lastSeries; await setConfig("lastSeries", S.lastSeries); }
+            if (b.storyKinds && typeof b.storyKinds === "object") { S.storyKinds = Object.assign({}, b.storyKinds, S.storyKinds); await setConfig("storyKinds", S.storyKinds); }
+            if (Array.isArray(b.todoHidden) && !(S.todoHidden || []).length) { S.todoHidden = b.todoHidden; await setConfig("todoHidden", S.todoHidden); }
             if (b.storyRatings && typeof b.storyRatings === "object") { S.storyRatings = Object.assign({}, S.storyRatings, b.storyRatings); await setConfig("storyRatings", S.storyRatings); }
             const n = await saveMany(fresh, d => { box.innerHTML = `<div class="banner">${isClz ? "Adding" : "Restoring"}… ${d} of ${fresh.length}</div>`; }, true);
             await adoptLooseSeries();
@@ -753,6 +849,6 @@ async function refreshBooks() {
   await Promise.all([worker(), worker()]);
   if (r.stop) r.stopped = true;
   if (!r.stop) { r.country = await fillAuthorCountries().catch(() => 0); }
-  r.running = false; r.finished = true; drawRefreshBooks();
+  r.running = false; r.finished = true; await markRun("books"); drawRefreshBooks();
   toast("Books: " + r.changed + " updated" + (r.country ? ", " + r.country + " countries found" : ""));
 }

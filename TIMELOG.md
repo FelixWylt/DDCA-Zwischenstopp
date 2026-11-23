@@ -237,4 +237,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-23 | Plan da-v237 restated with answers (kinds; pre-setting = own task later) | under 1 min (first guess 1–2 ÷ 2) | 0–1 min (23:38 → 23:38:31) |
 | 2026-11-23 | Explain question 3 (what changes per kind) | under 1 min (first guess 1 ÷ 2) | 0–1 min (23:39 → 23:39:25) |
 | 2026-11-23 | da-v237 started, STOPPED by the user (effort to high): only read code, nothing changed | 10–13 min for the whole bundle | 1–2 min until stopped (23:40 → 23:41) + this line (23:41:55) |
+| 2026-11-23 | da-v237 To do bundle (1–10, rough dates) + story series kinds, where to find them, bigger sort arrow (local) | 10–13 min (first guess 35 ÷ 3) | 8–9 min incl. the 1-min stop (go 23:40, stopped 23:41, continued 23:42 → 23:49:14) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

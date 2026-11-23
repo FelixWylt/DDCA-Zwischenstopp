@@ -653,6 +653,23 @@ body.kb .savebar { position: static; border-top: 0; }
 .todos { display: grid; gap: 8px; }
 .todo { display: block; text-align: left; padding: 10px 12px; border-radius: 10px; background: var(--wanted-soft); color: var(--ink); border: 0; font-size: .92rem; line-height: 1.5; }
 .todo button:not(.link):not(.chipbtn) { margin-left: 6px; padding: 4px 10px; }
+/* da-v237: every To do line = text with its button, "Not now" on the right, "marked as can't be done" under it */
+.tdline { display: flex; gap: 8px; align-items: flex-start; justify-content: space-between; }
+.tdmain { min-width: 0; flex: 1; }
+.todo .tdhide { margin-left: 0; flex: none; padding: 2px 8px; font-size: .8rem; }
+.todo .tdskip { display: block; margin-top: 4px; color: var(--muted); }
+.skiprow { display: flex; gap: 6px; align-items: center; }
+.skiprow > .item { flex: 1; min-width: 0; }
+.skiprow > button.tiny { flex: none; }
+/* story series: where to find the stories */
+.gold { color: #a8780a; }
+.wherecard > summary { cursor: pointer; margin: 4px 0; }
+.wheregroup { margin-top: 10px; }
+.whererow { display: flex; gap: 8px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line, #e5e5e5); }
+.whererow .wnum { min-width: 4.5em; font-variant-numeric: tabular-nums; }
+.whererow .wparts { flex: 1; min-width: 0; }
+.whererow .chip, .whererow button { flex: none; }
+.partlist { margin: 6px 0 0; padding-left: 22px; }
 button.card.highlight { display: grid; gap: 2px; text-align: left; width: 100%; border-left: 5px solid var(--accent); color: var(--ink); }
 .vhist .hit { fill: transparent; cursor: pointer; }
 .vhist path.b { stroke: #2e8b57; } .key.b { background: #2e8b57; }
@@ -672,6 +689,7 @@ button.card.highlight { display: grid; gap: 2px; text-align: left; width: 100%; 
 .key.gbar { background: var(--accent); opacity: 0.35; }
 .sortdir { min-width: 2em; padding: 2px 6px; font-size: 0.85rem; line-height: 1.2; vertical-align: middle; }
 .cardhead h3 .sortdir { margin-left: 4px; }
+.sortdir.big { font-size: 1.35rem; min-width: 2.4em; min-height: 40px; padding: 4px 10px; }
 .dkstory .srate { font-size: 0.8rem; color: var(--accent); font-weight: 500; white-space: nowrap; }
 .key.gbar { width: 8px; height: 8px; }
 

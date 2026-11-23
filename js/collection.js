@@ -334,8 +334,12 @@ function drawResults() {
     let list = S.comics.filter(c => pk.test(c));
     if (q) list = list.filter(c => searchHit(c, S.filters.q));
     list = sortComics(list);
-    html = crumbs([{ label: "All", col: {} }, { label: "From Stats" }]) + `<p class="muted small" style="margin:0 0 8px">${list.length} ${esc(pk.label)} · ${esc(valueTag(list) || "")} <button class="link" id="pickback" type="button">Back to Stats</button></p>` +
-      (list.length ? entriesHtml(list.slice(0, S.shown)) : '<div class="empty"><h3>Nothing left here</h3><p>Everything in this list has been filled in.</p></div>') + more(list.length);
+    // a To do list (da-v237): each entry can be marked "Can't be done" (you can't know it), in the marked list undone again
+    const skipRows = xs => '<div class="list">' + xs.map(c => `<div class="skiprow">${itemHtml(c)}<button type="button" class="ghost tiny" data-skip="${esc(c.id)}">${pk.skipMode ? "Undo" : "Can't be done"}</button></div>`).join("") + "</div>";
+    const skipAll = pk.skipKey && list.length ? ` <button class="link" id="skipall" type="button">${pk.skipMode ? "Undo all shown" : "Mark all shown as can't be done"}</button>` : "";
+    html = crumbs([{ label: "All", col: {} }, { label: "From Stats" }]) + `<p class="muted small" style="margin:0 0 8px">${list.length} ${esc(pk.label)} · ${esc(valueTag(list) || "")} <button class="link" id="pickback" type="button">Back to Stats</button>${skipAll}</p>` +
+      (pk.skipKey && list.length ? `<p class="small muted" style="margin:0 0 8px">${pk.skipMode ? "Undo puts an entry back on its To do list." : "“Can't be done” takes an entry off this list when you can't find out (no idea when you read it, price long forgotten). It stays on the other lists."}</p>` : "") +
+      (list.length ? (pk.skipKey ? skipRows(list.slice(0, S.shown)) : entriesHtml(list.slice(0, S.shown))) : `<div class="empty"><h3>Nothing left here</h3><p>${pk.skipMode ? "Nothing is marked as can't be done here." : "Everything in this list has been filled in."}</p></div>`) + more(list.length);
   } else if (srt) {
     let list = pool.filter(c => (!col.p || publisherOf(c) === col.p) && (!col.g || groupOf(c) === col.g) && (!col.s || seriesKeyOf(c) === col.s)
       && (col.a == null || (splitPeople(c.author)[0] || "") === col.a) && (col.gen == null || (col.gen ? String(c.genre || "").split(",").map(x => x.trim()).includes(col.gen) : !c.genre)));
@@ -432,6 +436,12 @@ function drawResults() {
   });
   box.querySelectorAll("[data-bview]").forEach(b => b.onclick = () => { S.bookView = b.dataset.bview; try { localStorage.setItem("da-bookview", S.bookView); } catch (e) {} S.shown = 200; drawResults(); });
   $("#pickback") && ($("#pickback").onclick = () => nav("stats"));
+  // "Can't be done" marks: c.todoSkip holds one key per To do list
+  const skipSet = async (cs, on) => { const k = pickInfo((S.col || {}).pick).skipKey; if (!k || !cs.length) return;
+    await saveMany(cs.map(c => Object.assign({}, c, { todoSkip: on ? [...new Set((c.todoSkip || []).concat(k))] : (c.todoSkip || []).filter(x => x !== k) })));
+    toast(cs.length + (cs.length === 1 ? " entry " : " entries ") + (on ? "marked as can't be done" : "back on the list")); drawResults(); };
+  box.querySelectorAll("[data-skip]").forEach(b => b.onclick = e => { e.stopPropagation(); const c = S.comics.find(x => x.id === b.dataset.skip); if (c) skipSet([c], !pickInfo(S.col.pick).skipMode); });
+  $("#skipall") && ($("#skipall").onclick = () => { const pk = pickInfo(S.col.pick); const q2 = S.filters.q; let l = S.comics.filter(c => pk.test(c)); if (q2) l = l.filter(c => searchHit(c, q2)); skipSet(sortComics(l).slice(0, S.shown), !pk.skipMode); });
   $("#sortoff") && ($("#sortoff").onclick = () => { S.colSort = "series"; const sel = $("#fsort"); if (sel) sel.value = "series"; drawResults(); });
   $("#more") && ($("#more").onclick = () => { S.shown += 300; drawResults(); });
   $("#newbook") && ($("#newbook").onclick = () => { S.editing = null; S.draft = blankDraft({ kind: "book", bookType: "book", seriesId: "_book" }); nav("add"); });

@@ -22,8 +22,14 @@ const MISSING = {
   date: { label: "purchase date", test: c => !c.purchaseDate },
   source: { label: "where it was bought", test: c => !String(c.source || "").trim() }
 };
+// To do lists whose comics can be marked "Can't be done" (c.todoSkip: one key per list); "skip:<pick>" shows the marked ones
+const TODO_TYPES = ["miss", "readnodate", "isbn", "qnum", "noed", "nocountry"];
+const todoSkipKey = (type, val) => TODO_TYPES.includes(type) ? (type === "miss" ? "miss:" + val : type) : "";
+const isSkipped = (c, k) => !!k && (c.todoSkip || []).includes(k);
 function pickInfo(pick) {
-  const [type, val, scope] = String(pick || "").split("|");
+  let [type, val, scope] = String(pick || "").split("|");
+  const skipMode = /^skip:/.test(type); if (skipMode) type = type.slice(5);
+  const sk = todoSkipKey(type, val);
   const inScope = c => scope === "b" ? isNovel(c) : scope === "c" ? !isNovel(c) : true;
   const scopeWord = scope === "b" ? "books" : scope === "c" ? "comics" : "entries";
   const T = {
@@ -44,12 +50,19 @@ function pickInfo(pick) {
     readnodate: [c => c.read && !/^\d{4}(-\d{2}(-\d{2})?)?$/.test(c.readDate || ""), "read, without a read date"],
     notowned: [c => notOwned(c), "read, not owned"],
     isbn: [c => isbnWarnings(c).length > 0, "with an ISBN warning (typo or unofficial copy?)"],
-    rfrom: [c => c.read && readFromOf(c).toLowerCase() === String(val).toLowerCase(), val === "Own copy" ? "read in your own copy" : `read from ${val}`]
+    rfrom: [c => c.read && readFromOf(c).toLowerCase() === String(val).toLowerCase(), val === "Own copy" ? "read in your own copy" : `read from ${val}`],
+    qnum: [c => hasUnknownNumber(c), "with an unknown number (?)"],
+    noed: [c => needsEdition(c), "without an edition (their series has prices per edition)"],
+    nocountry: [c => c.kind === "book" && isNovel(c) && !bookCountry(c), "books without a country"]
   }[type] || [() => false, "?"];
   // reading lists also show what you read without owning it
   const who = ["read", "readnodate", "notowned", "rfrom"].includes(type) ? isMine : isOwn;
-  return { test: c => who(c) && inScope(c) && T[0](c), label: T[1], scope };
+  // a comic marked "Can't be done" leaves that To do list (and shows only in its "marked" list)
+  return { test: c => who(c) && inScope(c) && T[0](c) && (!sk || isSkipped(c, sk) === skipMode), label: skipMode ? T[1] + ", marked as can't be done" : T[1], scope, skipKey: sk, skipMode };
 }
+const hasUnknownNumber = c => c.kind !== "book" && /\?/.test(String(c.issueLabel || c.issue || ""));
+// a comic without an edition in a series whose price ranges name editions: its value is less exact
+const needsEdition = c => !isNovel(c) && c.kind !== "book" && !String(c.edition || "").trim() && !!c.seriesId && seriesEditions(c.seriesId).length > 0 && !defaultEditionOf(c.seriesId);
 // where something was read: your own copy, else its "Read from" (first letter capital, so "library" and "Library" are one bar)
 function readFromOf(c) { if (isOwn(c)) return "Own copy"; const s = String(c.source || "").trim(); return s ? s[0].toUpperCase() + s.slice(1) : c.link ? "Online" : "Not set"; }
 function openPick(pick) { S.filters.q = ""; S.filters.status = "owned"; S.colSort = "series"; S.colTab = String(pick).endsWith("|b") ? "books" : "comics"; S.col = { pick }; S.shown = 200; nav("collection"); try { history.replaceState({ col: S.col }, "", "#collection"); } catch (e) {} }
@@ -209,24 +222,44 @@ VIEWS.stats = {
         <button type="button" class="stat3"${enteredM ? ` data-pick="entered|${ymNow}|${sc}"` : ""}><span class="v2">${nf(enteredM)}</span><span class="k small muted">entered</span></button>
         <button type="button" class="stat3"${readM ? ` data-pick="read|${ymNow}|${sc}"` : ""}><span class="v2">${nf(readM)}</span><span class="k small muted">read</span></button>
         <div class="stat3"><span class="v2">CHF ${fmt2(spentIn(ymNow))}</span><span class="k small muted">spent</span></div></div>`);
-      // To do: everything that needs you, in one place
-      const todo = [];
-      [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"], ["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]].forEach(([l, k, s2]) => {
-        if ((s2 === "c" && scope === "b") || (s2 === "b" && scope === "c")) return;
-        const pk = `miss|${k}|${s2 === "a" ? sc : s2}`, n = sel.filter(pickInfo(pk).test).length; if (n) todo.push(`<button type="button" class="todo" data-pick="${esc(pk)}"><b>${nf(n)}</b> without ${esc(l.toLowerCase())}</button>`); });
-      const noCov = {}; sel.filter(c => !c.coverUrl).forEach(c => { const k = isNovel(c) ? "" : seriesKeyOf(c); if (k) noCov[k] = (noCov[k] || 0) + 1; });
+      // To do: everything that needs you, in one place (da-v237: one look for every line, most important first, "Not now",
+      // comics marked "Can't be done" leave their list and are counted under it)
+      const items = [], hidden = S.todoHidden || [];
+      const pickLine = (id, pk, text, act) => { const n = sel.concat(selN).filter(pickInfo(pk).test).length, m = todoSkipKey(pk.split("|")[0], pk.split("|")[1]) ? sel.concat(selN).filter(pickInfo("skip:" + pk).test).length : 0;
+        items.push({ id, n, skipped: m ? `<button type="button" class="link small tdskip" data-pick="skip:${esc(pk)}">${nf(m)} marked as can't be done · show</button>` : "",
+          main: `<button type="button" class="link" data-pick="${esc(pk)}"><b>${nf(n)}</b> ${text}</button>`, act: act || "" }); };
+      const plainLine = (id, n, main, act) => items.push({ id, n, main, act: act || "", skipped: "" });
+      const bdays = daysSince(S.lastBackup);
+      if (bdays > 30) plainLine("backup", 1, `<b>${S.lastBackup ? "Last backup " + nf(bdays) + " days ago" : "No backup yet"}</b>`, `<button type="button" id="goBackup">Make a backup</button>`);
+      { const pw = priceBatchWaiting().filter(e => !batchTooNew(e)).length, cw = coverBatchWaiting().length;
+        if (pw) plainLine("prices", pw, `<b>${nf(pw)}</b> price ${pw === 1 ? "list" : "lists"} waiting`, `<button type="button" data-tdbatch="prices">Add all</button>`);
+        if (cw) plainLine("covers", cw, `<b>${nf(cw)}</b> ${cw === 1 ? "cover" : "covers"} waiting`, `<button type="button" data-tdbatch="covers">Add all</button>`); }
+      if (scope !== "b") pickLine("qnum", "qnum||" + sc, "with an unknown number (?)");
+      [["Condition", "grade", "c"], ["Price paid", "price", "a"], ["Purchase date", "date", "a"]].forEach(([l, k, s2]) => {
+        if (s2 === "c" && scope === "b") return; pickLine("miss:" + k, `miss|${k}|${s2 === "a" ? sc : s2}`, "without " + esc(l.toLowerCase())); });
+      pickLine("readnodate", "readnodate||" + sc, "read without a read date");
+      [["Genre", "genre", "a"], ["Pages (books)", "pages", "b"]].forEach(([l, k, s2]) => {
+        if (s2 === "b" && scope === "c") return; pickLine("miss:" + k, `miss|${k}|${s2 === "a" ? sc : s2}`, "without " + esc(l.toLowerCase())); });
+      const noCov = {}; sel.filter(c => !c.coverUrl && !isSkipped(c, "miss:cover")).forEach(c => { const k = isNovel(c) ? "" : seriesKeyOf(c); if (k) noCov[k] = (noCov[k] || 0) + 1; });
       const covTop = Object.entries(noCov).sort((a, b) => b[1] - a[1]).slice(0, 6);
-      if (covTop.length) todo.push(`<div class="todo"><button type="button" class="link" data-pick="miss|cover|${sc}"><b>${nf(sel.filter(c => !c.coverUrl).length)}</b> without a cover</button>: ${covTop.map(([k, n]) => { const c0 = bySer[k] && bySer[k][0]; return c0 ? `<button type="button" class="chipbtn" data-scol='${esc(JSON.stringify({ p: publisherOf(c0), g: groupOf(c0), s: k }))}'>${esc(seriesTitle(k))} ${n}</button>` : ""; }).join(" ")}</div>`);
+      pickLine("miss:cover", `miss|cover|${sc}`, "without a cover", covTop.map(([k, n]) => { const c0 = bySer[k] && bySer[k][0]; return c0 ? `<button type="button" class="chipbtn" data-scol='${esc(JSON.stringify({ p: publisherOf(c0), g: groupOf(c0), s: k }))}'>${esc(seriesTitle(k))} ${n}</button>` : ""; }).join(" "));
       // a comic already linked to its INDUCKS issue that still has no stories has none there (a postcard book: DSBP 63), so Fill all can't help
       const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && !c.inducks && catEntry(seriesById(c.seriesId))).length;
-      if (noStory) todo.push(`<div class="todo"><b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS) <button type="button" id="goFill">Fill all</button></div>`);
+      if (noStory) plainLine("stories", noStory, `<b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS)`, `<button type="button" id="goFill">Fill all</button>`);
       // ISBN / bootleg warnings (da-v233): owned ones open as a list, wishes in the Wishlist
-      { const iw = sel.filter(pickInfo("isbn||" + sc).test).length, iwW = S.comics.filter(c => c.status === "wanted" && (scope !== "b" || isNovel(c)) && (scope !== "c" || !isNovel(c)) && isbnWarnings(c).length).length;
-        if (iw || iwW) todo.push(`<div class="todo">${iw ? `<button type="button" class="link" data-pick="isbn||${sc}"><b>${nf(iw)}</b> with an ISBN warning</button>` : ""}${iw && iwW ? " · " : ""}${iwW ? `<button type="button" class="link" data-gowish><b>${nf(iwW)}</b> ${iwW === 1 ? "wish" : "wishes"} with an ISBN warning</button>` : ""}</div>`); }
-      if (noVal.length) todo.push(`<div class="todo"><b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet <button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}</div>`);
-      const bdays = daysSince(S.lastBackup);
-      if (bdays > 30) todo.push(`<div class="todo">${S.lastBackup ? "Last backup " + nf(bdays) + " days ago" : "No backup yet"} <button type="button" id="goBackup">Make a backup</button></div>`);
-      const todoCard = todo.length ? card("To do", "", `<div class="todos">${todo.join("")}</div>`) : card("To do", "", note("Nothing to do: everything is filled in. ✓"));
+      { const iwW = S.comics.filter(c => c.status === "wanted" && (scope !== "b" || isNovel(c)) && (scope !== "c" || !isNovel(c)) && isbnWarnings(c).length).length;
+        pickLine("isbn", "isbn||" + sc, "with an ISBN warning", iwW ? `<button type="button" class="link" data-gowish>${nf(iwW)} ${iwW === 1 ? "wish" : "wishes"} with one</button>` : "");
+        const it = items[items.length - 1]; if (!it.n && iwW) { it.n = iwW; it.main = `<button type="button" class="link" data-gowish><b>${nf(iwW)}</b> ${iwW === 1 ? "wish" : "wishes"} with an ISBN warning</button>`; it.act = ""; } }
+      if (scope !== "b") pickLine("noed", "noed||" + sc, "without an edition (their series has prices per edition)");
+      if (scope !== "c") pickLine("nocountry", "nocountry||b", "books without a country", `<button type="button" id="goRefreshBooks">Refresh all books</button>`);
+      if (noVal.length) plainLine("noval", noVal.length, `<b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet`, `<button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}`);
+      const open = items.filter(x => x.n && !hidden.includes(x.id)), hid = items.filter(x => x.n && hidden.includes(x.id));
+      const hidLabel = x => x.id === "backup" ? "Backup" : x.main.replace(/<[^>]+>/g, "").replace(/^[\d'’.,\s]+/, "").replace(/^without /, "").trim();
+      const todoBody = (open.length ? `<div class="todos">${open.map(x => `<div class="todo"><div class="tdline"><div class="tdmain">${x.main}${x.act ? " " + x.act : ""}</div><button type="button" class="ghost tiny tdhide" data-todohide="${esc(x.id)}">Not now</button></div>${x.skipped}</div>`).join("")}</div>`
+          : note(hid.length ? "Nothing else to do." : "Nothing to do: everything is filled in. ✓"))
+        + (() => { const done = items.filter(x => !x.n && x.skipped).map(x => `<span class="muted">${esc(hidLabel(x))}:</span> ${x.skipped}`); return done.length ? `<div class="row small" style="gap:6px;flex-wrap:wrap">${done.join(" · ")}</div>` : ""; })()
+        + (hid.length ? `<div class="row small" style="gap:6px;flex-wrap:wrap;align-items:center"><span class="muted">Hidden:</span>${hid.map(x => `<button type="button" class="chipbtn" data-todoshow="${esc(x.id)}" title="Show this line again">${esc(hidLabel(x))} ${nf(x.n)}</button>`).join("")}</div>` : "");
+      const todoCard = card("To do" + (open.length ? ` · ${nf(open.length)}` : ""), "", todoBody);
       // one highlight: the series closest to complete
       const close = perSeries.map(x => Object.assign({ miss: x.tot - x.n }, x)).filter(x => x.miss > 0 && x.n / x.tot >= 0.25).sort((a, b) => a.miss - b.miss || b.n - a.n)[0];
       const hl = close && scope !== "b" ? `<button type="button" class="card highlight" data-gap="${esc(close.s.id)}"><span class="small muted">Closest to complete</span><strong>${esc(seriesLabel(close.s))}: only ${nf(close.miss)} missing</strong><span class="small muted">${nf(close.n)} of ${nf(close.tot)} · tap for the gap grid</span></button>` : "";
@@ -455,6 +488,12 @@ VIEWS.stats = {
     document.querySelectorAll("[data-stq]").forEach(b => b.onclick = () => storiesGo({ q: b.dataset.stq }));
     $("#goFill") && ($("#goFill").onclick = () => { S.serTab = "tools"; S.serEditObj = null; S.serEditBook = null; nav("series"); setTimeout(() => { const r = $("#rfbox"); r && r.scrollIntoView({ block: "start" }); }, 100); });
     $("#goBackup") && ($("#goBackup").onclick = () => nav("backup"));
+    // To do (da-v237): "Not now" hides a line, the Hidden chips bring it back; waiting lists added from here
+    document.querySelectorAll("[data-todohide]").forEach(b => b.onclick = async () => { S.todoHidden = [...new Set((S.todoHidden || []).concat(b.dataset.todohide))]; await setConfig("todoHidden", S.todoHidden).catch(() => {}); renderKeep(); });
+    document.querySelectorAll("[data-todoshow]").forEach(b => b.onclick = async () => { S.todoHidden = (S.todoHidden || []).filter(x => x !== b.dataset.todoshow); await setConfig("todoHidden", S.todoHidden).catch(() => {}); renderKeep(); });
+    document.querySelectorAll("[data-tdbatch]").forEach(b => b.onclick = async () => { b.disabled = true;
+      try { if (b.dataset.tdbatch === "covers") { const n = await applyCoverBatch(); toast("Added " + n + " covers"); } else { const r = await applyPriceBatch(); toast("Added " + r.ranges + " price ranges for " + r.series + " series"); } } catch (e) { toast(errText(e)); } renderKeep(); });
+    $("#goRefreshBooks") && ($("#goRefreshBooks").onclick = () => { S.serTab = "tools"; S.serEditObj = null; S.serEditBook = null; nav("series"); setTimeout(() => { const r = $("#rbbox"); r && r.scrollIntoView({ block: "start" }); }, 100); });
     $("#goTrade") && ($("#goTrade").onclick = () => { S.filters.q = ""; S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
     $("#goWish") && ($("#goWish").onclick = () => { S.gapTab = "wishlist"; nav("gaps"); });
     document.querySelectorAll("[data-srcby]").forEach(b => b.onclick = () => { S.statSrcBy = b.dataset.srcby; renderKeep(); });

@@ -80,6 +80,14 @@ await shot("07-new-comic", () => { S.recentSeries = ["ltb", "tldle", "kap"]; S.e
 await shot("12-trade", () => { S.filters.status = "trade"; S.colTab = "comics"; S.col = {}; nav("collection"); });
 await shot("13-person", () => { S.st = { tab: "all", who: { role: "writers", name: "Guido Martina" }, status: "all" }; nav("stories"); });
 await shot("13b-story-rating", () => { S.storyRatings = { "c:itl1-ap": { rating: 4, writing: 5, art: 3.5 }, "c:itl20-a": { rating: 3, writing: 4 } }; S.st = { tab: "all", status: "all" }; nav("stories"); setTimeout(() => { const d = document.querySelector("details.storyit"); if (d) d.open = true; }, 300); });
+// da-v237: a story series page (kind, progress, Where to find them) and a To do list with "Can't be done"
+if (want("story-series") || process.env.VISIT) try {
+  await page.evaluate(() => { const { S, nav } = window.__dda; const a = S.comics.find(c => c.id === "a1"); a.stories = a.stories.concat([{ title: "Rasanter Einsatz", code: "I TL 2767-1", pages: "37" }]); a.read = true;
+    S.storyKinds = { DoubleDuck: "cont" }; S.st = { tab: "all", status: "all", sub: "stories", who: { role: "series", name: "DoubleDuck" } }; nav("stories"); });
+  await page.waitForTimeout(3000);
+  if (want("story-series")) await page.screenshot({ path: `${OUT}/13c-story-series.png`, fullPage: true });
+} catch (e) { errors.push("story-series: " + e.message); }
+await shot("21-todo-list", () => { openPick("miss|grade|c"); });
 await shot("14-value", () => { insuranceRows(); insuranceCsv(); S.statNoVal = true; S.valueHistory = { "2026-08": { v: 120, p: 100, n: 8 }, "2026-09": { v: 150, p: 110, n: 9 }, "2026-10": { v: 165, p: 115, n: 10 } }; S.statTab = "value"; nav("stats"); });
 await shot("15-fair", () => { S.fair = true; S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); document.querySelector("#fairres [data-got]").click(); });
 await shot("16-stats-collection", () => { S.statTab = "collection"; S.statScope = "a"; S.statRange = "all"; nav("stats"); });

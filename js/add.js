@@ -136,7 +136,7 @@ ${isBook ? `
       <div class="card stack"><div class="row between"><h3>Read, not owned</h3><span class="row" style="gap:10px">${heartHtml(d.fav, 'id="f-fav"')}${starsHtml(d.rating, 'id="f-rating"')}</span></div>
         <p class="small muted" style="margin:0">For things you read without owning them (library, free e-book, borrowed). They count in the reading stats, kept apart from your own, and never in your collection, value or gap grids.</p>
         <div class="grid-form">
-          <label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="TT.MM.JJJJ, MM.JJJJ or JJJJ"></label>
+          <label><span class="l">Read on <button type="button" class="ghost tiny" data-yearonly="f-readDate" title="When you only know the year">only the year</button></span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="TT.MM.JJJJ, MM.JJJJ or JJJJ"></label>
           <label><span class="l">Read from</span><input id="f-source" list="readfrom" value="${esc(d.source)}" placeholder="Library, e-book, borrowed…"><datalist id="readfrom"><option>Library</option><option>Free e-book</option><option>Borrowed</option><option>Online</option></datalist></label>
           <div class="row wide" style="gap:6px;flex-wrap:wrap">${["Library", "Free e-book", "Borrowed", "Online"].map(x => `<button type="button" class="fchip${d.source === x ? " on" : ""}" data-rsrc="${x}">${x}</button>`).join("")}</div>
           <div class="row wide" style="gap:10px;align-items:center"><span class="small muted">Cover</span>${starsHtml(d.coverRating, 'id="f-coverRating" aria-label="Cover rating"')}</div>
@@ -155,10 +155,10 @@ ${isBook ? `
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
           <div class="wide small valueline">${(v => v ? `Value: <strong>${money(v.amount * (d.copies || 1), v.cur)}</strong> · ${v.how === "checked" ? "checked price" : v.how === "table" ? "from the price table (" + esc(rangeText(v.rule) || "all") + ": " + money(v.rule.price, v.rule.cur) + " × condition " + gradeFactor(d.grade) + (d.facsimile ? " × facsimile " + FACSIMILE_FACTOR : "") + ")" : "your own estimate"}` : "No value yet.")(valueOf(d))}
 ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seriesId, d) ? `<br>Collector prices: ${collectorLinks(d.seriesId, d)}` : ""}</div>
-          <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ"></label>
+          <label><span class="l">Purchase date <button type="button" class="ghost tiny" id="today">today</button> <button type="button" class="ghost tiny" data-yearonly="f-purchaseDate" title="When you only know the year">only the year</button></span><input id="f-purchaseDate" inputmode="numeric" value="${esc(niceDate(d.purchaseDate))}" placeholder="TT.MM.JJJJ, MM.JJJJ or JJJJ"></label>
           <label><span class="l">Bought from</span><input id="f-source" list="sources" value="${esc(d.source)}" placeholder="Comic-Börse Zürich, Ricardo…"><datalist id="sources">${sourceList().map(n => `<option>${esc(n)}</option>`).join("")}</datalist></label>
           <label class="check"><input id="f-read" type="checkbox"${d.read ? " checked" : ""}> Read</label>
-          ${d.read ? `<label><span class="l">Read on</span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="${d.readDate ? "TT.MM.JJJJ, MM.JJJJ or JJJJ" : "not recorded"}"></label>` : ""}
+          ${d.read ? `<label><span class="l">Read on <button type="button" class="ghost tiny" data-yearonly="f-readDate" title="When you only know the year">only the year</button></span><input id="f-readDate" inputmode="numeric" value="${esc(niceDate(d.readDate || ""))}" placeholder="${d.readDate ? "TT.MM.JJJJ, MM.JJJJ or JJJJ" : "not recorded"}"></label>` : ""}
           <label class="check"><input id="f-forTrade" type="checkbox"${d.forTrade ? " checked" : ""}> Available for trade</label>
           ${isBook ? "" : `<label class="check wide"><input id="f-facsimile" type="checkbox"${d.facsimile ? " checked" : ""}> Facsimile or reprint (doesn't count as the original in the gap grid)</label>`}
           <label class="wide"><span class="l">Notes</span><textarea id="f-notes">${esc(d.notes)}</textarea></label>
@@ -182,6 +182,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     if (S.viewMode && d && d.id) return bindDetail(d);
     bindAmounts();
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
+    // a rough date (da-v237): only the year counts as filled in (yearly numbers), not in the monthly charts
+    document.querySelectorAll("[data-yearonly]").forEach(b => b.onclick = e => { e.preventDefault(); const inp = $("#" + b.dataset.yearonly); if (!inp) return;
+      const y = /^\d{4}/.exec(isoDate(inp.value)); inp.value = y ? y[0] : ""; if (!y) { inp.placeholder = "Year, e.g. 2019"; inp.focus(); } });
     $("#f-fav") && ($("#f-fav").onclick = e => { d.fav = !d.fav; const b = e.currentTarget; b.classList.toggle("on", d.fav); b.textContent = d.fav ? "♥" : "♡"; b.setAttribute("aria-pressed", d.fav); });
     bindStars($("#app"), (v, box) => { if (box.id === "f-rating") d.rating = v; if (box.id === "f-coverRating") d.coverRating = v; });
     refreshDup(d);

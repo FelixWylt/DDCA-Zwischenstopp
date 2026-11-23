@@ -145,6 +145,20 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Closest to complete and "no prices yet". da-v236 (go 23:00, "no report"): single books (key "book:" = no series, or a book series of 1 volume) never Complete (markComplete/isComplete).
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
+- **da-v237 built (go 23:40, continued 23:42 on high, local until "publish"):** Stats › Overview › To do rebuilt (stats.js): lines
+  backup › waiting price lists/covers (Add all, data-tdbatch) › qnum (unknown "?" number) › condition/price/date › readnodate › genre/pages ›
+  cover › stories › isbn › noed (no edition where ranges name editions and no default edition) › nocountry (books, Refresh all books button
+  #goRefreshBooks) › no prices; "Not now" (config todoHidden, Hidden chips bring back), title "To do · N". "Can't be done": c.todoSkip = keys
+  ("miss:date", "readnodate", "isbn", "qnum", "noed", "nocountry"; TODO_TYPES/todoSkipKey/isSkipped), pick "skip:<pick>" lists the marked;
+  the To do list view (collection.js) has a button per row + "Mark all shown"/"Undo all shown". Dates: "only the year" chip on Read on and
+  Purchase date (add.js data-yearonly); a bare year already counted as filled. markRun("books") fixed. Stories: bigger ↓/↑ (.sortdir.big);
+  story series kinds (config storyKinds, in the backup: cont/loose/setting, chips on the series page, filter row data-skf in the Story
+  series list); storySeriesCard: progress (cont: parts read; others: owned), "All N parts" (cont), "Where to find them" (closed for
+  setting) from catalogue/story-where.json (scripts/build_story_where.py, also run by the catalogue workflow; parts = stories of 2+ pages,
+  reading order = story code order), Wish button (wishFromStory, adds the series from the catalogue if needed). Screens: stats, edit-comic,
+  stories, story-series (new), todo-list (new) + visit.
+  **Next, chosen by the user (2026-11-23):** pre-set the kind of as many story series as possible, as its OWN task with full attention
+  (not part of da-v237). Idea: a catalogue/story-kinds.json read by storyKindOf as a default under the user's own choice.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
@@ -293,7 +307,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   `gh api -X POST repos/FelixWylt/DDCA-Zwischenstopp/actions/workflows/screens.yml/dispatches -f ref=main -f 'inputs[screens]=wishlist,copy-picker'`
   (`gh workflow run` is blocked here). Add `-f 'inputs[visit]=1'` to open every screen without pictures, only to catch errors (names: collection, group-ltb,
   series-ltb-copies, group-singles, series-tools (also taps Add all), stories (same story twice in one comic = once), stats-singles, wishlist, wishlist-books, edit-comic, new-comic, stats, series, copy-picker,
-  price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
+  price-suggestion, trade, person, value, fair, stats-collection, stats-spend, stats-stories, stats-reading, story-series, todo-list; `prices` = check that every list in catalogue/prices.json reads). It always records JavaScript
   errors. Results on the `screens` branch: `*.png` and `errors.txt` (about 1.5 min per run). No run for invisible changes.
 - **Handover tips (2026-11-15):** the user's backup (.json, sent in the chat) is private: never commit it. It is the only
   source for the user's series ids (non-INDUCKS series "x-<name>-<lang>", book series "book:<name>") and for what they

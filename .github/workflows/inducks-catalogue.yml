@@ -48,6 +48,10 @@ jobs:
         if: steps.dl.outcome == 'success'
         run: python3 scripts/fix_titles.py catalogue
 
+      - name: Where story series stories are printed
+        if: steps.dl.outcome == 'success'
+        run: python3 scripts/build_story_where.py
+
       - name: Build title index
         if: steps.dl.outcome == 'success'
         run: python3 scripts/build_titles.py catalogue
