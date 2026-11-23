@@ -134,6 +134,10 @@ except typing the reply itself. Say in the report that the reply writing and Git
   completeKeys (config completeSeries, markComplete/isComplete/completeChip/bookSeriesComplete): set by gapHead (only with a known end)
   and Stats (perSeries with tot, book series with a size); gold chip .complete in gap head, Collection folders, Stats card "Complete
   series" (data-cgap) and How complete. Screens at publish: + series-ltb-copies/collection, stats, series (with da-v233's list).
+- **Handover nr. 15 (2026-11-23 ~22:42, app da-v234 published, nothing local):** da-v233 + da-v234 pushed 22:37; one check run
+  (series, edit-comic, stats, series-tools, notowned, series-ltb-copies, collection + visit): no JavaScript errors; book grid shows Move and
+  Wish all missing. Not yet tried on the phone: Wish all missing / Remove all wishes, ISBN warning, Make it a comic/book series, Move, Merge,
+  Complete label (Collection label appears after the grid or Stats counted a series). Nothing chosen next.
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
