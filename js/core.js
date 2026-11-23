@@ -136,9 +136,10 @@ function isbnWarnings(c) {
 }
 const isbnWarnHtml = c => (w => w.length ? `<div class="banner warn small isbnwarn">⚠ ${w.map(esc).join("<br>⚠ ")}</div>` : "")(isbnWarnings(c));
 // ---- complete series (da-v234): remembered when the gap grid or Stats counts them, shown as a gold "Complete" label ----
-function isComplete(key) { return !!(S.completeKeys || {})[key]; }
+function isComplete(key) { return key !== "book:" && !!(S.completeKeys || {})[key]; }
 function markComplete(key, done) {
   if (!key) return; S.completeKeys = S.completeKeys || {};
+  if (key === "book:" || (String(key).startsWith("book:") && parseInt((S.bookSizes || {})[key.slice(5)], 10) === 1)) done = false;   // single books (no series, or a series of one volume) are never "complete"
   if (!!S.completeKeys[key] === !!done) return;
   if (done) S.completeKeys[key] = true; else delete S.completeKeys[key];
   setConfig("completeSeries", S.completeKeys).catch(() => {});
@@ -1270,7 +1271,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 235;
+const APP_BUILD = 236;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

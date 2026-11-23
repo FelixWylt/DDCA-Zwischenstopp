@@ -139,7 +139,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Wish all missing. Not yet tried on the phone: Wish all missing / Remove all wishes, ISBN warning, Make it a comic/book series, Move, Merge,
   Complete label (Collection label appears after the grid or Stats counted a series). Nothing chosen next.
   da-v235 (go 22:58): single comics (isSingleSeries) get no Complete label (gapHead, Stats unmarks) and stay out of How complete,
-  Closest to complete and "no prices yet".
+  Closest to complete and "no prices yet". da-v236 (go 23:00, "no report"): single books (key "book:" = no series, or a book series of 1 volume) never Complete (markComplete/isComplete).
   Idea 5 judged NOT needed (2026-11-23): the last GCD run had only 7 comics left; a nightly job can't know which comics lack covers
   (data only on the phone, needs a fresh backup each time). Instead: a one-off run when the user sends a backup with new cover-less comics.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
