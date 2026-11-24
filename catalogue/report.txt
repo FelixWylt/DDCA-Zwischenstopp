@@ -81,7 +81,7 @@ PUBLICATIONS
   ✓ Der Stammbaum der Ducks (1999)  →  de/SDD  'Der Stammbaum der Ducks'  (by code)
 
 issues in chosen publications: 21,719
-entries: 236,337, story versions: 120,525
+entries: 236,366, story versions: 120,527
 cover scans: 21,091 of 21,719 issues
 story heroes: 76,392, their names: 5,577
 
@@ -146,7 +146,7 @@ FILES
   inducks-it-ABB.json: 24 issues, 72 KB  e.g. 1978 = it/ABB1978 1979 (10 stories)
   inducks-it-DLL.json: 6 issues, 2 KB  e.g. 4 = it/DLL   4 1984 (1 stories)
   inducks-de-CBC.json: 30 issues, 75 KB  e.g. 6 = de/CBC  6 2007-04 (28 stories)
-  inducks-it-TLDLE.json: 86 issues, 47 KB  e.g. 32 = it/TLDLE32 2021-11 (3 stories)
+  inducks-it-TLDLE.json: 86 issues, 48 KB  e.g. 32 = it/TLDLE32 2021-11 (3 stories)
   inducks-it-DDCO.json: 49 issues, 33 KB  e.g. 24 = it/DDCO 24 2018-01-15 (3 stories)
   inducks-it-CALE.json: 26 issues, 15 KB  e.g. 14 = it/CALE 14 2019-09 (1 stories)
   inducks-de-MMS.json: 1 issues, 1 KB  e.g. 1 = de/MMS   1 2017-11-17 (6 stories)
