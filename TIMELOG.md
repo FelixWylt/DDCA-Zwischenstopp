@@ -260,4 +260,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Publish da-v239 (+ automatic catalogue rebuild) and da-v240 (4 fixes, go 18:13), one check run (story-search, stories + visit): no errors | ~7 min incl. 5–6 min waiting (first guess 7) + 1–2 min for da-v240 | 5–6 min incl. ~5 min waiting (18:12 → 18:18:22) |
 | 2026-11-24 | Plan step 2 (issue lists for all de/sv/en/it series): counted 2,467 series without a list | 1–2 min (first guess 3 ÷ 2) | 0–1 min (18:19 → 18:19:47) |
 | 2026-11-24 | Handover nr. 17 (step 2 = B chosen, for the next chat) + publish notes | about 1 min (first guess 2 ÷ 2) | 0–1 min (18:30 → 18:30:36) |
+| 2026-11-24 | da-v241 slim issue lists (build + app + measuring run + check run on check-v241) | 15–25 min + ~5 min waiting (first guess 60 ÷ 3) | 8–9 min incl. ~4 min waiting (18:34 → 18:42:03) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

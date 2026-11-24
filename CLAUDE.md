@@ -191,6 +191,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
   series from a slim list fill story titles/creators from the story list; Gaps and Fill from INDUCKS work as before; 4) local until
   "publish"; screens: story-search + a new gap grid of a slim-list series. Estimate given: first guess 60 ÷ 3 = 15–25 min + ~5 min waiting.
   Test branches left on GitHub (can't delete from here): check-v238, check-v239.
+- **da-v241 built (go 2026-11-24 18:34, local until "publish"): slim issue lists.** build_story_search.py writes catalogue/slim/<code>.json
+  ({code,title,lang,slim:1,issues:{label:{n,ic only if not "code n",t,d,pg,s:[story codes]}}}) for every pub with a de/sv/en/it printing
+  and no full file (2,467 pubs, 78,057 issues, 9.2 MB) + slim-index.json ([code,title,lang,file,issues], precached by sw.js); story-search-meta
+  pubs point to them, so every printing has Wish. App (core.js): setSlimIndex/S.slimCat, catEntry falls back to slim (by code; by name only
+  if unique in its country and the series has a country), catEntryByFile, catalogueFile → expandSlim (titles in the list's language,
+  creators, pages from story-search.txt via storyRecs/SRECS); wishFromCat names a same-named series of another country "Name (US)";
+  inducksNote for slim. Screen "slim-gaps" (de/LTBAT). Tested on check-v241 (catalogue run + screens story-search,slim-gaps + visit: no errors).
+  **On publish:** push main, then dispatch the catalogue workflow on main (build_story_search.py isn't in its push paths), then one check run.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
