@@ -198,7 +198,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   if unique in its country and the series has a country), catEntryByFile, catalogueFile → expandSlim (titles in the list's language,
   creators, pages from story-search.txt via storyRecs/SRECS); wishFromCat names a same-named series of another country "Name (US)";
   inducksNote for slim. Screen "slim-gaps" (de/LTBAT). Tested on check-v241 (catalogue run + screens story-search,slim-gaps + visit: no errors).
-  **On publish:** push main, then dispatch the catalogue workflow on main (build_story_search.py isn't in its push paths), then one check run.
+  **Published 2026-11-24 18:48** (catalogue rebuilt on main 18:48, check run story-search,slim-gaps + visit: no errors; nothing local after this).
+  Test branch check-v241 left on GitHub. Note: build_story_search.py isn't in the catalogue job's push paths: dispatch it by hand after changing it.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
