@@ -248,4 +248,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Plan da-v239: search all catalogue stories (checked: 57,645 stories in the 76 issue lists) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (16:55 → 16:56:05) |
 | 2026-11-24 | Question: Mickey Mouse universe stories in INDUCKS (inducks.org blocks automated access; web search; catalogue has heroes only for Swedish lists) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (16:58 → 16:59:24) |
 | 2026-11-24 | Answer: where the INDUCKS stats page is | under 1 min | 0–1 min (17:02 → 17:02:28) |
+| 2026-11-24 | Estimate: stories in the Mickey Mouse universe (from the user's INDUCKS counts) | under 1 min | 0–1 min (17:07 → 17:07:49) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
