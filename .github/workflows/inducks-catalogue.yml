@@ -52,6 +52,10 @@ jobs:
         if: steps.dl.outcome == 'success'
         run: python3 scripts/build_story_where.py
 
+      - name: Every comic story, for the All INDUCKS search
+        if: steps.dl.outcome == 'success'
+        run: python3 scripts/build_story_search.py data/isv catalogue
+
       - name: Build title index
         if: steps.dl.outcome == 'success'
         run: python3 scripts/build_titles.py catalogue
