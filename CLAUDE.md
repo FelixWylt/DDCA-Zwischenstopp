@@ -167,6 +167,17 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Il re del Klondike, Paperinik e la macchina del Fangus, P.d.P., and the 1-story series.
   Checked before publishing on a test branch (push HEAD to check-v238, screens.yml dispatched with ref=check-v238: it serves that
   branch's copy, Pages untouched): no errors. Branches can't be deleted from here (proxy 403): check-v238 is left on GitHub, harmless.
+- **da-v239 built (go 2026-11-24 17:18, local until "publish"): All INDUCKS search.** scripts/build_story_search.py (workflow step after
+  build_story_where) writes catalogue/story-search.txt (152,039 comic stories, kind n incl. gags; TAB lines: code, titles de/sv/en/it
+  [most used, empty = same as original], original title, writer/artist/hero indexes, pages, year, original language; 10 MB, ~3 MB sent),
+  story-search-meta.json (people, heroes [de,sv,en,it], pubs [code,title,lang,catalogue file]) and story-print/NN.json (64 shards, shard =
+  sum of char codes % 64; 438,476 printings in de/sv/en/it). App (stories-backup.js): chip "All INDUCKS" (st.status "inducks", only on All
+  stories › Stories), loadInducksSearch (search text built in pieces), drawInducksSearch (3+ letters, 100 at a time), fillInducksStory
+  (titles, creators, characters, story series, printings by language with owned/wish marks; Wish via wishFromCat only where the series
+  has a catalogue issue list). Screens: story-search (new, waits 12 s for the list). The catalogue job now commits to its own branch
+  ($GITHUB_REF_NAME), so test branches work; tested on check-v239 (catalogue run ~1 min, screens no errors). Known: Swedish titles
+  like "och Atlantidernas skatt" (no hero) in this list; step 2 (all issue lists in de/sv/en/it for Wish everywhere) not started.
+  At publish the workflow change starts a catalogue rebuild on main by itself: run the screenshot check AFTER it.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)

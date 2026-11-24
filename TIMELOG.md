@@ -250,4 +250,6 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Answer: where the INDUCKS stats page is | under 1 min | 0–1 min (17:02 → 17:02:28) |
 | 2026-11-24 | Estimate: stories in the Mickey Mouse universe (from the user's INDUCKS counts) | under 1 min | 0–1 min (17:07 → 17:07:49) |
 | 2026-11-24 | Answer: is adding all INDUCKS stories to the catalogue worth it | under 1 min | 0–1 min (17:09 → 17:09:15) |
+| 2026-11-24 | Plan da-v239 search every story (17:13; commit forgotten, end time not measured) | about 2 min (first guess 4 ÷ 2) | not measured |
+| 2026-11-24 | da-v239: All INDUCKS search (catalogue builder + app + 2 test catalogue runs + check run on check-v239, local) | 12–18 min + 10–20 min waiting (first guess 45 ÷ 3) | 9–10 min incl. ~7 min waiting (17:18 → 17:28:28) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
