@@ -247,4 +247,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Lookup: James Goof (= story series Triple Zero) kind in story-kinds.json | under 1 min (first guess 1 ÷ 2) | 0–1 min (16:51 → 16:51:56) |
 | 2026-11-24 | Plan da-v239: search all catalogue stories (checked: 57,645 stories in the 76 issue lists) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (16:55 → 16:56:05) |
 | 2026-11-24 | Question: Mickey Mouse universe stories in INDUCKS (inducks.org blocks automated access; web search; catalogue has heroes only for Swedish lists) | 1–2 min (first guess 3 ÷ 2) | 0–1 min (16:58 → 16:59:24) |
+| 2026-11-24 | Answer: where the INDUCKS stats page is | under 1 min | 0–1 min (17:02 → 17:02:28) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
