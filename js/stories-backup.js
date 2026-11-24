@@ -364,14 +364,14 @@ VIEWS.stories = {
   }
 };
 const storyTitle = e => (e.titles[0] || e.code || "").replace(/^\((.*)\)$/, "$1");
-// one story: cover of the first comic it's in, title, creators; opens to details, rating and the comics
 // ---- All INDUCKS search (da-v239): every comic story in INDUCKS (catalogue/story-search.txt, built from the export),
 // where it's printed in German, Swedish, English and Italian (catalogue/story-print/NN.json, loaded per story) ----
 let ISRCH = null, isrchBusy = false;
 function loadInducksSearch() {
+  if (ISRCH && ISRCH.err && Date.now() - ISRCH.at > 60000) ISRCH = null;   // try again a minute after a failed load
   if (ISRCH || isrchBusy) return; isrchBusy = true;
   Promise.all([fetch("catalogue/story-search-meta.json").then(r => r.ok ? r.json() : null), fetch("catalogue/story-search.txt").then(r => r.ok ? r.text() : null)]).then(([m, t]) => {
-    if (!m || !t) { ISRCH = { err: true }; isrchBusy = false; if (S.view === "stories") drawStories(); return; }
+    if (!m || !t) { ISRCH = { err: true, at: Date.now() }; isrchBusy = false; if (S.view === "stories") drawStories(); return; }
     const recs = t.split("\n").filter(Boolean).map(l => l.split("\t")), hay = new Array(recs.length);
     const heroTxt = (m.heroes || []).map(h => h.filter(Boolean).join(" ")), ids = v => v ? v.split(",").map(Number) : [];
     let i = 0;
@@ -384,13 +384,13 @@ function loadInducksSearch() {
       else { ISRCH = { meta: m, recs, hay, prints: {} }; isrchBusy = false; if (S.view === "stories") drawStories(); }
     };
     step();
-  }).catch(() => { ISRCH = { err: true }; isrchBusy = false; if (S.view === "stories") drawStories(); });
+  }).catch(() => { ISRCH = { err: true, at: Date.now() }; isrchBusy = false; if (S.view === "stories") drawStories(); });
 }
 const indTitle = r => r[1] || r[2] || r[3] || r[4] || r[5] || r[0];   // German first, then Swedish, English, Italian, original
 function drawInducksSearch(box, words) {
   const st = S.st;
-  if (!ISRCH || ISRCH.busy != null) { loadInducksSearch(); box.innerHTML = `<p class="muted small" style="margin:8px 0">${ISRCH && ISRCH.busy != null ? `Preparing the search … ${ISRCH.busy} %` : "Loading every INDUCKS story (about 4 MB, only the first time) …"}</p>`; return; }
-  if (ISRCH.err) { box.innerHTML = '<div class="empty"><h3>Not available yet</h3><p>The story list comes with the next catalogue update. Try again later.</p></div>'; return; }
+  if (!ISRCH || ISRCH.busy != null) { loadInducksSearch(); box.innerHTML = `<p class="muted small" style="margin:8px 0">${ISRCH && ISRCH.busy != null ? `Preparing the search … ${ISRCH.busy} %` : "Loading every INDUCKS story (about 3 MB, only the first time) …"}</p>`; return; }
+  if (ISRCH.err) { loadInducksSearch(); box.innerHTML = '<div class="empty"><h3>Not available yet</h3><p>The story list couldn\'t be loaded (right after an update it may still be on its way). The app tries again after a minute: tap the chip again then.</p></div>'; return; }
   const m = ISRCH.meta;
   if (words.join("").length < 3) { box.innerHTML = `<p class="muted small" style="margin:8px 0">Search all ${ISRCH.recs.length.toLocaleString("de-CH")} comic stories in INDUCKS: type at least 3 letters of a title (German, Swedish, English, Italian or original), a story code, a writer, an artist or a character.</p>`; return; }
   const hits = []; for (let i = 0; i < ISRCH.hay.length; i++) { const h = ISRCH.hay[i]; if (words.every(w => h.includes(w))) hits.push(i); }
@@ -417,7 +417,7 @@ async function fillInducksStory(d) {
   const tag = h => h === "owned" ? '<span class="chip">owned</span>' : h === "read" ? '<span class="chip">read, not owned</span>' : h === "wish" ? '<span class="chip wanted">wishlist</span>' : "";
   const printed = Object.keys(groups).sort((a, b) => ["de", "sv", "en", "it"].indexOf(a) - ["de", "sv", "en", "it"].indexOf(b)).map(l => `<div class="wheregroup"><div><strong>${esc(LN[l] || l)}</strong> <span class="muted">${groups[l].length}</span></div>${groups[l].map(x => {
       const h = x.p[3] ? st.get(x.p[3] + "|" + catLabel(x.num)) || "" : "";
-      return `<div class="whererow"><span class="wparts">${esc(x.p[1])} ${esc(x.num)}${x.year ? ` <span class="muted">(${esc(x.year)})</span>` : ""}</span>${tag(h)}${!h && x.p[3] ? `<button type="button" class="ghost tiny" data-iwish="${esc(x.p[3])}|${esc(catLabel(x.num))}|${esc(x.p[0] + " " + x.num)}|${esc(x.p[1])}">Wish</button>` : ""}</div>`; }).join("")}</div>`).join("");
+      return `<div class="whererow"><span class="wparts">${esc(x.p[1])} ${esc(x.num)}${x.year ? ` <span class="muted">(${esc(x.year)})</span>` : ""}</span>${tag(h)}${!h && x.p[3] ? `<button type="button" class="ghost tiny" data-iwish="${esc(JSON.stringify([x.p[3], catLabel(x.num), x.p[0] + " " + x.num, x.p[1]]))}">Wish</button>` : ""}</div>`; }).join("")}</div>`).join("");
   const noCat = pr.filter(([pi]) => !(m.pubs[pi] || [])[3]).length;
   body.innerHTML = `${titles.length ? `<div><span class="muted">Titles:</span> ${titles.join(" · ")}</div>` : ""}
     ${r[5] ? `<div><span class="muted">Original title:</span> ${esc(r[5])}</div>` : ""}
@@ -430,10 +430,11 @@ async function fillInducksStory(d) {
     ${printed || '<p class="muted" style="margin:0">Never printed in these four languages.</p>'}
     ${noCat ? `<p class="muted" style="margin:4px 0 0">Comics without a Wish button are in series whose issue list isn't in the catalogue yet.</p>` : ""}`;
   d.dataset.done = "1";
-  body.querySelectorAll("[data-iwish]").forEach(b => b.onclick = async e => { e.preventDefault(); b.disabled = true; const [file, key, ic, title] = b.dataset.iwish.split("|");
+  body.querySelectorAll("[data-iwish]").forEach(b => b.onclick = async e => { e.preventDefault(); b.disabled = true; const [file, key, ic, title] = JSON.parse(b.dataset.iwish);
     try { await wishFromCat(file, title, key, ic); } catch (er) { toast(errText(er)); } d.dataset.done = ""; fillInducksStory(d); });
   body.querySelectorAll("[data-ser]").forEach(b => b.onclick = () => { S.st.who = { role: "series", name: b.dataset.ser }; S.st.sub = "stories"; S.st.status = "all"; S.st.q = ""; S.st.shown = 100; render(); window.scrollTo(0, 0); });
 }
+// one story: cover of the first comic it's in, title, creators; opens to details, rating and the comics
 function storyRow(e) {
   const people = [[...e.writers].join(", "), [...e.artists].join(", ")];
   const by = people[0] && people[0] === people[1] ? people[0] : [people[0] && "W: " + people[0], people[1] && "A: " + people[1]].filter(Boolean).join(" · ");

@@ -178,7 +178,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   ($GITHUB_REF_NAME), so test branches work; tested on check-v239 (catalogue run ~1 min, screens no errors). Short titles ("och Atlantidernas skatt")
   get the printed hero / main character in front (full_title in build_story_search.py; test run: 3,794 short printings, 24 titles
   left without a known hero); step 2 (all issue lists in de/sv/en/it for Wish everywhere) not started.
-  At publish the workflow change starts a catalogue rebuild on main by itself: run the screenshot check AFTER it.
+  Published 2026-11-24 18:12 (catalogue rebuilt on main 18:13). **da-v240 (go 18:13):** after a failed load the search retries
+  after a minute (ISRCH.err + at); loading text says ~3 MB; Wish button data as JSON (data-iwish); storyRow comment back in place.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
