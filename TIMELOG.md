@@ -257,4 +257,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | da-v239: hero names in front of short titles in the All INDUCKS list + test catalogue run (local) | ~3 min + ~2 min waiting (first guess 6 ÷ 2) | 2–3 min incl. ~2 min waiting (18:02 → 18:05:15) |
 | 2026-11-24 | Check of everything unpublished (da-v239 diff, build script, workflow, notes, log): 4 small findings, nothing fixed yet | 3–4 min (first guess 10 ÷ 3) | 0–1 min (18:07 → 18:07:58) |
 | 2026-11-24 | Answer + check: short-title fix keeps each title's own language | under 1 min | 0–1 min (18:11 → 18:11:18) |
+| 2026-11-24 | Publish da-v239 (+ automatic catalogue rebuild) and da-v240 (4 fixes, go 18:13), one check run (story-search, stories + visit): no errors | ~7 min incl. 5–6 min waiting (first guess 7) + 1–2 min for da-v240 | 5–6 min incl. ~5 min waiting (18:12 → 18:18:22) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
