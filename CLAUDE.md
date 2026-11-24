@@ -180,6 +180,17 @@ except typing the reply itself. Say in the report that the reply writing and Git
   left without a known hero); step 2 (all issue lists in de/sv/en/it for Wish everywhere) not started.
   Published 2026-11-24 18:12 (catalogue rebuilt on main 18:13). **da-v240 (go 18:13):** after a failed load the search retries
   after a minute (ISRCH.err + at); loading text says ~3 MB; Wish button data as JSON (data-iwish); storyRow comment back in place.
+- **Handover nr. 17 (2026-11-24 ~18:30, app da-v240 published, catalogue 2026-11-24, nothing local except this note):**
+  **Next job, chosen by the user: step 2 = version B "slim issue lists" (da-v241). NOT started, no go yet:** in the new chat restate
+  the plan below with estimate, then wait for "go" (the user switches model/effort BEFORE the go; table says high).
+  Facts (counted 18:19 from story-search-meta.json): printings in de/sv/en/it appear in 2,540 publications; 73 have catalogue issue
+  lists, 2,467 don't (en 994, de 561, sv 329, it 583). The 76 full lists = 22 MB for ~21,700 issues (~1 KB/issue). Version A (full
+  lists for all) rejected: ~100–150 MB. Plan B: 1) measuring run on a test branch first (issues + size; stop and ask if > ~50 MB);
+  2) build: per publication a slim list (issue number/key, date, title, story codes only; titles/creators come from story-search.txt)
+  + entries in the search index so Add finds these series; 3) app: Wish button on every de/sv/en/it printing (fillInducksStory, wishFromCat),
+  series from a slim list fill story titles/creators from the story list; Gaps and Fill from INDUCKS work as before; 4) local until
+  "publish"; screens: story-search + a new gap grid of a slim-list series. Estimate given: first guess 60 ÷ 3 = 15–25 min + ~5 min waiting.
+  Test branches left on GitHub (can't delete from here): check-v238, check-v239.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
