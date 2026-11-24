@@ -157,7 +157,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   setting) from catalogue/story-where.json (scripts/build_story_where.py, also run by the catalogue workflow; parts = stories of 2+ pages,
   reading order = story code order), Wish button (wishFromStory, adds the series from the catalogue if needed). Screens: stats, edit-comic,
   stories, story-series (new), todo-list (new) + visit.
-- **da-v238 built overnight (go 2026-11-24 00:07 "do everything overnight", local until "publish"; the user looks in the morning):**
+- **da-v238 published 2026-11-24 12:4x** (check run story-series + visit: no errors; nothing local after this):
   1) storySeriesCard "Where to find them": one folded <details data-wpi> per series (open state kept in S.stWhereOpen), chip
   "Only comics with parts I'm missing" (data-swall, S.stWhereAll; on at first). 2) Pre-set kinds: catalogue/story-kinds.json
   {kinds: {series code: cont|loose|setting}} for 411 of 1,070 series (70 cont, 54 setting, 287 loose; judged from names + story

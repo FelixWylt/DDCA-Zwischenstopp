@@ -243,4 +243,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | da-v238 part 1: Where to find them folded per series + chip "Only comics with parts I'm missing" (local) | ~3 min (first guess 6 ÷ 2) | 1–2 min (00:07 → 00:08:42) |
 | 2026-11-24 | da-v238 part 2: pre-set kinds of 411 story series (catalogue/story-kinds.json) + app reads them (local) | 15–25 min (first guess 60 ÷ 3) | 2–3 min (00:08:42 → 00:11:29) |
 | 2026-11-24 | da-v238 check run on a test branch (not published): story-series + visit, no errors; branch check-v238 left (delete not allowed from here) | ~3 min incl. ~2 min waiting | 3–4 min incl. waiting (00:11:29 → 00:14:41) |
+| 2026-11-24 | Publish da-v238 + log commits, one check run (story-series + visit): no errors | under 1 min + ~2 min waiting (first guess 4) | 3–4 min incl. waiting (12:43 → 12:46:09) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
