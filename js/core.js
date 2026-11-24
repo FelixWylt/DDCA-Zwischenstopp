@@ -1260,6 +1260,8 @@ async function loadCatalogueIndex() {
   // price lists Claude has collected for your series (Series › Tools › Price lists waiting)
   try { const r = await fetch("catalogue/restore-batch.json"); if (r.ok) { S.priceBatch = (await r.json()).series || []; if (S.view === "series") render(); } } catch (e) {}
   // cover links Claude has looked up (comics.org) for comics without a cover (Series › Tools › Covers waiting)
+  // slim issue lists (da-v241): every other German/Swedish/English/Italian INDUCKS publication, loaded only when needed
+  try { const r = await fetch("catalogue/slim-index.json"); if (r.ok) setSlimIndex((await r.json()).series || []); } catch (e) {}
   try { const r = await fetch("catalogue/covers-batch.json"); if (r.ok) { S.coverBatch = (await r.json()).covers || []; if (S.view === "series") render(); } } catch (e) {}
 }
 // comics without a cover that a waiting cover link fits (same series, same number); a cover you set yourself is never replaced
@@ -1273,7 +1275,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 240;
+const APP_BUILD = 241;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
@@ -1329,14 +1331,25 @@ function ownIssueCat(se) {
   const cat = { code: "", own: true, issues: Object.fromEntries(se.issueList.map(x => [x, { n: x.replace("/", "-"), t: "", s: [] }])) };
   ownCats.set(se.id, { k, cat }); return cat;
 }
+// slim lists: [code, title, lang, file, issues]; a title becomes a name to match only where it is unique in its country
+function setSlimIndex(list) {
+  const byCode = {}, byName = new Map(), seen = new Map();
+  list.forEach(([code, title, lang, file, issues]) => { byCode[code] = { series: title, title, code, file, issues, lang, slim: true };
+    const k = norm(title) + "|" + String(code).split("/")[0]; seen.set(k, (seen.get(k) || 0) + 1); });
+  Object.values(byCode).forEach(x => { const n = norm(x.title), k = n + "|" + x.code.split("/")[0]; if (seen.get(k) === 1) (byName.get(n) || byName.set(n, []).get(n)).push(x); });
+  S.slimCat = { byCode, byName };
+}
+const catEntryByFile = file => (S.catalogue && Object.values(S.catalogue.series || {}).find(x => x.file === file)) || (S.slimCat && Object.values(S.slimCat.byCode).find(x => x.file === file)) || null;
 function gridCat(se) { const e = catEntry(se); return (e && S.catCache[e.file]) || ownIssueCat(se); }
 function catEntry(se) {
   const all = S.catalogue && S.catalogue.series; if (!se || !all) return null;
   const n = norm(se.name), list = Object.values(all);
-  if (se.code) return list.find(x => x.code === se.code) || null;   // a series with an INDUCKS code only matches that code
+  const slim = S.slimCat;
+  if (se.code) return list.find(x => x.code === se.code) || (slim && slim.byCode[se.code]) || null;   // a series with an INDUCKS code only matches that code
   // by name, only within the same country: the Norwegian "Donald Duck & Co" is not the German one
   const cc = String(se.country || "").toLowerCase(), sameLand = x => !cc || String(x.code || "").split("/")[0] === cc;
-  return [all[n]].concat(list.filter(x => (x.aliases || []).some(a => norm(a) === n))).find(x => x && sameLand(x)) || null;
+  return [all[n]].concat(list.filter(x => (x.aliases || []).some(a => norm(a) === n))).find(x => x && sameLand(x))
+    || (slim && (slim.byName.get(n) || []).find(x => cc && sameLand(x))) || null;   // slim lists by name only with a known country
 }
 // ---- "Find by title": books and specials found by the words on their cover (INDUCKS has no ISBNs) ----
 async function loadTitles() {
@@ -1355,9 +1368,33 @@ async function catalogueFile(entry) {
   if (!S.catCache[entry.file]) {
     const r = await fetch("catalogue/" + entry.file);
     if (!r.ok) return null;
-    S.catCache[entry.file] = await r.json();
+    const f = await r.json();
+    if (f.slim) await expandSlim(f);
+    S.catCache[entry.file] = f;
   }
   return S.catCache[entry.file];
+}
+// a slim list names only story codes: titles (in the list's language), creators and pages come from the story list
+async function expandSlim(f) {
+  const sr = await storyRecs(), li = Math.max(0, ["de", "sv", "en", "it"].indexOf(f.lang)), ppl = v => (v ? v.split(",").map(x => sr.people[+x]) : []).filter(Boolean).join(", ");
+  Object.values(f.issues || {}).forEach(i => {
+    if (!i.ic) i.ic = f.code + " " + i.n;
+    i.t = i.t || ""; i.s = (i.s || []).map(c => { const r = sr.map.get(c);
+      return r ? { c, t: r[1 + li] || r[5] || r[1] || r[2] || r[3] || r[4] || "", w: ppl(r[6]), a: ppl(r[7]), h: "", p: r[9] || "" } : { c, t: "", w: "", a: "", h: "", p: "" }; });
+  });
+}
+// story code -> line of catalogue/story-search.txt (shared with the All INDUCKS search when that is loaded)
+let SRECS = null;
+function storyRecs() {
+  if (!SRECS) SRECS = (async () => {
+    let recs, m;
+    if (typeof ISRCH !== "undefined" && ISRCH && ISRCH.recs) { recs = ISRCH.recs; m = ISRCH.meta; }
+    else { const [mj, t] = await Promise.all([fetch("catalogue/story-search-meta.json").then(r => r.ok ? r.json() : null), fetch("catalogue/story-search.txt").then(r => r.ok ? r.text() : null)]);
+      if (!mj || !t) { SRECS = null; throw new Error("The story list couldn't be loaded: try again online"); }
+      m = mj; recs = t.split("\n").filter(Boolean).map(l => l.split("\t")); }
+    return { map: new Map(recs.map(r => [r[0], r])), people: m.people || [] };
+  })();
+  return SRECS;
 }
 async function catalogueLookup(series, issue) {
   const entry = catEntry(series); if (!entry) return null;

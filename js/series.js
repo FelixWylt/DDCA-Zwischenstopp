@@ -151,6 +151,7 @@ function missingCatalogueCard() {
 function inducksNote(se) {
   if (se.publisher && se.publisher !== DISNEY) return "";
   const ce = catEntry(se);
+  if (ce && ce.slim) return `In the INDUCKS issue lists as <a href="https://inducks.org/publication.php?c=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">${esc(ce.code)}</a> “${esc(ce.title)}”, ${Number(ce.issues).toLocaleString("de-CH")} issues (numbers, dates and stories; loaded when you open its gaps).`;
   if (ce) return `In the offline INDUCKS catalogue as <a href="https://inducks.org/publication.php?c=${encodeURIComponent(ce.code)}" target="_blank" rel="noopener">${esc(ce.code)}</a> “${esc(ce.title)}”, ${Number(ce.issues).toLocaleString("de-CH")} issues.`;
   if (!S.inducksDir) { loadInducksDir(); return "Checking INDUCKS…"; }
   const c = inducksCandidates(se);

@@ -96,6 +96,21 @@ if (want("story-search") || process.env.VISIT) try {
   await page.waitForTimeout(2500);
   if (want("story-search")) await page.screenshot({ path: `${OUT}/22-story-search.png`, fullPage: true });
 } catch (e) { errors.push("story-search: " + e.message); }
+// da-v241: a series with only a slim issue list (de/LTBAT): its Gaps grid, story titles and creators filled from the story list
+if (want("slim-gaps") || process.env.VISIT) try {
+  const r = await page.evaluate(async () => { const { S, nav } = window.__dda;
+    if (!S.series.some(s => s.id === "ltbat")) S.series.push({ id: "ltbat", name: "Lustiges Taschenbuch Abenteuer", code: "de/LTBAT", country: "de", publisher: "Disney", group: "Deutschland – Lustiges Taschenbuch", numbering: "running" });
+    for (let i = 0; i < 40 && !S.slimCat; i++) await new Promise(f => setTimeout(f, 250));
+    const se = S.series.find(s => s.id === "ltbat"), e = catEntry(se);
+    if (!e) return { entry: false };
+    const f = await catalogueFile(e), first = f && Object.values(f.issues)[0], st = first && (first.s || [])[0];
+    S.gapTab = "gaps"; S.gapSeries = "ltbat"; nav("gaps"); await new Promise(x => setTimeout(x, 1200));
+    return { entry: true, slim: !!e.slim, issues: f ? Object.keys(f.issues).length : 0, story: st || null, cells: document.querySelectorAll(".cell[data-issue]").length };
+  });
+  if (!r.entry || !r.slim || !r.issues || !r.cells || !(r.story && r.story.t && (r.story.w || r.story.a))) errors.push("slim gaps: " + JSON.stringify(r));
+  fs.writeFileSync(`${OUT}/slim-gaps.txt`, JSON.stringify(r) + "\n");
+  if (want("slim-gaps")) await page.screenshot({ path: `${OUT}/23-slim-gaps.png`, fullPage: true });
+} catch (e) { errors.push("slim gaps: " + e.message); }
 await shot("14-value", () => { insuranceRows(); insuranceCsv(); S.statNoVal = true; S.valueHistory = { "2026-08": { v: 120, p: 100, n: 8 }, "2026-09": { v: 150, p: 110, n: 9 }, "2026-10": { v: 165, p: 115, n: 10 } }; S.statTab = "value"; nav("stats"); });
 await shot("15-fair", () => { S.fair = true; S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); document.querySelector("#fairres [data-got]").click(); });
 await shot("16-stats-collection", () => { S.statTab = "collection"; S.statScope = "a"; S.statRange = "all"; nav("stats"); });

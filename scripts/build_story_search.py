@@ -46,8 +46,17 @@ print(f"comic stories: {len(first_sv):,}")
 
 pubs = {r["publicationcode"]: (r["languagecode"], clean(r["title"])) for r in rows("inducks_publication", ["publicationcode", "languagecode", "title"])}
 issue = {}
-for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "oldestdate"]):
+# slim issue lists (da-v241): every publication in de/sv/en/it that has no full catalogue file gets a small list
+# (number, date, title, story codes); the app fills story titles and creators from story-search.txt
+index0 = json.load(open(os.path.join(out_dir, "index.json"), encoding="utf-8"))
+full_codes = {e.get("code") for e in index0.get("series", {}).values() if e.get("code")}
+slim_issue = {}                # issuecode -> [pub, number, title, date, pages]
+for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "oldestdate", "title", "pages"]):
     issue[r["issuecode"]] = (r["publicationcode"], r["issuenumber"].strip(), r["oldestdate"][:4] if re.match(r"\d{4}", r["oldestdate"] or "") else "")
+    pl = (pubs.get(r["publicationcode"]) or ("", ""))[0]
+    if pl in LANGS and r["publicationcode"] not in full_codes:
+        slim_issue[r["issuecode"]] = [r["publicationcode"], r["issuenumber"].strip(), clean(r["title"]), (r["oldestdate"] or "").strip(), (r["pages"] or "").strip()]
+slim_entries = {}              # issuecode -> [(position, story code)]
 
 heroes = {}
 for r in rows("inducks_herocharacter", ["storycode", "charactercode", "number"]):
@@ -75,9 +84,10 @@ def full_title(t, printed, sc, lang):
     if not name: return t
     return name + t if t.startswith("s ") else name + " " + t
 short_before = 0
-for r in rows("inducks_entry", ["issuecode", "storyversioncode", "title", "printedhero"]):
+for r in rows("inducks_entry", ["issuecode", "storyversioncode", "title", "printedhero", "position"]):
     sc = sv_story.get(r["storyversioncode"])
     if not sc: continue
+    if r["issuecode"] in slim_issue: slim_entries.setdefault(r["issuecode"], []).append((r["position"] or "", norm(sc)))
     i = issue.get(r["issuecode"])
     if not i: continue
     pub, num, year = i; lang = (pubs.get(pub) or ("", ""))[0]
@@ -130,8 +140,47 @@ for sc in sorted(first_sv, key=lambda s: s.lower()):
     lang = (first.get(sc) or ("", ""))[1]
     lines.append("\t".join([norm(sc)] + ts + [o, role_ix(sc, "pw"), role_ix(sc, "ai"), hs, str(pages.get(sc) or ""), year, lang]))
 
-index = json.load(open(os.path.join(out_dir, "index.json"), encoding="utf-8"))
+index = index0
 cat_file = {e.get("code"): e.get("file") for e in index.get("series", {}).values() if e.get("code")}
+# which publications get a slim list: those where a story is printed in de/sv/en/it and that have no full file
+slim_pubs = {pub for ps in prints.values() for pub, _, _ in ps if pub not in cat_file}
+def label_for(num):   # as build_catalogue.py
+    m = re.fullmatch(r"(\d{4})-(\d{1,3})", num)
+    if m: return f"{m[1]}/{int(m[2]):02d}"
+    if re.fullmatch(r"\d+", num): return str(int(num))
+    return num
+slim_out = {}
+for ic, (pub, num, t, d, pg) in slim_issue.items():
+    if pub not in slim_pubs: continue
+    out = slim_out.setdefault(pub, {})
+    rec = {"n": num}
+    if ic != pub + " " + num: rec["ic"] = ic       # the app rebuilds the usual issue code itself
+    if t: rec["t"] = t
+    if d: rec["d"] = d
+    if pg: rec["pg"] = pg
+    st = [c for _, c in sorted(slim_entries.get(ic, []))]
+    if st: rec["s"] = st
+    lab = label_for(num)
+    if lab in out:   # two issues with one number: as in build_catalogue.py
+        other = out[lab]
+        if re.fullmatch(r"0\d+", num): lab = "T" + lab
+        elif re.fullmatch(r"0\d+", other["n"]): out["T" + lab] = other
+        else: lab = f"{lab} ({num})"
+    out[lab] = rec
+sd = os.path.join(out_dir, "slim"); os.makedirs(sd, exist_ok=True)
+for f in glob.glob(os.path.join(sd, "*.json")): os.remove(f)
+slim_index = []
+for pub in sorted(slim_out):
+    fname = "slim/" + re.sub(r"[^A-Za-z0-9]+", "-", pub).strip("-") + ".json"
+    l, t = pubs.get(pub, ("", ""))
+    json.dump({"code": pub, "title": t, "lang": l, "slim": 1, "issues": slim_out[pub]}, open(os.path.join(out_dir, fname), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+    slim_index.append([pub, t, l, fname, len(slim_out[pub])])
+    cat_file[pub] = fname
+json.dump({"built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"), "series": slim_index},
+          open(os.path.join(out_dir, "slim-index.json"), "w", encoding="utf-8"), ensure_ascii=False, separators=(",", ":"))
+slim_kb = sum(os.path.getsize(p) for p in glob.glob(os.path.join(sd, "*.json"))) / 1024
+print(f"slim issue lists: {len(slim_index):,} publications, {sum(x[4] for x in slim_index):,} issues, {slim_kb:,.0f} KB; "
+      f"slim-index.json {os.path.getsize(os.path.join(out_dir, 'slim-index.json'))/1024:,.0f} KB")
 pub_list, pub_ix = [], {}
 shards = [dict() for _ in range(SHARDS)]
 for sc, ps in prints.items():

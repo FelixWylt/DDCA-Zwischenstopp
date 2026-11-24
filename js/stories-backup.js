@@ -213,7 +213,7 @@ async function wishFromStory(pi, key) {
 // INDUCKS keys an issue "1984/03" (yearly) or "12" (running), as label_for in build_catalogue.py
 const catLabel = num => { num = String(num || "").trim(); const m = /^(\d{4})-(\d{1,3})$/.exec(num); return m ? m[1] + "/" + String(+m[2]).padStart(2, "0") : /^\d+$/.test(num) ? String(+num) : num; };
 async function wishFromCat(file, pubTitle, key, ic) {
-  const entry = S.catalogue && Object.values(S.catalogue.series || {}).find(x => x.file === file);
+  const entry = catEntryByFile(file);
   if (!entry) { toast("The catalogue isn't loaded yet: try again in a moment"); return; }
   const f = await catalogueFile(entry).catch(() => null);
   if (f && ic && !(f.issues[key] && storyCode(f.issues[key].ic) === storyCode(ic))) { const k2 = Object.keys(f.issues).find(k => storyCode(f.issues[k].ic) === storyCode(ic)); if (k2) key = k2; }
@@ -221,7 +221,10 @@ async function wishFromCat(file, pubTitle, key, ic) {
   if (!hit) { toast("INDUCKS has no issue " + key + " in " + pubTitle); return; }
   const pub = [file, entry.code, pubTitle];
   let se = S.series.find(x => { const e = catEntry(x); return e && e.file === pub[0]; }), made = false;
-  if (!se) { se = findSeriesByName(entry.series || entry.title) || newSeriesFor(entry.series || entry.title, []); seriesFromCatalogue(se, f, entry); delete se.pending; made = true; await saveSeries(); }
+  if (!se) { const nm = entry.series || entry.title, cc = String(entry.code || "").split("/")[0], same = findSeriesByName(nm);
+    // a slim list's series of the same name from another country (the US "Donald Duck") is a new series, named with its country
+    const fits = same && (!entry.slim || ((!same.code || same.code === entry.code) && (!same.country || String(same.country).toLowerCase() === cc)));
+    se = fits ? same : newSeriesFor(same ? nm + " (" + cc.toUpperCase() + ")" : nm, []); seriesFromCatalogue(se, f, entry); delete se.pending; made = true; await saveSeries(); }
   const p = parseIssue(se, key);
   const d = Object.assign(blankDraft({ seriesId: se.id, seriesName: se.name, issue: key, status: "wanted", wishLevel: "" }), { issueLabel: p.label, issueSort: p.sort, issueYear: p.year || null, issueNum: p.n });
   await saveMany([applyIssueFromCatalogue(d, key, hit)]);
