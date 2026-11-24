@@ -255,4 +255,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Answer: does switching model/effort mid-job help (support page checked) + note in CLAUDE.md | under 1 min (first guess 1 ÷ 2) | 0–1 min (18:00 → 18:00:38) |
 | 2026-11-24 | Plan: hero names in front of short Swedish titles in the All INDUCKS list | under 1 min | 0–1 min (18:01 → 18:01:50) |
 | 2026-11-24 | da-v239: hero names in front of short titles in the All INDUCKS list + test catalogue run (local) | ~3 min + ~2 min waiting (first guess 6 ÷ 2) | 2–3 min incl. ~2 min waiting (18:02 → 18:05:15) |
+| 2026-11-24 | Check of everything unpublished (da-v239 diff, build script, workflow, notes, log): 4 small findings, nothing fixed yet | 3–4 min (first guess 10 ÷ 3) | 0–1 min (18:07 → 18:07:58) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
