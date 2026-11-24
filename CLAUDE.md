@@ -175,8 +175,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   stories › Stories), loadInducksSearch (search text built in pieces), drawInducksSearch (3+ letters, 100 at a time), fillInducksStory
   (titles, creators, characters, story series, printings by language with owned/wish marks; Wish via wishFromCat only where the series
   has a catalogue issue list). Screens: story-search (new, waits 12 s for the list). The catalogue job now commits to its own branch
-  ($GITHUB_REF_NAME), so test branches work; tested on check-v239 (catalogue run ~1 min, screens no errors). Known: Swedish titles
-  like "och Atlantidernas skatt" (no hero) in this list; step 2 (all issue lists in de/sv/en/it for Wish everywhere) not started.
+  ($GITHUB_REF_NAME), so test branches work; tested on check-v239 (catalogue run ~1 min, screens no errors). Short titles ("och Atlantidernas skatt")
+  get the printed hero / main character in front (full_title in build_story_search.py; test run: 3,794 short printings, 24 titles
+  left without a known hero); step 2 (all issue lists in de/sv/en/it for Wish everywhere) not started.
   At publish the workflow change starts a catalogue rebuild on main by itself: run the screenshot check AFTER it.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
