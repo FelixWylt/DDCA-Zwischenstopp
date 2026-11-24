@@ -88,6 +88,14 @@ if (want("story-series") || process.env.VISIT) try {
   if (want("story-series")) await page.screenshot({ path: `${OUT}/13c-story-series.png`, fullPage: true });
 } catch (e) { errors.push("story-series: " + e.message); }
 await shot("21-todo-list", () => { openPick("miss|grade|c"); });
+// da-v239: All INDUCKS search, a search with results and the first story opened (its printings)
+if (want("story-search") || process.env.VISIT) try {
+  await page.evaluate(() => { const { S, nav } = window.__dda; S.st = { tab: "all", status: "inducks", sub: "stories", q: "Scarpa Atlantide" }; nav("stories"); });
+  await page.waitForTimeout(12000);
+  await page.evaluate(() => { const d = document.querySelector("details[data-ind]"); if (d) d.open = true; });
+  await page.waitForTimeout(2500);
+  if (want("story-search")) await page.screenshot({ path: `${OUT}/22-story-search.png`, fullPage: true });
+} catch (e) { errors.push("story-search: " + e.message); }
 await shot("14-value", () => { insuranceRows(); insuranceCsv(); S.statNoVal = true; S.valueHistory = { "2026-08": { v: 120, p: 100, n: 8 }, "2026-09": { v: 150, p: 110, n: 9 }, "2026-10": { v: 165, p: 115, n: 10 } }; S.statTab = "value"; nav("stats"); });
 await shot("15-fair", () => { S.fair = true; S.gapTab = "wishlist"; S.wishKind = "comics"; nav("gaps"); document.querySelector("#fairres [data-got]").click(); });
 await shot("16-stats-collection", () => { S.statTab = "collection"; S.statScope = "a"; S.statRange = "all"; nav("stats"); });
