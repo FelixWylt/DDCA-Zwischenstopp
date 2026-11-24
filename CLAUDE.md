@@ -297,6 +297,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **More power (the user's wish, 2026-11-21):** (see the guideline table below) before a job, say when it needs more than the current setting: a higher "effort"
   setting (usually "high" is enough for big bundles; "extra" only for one very tricky problem) or a stronger model. Say it in the
   report, before the go, with one line on why.
+- **Switching model/effort (checked 2026-11-24, support.claude.com):** a change applies from Claude's NEXT response, never to a job
+  already running. So tell the user to switch BEFORE saying "go" (or to stop, switch, and say "continue"); never "switch now" mid-job.
 - **Model/effort guideline (the user's wish, 2026-11-21):** in every report before a job, add ONE line "Model/effort: …" taken from
   this table, without working it out anew (saves energy):
   | Kind of job | Model | Effort |

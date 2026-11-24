@@ -252,4 +252,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Answer: is adding all INDUCKS stories to the catalogue worth it | under 1 min | 0–1 min (17:09 → 17:09:15) |
 | 2026-11-24 | Plan da-v239 search every story (17:13; commit forgotten, end time not measured) | about 2 min (first guess 4 ÷ 2) | not measured |
 | 2026-11-24 | da-v239: All INDUCKS search (catalogue builder + app + 2 test catalogue runs + check run on check-v239, local) | 12–18 min + 10–20 min waiting (first guess 45 ÷ 3) | 9–10 min incl. ~7 min waiting (17:18 → 17:28:28) |
+| 2026-11-24 | Answer: does switching model/effort mid-job help (support page checked) + note in CLAUDE.md | under 1 min (first guess 1 ÷ 2) | 0–1 min (18:00 → 18:00:38) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
