@@ -49,29 +49,6 @@ issue = {}
 for r in rows("inducks_issue", ["issuecode", "publicationcode", "issuenumber", "oldestdate"]):
     issue[r["issuecode"]] = (r["publicationcode"], r["issuenumber"].strip(), r["oldestdate"][:4] if re.match(r"\d{4}", r["oldestdate"] or "") else "")
 
-titles = {}                    # (story, lang) -> Counter of titles
-first = {}                     # story -> (year, lang) of the oldest dated printing
-prints = {}                    # story -> [(pub, number, year)] in LANGS
-for r in rows("inducks_entry", ["issuecode", "storyversioncode", "title"]):
-    sc = sv_story.get(r["storyversioncode"])
-    if not sc: continue
-    i = issue.get(r["issuecode"])
-    if not i: continue
-    pub, num, year = i; lang = (pubs.get(pub) or ("", ""))[0]
-    if year and (sc not in first or year < first[sc][0]): first[sc] = (year, lang)
-    if lang in LANGS:
-        t = clean(r["title"])
-        if t: titles.setdefault((sc, lang), Counter())[t] += 1
-        p = prints.setdefault(sc, [])
-        if not any(x[0] == pub and x[1] == num for x in p): p.append((pub, num, year))
-print(f"stories printed in {'/'.join(LANGS)}: {len(prints):,}, printings: {sum(len(v) for v in prints.values()):,}")
-
-orig_title, first_date = {}, {}
-for r in rows("inducks_story", ["storycode", "title", "firstpublicationdate"]):
-    if r["storycode"] in first_sv:
-        orig_title[r["storycode"]] = clean(r["title"])
-        if re.match(r"\d{4}", r.get("firstpublicationdate") or ""): first_date[r["storycode"]] = r["firstpublicationdate"][:4]
-
 heroes = {}
 for r in rows("inducks_herocharacter", ["storycode", "charactercode", "number"]):
     if r["storycode"] in first_sv and r["charactercode"]:
@@ -83,6 +60,43 @@ for r in rows("inducks_charactername", ["charactercode", "languagecode", "charac
     c, l = r["charactercode"], r["languagecode"]
     if c in hero_ix and l in LANGS and r["charactername"] and ((c, l) not in cname or r["preferred"] == "Y"):
         cname[(c, l)] = clean(r["charactername"])
+
+titles = {}                    # (story, lang) -> Counter of titles
+first = {}                     # story -> (year, lang) of the oldest dated printing
+prints = {}                    # story -> [(pub, number, year)] in LANGS
+# INDUCKS gives some (mostly old Swedish) titles without their hero: "och Atlantidernas skatt". Put the printed hero line in
+# front, else the story's main character in that language: "Farbror Joakim och Atlantidernas skatt" (as build_catalogue.py does)
+def full_title(t, printed, sc, lang):
+    if not t or not t[0].islower(): return t
+    name = printed
+    if not name:
+        hs = sorted(heroes.get(sc, []))
+        name = cname.get((hs[0][1], lang), "") if hs else ""
+    if not name: return t
+    return name + t if t.startswith("s ") else name + " " + t
+short_before = 0
+for r in rows("inducks_entry", ["issuecode", "storyversioncode", "title", "printedhero"]):
+    sc = sv_story.get(r["storyversioncode"])
+    if not sc: continue
+    i = issue.get(r["issuecode"])
+    if not i: continue
+    pub, num, year = i; lang = (pubs.get(pub) or ("", ""))[0]
+    if year and (sc not in first or year < first[sc][0]): first[sc] = (year, lang)
+    if lang in LANGS:
+        t = clean(r["title"])
+        if t and t[0].islower(): short_before += 1
+        t = full_title(t, clean(r["printedhero"]), sc, lang)
+        if t: titles.setdefault((sc, lang), Counter())[t] += 1
+        p = prints.setdefault(sc, [])
+        if not any(x[0] == pub and x[1] == num for x in p): p.append((pub, num, year))
+print(f"titles starting with a small letter: {short_before:,} printings before the hero fix")
+print(f"stories printed in {'/'.join(LANGS)}: {len(prints):,}, printings: {sum(len(v) for v in prints.values()):,}")
+
+orig_title, first_date = {}, {}
+for r in rows("inducks_story", ["storycode", "title", "firstpublicationdate"]):
+    if r["storycode"] in first_sv:
+        orig_title[r["storycode"]] = clean(r["title"])
+        if re.match(r"\d{4}", r.get("firstpublicationdate") or ""): first_date[r["storycode"]] = r["firstpublicationdate"][:4]
 
 jobs = {}
 want_sv = set(first_sv.values())
@@ -128,6 +142,8 @@ for sc, ps in prints.items():
         arr.append([pub_ix[pub], num, year])
     shards[sum(ord(ch) for ch in code) % SHARDS][code] = arr
 
+left = sum(1 for l in lines for t in l.split("\t")[1:5] if t and t[0].islower())
+print(f"titles in the list still starting with a small letter: {left:,}")
 with open(os.path.join(out_dir, "story-search.txt"), "w", encoding="utf-8") as fh: fh.write("\n".join(lines) + "\n")
 meta = {"built": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d"), "source": "I.N.D.U.C.K.S. (https://inducks.org)",
         "langs": LANGS, "shards": SHARDS, "people": people,
