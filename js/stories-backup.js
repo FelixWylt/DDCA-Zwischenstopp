@@ -881,8 +881,8 @@ async function refreshAll() {
         if (hit.cv && fromSources(c.coverUrl)) c.coverUrl = inducksImg(hit.cv);
         const clean = v => String(v || "").split(", ").filter(n => n && n !== "?").join(", ");
         if ((hit.s || []).length) c.stories = keepOwnTitles(c0.stories, hit.s.map(x => ({ title: x.t || "", code: x.c || "", writer: clean(x.w), artist: clean(x.a), hero: x.h || "", pages: x.p || "" })));
-        c.inducks = hit.ic;
-      }
+        c.inducks = hit.ic; delete c.catNoMatch;
+      } else if (file && !(c.stories || []).length) c.catNoMatch = lab || "?";   // the number it couldn't find: the To do list asks to check it (a changed number counts again)
     }
     // Duckipedia, German comics only
     if (se && dkDue(c0) && Duckipedia.candidates(dkSeries(se), c).length) {
@@ -949,7 +949,10 @@ async function refreshBooks() {
   };
   await Promise.all([worker(), worker()]);
   if (r.stop) r.stopped = true;
-  if (!r.stop) { r.country = await fillAuthorCountries().catch(() => 0); }
+  if (!r.stop) { r.country = await fillAuthorCountries().catch(() => 0);
+    // books that still have no country: refreshing again can't help, so the To do list asks to type it (da-v242)
+    const day = new Date().toISOString().slice(0, 10), left = list.map(x => S.comics.find(y => y.id === x.id)).filter(c => c && isNovel(c) && !bookCountry(c) && !c.countryTried);
+    if (left.length) await saveMany(left.map(c => Object.assign({}, c, { countryTried: day }))).catch(() => {}); }
   r.running = false; r.finished = true; await markRun("books"); drawRefreshBooks();
   toast("Books: " + r.changed + " updated" + (r.country ? ", " + r.country + " countries found" : ""));
 }

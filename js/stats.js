@@ -23,7 +23,13 @@ const MISSING = {
   source: { label: "where it was bought", test: c => !String(c.source || "").trim() }
 };
 // To do lists whose comics can be marked "Can't be done" (c.todoSkip: one key per list); "skip:<pick>" shows the marked ones
-const TODO_TYPES = ["miss", "readnodate", "isbn", "qnum", "noed", "nocountry"];
+const TODO_TYPES = ["miss", "readnodate", "isbn", "qnum", "noed", "nocountry", "nomatch"];
+// comics without stories whose series is in INDUCKS (a comic linked to its issue that still has none has none there: DSBP 63);
+// c.catNoMatch = the number Refresh all comics couldn't find (da-v242): refreshing again can't help until the number changes
+const noMatch = c => !!c.catNoMatch && c.catNoMatch === ((c.issueLabel || c.issue || "") || "?");
+const lacksStories = c => c.kind !== "book" && !(c.stories || []).length && !c.inducks && !!catEntry(seriesById(c.seriesId));
+// a book Refresh all books could still give a country: has an ISBN, not skipped as unknown, not tried since (c.countryTried)
+const countryFindable = c => c.kind === "book" && isNovel(c) && !bookCountry(c) && !c.countryTried && window.Books && Books.normalize(c.isbn) && bookDue(c);
 const todoSkipKey = (type, val) => TODO_TYPES.includes(type) ? (type === "miss" ? "miss:" + val : type) : "";
 const isSkipped = (c, k) => !!k && (c.todoSkip || []).includes(k);
 function pickInfo(pick) {
@@ -53,7 +59,8 @@ function pickInfo(pick) {
     rfrom: [c => c.read && readFromOf(c).toLowerCase() === String(val).toLowerCase(), val === "Own copy" ? "read in your own copy" : `read from ${val}`],
     qnum: [c => hasUnknownNumber(c), "with an unknown number (?)"],
     noed: [c => needsEdition(c), "without an edition (their series has prices per edition)"],
-    nocountry: [c => c.kind === "book" && isNovel(c) && !bookCountry(c), "books without a country"]
+    nocountry: [c => c.kind === "book" && isNovel(c) && !bookCountry(c), "books without a country"],
+    nomatch: [c => lacksStories(c) && noMatch(c), "comics whose number INDUCKS doesn't know"]
   }[type] || [() => false, "?"];
   // reading lists also show what you read without owning it
   const who = ["read", "readnodate", "notowned", "rfrom"].includes(type) ? isMine : isOwn;
@@ -244,14 +251,18 @@ VIEWS.stats = {
       const covTop = Object.entries(noCov).sort((a, b) => b[1] - a[1]).slice(0, 6);
       pickLine("miss:cover", `miss|cover|${sc}`, "without a cover", covTop.map(([k, n]) => { const c0 = bySer[k] && bySer[k][0]; return c0 ? `<button type="button" class="chipbtn" data-scol='${esc(JSON.stringify({ p: publisherOf(c0), g: groupOf(c0), s: k }))}'>${esc(seriesTitle(k))} ${n}</button>` : ""; }).join(" "));
       // a comic already linked to its INDUCKS issue that still has no stories has none there (a postcard book: DSBP 63), so Fill all can't help
-      const noStory = own.filter(c => c.kind !== "book" && !(c.stories || []).length && !c.inducks && catEntry(seriesById(c.seriesId))).length;
-      if (noStory) plainLine("stories", noStory, `<b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS)`, `<button type="button" id="goFill">Fill all</button>`);
+      const noStory = own.filter(c => lacksStories(c) && !noMatch(c)).length;
+      if (noStory) plainLine("stories", noStory, `<b>${nf(noStory)}</b> comics without stories (their series is in INDUCKS)`, `<button type="button" id="goFill">Refresh all comics</button>`);
+      // what Refresh all comics couldn't match: the number needs fixing (Edit), or the issue isn't in INDUCKS
+      if (scope !== "b") pickLine("nomatch", "nomatch||" + sc, "comics without stories: INDUCKS has no issue with their number", `<span class="small muted">Check the number in Edit (as INDUCKS writes it), or mark them "Can't be done".</span>`);
       // ISBN / bootleg warnings (da-v233): owned ones open as a list, wishes in the Wishlist
       { const iwW = S.comics.filter(c => c.status === "wanted" && (scope !== "b" || isNovel(c)) && (scope !== "c" || !isNovel(c)) && isbnWarnings(c).length).length;
         pickLine("isbn", "isbn||" + sc, "with an ISBN warning", iwW ? `<button type="button" class="link" data-gowish>${nf(iwW)} ${iwW === 1 ? "wish" : "wishes"} with one</button>` : "");
         const it = items[items.length - 1]; if (!it.n && iwW) { it.n = iwW; it.main = `<button type="button" class="link" data-gowish><b>${nf(iwW)}</b> ${iwW === 1 ? "wish" : "wishes"} with an ISBN warning</button>`; it.act = ""; } }
       if (scope !== "b") pickLine("noed", "noed||" + sc, "without an edition (their series has prices per edition)");
-      if (scope !== "c") pickLine("nocountry", "nocountry||b", "books without a country", `<button type="button" id="goRefreshBooks">Refresh all books</button>`);
+      if (scope !== "c") { const fb = S.comics.filter(c => isOwn(c) && countryFindable(c) && !isSkipped(c, "nocountry")).length;
+        pickLine("nocountry", "nocountry||b", "books without a country", fb ? `<button type="button" id="goRefreshBooks">Refresh all books</button> <span class="small muted">${nf(fb)} can still be looked up</span>`
+          : `<span class="small muted">Refresh all books can't find these: type the Country in Edit, or mark them "Can't be done".</span>`); }
       if (noVal.length) plainLine("noval", noVal.length, `<b>${nf(noVal.length)}</b> ${noVal.length === 1 ? "series has" : "series have"} no prices yet`, `<button type="button" class="link" data-novals>${S.statNoVal ? "Hide the list" : "Show them"}</button>${noValList()}`);
       const open = items.filter(x => x.n && !hidden.includes(x.id)), hid = items.filter(x => x.n && hidden.includes(x.id));
       const hidLabel = x => x.id === "backup" ? "Backup" : x.main.replace(/<[^>]+>/g, "").replace(/^[\d'’.,\s]+/, "").replace(/^without /, "").trim();
