@@ -206,7 +206,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (ISBN, bookDue, no c.countryTried); refreshBooks marks books still without a country c.countryTried (after fillAuthorCountries); the
   nocountry line shows the Refresh button only while some can still be looked up, else "type the Country in Edit".
   Check run (stats,todo-list + visit) done 2026-11-26 07:33 after the GitHub outage: no errors; To do shows "Refresh all comics" and the new book hint.
-- **da-v243 built (go 2026-11-26 07:44, local until "publish"):** none of the 47 GCD covers showed on the phone (all have
+- **da-v243 published 2026-11-26 07:46 (check run visit: no errors):** none of the 47 GCD covers showed on the phone (all have
   coverKeepFail). index.html gets <meta name="referrer" content="no-referrer"> (GCD hotlink check?). Only the phone can tell if it helps;
   if not: step 2 = own cover photo button in Edit, step 3 = drop the dead GCD links so Get cover pictures looks elsewhere.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
