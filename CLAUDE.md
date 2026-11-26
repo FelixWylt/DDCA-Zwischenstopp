@@ -209,7 +209,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **da-v243 published 2026-11-26 07:46 (check run visit: no errors):** none of the 47 GCD covers showed on the phone (all have
   coverKeepFail). index.html gets <meta name="referrer" content="no-referrer"> (GCD hotlink check?). Only the phone can tell if it helps;
   if not: step 2 = own cover photo button in Edit, step 3 = drop the dead GCD links so Get cover pictures looks elsewhere.
-- **da-v244 built (go 2026-11-26 09:49, local until "publish"):** no-referrer didn't help (user, 07:51): GCD pictures never load in the app.
+- **da-v244 published 2026-11-26 11:41 (check run edit-comic + visit: no errors; the edit-comic shot shows the comic page, not the form):** no-referrer didn't help (user, 07:51): GCD pictures never load in the app.
   core.js deadCoverHost(); start drops comics.org coverUrls with coverKeepFail (comic counts as "no cover" again); coverBatchWaiting skips
   comics.org; covers-batch.json emptied of its 47 GCD links. Edit (comic + book forms, add.js): "Cover photo" button under Cover image URL
   (coverPhotoHtml/bindCoverPhoto/photoToCover: 600 px JPEG data: URL in coverUrl, S.coverPhoto, not shown in the link box, "Remove photo").
