@@ -292,4 +292,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Answer: purchase-cost fields (shipping, VAT) – look at price fields + plan | 1–2 min | 0–1 min (20:09 → 20:09:37) |
 | 2026-11-26 | da-v247 price split (shipping, customs & VAT, fees, discount; lots; Spending line) + test | 4–6 min | 1–2 min (20:38 → 20:40:08) |
 | 2026-11-26 | Publish da-v247 + check run (edit-comic, new-comic, stats-spend, visit): no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~2.5 min of it waiting (20:40 → 20:44:03) |
+| 2026-11-26 | da-v248 discount as amount or % (of item price) + test | 1–2 min | 0–0 min (20:51 → 20:51:38) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

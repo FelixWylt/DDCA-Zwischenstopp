@@ -1170,14 +1170,23 @@ function lotFields(d) {
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
 // ---- price split (da-v247): item + shipping + customs & import VAT + fees − discount = the total in "Price paid" (or the lot's price) ----
-const PRICE_PARTS = [["item", "Item price"], ["ship", "Shipping"], ["tax", "Customs & import VAT"], ["fees", "Fees (Ricardo, eBay, PayPal…)"], ["disc", "Discount (taken off)"]];
-function cleanParts(p) { if (!p) return null; const o = {}; PRICE_PARTS.forEach(([k]) => { const v = parseAmt(p[k]); if (typeof v === "number") o[k] = v; }); return Object.keys(o).length ? o : null; }
+const PRICE_PARTS = [["item", "Item price"], ["ship", "Shipping"], ["tax", "Customs & import VAT"], ["fees", "Fees (Ricardo, eBay, PayPal…)"], ["disc", "Discount (amount or %)"]];
+function cleanParts(p) {
+  if (!p) return null; const o = {}; PRICE_PARTS.forEach(([k]) => { if (k === "disc") return; const v = parseAmt(p[k]); if (typeof v === "number") o[k] = v; });
+  // discount: an amount, or a percentage of the item price ("10%", da-v248); a kept percentage follows the item price
+  const dv = p.disc, pct = typeof dv === "string" && /%/.test(dv) ? parseAmt(dv.replace("%", "")) : typeof dv !== "string" && typeof p.discPct === "number" ? p.discPct : "";
+  if (typeof pct === "number") { o.discPct = pct; o.disc = Math.round((o.item || 0) * pct) / 100; }
+  else { const v = parseAmt(dv); if (typeof v === "number") o.disc = v; }
+  return Object.keys(o).length ? o : null;
+}
 function partsSum(p) { p = cleanParts(p); if (!p) return null; const t = PRICE_PARTS.reduce((a, [k]) => a + (typeof p[k] === "number" ? (k === "disc" ? -p[k] : p[k]) : 0), 0); return Math.max(0, Math.round(t * 100) / 100); }
 function partsHtml(p, forLot) {
-  return `<details class="wide pparts"${cleanParts(p) ? " open" : ""}><summary class="small">Split the price${forLot ? " (for the whole lot)" : ""}: shipping, customs, fees</summary><div class="grid-form" style="margin-top:6px">${PRICE_PARTS.map(([k, l]) => `<label><span class="l">${l}</span><input id="f-pp-${k}" data-pp="${k}" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(p && p[k] != null ? amtVal(p[k]) : "")}"></label>`).join("")}
-    <p class="small muted wide" style="margin:0">The app adds these up (minus the discount) and puts the total into “${forLot ? "Price for the whole lot" : "Price paid"}”. Customs & import VAT is only for parcels from abroad: in a Swiss shop the MWST is already in the price.</p></div></details>`;
+  return `<details class="wide pparts"${cleanParts(p) ? " open" : ""}><summary class="small">Split the price${forLot ? " (for the whole lot)" : ""}: shipping, customs, fees</summary><div class="grid-form" style="margin-top:6px">${PRICE_PARTS.map(([k, l]) => k === "disc"
+      ? `<label><span class="l">${l}</span><input id="f-pp-disc" data-pp="disc" inputmode="text" placeholder="e.g. 2.50 or 10%" value="${esc(p && typeof p.discPct === "number" ? p.discPct + "%" : p && p.disc != null ? amtVal(p.disc) : "")}"></label>`
+      : `<label><span class="l">${l}</span><input id="f-pp-${k}" data-pp="${k}" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(p && p[k] != null ? amtVal(p[k]) : "")}"></label>`).join("")}
+    <p class="small muted wide" style="margin:0">The app adds these up (minus the discount; a percentage counts on the item price) and puts the total into “${forLot ? "Price for the whole lot" : "Price paid"}”. Customs & import VAT is only for parcels from abroad: in a Swiss shop the MWST is already in the price.</p></div></details>`;
 }
-function partsText(p, cur) { p = cleanParts(p); return p ? PRICE_PARTS.filter(([k]) => typeof p[k] === "number").map(([k, l]) => l.replace(/ \(.*\)$/, "") + " " + money(p[k], cur)).join(" · ") : ""; }
+function partsText(p, cur) { p = cleanParts(p); return p ? PRICE_PARTS.filter(([k]) => typeof p[k] === "number").map(([k, l]) => l.replace(/ \(.*\)$/, "") + (k === "disc" && typeof p.discPct === "number" ? " " + p.discPct + "% (" + money(p[k], cur) + ")" : " " + money(p[k], cur))).join(" · ") : ""; }
 // shipping, customs and fees of an entry in CHF (for a lot: its share, by its part of the lot price)
 function extrasOf(c) {
   const p = cleanParts(c.lotId ? c.lotParts : c.priceParts); if (!p || typeof c.pricePaid !== "number") return null;
@@ -1327,7 +1336,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 247;
+const APP_BUILD = 248;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

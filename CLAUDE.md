@@ -48,6 +48,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Add/Edit › Your copy › "Split the price" under Price paid (or under the lot price): Item price, Shipping, Customs & import VAT, Fees, Discount;
   their sum fills the total and wins on save (priceParts on a comic, lotParts on every lot member, shared by afterLotSave). Detail view row
   "Price split"; Stats › Money › Spending › Spent card: "of which shipping, customs and fees" (extrasOf: lot share by pricePaid/lotTotal).
+- **da-v248 committed locally 2026-11-26, NOT pushed (on "publish": check run new-comic + visit):** Discount in the price split takes an amount or "10%"
+  (percentage of the item price only; kept as discPct, disc recomputed by cleanParts; the field has no "amt" class so blur keeps the %).
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·
