@@ -284,4 +284,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Text for the project instructions (Anweisungen) + answer | under 1 min | 0–1 min (18:25 → 18:25:27) |
 | 2026-11-26 | CLAUDE.md slimmed (48 → 19 KB), history moved word for word to HISTORY.md, line check | 3–5 min | 1–2 min (18:29 → 18:30:14) |
 | 2026-11-26 | Publish da-v245 + notes split, check run (series, visit): no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~3 min of it waiting (18:33 → 18:36:28) |
+| 2026-11-26 | Bug lookup: book added to a lot (Uhland), lot count 4 instead of 3 | 2–4 min | 1–2 min (19:18 → 19:19:39) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
