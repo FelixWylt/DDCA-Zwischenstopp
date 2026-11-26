@@ -274,4 +274,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | da-v244 cover photo in Edit, dead GCD links dropped | 3–5 min | 3–4 min (09:49 → 09:51:13) |
 | 2026-11-26 | Publish da-v244 + check run (edit-comic, visit): no errors | under 1 min + ~3 min waiting | 4–5 min, ~3.5 min of it waiting (11:40 → 11:44:33) |
 | 2026-11-26 | Note: Cover photo button seen on the phone | under 1 min | 0–1 min (12:52 → 12:53:08) |
+| 2026-11-26 | Count series/comics/books without prices (backup) + test one source (search) | 1–2 min | 0–1 min (12:54 → 12:55:03) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
