@@ -185,7 +185,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     bindAmounts();
     // price split (da-v247): typing a part fills in the total
     const readParts = () => { const p = {}; document.querySelectorAll("[data-pp]").forEach(x => p[x.dataset.pp] = x.value); return p; };
-    document.querySelectorAll("[data-pp]").forEach(el => el.addEventListener("input", () => { const t = partsSum(readParts()), tot = $("#f-lotTotal") || $("#f-pricePaid"); if (tot && t != null) { tot.value = t.toFixed(2); tot.dispatchEvent(new Event("input")); } }));
+    document.querySelectorAll("[data-pp]").forEach(el => el.addEventListener("input", () => { const dn = $("#ppdiscnote"); if (dn) dn.textContent = discNote(readParts()); const t = partsSum(readParts()), tot = $("#f-lotTotal") || $("#f-pricePaid"); if (tot && t != null) { tot.value = t.toFixed(2); tot.dispatchEvent(new Event("input")); } }));
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     // a rough date (da-v237): only the year counts as filled in (yearly numbers), not in the monthly charts
     document.querySelectorAll("[data-yearonly]").forEach(b => b.onclick = e => { e.preventDefault(); const inp = $("#" + b.dataset.yearonly); if (!inp) return;

@@ -1182,11 +1182,17 @@ function cleanParts(p) {
 function partsSum(p) { p = cleanParts(p); if (!p) return null; const t = PRICE_PARTS.reduce((a, [k]) => a + (typeof p[k] === "number" ? (k === "disc" ? -p[k] : p[k]) : 0), 0); return Math.max(0, Math.round(t * 100) / 100); }
 function partsHtml(p, forLot) {
   return `<details class="wide pparts"${cleanParts(p) ? " open" : ""}><summary class="small">Split the price${forLot ? " (for the whole lot)" : ""}: shipping, customs, fees</summary><div class="grid-form" style="margin-top:6px">${PRICE_PARTS.map(([k, l]) => k === "disc"
-      ? `<label><span class="l">${l}</span><input id="f-pp-disc" data-pp="disc" inputmode="text" placeholder="e.g. 2.50 or 10%" value="${esc(p && typeof p.discPct === "number" ? p.discPct + "%" : p && p.disc != null ? amtVal(p.disc) : "")}"></label>`
+      ? `<label><span class="l">${l}</span><input id="f-pp-disc" data-pp="disc" inputmode="text" placeholder="e.g. 2.50 or 10%" value="${esc(p && typeof p.discPct === "number" ? p.discPct + "%" : p && p.disc != null ? amtVal(p.disc) : "")}"><span class="small muted" id="ppdiscnote">${esc(discNote(p || {}))}</span></label>`
       : `<label><span class="l">${l}</span><input id="f-pp-${k}" data-pp="${k}" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(p && p[k] != null ? amtVal(p[k]) : "")}"></label>`).join("")}
     <p class="small muted wide" style="margin:0">The app adds these up (minus the discount; a percentage counts on the item price) and puts the total into “${forLot ? "Price for the whole lot" : "Price paid"}”. Customs & import VAT is only for parcels from abroad: in a Swiss shop the MWST is already in the price.</p></div></details>`;
 }
-function partsText(p, cur) { p = cleanParts(p); return p ? PRICE_PARTS.filter(([k]) => typeof p[k] === "number").map(([k, l]) => l.replace(/ \(.*\)$/, "") + (k === "disc" && typeof p.discPct === "number" ? " " + p.discPct + "% (" + money(p[k], cur) + ")" : " " + money(p[k], cur))).join(" · ") : ""; }
+function pctText(x) { return (Math.round(x * 10) / 10).toString() + "%"; }
+// the discount as a percentage of the item price (typed or worked out), null without an item price (da-v249)
+function discPctOf(p) { return !p || typeof p.disc !== "number" ? null : typeof p.discPct === "number" ? p.discPct : p.item > 0 ? p.disc / p.item * 100 : null; }
+// the note under the Discount field: the other number of the two
+function discNote(raw) { const p = cleanParts(raw); if (!p || typeof p.disc !== "number") return ""; const typedPct = typeof raw.disc === "string" ? /%/.test(raw.disc) : typeof raw.discPct === "number";
+  if (typedPct) return "= " + fmt2(p.disc); const q = discPctOf(p); return q == null ? "" : "= " + pctText(q) + " of the item price"; }
+function partsText(p, cur) { p = cleanParts(p); return p ? PRICE_PARTS.filter(([k]) => typeof p[k] === "number").map(([k, l]) => l.replace(/ \(.*\)$/, "") + (k === "disc" && discPctOf(p) != null ? " " + pctText(discPctOf(p)) + " (" + money(p[k], cur) + ")" : " " + money(p[k], cur))).join(" · ") : ""; }
 // shipping, customs and fees of an entry in CHF (for a lot: its share, by its part of the lot price)
 function extrasOf(c) {
   const p = cleanParts(c.lotId ? c.lotParts : c.priceParts); if (!p || typeof c.pricePaid !== "number") return null;
@@ -1336,7 +1342,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 248;
+const APP_BUILD = 249;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;
