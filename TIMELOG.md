@@ -264,4 +264,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-24 | Publish da-v241 + catalogue rebuild on main + one check run (story-search, slim-gaps + visit): no errors | 5–6 min incl. ~4 min waiting | 5–6 min incl. ~4–5 min waiting (18:47 → 18:52:15) |
 | 2026-11-25 | Lookup: why To do lines 'Fill all' / 'Refresh all books' stay (stats.js, refreshAll, bookCountry) | 2–4 min | 0–1 min (16:39 → 16:39:44) |
 | 2026-11-25 | da-v242 To do lines (stories/nomatch, book country) + publish; check run blocked by GitHub outage | 5–8 min + ~2 min waiting | 6–7 min incl. ~7 min waiting/retries (16:43 → 16:49:31) |
+| 2026-11-26 | Check run da-v242 (stats, todo-list + visit) after the outage: no errors | 3–4 min (mostly waiting) | 3–4 min, ~2.5 min of it waiting (07:31 → 07:34:01) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

@@ -205,7 +205,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (noMatch(): only while the number is unchanged) → new pick "nomatch" (in TODO_TYPES, "Can't be done" works). Books: countryFindable()
   (ISBN, bookDue, no c.countryTried); refreshBooks marks books still without a country c.countryTried (after fillAuthorCountries); the
   nocountry line shows the Refresh button only while some can still be looked up, else "type the Country in Edit".
-  **Check run NOT done:** GitHub answered 500/503 (outage); Pages publish needed a rerun. Run stats,todo-list + visit when GitHub works.
+  Check run (stats,todo-list + visit) done 2026-11-26 07:33 after the GitHub outage: no errors; To do shows "Refresh all comics" and the new book hint.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
