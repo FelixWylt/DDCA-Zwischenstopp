@@ -44,7 +44,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   in the last day (newest createdAt, was: last changed), and copies its purchase date/where bought into empty fields; leaving a lot empties
   the lot's share price (prepareLot, unless a new price was typed). Cause: Valhall landed in Uhland's lot; Uhland had no date. Restore file
   lot-fix-2026-11-26.json (Uhland 2025/Street, Valhall price empty) sent in chat, not committed.
-- **da-v247 committed locally 2026-11-26, NOT pushed (push on "publish", then check run edit-comic,new-comic,stats-spend + visit):** price split.
+- **da-v247 published 2026-11-26 20:41 (check run edit-comic,new-comic,stats-spend + visit: no errors; shot shows the "Split the price" line):** price split.
   Add/Edit › Your copy › "Split the price" under Price paid (or under the lot price): Item price, Shipping, Customs & import VAT, Fees, Discount;
   their sum fills the total and wins on save (priceParts on a comic, lotParts on every lot member, shared by afterLotSave). Detail view row
   "Price split"; Stats › Money › Spending › Spent card: "of which shipping, customs and fees" (extrasOf: lot share by pricePaid/lotTotal).
