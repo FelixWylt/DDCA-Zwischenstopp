@@ -275,4 +275,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Publish da-v244 + check run (edit-comic, visit): no errors | under 1 min + ~3 min waiting | 4–5 min, ~3.5 min of it waiting (11:40 → 11:44:33) |
 | 2026-11-26 | Note: Cover photo button seen on the phone | under 1 min | 0–1 min (12:52 → 12:53:08) |
 | 2026-11-26 | Count series/comics/books without prices (backup) + test one source (search) | 1–2 min | 0–1 min (12:54 → 12:55:03) |
+| 2026-11-26 | Price lists: 7 comics + DD 97-, 6 book series, 38-book type-in list (research + estimates) | 16–24 min | 3–4 min (13:12 → 13:15:19) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

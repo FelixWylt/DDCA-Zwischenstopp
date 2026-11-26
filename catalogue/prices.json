@@ -312,6 +312,84 @@
    "date": "2026-11-22",
    "note": "Spindelmannen (Semic, 1984–1999/8; then Spider-Man), Seriekatalogen.se VF column, sent by the user 2026-11-22. 1991/2 listed twice: second = variant 1991/2B, 30 kr like 1991/2. 1990/7–8 marked Spindelklassiker. 1998/13 25 kr (the user's own 1998/4: 25 kr was probably meant for 1998/13; Seriekatalogen has 1998/4 at 30 kr).",
    "text": "1984/1-1999/8: 30 kr\n1984/1: 80 kr\n1991/4: 300 kr\n1998/13: 25 kr"
+  },
+  "id:x-winnetou-swedish": {
+   "cur": "SEK",
+   "date": "2026-11-26",
+   "note": "Winnetou (Williams Förlag 1974), Seriekatalogen.se VF: 40 kr, given by the user 2026-11-26.",
+   "text": "1: 40 kr"
+  },
+  "id:x-frieren-nach-dem-ende-der-reise": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Frieren – Nach dem Ende der Reise (Altraverse, German, since 2022): new 10 € per volume (Altraverse list price); very good used copies about half. Estimate, Claude 2026-11-26.",
+   "text": "1-: 6 €"
+  },
+  "id:x-the-sandman-the-deluxe-edition": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "The Sandman: The Deluxe Edition (DC, hardcover, 2020–): list price $49.99, used copies £11–26 (Biblio), eBay asking about $38. Claude 2026-11-26.",
+   "text": "1-: 25 €"
+  },
+  "id:x-black-butler": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Black Butler (Carlsen Manga, German): new 7.50 €, used single volumes about 4–5 € (eBay, rebuy). Claude 2026-11-26.",
+   "text": "1-: 4 €"
+  },
+  "id:x-doctor-strange-the-punisher-magic-bullets": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Doctor Strange / Punisher: Magic Bullets (Marvel 2017, 4 issues): eBay sold #1 $2.48–4.99, set #1–4 $8 (PriceCharting); #2 asking about 4 €. Claude 2026-11-26.",
+   "text": "1-4: 3 €"
+  },
+  "id:x-maus": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Maus: A Survivor's Tale (Pantheon, Art Spiegelman): very good used paperback about 8–12 €. Estimate, not looked up one by one, Claude 2026-11-26. Numbers the user's unnumbered copy 1.",
+   "text": "1: 10 €"
+  },
+  "id:donald-duck-taschenbuch": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Donald Duck Taschenbuch (Ehapa, de/DD): the user's Comicguide ranges end at 96; 97 and later added as an estimate (81–96 = 2.50 €, eBay auctions of single volumes end around 1 €). Claude 2026-11-26.",
+   "text": "97-: 2 €"
+  },
+  "id:book:Apollon": {
+   "cur": "SEK",
+   "date": "2026-11-26",
+   "note": "Apollon (Rick Riordan, Bonnier Carlsen, Swedish hardcovers): very good used about 60–100 kr. Estimate, Claude 2026-11-26. Only 2–4: volume 1 has the user's own value.",
+   "text": "2-4: 80 kr"
+  },
+  "id:book:Percy Jackson and the Olympians: The Senior Year Adventures": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Percy Jackson: The Senior Year Adventures (Rick Riordan, Puffin): very good used about 6–8 €. Estimate, Claude 2026-11-26. Only 2: volume 1 has the user's own value.",
+   "text": "2: 7 €"
+  },
+  "id:book:Sparven från Nim": {
+   "cur": "SEK",
+   "date": "2026-11-26",
+   "note": "Sparven från Nim (Daniel Braesch, Seraf förlag, hardcover): small publisher, very good used about 120–180 kr. Estimate, Claude 2026-11-26. Only 1: volume 2 has the user's own value.",
+   "text": "1: 150 kr"
+  },
+  "id:book:Magnus Chase": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Magnus Chase (Rick Riordan, Carlsen, German softcover): very good used about 5–7 €. Estimate, Claude 2026-11-26. Only 2: 1 and 3 have the user's own values.",
+   "text": "2: 6 €"
+  },
+  "id:book:Deutsche Kurzgeschichten": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Deutsche Kurzgeschichten (Reclam): very good used about 2–4 €. Estimate, Claude 2026-11-26.",
+   "text": "1: 3 €"
+  },
+  "id:book:Lady Trents Memoiren": {
+   "cur": "EUR",
+   "date": "2026-11-26",
+   "note": "Lady Trents Memoiren (Marie Brennan, Cross Cult, German softcover): very good used about 6–10 €. Estimate, Claude 2026-11-26. Numbers 'Die Naturgeschichte der Drachen' as volume 1.",
+   "text": "1: 8 €"
   }
  }
 }

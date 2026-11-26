@@ -3949,6 +3949,92 @@
      "1999/08"
     ]
    }
+  },
+  {
+   "id": "x-winnetou-swedish",
+   "sugg": "id:x-winnetou-swedish",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "x-frieren-nach-dem-ende-der-reise",
+   "sugg": "id:x-frieren-nach-dem-ende-der-reise",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "x-the-sandman-the-deluxe-edition",
+   "sugg": "id:x-the-sandman-the-deluxe-edition",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "x-black-butler",
+   "sugg": "id:x-black-butler",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "x-doctor-strange-the-punisher-magic-bullets",
+   "sugg": "id:x-doctor-strange-the-punisher-magic-bullets",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "x-maus",
+   "sugg": "id:x-maus",
+   "replace": false,
+   "added": "2026-11-26",
+   "titleNumbers": {
+    "Survivor": "1"
+   },
+   "minApp": 205
+  },
+  {
+   "id": "donald-duck-taschenbuch",
+   "sugg": "id:donald-duck-taschenbuch",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Apollon",
+   "sugg": "id:book:Apollon",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Percy Jackson and the Olympians: The Senior Year Adventures",
+   "sugg": "id:book:Percy Jackson and the Olympians: The Senior Year Adventures",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Sparven från Nim",
+   "sugg": "id:book:Sparven från Nim",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Magnus Chase",
+   "sugg": "id:book:Magnus Chase",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Deutsche Kurzgeschichten",
+   "sugg": "id:book:Deutsche Kurzgeschichten",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Lady Trents Memoiren",
+   "sugg": "id:book:Lady Trents Memoiren",
+   "replace": false,
+   "added": "2026-11-26",
+   "titleNumbers": {
+    "Naturgeschichte der Drachen": "1"
+   },
+   "minApp": 205
   }
  ]
 }
