@@ -24,13 +24,15 @@ const series = [
 ];
 const c = (id, s, n, extra) => Object.assign({ id, kind: "issue", seriesId: s, issue: String(n), issueLabel: String(n), issueSort: typeof n === "number" ? n : parseInt(n, 10), issueNum: parseInt(n, 10), status: "owned", copies: 1, currency: "CHF", stories: [] }, extra || {});
 const comics = [
-  c("a1", "ltb", 1, { stories: [{ title: "Der Kolumbusfalter", code: "I TL 1-AP", writer: "Guido Martina", artist: "Romano Scarpa", first: "1953-01-01" }], title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, source: "Ricardo", purchaseDate: "2025-03-01" }),
+  c("a1", "ltb", 1, { stories: [{ title: "Der Kolumbusfalter", code: "I TL 1-AP", writer: "Guido Martina", artist: "Romano Scarpa", first: "1953-01-01" }], title: "Der Kolumbusfalter", grade: "1", pricePaid: 40, priceParts: { item: 34, ship: 6 }, source: "Ricardo", purchaseDate: "2025-03-01" }),
   c("a2", "ltb", 1, { title: "Der Kolumbusfalter", grade: "3", pricePaid: 12, source: "Flohmarkt", purchaseDate: "2025-06-01", notes: "Second copy" }),
   c("a3", "ltb", 2, { title: "Hallo, hier Micky!", forTrade: true, copies: 2, grade: "2", stories: [{ title: "Der Kolumbusfalter", code: "I TL 1-AP", writer: "Guido Martina", artist: "Romano Scarpa", first: "1953-01-01" }, { title: "Micky und das Meer", code: "I TL 20-A", writer: "Guido Martina", artist: "Luciano Bottaro", first: "1955-05-01" }], extras: [{ what: "Lithograph (Freccero)", value: 15, cur: "EUR" }] }),
   c("a4", "tldle", "29B", { title: "PK Tube", issueSort: 29 }),
   c("a5", "tldle", 34, { title: "PK Timecrime DD" }),
   c("a6", "mhdw", 1, {}),
-  c("a7", "kap", 15, { lotId: "lot1", lotTotal: 20, lotCurrency: "CHF", source: "Tradera" }),
+  c("a7", "kap", 15, { lotId: "lot1", lotTotal: 20, lotCurrency: "CHF", pricePaid: 20, lotParts: { item: 16, ship: 6, disc: 2 }, purchaseDate: new Date().getFullYear() + "-02-10", source: "Tradera" }),
+  // a split price this month: shipping, customs and fees in Stats › Spending (da-v250)
+  c("sp1", "kap", 16, { pricePaid: 13.6, priceParts: { item: 10, ship: 3, tax: 0.8, fees: 0.8, disc: 1 }, purchaseDate: new Date().toISOString().slice(0, 7) + "-05", source: "Tradera" }),
   c("w1", "ltb", 3, { status: "wanted", wishLevel: "must", pricePaid: 10 }),
   c("w2", "ltb", 4, { status: "wanted" }),
   c("w3", "ltb", 5, { status: "wanted", wishLevel: "dream" }),

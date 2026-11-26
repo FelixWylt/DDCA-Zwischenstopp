@@ -103,15 +103,16 @@ const labStep = n => n <= 12 ? 1 : Math.ceil(n / 8);
 // This year / All time, for the over-time cards
 function rangeSwitch() { const r = S.statRange || "year"; return `<div class="seg small" role="group" aria-label="Period"><button type="button" data-range="year" aria-pressed="${r === "year"}">This year</button><button type="button" data-range="all" aria-pressed="${r === "all"}">All time</button></div>`; }
 // bars over time: months of this year, or years
-function timeBars(per, word, pickType, scope, unitFmt) {
+function timeBars(per, word, pickType, scope, unitFmt, lite) {   // lite: same keys, the part of each bar shown lighter on top (da-v250)
   const now = new Date(), M = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   let keys;
   if ((S.statRange || "year") === "year") keys = Array.from({ length: 12 }, (_, i) => now.getFullYear() + "-" + String(i + 1).padStart(2, "0"));
   else { const ys = Object.keys(per).map(k => +k.slice(0, 4)).filter(Boolean); const lo = Math.min(now.getFullYear(), ...ys); keys = []; for (let y = Math.max(lo, now.getFullYear() - 29); y <= now.getFullYear(); y++) keys.push(String(y)); }
   const val = k => Object.keys(per).filter(x => x.startsWith(k)).reduce((a, x) => a + per[x], 0);
+  const litev = k => lite ? Object.keys(lite.per).filter(x => x.startsWith(k)).reduce((a, x) => a + lite.per[x], 0) : 0;
   const max = niceMax(Math.max(1, ...keys.map(val))), f = unitFmt || (n => Number(n).toLocaleString("de-CH")), step = labStep(keys.length);
   const lab = (k, i) => (keys.length - 1 - i) % step ? "" : k.length === 7 ? M[+k.slice(5) - 1] : "'" + k.slice(2);
-  return ychart(max, `<div class="cols short" role="img" aria-label="${esc(word)}">${keys.map((k, i) => `<button class="col${val(k) ? "" : " zero"}" ${pickType && val(k) ? `data-pick="${esc(pickType + "|" + k + "|" + scope)}"` : ""} title="${esc((k.length === 7 ? M[+k.slice(5) - 1] + " " + k.slice(0, 4) : k) + ": " + f(val(k)))}"><span class="bar" style="height:${(val(k) / max * 100).toFixed(1)}%"></span><span class="x">${lab(k, i)}</span></button>`).join("")}</div>`);
+  return ychart(max, `<div class="cols short" role="img" aria-label="${esc(word)}">${keys.map((k, i) => `<button class="col${val(k) ? "" : " zero"}" ${pickType && val(k) ? `data-pick="${esc(pickType + "|" + k + "|" + scope)}"` : ""} title="${esc((k.length === 7 ? M[+k.slice(5) - 1] + " " + k.slice(0, 4) : k) + ": " + f(val(k)) + (lite && litev(k) ? " · " + lite.label + " " + f(litev(k)) : ""))}"><span class="bar" style="height:${(val(k) / max * 100).toFixed(1)}%;${lite && litev(k) && val(k) ? `background:linear-gradient(to bottom, color-mix(in srgb, var(--accent) 35%, transparent) ${Math.min(100, litev(k) / val(k) * 100).toFixed(1)}%, var(--accent) ${Math.min(100, litev(k) / val(k) * 100).toFixed(1)}%)` : ""}"></span><span class="x">${lab(k, i)}</span></button>`).join("")}</div>`);
 }
 // the country of an entry: its series' country, or the book's language
 const COUNTRY_NAMES = { de: "Germany", it: "Italy", se: "Sweden", ch: "Switzerland", at: "Austria", us: "USA", dk: "Denmark", no: "Norway", fi: "Finland", fr: "France", nl: "Netherlands", es: "Spain", br: "Brazil", gb: "United Kingdom", be: "Belgium", pt: "Portugal", pl: "Poland" };
@@ -132,7 +133,7 @@ function bookCountry(c) {
 }
 function countryOf(c) { if (c.kind === "book") return bookCountry(c) || "Not set"; const se = seriesById(c.seriesId); const k = se && (se.country || String(se.code || (catEntry(se) || {}).code || "").split("/")[0]); return k ? COUNTRY_NAMES[k] || k.toUpperCase() : "Not set"; }
 // a line chart over months, one line per series of values; tapping a month opens what was bought then
-function lineChart(ks, lines, pickType, bars) {
+function lineChart(ks, lines, pickType, bars, barWord) {
   if (!ks.length) return "";
   const W = 360, H = 160, L = 40, B = 22, max = Math.max(1, ...lines.flatMap(l => l.vals)) * 1.1;
   const x = i => ks.length === 1 ? L + (W - L) / 2 : L + i * (W - L - 8) / (ks.length - 1), y = v => H - B - v / max * (H - B - 8);
@@ -144,9 +145,9 @@ function lineChart(ks, lines, pickType, bars) {
   // optional bars under the line: how many were added that month (own scale: the highest bar is 40 % of the chart)
   const bmax = bars ? Math.max(1, ...bars) : 1, bh = v => v / bmax * (H - B - 8) * 0.4, bw = Math.max(1.5, Math.min(14, w * 0.7));
   const barsSvg = bars ? bars.map((v, i) => v ? `<rect class="gbar" x="${(x(i) - bw / 2).toFixed(1)}" y="${(H - B - bh(v)).toFixed(1)}" width="${bw.toFixed(1)}" height="${bh(v).toFixed(1)}"/>` : "").join("") : "";
-  const hits = ks.map((k, i) => `<rect class="hit" x="${(x(i) - w / 2).toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H - B}"${pickType ? ` data-pick="${pickType}|${k}|a"` : ""}><title>${lab(k)}: ${lines.map(l => l.label + " " + l.vals[i].toLocaleString("de-CH")).join(", ")}${bars ? " · bought that month: " + bars[i] : ""}</title></rect>`).join("");
+  const hits = ks.map((k, i) => `<rect class="hit" x="${(x(i) - w / 2).toFixed(1)}" y="0" width="${w.toFixed(1)}" height="${H - B}"${pickType ? ` data-pick="${pickType}|${k}|a"` : ""}><title>${lab(k)}: ${lines.map(l => l.label + " " + l.vals[i].toLocaleString("de-CH")).join(", ")}${bars ? " · " + (barWord ? "that month" : "bought that month") + ": " + bars[i].toLocaleString("de-CH") : ""}</title></rect>`).join("");
   return `<svg class="vhist" viewBox="0 0 ${W} ${H}" role="img" aria-label="Per month">${ticks}${xl}${barsSvg}${lines.map(path).join("")}${hits}</svg>
-    <div class="row small" style="gap:14px;flex-wrap:wrap">${lines.map(l => `<span><span class="key ${l.cls}"></span> ${esc(l.label)}: ${l.vals[l.vals.length - 1].toLocaleString("de-CH")}</span>`).join("")}${bars ? `<span><span class="key gbar"></span> bought per month (most: ${bmax.toLocaleString("de-CH")})</span>` : ""}</div>`;
+    <div class="row small" style="gap:14px;flex-wrap:wrap">${lines.map(l => `<span><span class="key ${l.cls}"></span> ${esc(l.label)}: ${l.vals[l.vals.length - 1].toLocaleString("de-CH")}</span>`).join("")}${bars ? `<span><span class="key gbar"></span> ${barWord || "bought per month"} (most: ${bmax.toLocaleString("de-CH")})</span>` : ""}</div>`;
 }
 // bars for the 12 months of this year
 function timeBarsYear(per, word) { const r = S.statRange; S.statRange = "year"; const h = timeBars(per, word, "", "a"); S.statRange = r; return h; }
@@ -394,8 +395,15 @@ VIEWS.stats = {
       const ex = { ship: 0, tax: 0, fees: 0, disc: 0 }; let exN = 0;
       sel.forEach(c => { const d = boughtOn(c); if (!d || ((S.statRange || "year") !== "all" && !d.startsWith(yNow))) return; const e = extrasOf(c); if (!e) return; exN++; Object.keys(ex).forEach(k => ex[k] += e[k]); });
       const exAll = ex.ship + ex.tax + ex.fees;
+      const perEx = {}; sel.forEach(c => { const d = boughtOn(c).slice(0, 7), e = d && extrasOf(c); if (e) perEx[d] = (perEx[d] || 0) + e.ship + e.tax + e.fees; });
       const exLine = exN ? `<div class="small">of which shipping, customs and fees: <strong>CHF ${fmt2(exAll)}</strong> <span class="muted">(shipping ${fmt2(ex.ship)} · customs & VAT ${fmt2(ex.tax)} · fees ${fmt2(ex.fees)}${ex.disc ? " · discounts saved " + fmt2(ex.disc) : ""}; from ${nf(exN)} ${exN === 1 ? "entry" : "entries"} with a split price)</span></div>` : "";
-      const spent = card("Spent", rangeSwitch(), `<div class="small"><strong>CHF ${fmt2(inRange)}</strong> <span class="muted">${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>${exLine}${timeBars(perSpent, "CHF spent", "added", sc, n => "CHF " + fmt2(n))}${note("By purchase date. Tap a bar to see what you bought then.")}`);
+      const spent = card("Spent", rangeSwitch(), `<div class="small"><strong>CHF ${fmt2(inRange)}</strong> <span class="muted">${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>${exLine}${timeBars(perSpent, "CHF spent", "added", sc, n => "CHF " + fmt2(n), Object.keys(perEx).length ? { per: perEx, label: "shipping, customs and fees" } : null)}${note("By purchase date. Tap a bar to see what you bought then." + (Object.keys(perEx).length ? " Lighter top: shipping, customs and fees." : ""))}`);
+      // shipping, customs and fees over time: a running total per month, all time (da-v250)
+      const exKs = Object.keys(perEx).filter(k => k.length === 7).sort(); let exCard = "";
+      if (exKs.length) { const ks = []; let [yy, mm] = exKs[0].split("-").map(Number); const end = todayIso().slice(0, 7);
+        while (true) { const k = yy + "-" + String(mm).padStart(2, "0"); ks.push(k); if (k >= end || ks.length > 600) break; if (++mm > 12) { mm = 1; yy++; } }
+        let run = 0; const vals = ks.map(k => { run += perEx[k] || 0; return Math.round(run * 100) / 100; });
+        exCard = card("Shipping, customs & fees over time", "CHF, running total", lineChart(ks, [{ label: "So far", vals, cls: "p" }], "added", ks.map(k => perEx[k] ? Math.round(perEx[k] * 100) / 100 : 0), "extras per month") + note("Adds up from your first purchase with a split price. Bars: the extras of each month. Only purchases with a split price and a purchase date count.")); }
       // average price per entry, per purchase year
       const py = {}; sel.forEach(c => { const y = boughtOn(c).slice(0, 4), p = paidOf(c); if (y && p != null) { const x = py[y] = py[y] || { t: 0, n: 0 }; x.t += p; x.n += c.copies || 1; } });
       const pys = Object.keys(py).sort(), pmax = niceMax(Math.max(1, ...pys.map(y => py[y].t / py[y].n))), pstep = labStep(pys.length);
@@ -419,7 +427,7 @@ VIEWS.stats = {
       const wrow = (l, xs) => { const k = cost(xs); return xs.length ? `<tr><td>${l}</td><td>${nf(xs.length)}</td><td>${k.n ? fmt2(k.t) : "–"}</td><td class="muted">${k.n < xs.length ? (k.n ? k.n + " priced" : "no prices") : ""}</td></tr>` : ""; };
       const budget = selW.length ? card("Wishlist budget", "CHF, by your price tables", `<div class="tablewrap"><table class="moneytab"><thead><tr><th></th><th>Items</th><th>Cost</th><th></th></tr></thead><tbody>${wrow("★ Must have", lvl("must"))}${wrow("Want", lvl(""))}${wrow("Dream", lvl("dream"))}</tbody></table></div>
         ${note(`${fits ? nf(fits) + " cost no more than your maximum price. " : ""}<button type="button" class="link" id="goWish">Open the wishlist</button>`)}`) : "";
-      return head + sw + spent + `<div class="two">${avgCard}${lots}</div><div class="two">${source}${budget}</div>` + settings;
+      return head + sw + spent + exCard + `<div class="two">${avgCard}${lots}</div><div class="two">${source}${budget}</div>` + settings;
     }
 
     // ================= Stories =================

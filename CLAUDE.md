@@ -53,6 +53,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
   (percentage of the item price only; kept as discPct, disc recomputed by cleanParts; the field has no "amt" class so blur keeps the %).
 - **da-v249 published 2026-11-26 21:03 (check run new-comic + visit: no errors):** Discount note under the field
   ("= 8.3% of the item price" for an amount, "= 3.00" for a %; discNote); comic page always shows "Discount 8.3% (2.50 CHF)" (percentage first, discPctOf).
+- **da-v250 committed locally 2026-11-26, NOT pushed (on "publish": check run stats-spend + visit):** Stats › Spending: Spent bars get a lighter top part
+  for shipping, customs and fees (timeBars lite), new card "Shipping, customs & fees over time" (lineChart running total + bars per month).
+  Test data: a1 priceParts, a7 lotParts + date, new sp1 (this month).
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·
