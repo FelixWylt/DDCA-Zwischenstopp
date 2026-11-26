@@ -220,6 +220,11 @@ except typing the reply itself. Say in the report that the reply writing and Git
   books Apollon 2-4, Percy Senior 2, Sparven 1, Magnus Chase 2, Deutsche Kurzgeschichten 1, Lady Trent 1 (titleNumbers). Book series ranges
   only for volumes without the user's own value. 38 loose/unnumbered books can't get ranges (valueKeyOf "" without a series): values sent
   as a Restore file instead (book-values-2026-11-26.json, sent in chat, not committed; the user's wish 18:01). Blixt Gordon: the user does it.
+- **da-v245 built (go 2026-11-26 18:18, local until "publish"):** comic series page: "Fill from Wikidata and Wikipedia" (data-wdser, series.js
+  fillComicSeriesWD): search by name (series language, then en; description must say comic/manga/…, not TV/film/anime), fills ONLY empty
+  fields (pubHouse P123, country P495→P297, firstYear/lastYear for yearly series, latest from P2635, about from Wikipedia + aboutSrc +
+  aboutFrom "Wikipedia"); never removes or overwrites (the user's wish: Duckipedia descriptions stay); remembers se.wikidata. Tested here with
+  mocks (full series: nothing changed but the hidden wikidata id). Screens at publish: series + visit.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)

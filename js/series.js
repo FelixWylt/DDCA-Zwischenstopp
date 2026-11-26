@@ -341,6 +341,63 @@ async function wikiSummary(sitelinks) {
   }
   return null;
 }
+// ---- Wikidata (facts) and Wikipedia (description) for a comic series: ONLY empty fields are filled, nothing is ever removed
+// or overwritten (a Duckipedia description or anything you typed stays exactly as it is) ----
+async function fillComicSeriesWD(se) {
+  const got = [], has = v => v != null && String(v).trim() !== "";
+  const set = (k, v, label) => { if (has(v) && !has(se[k])) { se[k] = v; got.push(label); } };
+  const lang = ({ German: "de", Swedish: "sv", Italian: "it", English: "en", Norwegian: "no", Danish: "da", French: "fr", Dutch: "nl", Finnish: "fi" })[seriesLang(se)] || "en";
+  const name = String(se.name || "").replace(/\s*\((german|germany|swedish|sweden|italian|italy|norwegian|norway|english|us|uk)\)\s*$/i, "").trim();
+  const comicRe = /comic|manga|manhwa|bande dessin|tecknad serie|serietidning|seriealbum|comicserie|comic-serie|fumetto|graphic novel|webcomic|comic strip|tegneserie|stripverhaal|sarjakuva/i;
+  const notRe = /\b(tv|television|film|movie|anime series|video game|episode|character|album by|song)\b/i;
+  try {
+    let id = se.wikidata || "";
+    if (!id) {
+      const langs = [...new Set([lang, "en"])];
+      const answers = await Promise.all(langs.map(l => wdGet({ action: "wbsearchentities", search: name, language: l, uselang: "en", limit: "8", type: "item" }).catch(e => ({ failed: e }))));
+      if (answers.every(j => j.failed)) throw answers[0].failed;
+      for (const j of answers) { const hit = (j.search || []).find(x => comicRe.test(x.description || "") && !notRe.test(x.description || "")); if (hit) { id = hit.id; break; } }
+    }
+    if (!id) return got;
+    const e = Object.values((await wdGet({ action: "wbgetentities", ids: id, props: "claims|sitelinks" })).entities || {})[0] || {};
+    const cl = p => ((e.claims || {})[p] || []).map(c => (c.mainsnak || {}).datavalue && c.mainsnak.datavalue.value).filter(Boolean);
+    const ids = p => cl(p).map(v => v.id).filter(Boolean);
+    if (!has(se.wikidata)) se.wikidata = id;   // remembered so the next Fill asks the same page; never changed once set
+    // publisher (P123) and the country it first came out in (P495, as its two-letter code)
+    const want = [...new Set([...ids("P123").slice(0, 2), ...ids("P495").slice(0, 1)])];
+    if (want.length) {
+      const j = await wdGet({ action: "wbgetentities", ids: want.join("|"), props: "labels|claims", languages: lang + "|en" });
+      const ent = j.entities || {}, label = q => { const l = (ent[q] || {}).labels || {}; return (l[lang] || l.en || {}).value || ""; };
+      set("pubHouse", ids("P123").slice(0, 2).map(label).filter(Boolean).join(", "), "publisher");
+      const c = ids("P495")[0], iso = c && ((((ent[c] || {}).claims || {}).P297 || [])[0] || {}).mainsnak;
+      set("country", iso && iso.datavalue ? String(iso.datavalue.value).toUpperCase() : "", "country");
+    }
+    // years (start P580 / publication P577, end P582): only for series numbered by year
+    if (se.numbering === "year") {
+      const yr = p => cl(p).map(v => +(String(v.time || "").match(/^\+?(\d{4})/) || [])[1]).filter(Boolean);
+      const y0 = Math.min(...yr("P580"), ...yr("P577")), y1 = Math.max(...yr("P582"));
+      if (isFinite(y0)) set("firstYear", y0, "first year");
+      if (isFinite(y1)) set("lastYear", y1, "last year");
+    } else {
+      const parts = (cl("P2635")[0] || {}).amount;   // number of parts / volumes
+      if (parts && Math.round(+parts) > 0) set("latest", Math.round(+parts), "latest issue");
+    }
+    // description: only when the series has none yet (a Duckipedia text stays)
+    if (!has(se.about)) {
+      const sl = e.sitelinks || {};
+      for (const w of [...new Set([lang + "wiki", "enwiki", "dewiki", "svwiki", "itwiki"])]) {
+        const t = sl[w] && sl[w].title; if (!t) continue;
+        try {
+          const wl = w.replace(/wiki$/, ""), r = await fetchWithin(`https://${wl}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(t.replace(/ /g, "_"))}`, 10000);
+          if (!r.ok) continue; const j = await r.json(); if (!j.extract) continue;
+          if (!has(se.about)) { se.about = j.extract.slice(0, 700); se.aboutSrc = (j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page) || `https://${wl}.wikipedia.org/wiki/${encodeURIComponent(t.replace(/ /g, "_"))}`; se.aboutFrom = "Wikipedia"; got.push("description"); }
+          break;
+        } catch (x) {}
+      }
+    }
+  } catch (x) { got.warn = "Wikidata couldn't be reached"; }
+  return got;
+}
 async function fillBookSeries(name, quick) {
   const bs = S.comics.filter(c => c.kind === "book" && c.seriesName === name);
   const m = Object.assign({}, bookInfo(name)), got = [];
@@ -556,9 +613,9 @@ VIEWS.series = {
       <label><span class="l">Format</span><input data-k="format" value="${esc(s.format || "")}" placeholder="12,5×19,0 cm"></label></div>`, true)
       + sect(key, "about", "Description", s.about ? s.about.slice(0, 40) + "…" : "empty", `<div class="seriesrow" data-i="${i}">
       <label class="wide"><span class="l">About this series</span><textarea data-k="about" rows="4">${esc(s.about || "")}</textarea></label>
-      ${s.aboutSrc ? (t => `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a>${t && norm(t) !== norm(s.name) ? ` page “${esc(t)}”` : ""} (GNU FDL 1.2)</div>`)((() => { try { return decodeURIComponent((/duckipedia\.org\/(.+)$/.exec(s.aboutSrc) || [])[1] || "").replace(/_/g, " "); } catch (e) { return ""; } })()) : ""}</div>`, false)
+      ${s.aboutSrc && s.aboutFrom === "Wikipedia" ? `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Wikipedia</a> (CC BY-SA)${s.wikidata ? ` · <a href="https://www.wikidata.org/wiki/${esc(s.wikidata)}" target="_blank" rel="noopener">Wikidata</a>` : ""}</div>` : s.aboutSrc ? (t => `<div class="wide small muted">Text from <a href="${esc(s.aboutSrc)}" target="_blank" rel="noopener">Duckipedia</a>${t && norm(t) !== norm(s.name) ? ` page “${esc(t)}”` : ""} (GNU FDL 1.2)</div>`)((() => { try { return decodeURIComponent((/duckipedia\.org\/(.+)$/.exec(s.aboutSrc) || [])[1] || "").replace(/_/g, " "); } catch (e) { return ""; } })()) : ""}</div>`, false)
       + (s.id ? sect(key, "prices", "Price ranges", priceMeta(s.id), `<div class="sform">${valueRulesHtml(s.id)}</div>`, false) : "")
-      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}${s.id ? `<button type="button" class="ghost" data-c2b="${i}">Make it a book series</button><button type="button" class="ghost" data-smerge="${esc(s.id)}">Merge into…</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div><div id="cellpick"></div>`; };
+      + `<div class="row" style="margin-top:10px"><button type="button" data-fillser="${i}">Fill from INDUCKS${(s.publisher || DISNEY) === DISNEY ? " and Duckipedia" : ""}</button>${s.id ? `<button type="button" class="ghost" data-wdser="${i}">Fill from Wikidata and Wikipedia</button>` : ""}${s.id ? `<button type="button" class="ghost" data-sgap="${esc(s.id)}">Open gap grid</button>` : ""}${s.id ? `<button type="button" class="ghost" data-c2b="${i}">Make it a book series</button><button type="button" class="ghost" data-smerge="${esc(s.id)}">Merge into…</button>` : ""}<button class="ghost danger" data-rm="${i}" type="button">Remove series</button></div><div id="cellpick"></div>`; };
     // ---- the lists: Universe › Group › Series, like Collection ----
     const tab = S.serTab === "tools" ? "tools" : S.serTab === "books" ? "books" : "comics";
     const bookNames = bookSeriesNames();
@@ -694,6 +751,15 @@ VIEWS.series = {
       markRun("fillall");
       run.msg = (run.stop ? "Stopped. " : "Done. ") + changed + (changed === 1 ? " series got" : " series got") + " new details" + (warn ? ". " + warn : ".");
       toast(run.msg); if (S.view === "series") renderKeep();
+    });
+    document.querySelectorAll("[data-wdser]").forEach(b => b.onclick = async () => {
+      grab(); const se = S.series[+b.dataset.wdser];
+      if (!se || !se.name) { toast("Give the series a name first"); return; }
+      b.disabled = true; b.textContent = "Looking up…";
+      const got = await fillComicSeriesWD(se);
+      try { if (got.length) await saveSeries(); } catch (e) { toast(errText(e)); }
+      toast((got.length ? "Filled in: " + got.join(", ") : "Nothing new found on Wikidata for this series") + (got.warn ? ". " + got.warn : ""));
+      render();
     });
     document.querySelectorAll("[data-fillser]").forEach(b => b.onclick = async () => {
       grab(); const se = S.series[+b.dataset.fillser];

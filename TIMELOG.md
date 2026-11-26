@@ -280,4 +280,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Restore file with values for 38 books (book-values-2026-11-26.json, sent in chat, not committed) | 1–2 min | 1–2 min (18:03 → 18:04:12) |
 | 2026-11-26 | Publish 13 price lists + price check: no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~3 min of it waiting (18:04 → 18:07:54) |
 | 2026-11-26 | Lookup + plan: Wikidata/Wikipedia fill for comic series | 1–2 min | 1–2 min (18:13 → 18:14:09) |
+| 2026-11-26 | da-v245 Fill from Wikidata and Wikipedia for comic series (only empty fields) + mock test | 4–6 min | 1–2 min (18:18 → 18:19:23) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
