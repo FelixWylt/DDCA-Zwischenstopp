@@ -268,4 +268,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Start prompt for a new chat | under 1 min | 0–1 min (07:36 → 07:36:44) |
 | 2026-11-26 | New chat: open repo with push access, read CLAUDE.md | (not given first: forgotten) | 0–1 min (07:38 → 07:38:27) |
 | 2026-11-26 | Check the backup of 2026-11-26 opens (counts) | under 1 min | 0–1 min (07:40 → 07:40:21) |
+| 2026-11-26 | Lookup: Winnetou cover doesn't show (backup, covers-batch, cover code) | 1–2 min | 1–2 min (07:41 → 07:41:28) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
