@@ -151,7 +151,7 @@ ${isBook ? `
           <p class="small muted wide" style="margin:0">Only for copies that are the same in every way (condition, price, seller). A copy in another condition or from another seller: save it, then use <strong>Add another copy</strong> at the bottom.</p>
           <label><span class="l">Storage location</span><input id="f-location" value="${esc(d.location)}" placeholder="Box 3, shelf B"></label>
           <label class="check wide" style="min-height:0"><input id="f-inlot" type="checkbox"${d.lotId ? " checked" : ""}> Bought as a lot: several ${isBook ? "books or comics" : "comics"} for one price</label>
-          ${d.lotId ? lotFields(d) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>`}
+          ${d.lotId ? lotFields(d) + partsHtml(d.lotParts, true) : `<label><span class="l">Price paid</span><input id="f-pricePaid" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.pricePaid))}"></label>` + partsHtml(d.priceParts, false)}
           <label><span class="l">Currency</span><select id="f-currency">${curs}</select></label>
           <label class="wide"><span class="l">Checked value <span class="muted">(sold or collector price)</span></span><span class="row valrow" style="gap:6px;flex-wrap:nowrap"><input id="f-valueChecked" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.valueChecked))}"><select id="f-valueCur" aria-label="Currency of the checked value" style="width:auto">${CURRENCIES.map(x => `<option${(d.valueCur || d.currency || "CHF") === x ? " selected" : ""}>${x}</option>`).join("")}</select></span></label>
           <label><span class="l">Own estimate</span><input id="f-value" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(amtVal(d.value))}"></label>
@@ -183,6 +183,9 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     const d = S.draft;
     if (S.viewMode && d && d.id) return bindDetail(d);
     bindAmounts();
+    // price split (da-v247): typing a part fills in the total
+    const readParts = () => { const p = {}; document.querySelectorAll("[data-pp]").forEach(x => p[x.dataset.pp] = x.value); return p; };
+    document.querySelectorAll("[data-pp]").forEach(el => el.addEventListener("input", () => { const t = partsSum(readParts()), tot = $("#f-lotTotal") || $("#f-pricePaid"); if (tot && t != null) { tot.value = t.toFixed(2); tot.dispatchEvent(new Event("input")); } }));
     $("#today") && ($("#today").onclick = () => { $("#f-purchaseDate").value = niceDate(todayIso()); });
     // a rough date (da-v237): only the year counts as filled in (yearly numbers), not in the monthly charts
     document.querySelectorAll("[data-yearonly]").forEach(b => b.onclick = e => { e.preventDefault(); const inp = $("#" + b.dataset.yearonly); if (!inp) return;
@@ -199,13 +202,13 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         // a lot is offered only if something in it was ADDED in the last day (a lot bought today), not just changed today (da-v246)
         const addedAt = l => l.members.reduce((a, c) => { const x = String(c.createdAt || ""); return x > a ? x : a; }, "");
         const last = allLots().filter(l => !l.members.some(c => c.id === d.id)).sort((a, b) => addedAt(b).localeCompare(addedAt(a)))[0];
-        d.lotId = "new"; d.lotTotal = d.lotTotal || "";
-        if (last && daysSince(addedAt(last)) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.currency = last.currency; if (!d.source) d.source = last.source; if (!d.purchaseDate) d.purchaseDate = last.date; }   // its date and place, as when picked from the list
+        d.lotId = "new"; d.lotTotal = d.lotTotal || ""; d.lotParts = d.lotParts || d.priceParts || null;
+        if (last && daysSince(addedAt(last)) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.lotParts = last.parts; d.currency = last.currency; if (!d.source) d.source = last.source; if (!d.purchaseDate) d.purchaseDate = last.date; }   // its date and place, as when picked from the list
       }
-      else { d.lotId = ""; d.lotTotal = ""; }
+      else { d.lotId = ""; d.lotTotal = ""; d.lotParts = null; }
       render(); $("#f-inlot") && $("#f-inlot").scrollIntoView({ block: "center" });
     });
-    $("#f-lot") && ($("#f-lot").onchange = e => { grab(); d.lotId = e.target.value; const l = lotInfo(d.lotId); if (l) { d.lotTotal = l.total; d.currency = l.currency; if (!d.source) d.source = l.source; if (!d.purchaseDate) d.purchaseDate = l.date; } else d.lotTotal = ""; render(); });
+    $("#f-lot") && ($("#f-lot").onchange = e => { grab(); d.lotId = e.target.value; const l = lotInfo(d.lotId); if (l) { d.lotTotal = l.total; d.lotParts = l.parts; d.currency = l.currency; if (!d.source) d.source = l.source; if (!d.purchaseDate) d.purchaseDate = l.date; } else d.lotTotal = ""; render(); });
     // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
     $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s", el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
     document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
@@ -240,6 +243,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "country", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      if (document.querySelector("[data-pp]")) { const p = {}; document.querySelectorAll("[data-pp]").forEach(x => p[x.dataset.pp] = x.value); if (d.lotId) d.lotParts = cleanParts(p); else d.priceParts = cleanParts(p); }
       if (!String(d.coverUrl || "").trim() && S.coverPhoto) d.coverUrl = S.coverPhoto;   // your own cover photo (not shown in the link box)
       const words0 = d.words;
       ["link", "words"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value.trim(); });
@@ -507,7 +511,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
       if (dbl) p = Object.assign({}, p, { n: +dbl[2] });   // after 2016-11-12 comes 2016/13
       const nextIssue = se && se.numbering === "year" && p.year ? (p.n >= per ? (p.year + 1) + "/01" : p.year + "/" + String(p.n + 1).padStart(2, "0")) : (p.n != null ? String(p.n + 1) : "");
       S.editing = null;
-      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
+      S.draft = blankDraft({ seriesId: c.seriesId, seriesName: c.seriesName, status: c.status, issue: nextIssue, read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", lotParts: c.lotId ? c.lotParts || null : null, pricePaid: c.lotId ? "" : c.pricePaid, priceParts: c.lotId ? null : c.priceParts || null });
       render(); $("#f-issue") && $("#f-issue").focus();
     };
     // skip a number you don't have: move on without saving anything
@@ -554,7 +558,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
         toast("✓ " + (moved ? "Moved from your wishlist to your collection: " : S.editing ? "Changes saved: " : c.status === "wanted" ? "Added to your wishlist: " : notOwned(c) ? "Saved as read (not owned): " : "Saved to your archive: ") + (c.title || "book") + lotNote);
         if (next) {
           S.editing = null;
-          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, link: c.link || "", genre: c.genre || "", read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", pricePaid: c.lotId ? "" : c.pricePaid });
+          S.draft = blankDraft({ kind: "book", bookType: c.bookType || "", seriesId: "_book", seriesName: c.seriesName, issue: vm ? String(Math.floor(+vm[0]) + 1) : "", author: c.author, publisher: c.publisher, format: c.format, lang: c.lang, status: c.status, currency: c.currency, source: c.source, purchaseDate: c.purchaseDate, link: c.link || "", genre: c.genre || "", read: notOwned(c) || undefined, readDate: notOwned(c) ? todayIso() : undefined, location: c.location, lotId: c.lotId || "", lotTotal: c.lotId ? c.lotTotal : "", lotParts: c.lotId ? c.lotParts || null : null, pricePaid: c.lotId ? "" : c.pricePaid, priceParts: c.lotId ? null : c.priceParts || null });
           render(); $("#f-title") && $("#f-title").focus();
         } else goBack(() => { S.col = isNovel(saved) ? (saved.seriesName ? { p: NOVEL_PUB, g: BOOK_GROUP, s: seriesKeyOf(saved) } : {}) : { p: publisherOf(saved), g: BOOK_GROUP, s: seriesKeyOf(saved) }; if (isNovel(saved)) S.colTab = "books"; S.filters.q = ""; S.filters.status = saved.status === "wanted" ? "wanted" : notOwned(saved) ? "notowned" : "owned"; nav("collection"); });
       } catch (e) { toast(errText(e)); btns.forEach(b => b.disabled = false); }

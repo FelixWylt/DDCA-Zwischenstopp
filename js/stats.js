@@ -390,7 +390,12 @@ VIEWS.stats = {
       const sc = scope === "b" ? "b" : scope === "c" ? "c" : "a";
       const perSpent = {}; sel.forEach(c => { const d = boughtOn(c).slice(0, 7), p = paidOf(c); if (d && p != null) perSpent[d] = (perSpent[d] || 0) + p; });
       const inRange = Object.keys(perSpent).filter(k => (S.statRange || "year") === "all" || k.startsWith(yNow)).reduce((a, k) => a + perSpent[k], 0);
-      const spent = card("Spent", rangeSwitch(), `<div class="small"><strong>CHF ${fmt2(inRange)}</strong> <span class="muted">${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>${timeBars(perSpent, "CHF spent", "added", sc, n => "CHF " + fmt2(n))}${note("By purchase date. Tap a bar to see what you bought then.")}`);
+      // of which shipping, customs and fees: only entries with a split price (da-v247)
+      const ex = { ship: 0, tax: 0, fees: 0, disc: 0 }; let exN = 0;
+      sel.forEach(c => { const d = boughtOn(c); if (!d || ((S.statRange || "year") !== "all" && !d.startsWith(yNow))) return; const e = extrasOf(c); if (!e) return; exN++; Object.keys(ex).forEach(k => ex[k] += e[k]); });
+      const exAll = ex.ship + ex.tax + ex.fees;
+      const exLine = exN ? `<div class="small">of which shipping, customs and fees: <strong>CHF ${fmt2(exAll)}</strong> <span class="muted">(shipping ${fmt2(ex.ship)} · customs & VAT ${fmt2(ex.tax)} · fees ${fmt2(ex.fees)}${ex.disc ? " · discounts saved " + fmt2(ex.disc) : ""}; from ${nf(exN)} ${exN === 1 ? "entry" : "entries"} with a split price)</span></div>` : "";
+      const spent = card("Spent", rangeSwitch(), `<div class="small"><strong>CHF ${fmt2(inRange)}</strong> <span class="muted">${(S.statRange || "year") === "year" ? "in " + yNow : "in all"}</span></div>${exLine}${timeBars(perSpent, "CHF spent", "added", sc, n => "CHF " + fmt2(n))}${note("By purchase date. Tap a bar to see what you bought then.")}`);
       // average price per entry, per purchase year
       const py = {}; sel.forEach(c => { const y = boughtOn(c).slice(0, 4), p = paidOf(c); if (y && p != null) { const x = py[y] = py[y] || { t: 0, n: 0 }; x.t += p; x.n += c.copies || 1; } });
       const pys = Object.keys(py).sort(), pmax = niceMax(Math.max(1, ...pys.map(y => py[y].t / py[y].n))), pstep = labStep(pys.length);

@@ -1169,11 +1169,28 @@ function lotFields(d) {
       <div class="muted" style="margin-top:4px">Purchase date and where bought apply to the whole lot: changing them here changes them for all its ${w2}.</div>
       ${others.length ? `<div class="row" style="gap:6px;margin-top:6px">${others.map(c => `<button type="button" class="chipbtn" data-open="${esc(c.id)}">${esc(comicTag(c).trim() || c.title || "comic")}</button>`).join("")}</div>` : ""}</div>`;
 }
+// ---- price split (da-v247): item + shipping + customs & import VAT + fees − discount = the total in "Price paid" (or the lot's price) ----
+const PRICE_PARTS = [["item", "Item price"], ["ship", "Shipping"], ["tax", "Customs & import VAT"], ["fees", "Fees (Ricardo, eBay, PayPal…)"], ["disc", "Discount (taken off)"]];
+function cleanParts(p) { if (!p) return null; const o = {}; PRICE_PARTS.forEach(([k]) => { const v = parseAmt(p[k]); if (typeof v === "number") o[k] = v; }); return Object.keys(o).length ? o : null; }
+function partsSum(p) { p = cleanParts(p); if (!p) return null; const t = PRICE_PARTS.reduce((a, [k]) => a + (typeof p[k] === "number" ? (k === "disc" ? -p[k] : p[k]) : 0), 0); return Math.max(0, Math.round(t * 100) / 100); }
+function partsHtml(p, forLot) {
+  return `<details class="wide pparts"${cleanParts(p) ? " open" : ""}><summary class="small">Split the price${forLot ? " (for the whole lot)" : ""}: shipping, customs, fees</summary><div class="grid-form" style="margin-top:6px">${PRICE_PARTS.map(([k, l]) => `<label><span class="l">${l}</span><input id="f-pp-${k}" data-pp="${k}" class="amt" inputmode="decimal" placeholder="0.00" value="${esc(p && p[k] != null ? amtVal(p[k]) : "")}"></label>`).join("")}
+    <p class="small muted wide" style="margin:0">The app adds these up (minus the discount) and puts the total into “${forLot ? "Price for the whole lot" : "Price paid"}”. Customs & import VAT is only for parcels from abroad: in a Swiss shop the MWST is already in the price.</p></div></details>`;
+}
+function partsText(p, cur) { p = cleanParts(p); return p ? PRICE_PARTS.filter(([k]) => typeof p[k] === "number").map(([k, l]) => l.replace(/ \(.*\)$/, "") + " " + money(p[k], cur)).join(" · ") : ""; }
+// shipping, customs and fees of an entry in CHF (for a lot: its share, by its part of the lot price)
+function extrasOf(c) {
+  const p = cleanParts(c.lotId ? c.lotParts : c.priceParts); if (!p || typeof c.pricePaid !== "number") return null;
+  let f = c.copies || 1;
+  if (c.lotId) { const T = +c.lotTotal; if (!(T > 0)) return null; f = c.pricePaid * (c.copies || 1) / T; }
+  const cur = c.lotId ? (c.lotCurrency || c.currency) : c.currency, x = k => toCHF((p[k] || 0) * f, cur);
+  return { ship: x("ship"), tax: x("tax"), fees: x("fees"), disc: x("disc") };
+}
 function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && isOwn(c)) : []; }
 function lotInfo(id) {
   const m = lotMembers(id); if (!m.length) return null;
   const f = m.slice().sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)))[0];
-  return { id, members: m, total: f.lotTotal, currency: f.lotCurrency || f.currency || "CHF", source: f.source || "", date: f.purchaseDate || "", created: m.reduce((a, c) => { const x = String(c.updatedAt || c.createdAt || ""); return x > a ? x : a; }, "") };
+  return { id, members: m, total: f.lotTotal, parts: f.lotParts || null, currency: f.lotCurrency || f.currency || "CHF", source: f.source || "", date: f.purchaseDate || "", created: m.reduce((a, c) => { const x = String(c.updatedAt || c.createdAt || ""); return x > a ? x : a; }, "") };
 }
 function allLots() {
   const ids = [...new Set(S.comics.filter(c => c.lotId && isOwn(c)).map(c => c.lotId))];
@@ -1202,9 +1219,13 @@ function prepareLot(d, c, before) {
   if (c.status === "wanted" || !d.lotId) {
     // leaving a lot: the lot's share price goes too (unless you typed a new price), so the real price can be filled in (da-v246)
     if (before && before.lotId && c.pricePaid === before.pricePaid) c.pricePaid = "";
-    c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; return true;
+    c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; delete c.lotParts;
+    if (c.status === "wanted") delete c.priceParts;
+    else { c.priceParts = cleanParts(d.priceParts); if (c.priceParts) c.pricePaid = partsSum(c.priceParts); else delete c.priceParts; }   // the split decides the total (da-v247)
+    return true;
   }
-  const total = parseAmt(d.lotTotal);
+  delete c.priceParts; c.lotParts = cleanParts(d.lotParts); if (!c.lotParts) delete c.lotParts;
+  const total = c.lotParts ? partsSum(c.lotParts) : parseAmt(d.lotTotal);
   if (!(typeof total === "number" && total >= 0)) { toast("Enter the price for the whole lot (0 if you got it for free)"); $("#f-lotTotal") && $("#f-lotTotal").focus(); return false; }
   if (d.lotId === "new") d.lotId = newId();
   c.lotId = d.lotId; c.lotTotal = total; c.lotCurrency = c.currency; c.pricePaid = "";
@@ -1212,6 +1233,7 @@ function prepareLot(d, c, before) {
 }
 async function afterLotSave(c, before) {
   const shared = {}; if (c.purchaseDate) shared.purchaseDate = c.purchaseDate; if (c.source) shared.source = c.source;   // an empty field never wipes the others
+  if (c.lotId) shared.lotParts = c.lotParts || null;   // the price split belongs to the whole lot (da-v247)
   if (c.lotId) await rebalanceLot(c.lotId, c.lotTotal, c.currency, shared);
   if (before && before.lotId && before.lotId !== c.lotId) await rebalanceLot(before.lotId);   // left its old lot
   const l = c.lotId && lotInfo(c.lotId);
@@ -1305,7 +1327,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 246;
+const APP_BUILD = 247;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

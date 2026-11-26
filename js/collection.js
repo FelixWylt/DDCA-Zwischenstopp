@@ -636,6 +636,7 @@ function detailHtml(c) {
     : notOwned(c) ? [row("Read on", t(niceDate(c.readDate || ""))), row("Read from", t(c.source)), linkRow, row("Notes", t(c.notes))]
     : [row("Condition", t(grade)), row("Copies", (c.copies || 1) > 1 ? c.copies : ""), row("Location", t(c.location)),
       row("Paid", t(money(c.pricePaid, c.currency)) + (lot ? ` <span class="muted">(lot of ${lot.members.length}, ${t(money(lot.total, lot.currency))})</span>` : "")),
+      row("Price split", t(partsText(c.lotId ? c.lotParts : c.priceParts, c.lotId ? c.lotCurrency || c.currency : c.currency)) + (c.lotId && cleanParts(c.lotParts) ? ' <span class="muted">(whole lot)</span>' : "")),
       row("Bought", t([niceDate(c.purchaseDate), c.source].filter(Boolean).join(" · "))), row("Read", c.read ? "yes" + (c.readDate ? ", " + t(niceDate(c.readDate)) : "") : "not yet"),
       row("For trade", c.forTrade ? "yes" : ""), row("Value", v ? t(money(v.amount * (c.copies || 1), v.cur)) + ` <span class="muted">(${v.how === "checked" ? "checked price" : v.how === "table" ? "price table" : "own estimate"})</span>` : ""),
       row("Special", t(c.special)), linkRow, row("Extras", (c.extras || []).length ? c.extras.map(x => esc(x.what || "Extra") + (typeof x.value === "number" ? " (" + esc(money(x.value, x.cur || "CHF")) + ")" : "")).join("<br>") : ""), row("Notes", t(c.notes))];
