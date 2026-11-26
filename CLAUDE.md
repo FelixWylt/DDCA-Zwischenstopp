@@ -11,6 +11,8 @@
    (a pasted table): the estimate comes in the first message, before any tool call (2026-11-22: forgotten several times).
    Estimate at Claude's own pace, not a person's. Base it on the log below: Claude tends to estimate too HIGH.
    State waiting separately (GitHub Actions network probe: about 1 minute; the user's replies don't count).
+   **Format (the user's wish, 2026-11-26):** the waiting goes inside the total, e.g. "3–4 min (including 2–3 min of waiting)";
+   the same for the real time ("2–3 min (including about 2.5 min of waiting)"). Never "under 1 min + ~2–3 min waiting".
 2. **Measure from the user's message time** (system reminder, minute precision) to the commit time
    (`git log -1 --format=%ad --date=format:%H:%M:%S`). Don't start the clock at your first command:
    that misses the thinking/writing before it. Give a range where the minute precision matters.
