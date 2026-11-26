@@ -213,7 +213,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   core.js deadCoverHost(); start drops comics.org coverUrls with coverKeepFail (comic counts as "no cover" again); coverBatchWaiting skips
   comics.org; covers-batch.json emptied of its 47 GCD links. Edit (comic + book forms, add.js): "Cover photo" button under Cover image URL
   (coverPhotoHtml/bindCoverPhoto/photoToCover: 600 px JPEG data: URL in coverUrl, S.coverPhoto, not shown in the link box, "Remove photo").
-  **Don't collect GCD covers any more.**
+  **Don't collect GCD covers any more.** User saw the Cover photo button on the phone (2026-11-26 12:52).
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
