@@ -40,7 +40,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
   da-v244 (Cover photo button in Edit; dead GCD cover links dropped), 13 price lists 2026-11-26 (price check clean).
 - Waiting on the phone: Add all for the 2026-11-26 price lists; Restore file book-values-2026-11-26.json (38 book values, sent in chat);
   Blixt Gordon prices and the DD Taschenbuch T4 test-issue value (the user does them); once Series › Tools › Refresh all books.
-- **da-v246 built (go 2026-11-26 19:29, local until "publish"):** lots: ticking "Bought as a lot" pre-picks only a lot with something ADDED
+- **da-v246 published 2026-11-26 19:35 (check run edit-comic + visit: no errors):** lots: ticking "Bought as a lot" pre-picks only a lot with something ADDED
   in the last day (newest createdAt, was: last changed), and copies its purchase date/where bought into empty fields; leaving a lot empties
   the lot's share price (prepareLot, unless a new price was typed). Cause: Valhall landed in Uhland's lot; Uhland had no date. Restore file
   lot-fix-2026-11-26.json (Uhland 2025/Street, Valhall price empty) sent in chat, not committed.
