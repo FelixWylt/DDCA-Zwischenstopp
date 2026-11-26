@@ -36,7 +36,7 @@ commit with the log line the **last** step before writing the reply, so the meas
 except typing the reply itself. Say in the report that the reply writing and GitHub's publishing/rebuild aren't included.
 
 ## Current state (2026-11-26) — details of every version are in HISTORY.md
-- App da-v245 built (Fill from Wikidata and Wikipedia on comic series pages; only empty fields, never overwrites). Before that published:
+- App da-v245 published 2026-11-26 18:34, check run series + visit: no errors (shot shows the list, not a series page) (Fill from Wikidata and Wikipedia on comic series pages; only empty fields, never overwrites). Before that published:
   da-v244 (Cover photo button in Edit; dead GCD cover links dropped), 13 price lists 2026-11-26 (price check clean).
 - Waiting on the phone: Add all for the 2026-11-26 price lists; Restore file book-values-2026-11-26.json (38 book values, sent in chat);
   Blixt Gordon prices and the DD Taschenbuch T4 test-issue value (the user does them); once Series › Tools › Refresh all books.
