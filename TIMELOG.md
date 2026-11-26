@@ -302,4 +302,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | da-v250 Spending: lighter bar part for extras + new running-total line card, test data + test (first estimate with ÷5) | 2–3 min | 0–1 min (21:27 → 21:28:02) |
 | 2026-11-26 | Publish da-v250 + check run (stats-spend, visit): no errors | under 1 min + ~2–3 min waiting | 1–2 min, ~2.5 min of it waiting (21:58 → 22:00:59) |
 | 2026-11-26 | Rule: estimate format "3–4 min (including 2–3 min of waiting)" | under 1 min | 0–0 min (22:01 → 22:01:43) |
+| 2026-11-26 | da-v251 extras card rebuilt (headline, line with dots, breakdown) + publish + check run (stats-spend, visit): no errors | 5–6 min (including 2–3 min of waiting) | 2–3 min (including about 2.5 min of waiting) (22:23 → 22:26:46) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
