@@ -266,4 +266,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-25 | da-v242 To do lines (stories/nomatch, book country) + publish; check run blocked by GitHub outage | 5–8 min + ~2 min waiting | 6–7 min incl. ~7 min waiting/retries (16:43 → 16:49:31) |
 | 2026-11-26 | Check run da-v242 (stats, todo-list + visit) after the outage: no errors | 3–4 min (mostly waiting) | 3–4 min, ~2.5 min of it waiting (07:31 → 07:34:01) |
 | 2026-11-26 | Start prompt for a new chat | under 1 min | 0–1 min (07:36 → 07:36:44) |
+| 2026-11-26 | New chat: open repo with push access, read CLAUDE.md | (not given first: forgotten) | 0–1 min (07:38 → 07:38:27) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
