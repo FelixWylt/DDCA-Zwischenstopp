@@ -4035,6 +4035,19 @@
     "Naturgeschichte der Drachen": "1"
    },
    "minApp": 205
+  },
+  {
+   "id": "it-fdll-2",
+   "sugg": "it/DLL",
+   "replace": false,
+   "added": "2026-11-26"
+  },
+  {
+   "id": "book:Frieren: Beyond Journey's End",
+   "sugg": "id:book:Frieren: Beyond Journey's End",
+   "replace": false,
+   "minApp": 200,
+   "added": "2026-11-26"
   }
  ]
 }
