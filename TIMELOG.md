@@ -294,4 +294,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Publish da-v247 + check run (edit-comic, new-comic, stats-spend, visit): no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~2.5 min of it waiting (20:40 → 20:44:03) |
 | 2026-11-26 | da-v248 discount as amount or % (of item price) + test | 1–2 min | 0–0 min (20:51 → 20:51:38) |
 | 2026-11-26 | Publish da-v248 + check run (new-comic, visit): no errors | under 1 min + ~2–3 min waiting | 1–2 min, ~2.5 min of it waiting (20:53 → 20:55:58) |
+| 2026-11-26 | Publish notes/log only (da-v249 waits for go), no check run | under 1 min | 0–0 min (21:02 → 21:02:53) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
