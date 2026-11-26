@@ -298,4 +298,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | da-v249 discount % note while editing + % first on comic page + test | 1–2 min | 0–1 min (21:02 → 21:03:19) |
 | 2026-11-26 | Publish da-v249 + check run (new-comic, visit): no errors | under 1 min + ~2–3 min waiting | 2–3 min, ~2.5 min of it waiting (21:03 → 21:06:20) |
 | 2026-11-26 | Check: have estimates improved? (whole log compared: small jobs right, bigger jobs 2–3× too high and worse today) | under 1 min | 0–1 min (21:08 → 21:09:21) |
+| 2026-11-26 | Rule: bigger jobs first guess ÷ 5 (was ÷ 3), check again ~2026-12-03 | under 1 min | 0–0 min (21:12 → 21:12:17) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
