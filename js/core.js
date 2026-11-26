@@ -902,6 +902,8 @@ async function boot() {
       if (fix.length) await saveMany(fix, null, true);
       await setConfig("comicGenre1", true);
     }
+    // every start: GCD cover links your phone couldn't load are dropped, so the comic counts as "no cover" again (photo or another source)
+    { const dead = S.comics.filter(c => deadCoverHost(c.coverUrl) && c.coverKeepFail === c.coverUrl).map(c => Object.assign({}, c, { coverUrl: "", coverKeepFail: "" })); if (dead.length) await saveMany(dead, null, true); }
     // every start: German format names and series sizes become English (also catches an old backup restored earlier)
     { const fx = S.comics.filter(c => FMT_EN[c.format]).map(c => Object.assign({}, c, { format: FMT_EN[c.format] })); if (fx.length) await saveMany(fx, null, true);
       if (S.series.some(se => se.format && enSize(se.format) !== se.format)) await saveSeries(); }
@@ -1264,9 +1266,33 @@ async function loadCatalogueIndex() {
   try { const r = await fetch("catalogue/slim-index.json"); if (r.ok) setSlimIndex((await r.json()).series || []); } catch (e) {}
   try { const r = await fetch("catalogue/covers-batch.json"); if (r.ok) { S.coverBatch = (await r.json()).covers || []; if (S.view === "series") render(); } } catch (e) {}
 }
+// GCD (comics.org) pictures never load in the app (the site blocks them, checked on the phone 2026-11-26)
+const deadCoverHost = url => /(^|\/\/|\.)comics\.org\//i.test(String(url || ""));
+// your own cover photo: shrunk to 600 px and stored in the entry (and so in the backup)
+async function photoToCover(file) {
+  const u = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = u; });
+    const k = Math.min(1, 600 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1)), cv = document.createElement("canvas");
+    cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+    cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height);
+    return cv.toDataURL("image/jpeg", 0.8);
+  } finally { URL.revokeObjectURL(u); }
+}
+const coverPhotoHtml = d => { const has = /^data:/.test(d.coverUrl || ""); return `<div class="wide row" id="coverphotobox" style="gap:8px;align-items:center;flex-wrap:wrap"><input type="file" accept="image/*" id="f-coverPhotoFile" hidden><button type="button" class="ghost" id="coverphoto">${has ? "New cover photo" : "Cover photo"}</button><span id="coverphotoinfo" class="small">${has ? `<img src="${esc(d.coverUrl)}" alt="" style="height:48px;vertical-align:middle;border-radius:4px"> Your photo · <button type="button" class="ghost small" id="coverphotodel">Remove photo</button>` : "Take a photo of the cover or pick one"}</span></div>`; };
+function bindCoverPhoto(d) {
+  S.coverPhoto = /^data:/.test(d.coverUrl || "") ? d.coverUrl : "";
+  const btn = $("#coverphoto"), inp = $("#f-coverPhotoFile"); if (!btn || !inp) return;
+  const show = () => { const i = $("#coverphotoinfo"); if (i) i.innerHTML = S.coverPhoto ? `<img src="${esc(S.coverPhoto)}" alt="" style="height:48px;vertical-align:middle;border-radius:4px"> Your photo · <button type="button" class="ghost small" id="coverphotodel">Remove photo</button>` : "Take a photo of the cover or pick one"; btn.textContent = S.coverPhoto ? "New cover photo" : "Cover photo"; const x = $("#coverphotodel"); if (x) x.onclick = () => { S.coverPhoto = ""; d.coverUrl = ""; show(); }; };
+  btn.onclick = () => inp.click();
+  inp.onchange = async () => { const f = inp.files && inp.files[0]; if (!f) return;
+    try { S.coverPhoto = await photoToCover(f); d.coverUrl = S.coverPhoto; const u = $("#f-coverUrl"); if (u) u.value = ""; show(); toast("Photo added: tap Save to keep it"); }
+    catch (e) { toast("That picture couldn't be read"); } inp.value = ""; };
+  show();
+}
 // comics without a cover that a waiting cover link fits (same series, same number); a cover you set yourself is never replaced
 function coverBatchWaiting() {
-  const want = new Map(); (S.coverBatch || []).forEach(e => { if (e && e.url) want.set(e.sid + "|" + e.label, e.url); });
+  const want = new Map(); (S.coverBatch || []).forEach(e => { if (e && e.url && !deadCoverHost(e.url)) want.set(e.sid + "|" + e.label, e.url); });
   return S.comics.filter(c => c.kind !== "book" && !c.coverUrl && want.has(c.seriesId + "|" + (c.issueLabel || c.issue || ""))).map(c => ({ c, url: want.get(c.seriesId + "|" + (c.issueLabel || c.issue || "")) }));
 }
 async function applyCoverBatch() {
@@ -1275,7 +1301,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 243;
+const APP_BUILD = 244;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

@@ -271,4 +271,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Lookup: Winnetou cover doesn't show (backup, covers-batch, cover code) | 1–2 min | 1–2 min (07:41 → 07:41:28) |
 | 2026-11-26 | da-v243 no-referrer for cover pictures (GCD covers) | 1–2 min | 0–1 min (07:44 → 07:45:15) |
 | 2026-11-26 | Publish da-v243 + check run (visit): no errors | under 1 min + ~2 min waiting | 4–5 min, ~3 min of it waiting (07:45 → 07:49:14) |
+| 2026-11-26 | da-v244 cover photo in Edit, dead GCD links dropped | 3–5 min | 3–4 min (09:49 → 09:51:13) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.

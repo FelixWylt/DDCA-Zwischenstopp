@@ -82,7 +82,8 @@ ${isBook ? `
           <label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="${isNovel(d) ? "where you read it, e.g. a Royal Road page" : "where you read it online (optional)"}"></label>
           <label><span class="l">Country</span><input id="f-country" list="countrylist" value="${esc(d.country || "")}" placeholder="${esc(isNovel(d) ? bookCountry(Object.assign({}, d, { country: "" })) || "where it first came out" : bookCountry(Object.assign({}, d, { country: "" })) || "of this edition")}"></label>
           <datalist id="countrylist">${[...new Set(Object.values(COUNTRY_NAMES).concat(S.comics.map(c => c.country).filter(Boolean)))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
-          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
+          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(/^data:/.test(d.coverUrl || "") ? "" : d.coverUrl)}" placeholder="Filled in by the lookup, or paste a link"></label>
+          ${coverPhotoHtml(d)}
         </div>
         <datalist id="genres">${[...new Set(["Novel", "Novella", "Short Stories", "Drama", "Poetry", "Fantasy", "Science Fiction", "Crime", "Thriller", "Horror", "Adventure", "Historical Fiction", "Romance", "Humour", "Children's", "Young Adult", "Non-fiction", "Biography", "History", "Mythology", "Fairy Tales", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
         <datalist id="bookseries">${[...new Set(S.comics.filter(c => c.kind === "book" && isNovel(c) === isNovel(d) && c.seriesName).map(c => c.seriesName))].sort().map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
@@ -114,7 +115,8 @@ ${isBook ? `
           <label><span class="l">Publisher</span><input id="f-publisher" list="publishers" value="${esc(d.publisher)}" placeholder="e.g. Egmont Ehapa"></label>
           <label><span class="l">ISBN or barcode</span><input id="f-isbn" class="mono" inputmode="numeric" value="${esc(d.isbn || (d.barcode ? d.barcode + (d.barcodeExt ? " " + d.barcodeExt : "") : ""))}" placeholder="optional"></label>
           <div id="isbnwarn" class="wide">${isbnWarnHtml(d)}</div>
-          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
+          <label class="wide"><span class="l">Cover image URL</span><input id="f-coverUrl" value="${esc(/^data:/.test(d.coverUrl || "") ? "" : d.coverUrl)}" placeholder="Link to a cover scan (optional)"></label>
+          ${coverPhotoHtml(d)}
           ${d.link || notOwned(d) ? `<label class="wide"><span class="l">Link</span><input id="f-link" type="url" value="${esc(d.link || "")}" placeholder="where you read it online (optional)"></label>` : ""}
         </div>
         <datalist id="genres">${[...new Set(["Humour", "Adventure", "Crime", "Fantasy", "Science Fiction", "Horror", "Mythology", "Fairy Tales", "History", "Superheroes"].concat(S.comics.map(c => c.genre).filter(Boolean).flatMap(g => g.split(",").map(x => x.trim()))))].filter(Boolean).map(n => `<option>${esc(n)}</option>`).join("")}</datalist>
@@ -201,6 +203,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     // update the "about x each" line while typing, without redrawing the form (a redraw would swallow the Save tap)
     $("#f-lotTotal") && ($("#f-lotTotal").oninput = e => { const t = parseAmt(e.target.value), w1 = d.kind === "book" ? "book" : "comic", w2 = w1 + "s", el = $("#lotper"), n = +(el && el.dataset.n) || 1; if (el) el.textContent = t === 0 ? `A free lot: ${n === 1 ? "this " + w1 + " gets" : "all " + n + " " + w2 + " get"} the price 0.00.` : typeof t === "number" && t > 0 ? `With this one: ${n} ${n === 1 ? w1 : w2}, about ${fmt2(t / n)} each. The app splits the price to the cent and adjusts it when more ${w2} join the lot.` : "Enter what you paid for all of them together (0 if they were free). Add the others with “Save and add next”, which keeps the lot."; });
     document.querySelectorAll(".lotinfo [data-open]").forEach(b => b.onclick = () => { S.editing = b.dataset.open; S.draft = null; render(); window.scrollTo(0, 0); });
+    bindCoverPhoto(d);
     // ISBN / bootleg warning follows what you type
     const warnNow = () => { const w = $("#isbnwarn"); if (w) w.innerHTML = isbnWarnHtml(Object.assign({}, d, { isbn: ($("#f-isbn") || {}).value || "", publisher: $("#f-publisher") ? $("#f-publisher").value : d.publisher })); };
     ["f-isbn", "f-publisher"].forEach(k => { const el = $("#" + k); if (el) el.addEventListener("input", warnNow); });
@@ -231,6 +234,7 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     });
     const grab = () => {
       ["issue", "title", "date", "pages", "coverUrl", "grade", "copies", "location", "pricePaid", "currency", "value", "valueChecked", "valueCur", "purchaseDate", "source", "notes", "special", "edition", "seriesName", "author", "publisher", "isbn", "format", "lang", "genre", "translator", "originalTitle", "country", "lotTotal"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value; });
+      if (!String(d.coverUrl || "").trim() && S.coverPhoto) d.coverUrl = S.coverPhoto;   // your own cover photo (not shown in the link box)
       const words0 = d.words;
       ["link", "words"].forEach(k => { const el = $("#f-" + k); if (el) d[k] = el.value.trim(); });
       // pages from words (about 300 words per printed page): Pages follows Words until you type Pages yourself

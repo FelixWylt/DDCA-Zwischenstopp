@@ -209,6 +209,11 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **da-v243 published 2026-11-26 07:46 (check run visit: no errors):** none of the 47 GCD covers showed on the phone (all have
   coverKeepFail). index.html gets <meta name="referrer" content="no-referrer"> (GCD hotlink check?). Only the phone can tell if it helps;
   if not: step 2 = own cover photo button in Edit, step 3 = drop the dead GCD links so Get cover pictures looks elsewhere.
+- **da-v244 built (go 2026-11-26 09:49, local until "publish"):** no-referrer didn't help (user, 07:51): GCD pictures never load in the app.
+  core.js deadCoverHost(); start drops comics.org coverUrls with coverKeepFail (comic counts as "no cover" again); coverBatchWaiting skips
+  comics.org; covers-batch.json emptied of its 47 GCD links. Edit (comic + book forms, add.js): "Cover photo" button under Cover image URL
+  (coverPhotoHtml/bindCoverPhoto/photoToCover: 600 px JPEG data: URL in coverUrl, S.coverPhoto, not shown in the link box, "Remove photo").
+  **Don't collect GCD covers any more.**
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
@@ -307,7 +312,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
     GCD from GitHub (probes 2026-11-22): its API answers (series by name: /api/series/name/<name>/, issue JSON has "cover"), but sends no
     CORS header (the app can't ask it), and its pictures (files1.comics.org) fail with 403 on GitHub, also in a headless browser.
     Shop list: a Claude doc https://claude.ai/artifact/RC1qQvSjfR3sfWAUWboi52 (tables; claude/shops-zurich.md in the project only points to it).
-- **Covers waiting (da-v230):** catalogue/covers-batch.json {covers:[{sid,label,url,gcd}]} → Series › Tools › Covers waiting › Add all
+- **Covers waiting (da-v230; GCD links are useless since 2026-11-26, see da-v244):** catalogue/covers-batch.json {covers:[{sid,label,url,gcd}]} → Series › Tools › Covers waiting › Add all
   (coverBatchWaiting/applyCoverBatch in core.js; only comics without coverUrl). Made by the GCD lookup in probe-books.mjs on the cors-test
   branch (input cover-input.json from the backup; output covers-found.json). 2026-11-22: 27 covers; GCD stopped answering after 3 series
   (rate limit?). Slower run (1.6 s): +16 (Lucky Luke 6, Spirou 10); GCD stops after ~5 series per run, so run ~6 series at a time
