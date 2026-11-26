@@ -289,4 +289,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | da-v246 lot fixes (pre-pick, date copy, share price) + test + Restore file for 2 books | 4–6 min | 1–2 min (19:29 → 19:30:26) |
 | 2026-11-26 | Publish da-v246 + check run (edit-comic, visit): no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~3 min of it waiting (19:34 → 19:38:01) |
 | 2026-11-26 | Check backup opens (Chat 22): readable, 102 series, 939 comics | under 1 min | 0–1 min (19:41 → 19:41:25) |
+| 2026-11-26 | Answer: purchase-cost fields (shipping, VAT) – look at price fields + plan | 1–2 min | 0–1 min (20:09 → 20:09:37) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
