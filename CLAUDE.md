@@ -214,12 +214,12 @@ except typing the reply itself. Say in the report that the reply writing and Git
   comics.org; covers-batch.json emptied of its 47 GCD links. Edit (comic + book forms, add.js): "Cover photo" button under Cover image URL
   (coverPhotoHtml/bindCoverPhoto/photoToCover: 600 px JPEG data: URL in coverUrl, S.coverPhoto, not shown in the link box, "Remove photo").
   **Don't collect GCD covers any more.** User saw the Cover photo button on the phone (2026-11-26 12:52).
-- **Price lists 2026-11-26 (go 13:12, local until "publish"):** 13 new waiting lists (prices.json + restore-batch.json, added 2026-11-26):
+- **Price lists 2026-11-26 (go 13:12, published 18:05, price check: no errors):** 13 new waiting lists (prices.json + restore-batch.json, added 2026-11-26):
   Winnetou SE (40 kr, user/Seriekatalogen), Frieren DE, Sandman Deluxe, Black Butler, Doctor Strange/Punisher, Maus (titleNumbers Survivor→1),
   DD Taschenbuch 97- (user's Comicguide ranges end at 96; T4 = test issue, issueNum 4, counts as #4 → user may type a checked value),
   books Apollon 2-4, Percy Senior 2, Sparven 1, Magnus Chase 2, Deutsche Kurzgeschichten 1, Lady Trent 1 (titleNumbers). Book series ranges
   only for volumes without the user's own value. 38 loose/unnumbered books can't get ranges (valueKeyOf "" without a series): values sent
-  as a type-in list (estimates). Blixt Gordon: the user does it.
+  as a Restore file instead (book-values-2026-11-26.json, sent in chat, not committed; the user's wish 18:01). Blixt Gordon: the user does it.
 - **Older open points (handover nr. 10):** the user may check one story per code and Read online entries.
 - **Price batch (the user's wish, 2026-11-15):** new price lists are COLLECTED and the user adds them all at once in
   **Series › Tools › Price lists waiting › Add all** (da-v193). For each new list: add it to catalogue/prices.json (as usual)
