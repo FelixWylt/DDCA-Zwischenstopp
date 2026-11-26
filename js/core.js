@@ -1199,7 +1199,7 @@ function extrasOf(c) {
   let f = c.copies || 1;
   if (c.lotId) { const T = +c.lotTotal; if (!(T > 0)) return null; f = c.pricePaid * (c.copies || 1) / T; }
   const cur = c.lotId ? (c.lotCurrency || c.currency) : c.currency, x = k => toCHF((p[k] || 0) * f, cur);
-  return { ship: x("ship"), tax: x("tax"), fees: x("fees"), disc: x("disc") };
+  return { item: x("item"), ship: x("ship"), tax: x("tax"), fees: x("fees"), disc: x("disc") };
 }
 function lotMembers(id) { return id ? S.comics.filter(c => c.lotId === id && isOwn(c)) : []; }
 function lotInfo(id) {
@@ -1342,7 +1342,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 250;
+const APP_BUILD = 251;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

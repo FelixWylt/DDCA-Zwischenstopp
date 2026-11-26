@@ -58,6 +58,9 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **da-v250 published 2026-11-26 21:58 (check run stats-spend + visit: no errors; shot shows lighter bar tops and the new card):** Stats › Spending: Spent bars get a lighter top part
   for shipping, customs and fees (timeBars lite), new card "Shipping, customs & fees over time" (lineChart running total + bars per month).
   Test data: a1 priceParts, a7 lotParts + date, new sp1 (this month).
+- **da-v251 published 2026-11-26 22:23:** extras card rebuilt: "Shipping, customs & fees" (all time): CHF total + % on top of the item prices,
+  one solid line (running total) with dots on buying months (lineChart dots), bars by kind (Shipping, Customs & VAT, Fees) + discounts saved;
+  the old text line in Spent is gone, Spent bars keep their lighter tops. extrasOf now also returns item.
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·
