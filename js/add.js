@@ -195,7 +195,13 @@ ${d.kind === "book" ? `<br>Sold prices: ${soldLinks(d)}` : collectorLinks(d.seri
     $("#f-read") && ($("#f-read").onchange = e => { grab(); if (e.target.checked) { d.readDate = d.readDate || d.readDateWas || todayIso(); delete d.readDateWas; } else { if (d.readDate) d.readDateWas = d.readDate; d.readDate = ""; } renderKeep(); });
     $("#f-inlot") && ($("#f-inlot").onchange = e => {
       grab();
-      if (e.target.checked) { const last = recentLots()[0]; d.lotId = "new"; d.lotTotal = d.lotTotal || ""; if (last && daysSince(last.created) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.currency = last.currency; } }
+      if (e.target.checked) {
+        // a lot is offered only if something in it was ADDED in the last day (a lot bought today), not just changed today (da-v246)
+        const addedAt = l => l.members.reduce((a, c) => { const x = String(c.createdAt || ""); return x > a ? x : a; }, "");
+        const last = allLots().filter(l => !l.members.some(c => c.id === d.id)).sort((a, b) => addedAt(b).localeCompare(addedAt(a)))[0];
+        d.lotId = "new"; d.lotTotal = d.lotTotal || "";
+        if (last && daysSince(addedAt(last)) < 1) { d.lotId = last.id; d.lotTotal = last.total; d.currency = last.currency; if (!d.source) d.source = last.source; if (!d.purchaseDate) d.purchaseDate = last.date; }   // its date and place, as when picked from the list
+      }
       else { d.lotId = ""; d.lotTotal = ""; }
       render(); $("#f-inlot") && $("#f-inlot").scrollIntoView({ block: "center" });
     });

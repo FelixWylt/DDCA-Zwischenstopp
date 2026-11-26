@@ -40,6 +40,10 @@ except typing the reply itself. Say in the report that the reply writing and Git
   da-v244 (Cover photo button in Edit; dead GCD cover links dropped), 13 price lists 2026-11-26 (price check clean).
 - Waiting on the phone: Add all for the 2026-11-26 price lists; Restore file book-values-2026-11-26.json (38 book values, sent in chat);
   Blixt Gordon prices and the DD Taschenbuch T4 test-issue value (the user does them); once Series › Tools › Refresh all books.
+- **da-v246 built (go 2026-11-26 19:29, local until "publish"):** lots: ticking "Bought as a lot" pre-picks only a lot with something ADDED
+  in the last day (newest createdAt, was: last changed), and copies its purchase date/where bought into empty fields; leaving a lot empties
+  the lot's share price (prepareLot, unless a new price was typed). Cause: Valhall landed in Uhland's lot; Uhland had no date. Restore file
+  lot-fix-2026-11-26.json (Uhland 2025/Street, Valhall price empty) sent in chat, not committed.
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·

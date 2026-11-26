@@ -1199,7 +1199,11 @@ async function rebalanceLot(id, total, currency, shared) {
 }
 // before saving: settle the lot fields; returns false (with a message) if something is missing
 function prepareLot(d, c, before) {
-  if (c.status === "wanted" || !d.lotId) { c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; return true; }
+  if (c.status === "wanted" || !d.lotId) {
+    // leaving a lot: the lot's share price goes too (unless you typed a new price), so the real price can be filled in (da-v246)
+    if (before && before.lotId && c.pricePaid === before.pricePaid) c.pricePaid = "";
+    c.lotId = ""; c.lotTotal = ""; c.lotCurrency = ""; return true;
+  }
   const total = parseAmt(d.lotTotal);
   if (!(typeof total === "number" && total >= 0)) { toast("Enter the price for the whole lot (0 if you got it for free)"); $("#f-lotTotal") && $("#f-lotTotal").focus(); return false; }
   if (d.lotId === "new") d.lotId = newId();
@@ -1301,7 +1305,7 @@ async function applyCoverBatch() {
   await markRun("covers"); return n;
 }
 // this app's build number (the number in APP_VERSION, sw.js): a waiting list can need a newer app ("minApp")
-const APP_BUILD = 245;
+const APP_BUILD = 246;
 // a waiting list counts as added once it has been added (by its "added" mark, date, text and settings), so a corrected list shows up again
 const batchKey = e => { const sg = (S.priceSugg || {})[e.sugg] || {}; return e.id + "|" + (e.added || "") + "|" + (sg.date || "") + "|" + String(sg.text || "").length + "|" + JSON.stringify(e.patch || {}).length; };
 const batchTooNew = e => +e.minApp > APP_BUILD;

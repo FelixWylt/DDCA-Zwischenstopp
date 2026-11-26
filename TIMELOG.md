@@ -286,4 +286,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Publish da-v245 + notes split, check run (series, visit): no errors | under 1 min + ~2–3 min waiting | 3–4 min, ~3 min of it waiting (18:33 → 18:36:28) |
 | 2026-11-26 | Bug lookup: book added to a lot (Uhland), lot count 4 instead of 3 | 2–4 min | 1–2 min (19:18 → 19:19:39) |
 | 2026-11-26 | Backup check: Uhland lot, Valhall in the lot by mistake | 1–2 min | 0–1 min (19:27 → 19:27:52) |
+| 2026-11-26 | da-v246 lot fixes (pre-pick, date copy, share price) + test + Restore file for 2 books | 4–6 min | 1–2 min (19:29 → 19:30:26) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
