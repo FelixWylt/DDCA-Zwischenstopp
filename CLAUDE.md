@@ -61,7 +61,7 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **da-v251 published 2026-11-26 22:23:** extras card rebuilt: "Shipping, customs & fees" (all time): CHF total + % on top of the item prices,
   one solid line (running total) with dots on buying months (lineChart dots), bars by kind (Shipping, Customs & VAT, Fees) + discounts saved;
   the old text line in Spent is gone, Spent bars keep their lighter tops. extrasOf now also returns item.
-- **Wishlist prices (go 2026-11-26 22:36 and 2026-11-27 16:06, local until "publish"):** the user's wish: wishes STILL IN PRINT use the Swiss
+- **Wishlist prices (go 2026-11-26 22:36 and 2026-11-27 16:06; published 2026-11-27 17:05, price check: no errors):** the user's wish: wishes STILL IN PRINT use the Swiss
   shop price (Ex Libris, CHF), out-of-print ones the used VG price. Waiting lists: it/DLL (Disney lingua latina 1-: 35 €, out of print, one eBay
   sale) and Frieren EN (book:Frieren: Beyond Journey's End, 1-: 14.40 CHF, Ex Libris). 61 other wished books: Restore file
   wishlist-book-values-2026-11-27.json (sent in chat, not committed; replaces the 2026-11-26 file; updatedAt = backup + 1 s, so it wins over
