@@ -1,0 +1,1 @@
+price batch: {"hh":"year","hh86":"2009/06","hh1":"1998/01","hhr":8,"asoiaf":"1-1:600:1. Auflage HC 1-5:4:höhere Auflagen","n":34,"eds":"1. Auflage,1. Auflage HC,höhere Auflagen,Neuauflage","first":1956,"per":"1981: 27, 1956: 11, 1957-1959: 12, 1960-1965: 13, 1966: 16, 1967-1969: 20, 1970-: 26","card":false}
