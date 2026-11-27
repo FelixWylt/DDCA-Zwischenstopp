@@ -312,4 +312,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-27 | Test: ZVAB reachable by search (Parzival DKV 1994 found, 3 used copies; prices not in the snippets) | under 1 min | 0–1 min (17:03 → 17:03:21) |
 | 2026-11-27 | ZVAB page for Parzival DKV (used sets 144–150 €) → 70 CHF/vol, Restore file c | about 1 min | 0–1 min (17:04 → 17:04:33) |
 | 2026-11-27 | Publish 2 price lists + notes, price check (prices, series-tools): no errors | 3–4 min (including 2–3 min of waiting) | 2–3 min (including about 2.5 min of waiting) (17:05 → 17:08:28) |
+| 2026-11-27 | Lookup: Dark Lord paperbacks on Amazon (both exist, no price in the results) | under 1 min | 0–1 min (17:40 → 17:40:59) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
