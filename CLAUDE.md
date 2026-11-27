@@ -69,7 +69,8 @@ except typing the reply itself. Say in the report that the reply writing and Git
   Die unendliche Geschichte 19.80; the rest by kind (English PB 18, mass market 16, children's PB 13–15, self-published 22) = estimates;
   Viking Way 50, Codex Borgia 35, poetiska Eddan 25 estimated (not found at Ex Libris). Out of print, used: OHOTMU 15, Mac Cana 15, Parzival
   (DKV hardcover 1994, Ex Libris doesn't carry it) 70/vol (ZVAB 2026-11-27: used sets 144–150 €, one like new 399 €). 2026-11-27 17:00: Ex Libris pages: Jonathan Strange HC 38.80, And Then There Were
-  None 14.60 → latest file wishlist-book-values-2026-11-27c.json (updatedAt = backup + 3 s) replaces the earlier ones. Dark Lord web serial: no print edition, no value.
+  None 14.60 → latest file wishlist-book-values-2026-11-27d.json (63 books, updatedAt = backup + 4 s) replaces the earlier ones. Dark Lord: Amazon paperbacks
+  (Bongosian Press), 8 CHF each with free shipping (the user's price, 2026-11-27).
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·
