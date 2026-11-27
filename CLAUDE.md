@@ -61,10 +61,14 @@ except typing the reply itself. Say in the report that the reply writing and Git
 - **da-v251 published 2026-11-26 22:23:** extras card rebuilt: "Shipping, customs & fees" (all time): CHF total + % on top of the item prices,
   one solid line (running total) with dots on buying months (lineChart dots), bars by kind (Shipping, Customs & VAT, Fees) + discounts saved;
   the old text line in Spent is gone, Spent bars keep their lighter tops. extrasOf now also returns item.
-- **Wishlist prices 2026-11-26 (go 22:36, local until "publish"):** waiting lists it/DLL (Disney lingua latina 1-: 35 €, one eBay sale) and
-  Frieren EN (book:Frieren: Beyond Journey's End, 1-: 7 €); 61 other wished books got a value (CHF, used VG; sample check: Mistborn, Piranesi,
-  Parzival, Frieren matched the estimates) in the Restore file wishlist-book-values-2026-11-26.json (sent in chat, not committed; original
-  updatedAt kept, so wishes changed on the phone since the 19:26 backup stay). Dark Lord web serial: no print edition found, no value.
+- **Wishlist prices (go 2026-11-26 22:36 and 2026-11-27 16:06, local until "publish"):** the user's wish: wishes STILL IN PRINT use the Swiss
+  shop price (Ex Libris, CHF), out-of-print ones the used VG price. Waiting lists: it/DLL (Disney lingua latina 1-: 35 €, out of print, one eBay
+  sale) and Frieren EN (book:Frieren: Beyond Journey's End, 1-: 14.40 CHF, Ex Libris). 61 other wished books: Restore file
+  wishlist-book-values-2026-11-27.json (sent in chat, not committed; replaces the 2026-11-26 file; updatedAt = backup + 1 s, so it wins over
+  the old file but not over wishes changed on the phone). Looked up at Ex Libris: Mistborn 16.20, Piranesi 17.30, Codex Seraphinianus 174.80,
+  Die unendliche Geschichte 19.80; the rest by kind (English PB 18, mass market 16, children's PB 13–15, self-published 22) = estimates;
+  Parzival DKV hardcover 50/vol, Viking Way 50, Codex Borgia 35, poetiska Eddan 25 estimated (not found at Ex Libris). Out of print, used: OHOTMU 15,
+  Mac Cana 15. Dark Lord web serial: no print edition, no value.
 - Not wanted / don't repeat: GCD covers (pictures never load in the app); webcomic page reader ("not yet"); idea 40 of the bug hunt.
 - **HISTORY.md**: open it only when a job touches an older feature or a past decision. Index (version → feature):
   v193 price batch · v194 own issue lists · v195 double issues · v205 titleNumbers · v208 patch keys · v210 Read, not owned, cover ratings ·
