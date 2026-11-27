@@ -309,4 +309,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-27 | Test: Swiss shop prices (search finds Ex Libris/Orell Füssli without prices; Ex Libris page by ISBN shows CHF) | under 1 min | 0–1 min (15:02 → 15:02:51) |
 | 2026-11-27 | Wishlist books: Swiss shop prices (Ex Libris, 11 searches + 6 refused fetches) + new Restore file, Frieren list in CHF | 4–5 min | 2–3 min (16:06 → 16:09:27) |
 | 2026-11-27 | 3 Ex Libris pages (Parzival not carried → used price, Jonathan Strange, And Then There Were None) + corrected Restore file | 1–2 min | 0–1 min (16:59 → 16:59:45) |
+| 2026-11-27 | Test: ZVAB reachable by search (Parzival DKV 1994 found, 3 used copies; prices not in the snippets) | under 1 min | 0–1 min (17:03 → 17:03:21) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
