@@ -306,4 +306,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-26 | Lookup: wishlist prices (backup: 335 wishes, 251/257 comics priced, 78 books none) + 1 test search (Disney lingua latina) | 1–2 min | 0–1 min (22:30 → 22:30:48) |
 | 2026-11-26 | Check: wishlist budget card (counts only priced wishes, notes how many) | under 1 min | 0–1 min (22:33 → 22:33:45) |
 | 2026-11-26 | Wishlist prices: 2 waiting lists (Disney lingua latina, Frieren EN) + Restore file with 61 book values, 7 searches incl. sample check | 7–8 min | 1–2 min (22:36 → 22:38:42) |
+| 2026-11-27 | Test: Swiss shop prices (search finds Ex Libris/Orell Füssli without prices; Ex Libris page by ISBN shows CHF) | under 1 min | 0–1 min (15:02 → 15:02:51) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
