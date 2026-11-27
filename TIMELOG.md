@@ -314,4 +314,5 @@ Rules: see "Time estimates" in CLAUDE.md.
 | 2026-11-27 | Publish 2 price lists + notes, price check (prices, series-tools): no errors | 3–4 min (including 2–3 min of waiting) | 2–3 min (including about 2.5 min of waiting) (17:05 → 17:08:28) |
 | 2026-11-27 | Lookup: Dark Lord paperbacks on Amazon (both exist, no price in the results) | under 1 min | 0–1 min (17:40 → 17:40:59) |
 | 2026-11-27 | Dark Lord 2× 8 CHF added, Restore file d (63 books) | under 1 min | 0–1 min (17:43 → 17:43:53) |
+| 2026-11-27 | Publish notes/log only (end of Chat 22), no check run | under 1 min | 0–1 min (21:45 → 21:45:08) |
 Keep the log short: at the end of each month, replace that month's rows by one summary row.
